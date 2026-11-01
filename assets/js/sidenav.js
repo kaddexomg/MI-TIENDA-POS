@@ -236,36 +236,58 @@
       return;
     }
 
-    if (!isService) {
-      const qty = parseFloat(document.getElementById('gExpQty').value) || 1;
-      const res = MTP.recordKitchenPurchase({
-        insumoId: itemVal,
-        qty,
-        totalCostUsd: usd,
-        paymentSource: source,
-        supplier: desc
-      });
-      if (res) {
-        closeExpenseModal();
-        MTP.toast(`¡Sumados +${res.qty} ${res.insumo.unit} a ${res.insumo.name} y descontados ${MTP.fmtUSD(usd)} de ${source}!`);
-      }
-    } else {
-      let cat = 'Gasto Operativo';
-      if (itemVal === 'SERV_GAS') cat = 'Gas / Servicios';
-      else if (itemVal === 'SERV_HIELO') cat = 'Insumos Menores (Hielo / Bolsas)';
-      else if (itemVal === 'SERV_FLETE') cat = 'Flete / Transporte';
-      else if (itemVal === 'SERV_PERSONAL') cat = 'Personal / Ayudante';
+    const curUser = window.MTPAuth ? window.MTPAuth.getCurrentUser() : null;
+    const reqSuper = window.MTPPermissions ? window.MTPPermissions.requiresSupervisor(curUser, 'expense.create', { amountUsd: usd }) : false;
 
-      MTP.recordExpense({
-        category: cat,
-        description: desc || cat,
-        paymentSource: source,
-        amountUsd: usd,
-        amountBs: bs,
-        responsible: location.pathname.includes('/caja/') ? 'Cajero Turno' : 'Administrador'
-      });
-      closeExpenseModal();
-      MTP.toast(`Gasto de ${MTP.fmtUSD(usd)} registrado en ${source}`);
+    if (reqSuper && window.MTPAuth) {
+      window.MTPAuth.requestSupervisorPin(
+        'expense.create',
+        `Gasto de $${usd.toFixed(2)} supera el límite permitido para cajero`,
+        function (authData) {
+          doProcessExpense(authData.supervisor.name);
+        }
+      );
+      return;
+    }
+
+    doProcessExpense();
+
+    function doProcessExpense(supervisorName) {
+      const respName = supervisorName
+        ? `${curUser ? curUser.name : 'Cajero'} (Autorizado por ${supervisorName})`
+        : (curUser ? curUser.name : (location.pathname.includes('/caja/') ? 'Cajero Turno' : 'Administrador'));
+
+      if (!isService) {
+        const qty = parseFloat(document.getElementById('gExpQty').value) || 1;
+        const res = MTP.recordKitchenPurchase({
+          insumoId: itemVal,
+          qty,
+          totalCostUsd: usd,
+          paymentSource: source,
+          supplier: desc ? (desc + (supervisorName ? ` · Aut: ${supervisorName}` : '')) : (supervisorName ? `Aut: ${supervisorName}` : '')
+        });
+        if (res) {
+          closeExpenseModal();
+          MTP.toast(`¡Sumados +${res.qty} ${res.insumo.unit} a ${res.insumo.name} y descontados ${MTP.fmtUSD(usd)} de ${source}!`);
+        }
+      } else {
+        let cat = 'Gasto Operativo';
+        if (itemVal === 'SERV_GAS') cat = 'Gas / Servicios';
+        else if (itemVal === 'SERV_HIELO') cat = 'Insumos Menores (Hielo / Bolsas)';
+        else if (itemVal === 'SERV_FLETE') cat = 'Flete / Transporte';
+        else if (itemVal === 'SERV_PERSONAL') cat = 'Personal / Ayudante';
+
+        MTP.recordExpense({
+          category: cat,
+          description: desc || cat,
+          paymentSource: source,
+          amountUsd: usd,
+          amountBs: bs,
+          responsible: respName
+        });
+        closeExpenseModal();
+        MTP.toast(`Gasto de ${MTP.fmtUSD(usd)} registrado en ${source}`);
+      }
     }
   }
 
@@ -300,14 +322,22 @@
       { href: 'precios.html',    iconKey: 'dollar',     label: 'Precios & Tasas' },
       { href: 'facturas.html',   iconKey: 'fileText',   label: 'Facturación & Historial' },
       { href: 'index.html',      iconKey: 'chart',      label: 'Dashboard & Finanzas' },
+      { href: 'usuarios.html',   iconKey: 'users',      label: 'Usuarios & Permisos' },
       { href: 'ajustes.html',    iconKey: 'settings',   label: 'Ajustes & Respaldo' }
     ];
 
+    const currentUser = window.MTPAuth ? window.MTPAuth.getCurrentUser() : null;
+    const isSupervisorOrAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'encargado');
+
     const CAJA_LINKS = [
       { href: 'pos.html',   iconKey: 'pos',      label: 'Caja Mostrador (Facturar)', badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? '' : 'kbd' },
-      { href: 'index.html', iconKey: 'receipt',  label: 'Órdenes y Cuadre Turno' },
-      { href: '../admin/index.html', iconKey: 'settings', label: 'Ir a Panel Admin' }
+      { href: 'index.html', iconKey: 'receipt',  label: 'Órdenes y Cuadre Turno' }
     ];
+
+    // Solo si el usuario en caja es Encargado o Admin se despliega el acceso directo al panel
+    if (isSupervisorOrAdmin) {
+      CAJA_LINKS.push({ href: '../admin/index.html', iconKey: 'settings', label: 'Ir a Panel Admin' });
+    }
 
     const links = isCaja ? CAJA_LINKS : ADMIN_LINKS;
     const bcv = Number(MTP.state.settings.rateBcv || 42.85).toFixed(2);
@@ -336,6 +366,13 @@
 
     const boltIco = window.MTPIcons ? window.MTPIcons.get('bolt', { size: 15, color: '#fbbf24' }) : '';
     const plusIco = window.MTPIcons ? window.MTPIcons.get('plus', { size: 13, color: '#fff' }) : '+';
+
+    const userIco = getIco('user');
+    const logoutIco = getIco('logout') || '🔒';
+    const userName = currentUser ? currentUser.name : (isCaja ? 'Cajero Turno' : 'Administrador');
+    const userRole = currentUser ? currentUser.role : (isCaja ? 'cajero' : 'admin');
+    const roleLabel = window.MTPPermissions ? window.MTPPermissions.getRoleLabel(userRole) : (userRole === 'admin' ? 'Administrador' : (userRole === 'encargado' ? 'Encargado' : 'Cajero'));
+    const roleColor = userRole === 'admin' ? '#f87171' : (userRole === 'encargado' ? '#60a5fa' : '#34d399');
 
     aside.innerHTML = `
       <div class="aside-brand">
@@ -378,12 +415,33 @@
         ${linksHtml}
       </nav>
 
-      <div class="aside-ft">
-        <div class="aside-ft-info">
-          <div style="font-size:10px;color:#94a3b8">Modo: <strong style="color:#fff">${isCaja ? 'Cajero' : 'Administrador'}</strong></div>
-          <div style="font-size:9px;color:#64748b">Ctrl+B colapsar menú</div>
+      <div class="aside-ft" style="display:flex;flex-direction:column;gap:5px;padding:6px 8px;background:#091622;border-top:1px solid rgba(255,255,255,0.08)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+          <div style="display:flex;align-items:center;gap:6px;overflow:hidden">
+            <span style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;background:rgba(255,255,255,0.08);color:${roleColor};flex-shrink:0">
+              ${userIco}
+            </span>
+            <div style="overflow:hidden">
+              <div style="font-size:11px;font-weight:800;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${userName}">
+                ${userName}
+              </div>
+              <div style="font-size:9.5px;font-weight:700;color:${roleColor};display:flex;align-items:center;gap:3px">
+                <span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:${roleColor}"></span>
+                ${roleLabel}
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPAuth ? window.MTPAuth.logout() : window.location.href='../index.html'"
+            title="Bloquear / Cerrar Sesión"
+            style="padding:2px 5px;height:22px;background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.3);color:#fca5a5;flex-shrink:0">
+            ${logoutIco}
+          </button>
         </div>
-        <a href="../index.html" class="role-switch-btn" title="Cambiar rol">⇄ Rol</a>
+        ${currentUser && currentUser.isDefaultPin ? `
+          <a href="${isCaja ? '#' : 'usuarios.html'}" style="font-size:9px;color:#fbbf24;background:rgba(245,158,11,0.12);padding:2px 4px;border-radius:4px;border:1px solid rgba(245,158,11,0.25);text-align:center;display:block" title="PIN de fábrica activo. Te recomendamos cambiarlo en Usuarios.">
+            ⚠️ PIN por defecto activo
+          </a>
+        ` : ''}
       </div>
     `;
 
@@ -421,6 +479,13 @@
   };
 
   initSidebarState();
-  document.addEventListener('DOMContentLoaded', renderSidebar);
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.MTPAuth && typeof window.MTPAuth.guardCurrentPage === 'function') {
+      window.MTPAuth.guardCurrentPage();
+    }
+    renderSidebar();
+  });
   window.addEventListener('mtp:state-updated', renderSidebar);
+  window.addEventListener('mtp:auth-login', renderSidebar);
+  window.addEventListener('mtp:auth-logout', renderSidebar);
 })();

@@ -1,7 +1,9 @@
 /* ==========================================================================
-   MI-TIENDA-POS — Layout Optimizado para PC de Oficina (Windows 7 / Sin GPU)
-   - Cero desborde horizontal, cero efectos pesados de tarjeta gráfica
-   - Soporte de Barra Lateral Colapsable (Ctrl+B) para monitores de oficina
+   MI-TIENDA-POS — Layout Optimizado para PC de Oficina (Windows 7 / Chrome 109)
+   - Sidebar Dark Unificado con --nav-bg (#0F2A3D)
+   - Contenedor Principal con fondo --page (#E9EDF1)
+   - Topbar Sticky con fondo --surface (#FFFFFF) y borde --line (#CBD5E1)
+   - Barra lateral colapsable (Ctrl+B) para monitores 1024x768 / 1366x768
    ========================================================================== */
 
 .admin-wrap {
@@ -12,10 +14,13 @@
   overflow-x: hidden;
 }
 
+/* ==========================================================================
+   1. Barra Lateral (Sidebar)
+   ========================================================================== */
 .admin-aside {
-  width: 195px;
-  background: #0f172a;
-  color: #f1f5f9;
+  width: var(--aside-w);
+  background: var(--nav-bg);
+  color: var(--nav-txt);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -23,8 +28,9 @@
   bottom: 0;
   left: 0;
   z-index: 1000;
-  border-right: 1px solid #1e293b;
+  border-right: 1px solid var(--nav-border);
   user-select: none;
+  transition: width 0.15s ease;
 }
 
 .aside-brand {
@@ -33,56 +39,62 @@
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  border-bottom: 1px solid #1e293b;
-  background: #090d16;
+  border-bottom: 1px solid var(--nav-border);
+  background: #0A1C29;
 }
+
 .aside-brand-left {
   display: flex;
   align-items: center;
   gap: 7px;
   min-width: 0;
 }
+
 .aside-logo {
   width: 26px;
   height: 26px;
   border-radius: 6px;
-  background: #f59e0b;
+  background: var(--action);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
   font-weight: 900;
-  color: #fff;
+  color: var(--action-txt);
   flex-shrink: 0;
 }
+
 .aside-brand-txt {
   display: flex;
   flex-direction: column;
-  line-height: 1.1;
+  line-height: 1.15;
   min-width: 0;
 }
+
 .aside-brand-txt strong {
   font-size: 12px;
-  font-weight: 900;
-  color: #fff;
+  font-weight: var(--fw-bold);
+  color: #FFFFFF;
   letter-spacing: -0.02em;
   white-space: nowrap;
 }
+
 .aside-brand-txt strong em {
-  color: #fbbf24;
+  color: var(--action);
   font-style: normal;
 }
+
 .aside-brand-txt span {
-  font-size: 8.5px;
-  color: #94a3b8;
-  font-weight: 700;
+  font-size: 11px;
+  color: var(--nav-txt-muted);
+  font-weight: var(--fw-semibold);
   white-space: nowrap;
 }
 
 .aside-collapse-btn {
-  background: #1e293b;
-  border: 1px solid #334155;
-  color: #cbd5e1;
+  background: var(--nav-hover);
+  border: 1px solid var(--nav-border);
+  color: #CBD5E1;
   width: 22px;
   height: 22px;
   border-radius: 5px;
@@ -92,10 +104,12 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: background 0.12s ease;
 }
+
 .aside-collapse-btn:hover {
-  background: #334155;
-  color: #fff;
+  background: #224D6D;
+  color: #FFFFFF;
 }
 
 /* Widget Compacto de 3 Tasas Vivas en Sidebar */
@@ -103,72 +117,85 @@
   margin: 4px 6px 3px;
   padding: 4px 7px;
   border-radius: 6px;
-  background: #1e293b;
-  border: 1px solid #334155;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   flex-direction: column;
-  gap: 1.5px;
+  gap: 2px;
   cursor: pointer;
+  transition: border-color 0.12s ease;
 }
+
 .aside-rates-box:hover {
-  border-color: #fbbf24;
+  border-color: var(--action);
 }
+
 .aside-rate-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10px;
-}
-.aside-rate-row span {
-  color: #cbd5e1;
-  font-weight: 600;
-}
-.aside-rate-row strong {
-  color: #34d399;
-  font-weight: 800;
-  font-family: var(--font-mono);
-}
-.aside-rate-row.eur strong {
-  color: #60a5fa;
-}
-.aside-rate-row.usdt strong {
-  color: #fbbf24;
+  font-size: 11px;
 }
 
-/* Acciones Rápidas Globales en Sidebar (Gasto F6 / Respaldo) */
+.aside-rate-row span {
+  color: #CBD5E1;
+  font-weight: var(--fw-semibold);
+}
+
+.aside-rate-row strong {
+  color: #34D399;
+  font-weight: var(--fw-bold);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.aside-rate-row.eur strong {
+  color: #60A5FA;
+}
+
+.aside-rate-row.usdt strong {
+  color: var(--action);
+}
+
+/* Acciones Rápidas Globales en Sidebar */
 .aside-quick-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 5px;
   padding: 4px 8px;
 }
+
 .aside-qbtn {
-  background: #1e293b;
-  border: 1px solid #334155;
-  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #F8FAFC;
   padding: 5px 6px;
   border-radius: 6px;
-  font-size: 10.5px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
   white-space: nowrap;
+  transition: all 0.12s ease;
 }
+
 .aside-qbtn:hover {
-  background: #334155;
-  border-color: #64748b;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.25);
 }
+
 .aside-qbtn.expense {
-  background: #7f1d1d;
-  border-color: #b91c1c;
-  color: #fecaca;
+  background: #7F1D1D;
+  border-color: #B91C1C;
+  color: #FECACA;
 }
+
 .aside-qbtn.expense:hover {
-  background: #991b1b;
-  color: #fff;
+  background: #991B1B;
+  color: #FFFFFF;
 }
 
 /* Navegación Lateral Estructurada */
@@ -186,13 +213,14 @@
   flex-direction: column;
   gap: 2px;
 }
+
 .aside-group-btn {
   width: 100%;
   background: transparent;
   border: none;
-  color: #94a3b8;
-  font-size: 10px;
-  font-weight: 800;
+  color: var(--nav-txt-muted);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 5px 6px 2px;
@@ -202,12 +230,15 @@
   cursor: pointer;
   text-align: left;
 }
+
 .aside-group-btn:hover {
-  color: #e2e8f0;
+  color: #E2E8F0;
 }
+
 .aside-group.collapsed .aside-group-items {
   display: none;
 }
+
 .aside-group-items {
   display: flex;
   flex-direction: column;
@@ -220,93 +251,109 @@
   justify-content: space-between;
   padding: 4.5px 7px;
   border-radius: 5px;
-  color: #d1d5db;
-  font-weight: 600;
-  font-size: 11px;
+  color: #CBD5E1;
+  font-weight: var(--fw-semibold);
+  font-size: 11.5px;
   text-decoration: none;
+  transition: background 0.12s ease, color 0.12s ease;
 }
+
 .aside-link-left {
   display: flex;
   align-items: center;
   gap: 6px;
   min-width: 0;
 }
+
 .aside-link-label {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .aside-ico {
   font-size: 13px;
   width: 18px;
   text-align: center;
   flex-shrink: 0;
 }
+
 .aside-link:hover {
-  background: #1e293b;
-  color: #fff;
+  background: var(--nav-hover);
+  color: #FFFFFF;
 }
+
 .aside-link.active {
-  background: #059669;
-  color: #fff;
-  font-weight: 800;
+  background: var(--action);
+  color: var(--action-txt);
+  font-weight: var(--fw-bold);
 }
+
 .aside-badge {
-  background: #ef4444;
-  color: #fff;
-  font-size: 9px;
-  font-weight: 800;
-  padding: 1px 4.5px;
+  background: var(--money-out);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  padding: 1px 5px;
   border-radius: 99px;
   flex-shrink: 0;
 }
+
 .aside-badge.kbd {
   background: rgba(255, 255, 255, 0.14);
-  color: #e2e8f0;
+  color: #E2E8F0;
   font-family: var(--font-mono);
+  font-size: 11px;
 }
 
 .aside-ft {
   padding: 5px 8px;
-  border-top: 1px solid #1e293b;
-  background: #090d16;
+  border-top: 1px solid var(--nav-border);
+  background: #0A1C29;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 5px;
-  font-size: 10px;
-}
-.role-switch-btn {
-  background: #1e293b;
-  color: #fff;
-  border: 1px solid #334155;
-  padding: 2.5px 6px;
-  border-radius: 4px;
-  font-size: 9.5px;
-  font-weight: 700;
-  cursor: pointer;
-  text-decoration: none;
-}
-.role-switch-btn:hover {
-  background: #334155;
+  font-size: 11px;
 }
 
-/* Contenido Principal */
+.role-switch-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.12s ease;
+}
+
+.role-switch-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* ==========================================================================
+   2. Contenedor Principal
+   ========================================================================== */
 .admin-main {
   flex: 1;
-  margin-left: 195px;
-  width: calc(100vw - 195px);
-  max-width: calc(100vw - 195px);
+  margin-left: var(--aside-w);
+  width: calc(100vw - var(--aside-w));
+  max-width: calc(100vw - var(--aside-w));
   display: flex;
   flex-direction: column;
   min-width: 0;
   overflow-x: hidden;
+  background: var(--page);
 }
 
-/* MODO BARRA LATERAL COLAPSADA (Ideal para pantallas de oficina 1024px/1366px en Windows 7) */
+/* Modo Barra Lateral Colapsada (Ctrl+B) */
 body.aside-collapsed .admin-aside {
-  width: 52px;
+  width: var(--aside-collapsed-w);
 }
+
 body.aside-collapsed .aside-brand-txt,
 body.aside-collapsed .aside-rates-box,
 body.aside-collapsed .aside-group-btn,
@@ -316,36 +363,45 @@ body.aside-collapsed .aside-ft-info,
 body.aside-collapsed .aside-qbtn span.qtxt {
   display: none !important;
 }
+
 body.aside-collapsed .aside-brand {
   justify-content: center;
   padding: 6px 3px;
 }
+
 body.aside-collapsed .aside-logo {
   display: none;
 }
+
 body.aside-collapsed .aside-quick-actions {
   grid-template-columns: 1fr;
   padding: 3px 4px;
 }
+
 body.aside-collapsed .aside-link {
   justify-content: center;
   padding: 7px 3px;
 }
+
 body.aside-collapsed .aside-ft {
   justify-content: center;
   padding: 5px 3px;
 }
+
 body.aside-collapsed .admin-main,
 body.pos-fullscreen-body.aside-collapsed .admin-main {
-  margin-left: 52px;
-  width: calc(100vw - 52px);
-  max-width: calc(100vw - 52px);
+  margin-left: var(--aside-collapsed-w);
+  width: calc(100vw - var(--aside-collapsed-w));
+  max-width: calc(100vw - var(--aside-collapsed-w));
 }
 
+/* ==========================================================================
+   3. Barra Superior Sticky (Topbar)
+   ========================================================================== */
 .admin-topbar {
-  height: 38px;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
+  height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
   padding: 0 10px;
   display: flex;
   align-items: center;
@@ -355,39 +411,44 @@ body.pos-fullscreen-body.aside-collapsed .admin-main {
   top: 0;
   z-index: 900;
 }
+
 .topbar-left {
   display: flex;
   align-items: center;
   gap: 6px;
   min-width: 0;
 }
+
 .menu-toggle {
   display: none;
-  background: var(--bg-muted);
-  border: 1px solid var(--border);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
   border-radius: 5px;
   width: 26px;
   height: 26px;
   font-size: 13px;
   cursor: pointer;
 }
+
 .topbar-title h2 {
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: var(--fw-bold);
   color: var(--txt);
   line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .topbar-title p {
-  font-size: 9.5px;
-  color: var(--txt-sec);
+  font-size: 11px;
+  color: var(--txt-2);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .topbar-right {
   display: flex;
   align-items: center;
@@ -399,26 +460,34 @@ body.pos-fullscreen-body.aside-collapsed .admin-main {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
   padding: 2.5px 7px;
   border-radius: 99px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #065f46;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--money-in);
   cursor: pointer;
 }
+
 .topbar-rate-pill strong {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 
+/* ==========================================================================
+   4. Área de Contenido Principal
+   ========================================================================== */
 .admin-content {
-  padding: 6px 10px 14px;
+  padding: 8px 12px 16px;
   flex: 1;
   min-width: 0;
 }
 
+/* ==========================================================================
+   5. Adaptación Responsive para Monitores Pequeños / Móvil
+   ========================================================================== */
 @media (max-width: 960px) {
   .admin-aside {
     transform: translateX(-100%);

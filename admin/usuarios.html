@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuarios, Roles, PINs y Seguridad | MI TIENDA POS</title>
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+  <style>
+    .role-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 99px;
+    }
+    .role-admin { background: rgba(220, 38, 38, 0.15); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.3); }
+    .role-encargado { background: rgba(37, 99, 235, 0.15); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.3); }
+    .role-cajero { background: rgba(5, 150, 105, 0.15); color: #059669; border: 1px solid rgba(5, 150, 105, 0.3); }
+
+    .matrix-icon-ok { color: #059669; font-weight: 900; }
+    .matrix-icon-key { color: #d97706; font-weight: 900; }
+    .matrix-icon-no { color: #94a3b8; font-weight: 900; }
+
+    .audit-badge {
+      font-family: var(--font-mono, monospace);
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-wrap">
+    <aside class="admin-aside" id="adminAside"></aside>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle" id="menuToggleBtn">☰</button>
+          <div class="topbar-title">
+            <h2>Control de Usuarios, Roles, PINs y Permisos</h2>
+            <p>Acceso seguro por PIN de 4 y 6 dígitos + Matriz RBAC para Caja, Turnos y Finanzas</p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-ghost btn-sm" onclick="openResetSeedModal()" title="Restablecer usuarios a valores de fábrica">Restablecer Semilla</button>
+          <button class="btn btn-p btn-sm" onclick="openCreateUserModal()">+ Nuevo Usuario</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- 4 Tarjetas de Estadísticas de Usuarios y Seguridad -->
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(5,150,105,0.15);color:#059669;display:flex;align-items:center;justify-content:center" id="statIcoUsers"></div>
+            <div>
+              <div style="font-size:10px;font-weight:800;color:var(--txt-sec);text-transform:uppercase">Total Usuarios</div>
+              <div style="font-size:18px;font-weight:900" id="statTotalUsers">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(220,38,38,0.15);color:#dc2626;display:flex;align-items:center;justify-content:center" id="statIcoAdmin"></div>
+            <div>
+              <div style="font-size:10px;font-weight:800;color:var(--txt-sec);text-transform:uppercase">Administradores</div>
+              <div style="font-size:18px;font-weight:900;color:#dc2626" id="statAdmins">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(37,99,235,0.15);color:#2563eb;display:flex;align-items:center;justify-content:center" id="statIcoEncargado"></div>
+            <div>
+              <div style="font-size:10px;font-weight:800;color:var(--txt-sec);text-transform:uppercase">Encargados</div>
+              <div style="font-size:18px;font-weight:900;color:#2563eb" id="statEncargados">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(245,158,11,0.15);color:#d97706;display:flex;align-items:center;justify-content:center" id="statIcoSecurity"></div>
+            <div>
+              <div style="font-size:10px;font-weight:800;color:var(--txt-sec);text-transform:uppercase">Seguridad de PIN</div>
+              <div style="font-size:14px;font-weight:900" id="statSecurityAlert">Verificando...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLA 1: DIRECTORIO DE USUARIOS -->
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <h3 style="margin:0;font-size:13px;font-weight:900">Directorio de Usuarios y Acceso</h3>
+              <span class="badge badge-green">Cifrado SHA-256</span>
+            </div>
+            <div style="font-size:11px;color:var(--txt-muted)">
+              Autenticación rápida por PIN de 4 dígitos (Cajero/Encargado) o 6 dígitos (Admin)
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th>Nombre Completo</th>
+                  <th>Rol Asignado</th>
+                  <th>Estado del PIN</th>
+                  <th>Estado</th>
+                  <th>Acciones de Seguridad</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <!-- Se llena con renderUsersTable() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TABLA 2: MATRIZ DE PERMISOS (RBAC) SEGÚN PLAN_IMPLEMENTACION_V5 §3.2 -->
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <h3 style="margin:0;font-size:13px;font-weight:900">Matriz Oficial de Permisos y Autorizaciones (RBAC)</h3>
+              <p style="margin:2px 0 0 0;font-size:11px;color:var(--txt-sec)">
+                Leyenda: <strong class="matrix-icon-ok">✔ Directo</strong> · <strong class="matrix-icon-key">🔑 PIN Supervisor</strong> · <strong class="matrix-icon-no">✕ No Autorizado</strong>
+              </p>
+            </div>
+            <span class="badge badge-yellow">PLAN V5 §3.2</span>
+          </div>
+
+          <div class="table-wrap" style="max-height:280px;overflow-y:auto">
+            <table class="data-table">
+              <thead style="position:sticky;top:0;z-index:4">
+                <tr>
+                  <th>Módulo / Acción</th>
+                  <th>Identificador</th>
+                  <th style="text-align:center">Cajero</th>
+                  <th style="text-align:center">Encargado de Turno</th>
+                  <th style="text-align:center">Administrador</th>
+                </tr>
+              </thead>
+              <tbody id="permissionsTableBody">
+                <!-- Se llena con renderPermissionsMatrix() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TABLA 3: AUDITORÍA DE SEGURIDAD Y ACCESOS RECIENTES -->
+        <div class="card">
+          <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <h3 style="margin:0;font-size:13px;font-weight:900">Registro de Auditoría de Sesiones y Autorizaciones</h3>
+              <p style="margin:2px 0 0 0;font-size:11px;color:var(--txt-sec)">Trazabilidad de inicios de sesión, cambios de PIN y autorizaciones de supervisor en caja</p>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="renderAuditTable()">Actualizar Registro</button>
+          </div>
+
+          <div class="table-wrap" style="max-height:220px;overflow-y:auto">
+            <table class="data-table">
+              <thead style="position:sticky;top:0;z-index:4">
+                <tr>
+                  <th>Fecha y Hora</th>
+                  <th>Evento</th>
+                  <th>Usuario Activo</th>
+                  <th>Detalles del Evento</th>
+                </tr>
+              </thead>
+              <tbody id="auditTableBody">
+                <!-- Se llena con renderAuditTable() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL: CREAR / EDITAR USUARIO -->
+  <div class="modal-backdrop" id="userFormModal">
+    <div class="modal-box" style="max-width:440px">
+      <div class="modal-hd" style="background:#0F2A3D;color:#fff;border-radius:12px 12px 0 0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <h3 id="userModalTitle" style="color:#fff;margin:0;font-size:13.5px;font-weight:900">Nuevo Usuario</h3>
+          <p style="color:#94a3b8;font-size:11px;margin:2px 0 0 0">Configure las credenciales de acceso y rol del personal</p>
+        </div>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none" onclick="closeUserFormModal()">✕</button>
+      </div>
+
+      <div class="modal-bd" style="padding:14px">
+        <input type="hidden" id="editUserId">
+
+        <div class="form-group" style="margin-bottom:10px">
+          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Nombre y Apellido Completo:</label>
+          <input type="text" id="userNameInput" class="input" placeholder="Ej: María Rodríguez" style="font-weight:700">
+        </div>
+
+        <div class="form-group" style="margin-bottom:10px">
+          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Nombre de Usuario (Login corto):</label>
+          <input type="text" id="userLoginInput" class="input" placeholder="Ej: maria" style="font-weight:700">
+        </div>
+
+        <div class="form-group" style="margin-bottom:10px">
+          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Rol y Nivel de Acceso:</label>
+          <select id="userRoleSelect" class="select" onchange="updatePinRequirementsNotice()">
+            <option value="cajero">Cajero (Caja rápida, ventas, cobros y vuelto)</option>
+            <option value="encargado">Encargado de Turno (Caja + Supervisión, inventario y mermas)</option>
+            <option value="admin">Administrador (Control total, precios, tasas y usuarios)</option>
+          </select>
+        </div>
+
+        <div id="userPinWrap" class="form-group" style="margin-bottom:10px">
+          <label id="userPinLabel" style="display:block;font-size:11px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">
+            PIN de Acceso (4 dígitos):
+          </label>
+          <input type="password" id="userPinInput" class="input" placeholder="••••" maxlength="6" inputmode="numeric" style="font-weight:900;letter-spacing:4px">
+          <div id="pinNotice" style="font-size:10.5px;color:var(--txt-muted);margin-top:3px">
+            Mínimo 4 dígitos para cajero/encargado. 6 dígitos para administrador.
+          </div>
+        </div>
+
+        <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:12px">
+          <input type="checkbox" id="userActiveCheck" checked style="width:16px;height:16px">
+          <label for="userActiveCheck" style="font-size:12px;font-weight:700;color:var(--txt)">Usuario Activo (Permite inicio de sesión)</label>
+        </div>
+
+        <div id="userFormError" style="display:none;color:#dc2626;font-size:11px;font-weight:800;margin-top:8px"></div>
+      </div>
+
+      <div class="modal-ft" style="padding:10px 14px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)">
+        <button class="btn btn-ghost" onclick="closeUserFormModal()">Cancelar</button>
+        <button class="btn btn-p" onclick="submitUserForm()">Guardar Usuario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CAMBIAR PIN -->
+  <div class="modal-backdrop" id="changePinModal">
+    <div class="modal-box" style="max-width:380px">
+      <div class="modal-hd" style="background:#0F2A3D;color:#fff;border-radius:12px 12px 0 0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <h3 style="color:#fff;margin:0;font-size:13.5px;font-weight:900">Cambiar PIN de Acceso</h3>
+          <p id="changePinTargetName" style="color:#94a3b8;font-size:11px;margin:2px 0 0 0">Usuario</p>
+        </div>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none" onclick="closeChangePinModal()">✕</button>
+      </div>
+
+      <div class="modal-bd" style="padding:14px">
+        <input type="hidden" id="changePinUserId">
+
+        <div class="form-group" style="margin-bottom:10px">
+          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Nuevo PIN Numérico:</label>
+          <input type="password" id="newPinInput" class="input" placeholder="••••" maxlength="6" inputmode="numeric" style="font-size:18px;font-weight:900;text-align:center;letter-spacing:6px">
+        </div>
+
+        <div class="form-group" style="margin-bottom:10px">
+          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Confirmar Nuevo PIN:</label>
+          <input type="password" id="confirmPinInput" class="input" placeholder="••••" maxlength="6" inputmode="numeric" style="font-size:18px;font-weight:900;text-align:center;letter-spacing:6px">
+        </div>
+
+        <div id="changePinError" style="display:none;color:#dc2626;font-size:11px;font-weight:800;margin-top:6px;text-align:center"></div>
+      </div>
+
+      <div class="modal-ft" style="padding:10px 14px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)">
+        <button class="btn btn-ghost" onclick="closeChangePinModal()">Cancelar</button>
+        <button class="btn btn-p" onclick="submitChangePin()">Actualizar PIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts Obligatorios del Sistema -->
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/rates.js"></script>
+  <script src="../assets/js/permissions.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/sidenav.js"></script>
+
+  <script>
+    function initUserModuleIcons() {
+      if (!window.MTPIcons) return;
+      document.getElementById('statIcoUsers').innerHTML = MTPIcons.get('users', { size: 18, color: '#059669' });
+      document.getElementById('statIcoAdmin').innerHTML = MTPIcons.get('shield', { size: 18, color: '#dc2626' });
+      document.getElementById('statIcoEncargado').innerHTML = MTPIcons.get('user', { size: 18, color: '#2563eb' });
+      document.getElementById('statIcoSecurity').innerHTML = MTPIcons.get('lock', { size: 18, color: '#d97706' });
+    }
+
+    function renderUsersTable() {
+      if (!window.MTPAuth) return;
+      var users = MTPAuth.getUsers();
+      var tbody = document.getElementById('usersTableBody');
+      if (!tbody) return;
+
+      var total = users.length;
+      var admins = 0;
+      var encargados = 0;
+      var defaultPinCount = 0;
+
+      users.forEach(function (u) {
+        if (u.role === 'admin' && u.active !== false) admins++;
+        if (u.role === 'encargado' && u.active !== false) encargados++;
+        if (u.isDefaultPin && u.active !== false) defaultPinCount++;
+      });
+
+      document.getElementById('statTotalUsers').textContent = total;
+      document.getElementById('statAdmins').textContent = admins;
+      document.getElementById('statEncargados').textContent = encargados;
+
+      var secEl = document.getElementById('statSecurityAlert');
+      if (defaultPinCount > 0) {
+        secEl.innerHTML = '<span style="color:#d97706;font-size:12px">⚠️ ' + defaultPinCount + ' con PIN de fábrica</span>';
+      } else {
+        secEl.innerHTML = '<span style="color:#059669;font-size:12px">✔ Todos protegidos</span>';
+      }
+
+      tbody.innerHTML = users.map(function (u) {
+        var roleBadgeClass = 'role-' + u.role;
+        var roleLabel = window.MTPPermissions ? MTPPermissions.getRoleLabel(u.role) : u.role;
+        var statusBadge = u.active !== false
+          ? '<span class="badge badge-green">Activo</span>'
+          : '<span class="badge" style="background:#fee2e2;color:#991b1b">Inactivo</span>';
+
+        var pinBadge = u.isDefaultPin
+          ? '<span class="badge badge-yellow" title="PIN original de fábrica (1234/123456). Se recomienda cambiarlo.">⚠️ De fábrica</span>'
+          : '<span class="badge badge-green">Personalizado</span>';
+
+        return `
+          <tr>
+            <td>
+              <div style="font-weight:800;font-size:12px;display:flex;align-items:center;gap:6px">
+                <span style="font-family:var(--font-mono);background:#f1f5f9;padding:2px 5px;border-radius:4px;color:#334155">@${u.username}</span>
+              </div>
+            </td>
+            <td>
+              <div style="font-weight:800;font-size:12.5px">${u.name}</div>
+              <div style="font-size:10px;color:var(--txt-muted)">Registrado: ${new Date(u.createdAt || Date.now()).toLocaleDateString('es-VE')}</div>
+            </td>
+            <td>
+              <span class="role-pill ${roleBadgeClass}">${roleLabel}</span>
+            </td>
+            <td>${pinBadge}</td>
+            <td>${statusBadge}</td>
+            <td>
+              <div style="display:flex;gap:4px;flex-wrap:wrap">
+                <button class="btn btn-ghost btn-sm" onclick="openChangePinModal('${u.id}', '${u.name}', '${u.role}')" title="Cambiar clave PIN">
+                  🔑 PIN
+                </button>
+                <button class="btn btn-ghost btn-sm" onclick="openEditUserModal('${u.id}')" title="Editar datos">
+                  ✎ Editar
+                </button>
+                <button class="btn btn-ghost btn-sm" style="color:#dc2626" onclick="deleteUserPrompt('${u.id}', '${u.name}')" title="Eliminar usuario">
+                  ✕
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderPermissionsMatrix() {
+      if (!window.MTPPermissions) return;
+      var actions = MTPPermissions.getAllActions();
+      var tbody = document.getElementById('permissionsTableBody');
+      if (!tbody) return;
+
+      var rowsHtml = '';
+      var keys = Object.keys(actions);
+
+      keys.forEach(function (actKey) {
+        var meta = actions[actKey];
+
+        // Estado para Cajero
+        var cDirect = MTPPermissions.canDirectly('cajero', actKey);
+        var cSuper = MTPPermissions.requiresSupervisor('cajero', actKey);
+        var cajeroHtml = cDirect
+          ? '<span class="matrix-icon-ok">✔ Sí</span>'
+          : (cSuper ? '<span class="matrix-icon-key">🔑 Supervisor</span>' : '<span class="matrix-icon-no">✕ No</span>');
+
+        // Estado para Encargado
+        var eDirect = MTPPermissions.canDirectly('encargado', actKey);
+        var eSuper = MTPPermissions.requiresSupervisor('encargado', actKey);
+        var encHtml = eDirect
+          ? '<span class="matrix-icon-ok">✔ Sí</span>'
+          : (eSuper ? '<span class="matrix-icon-key">🔑 Supervisor</span>' : '<span class="matrix-icon-no">✕ No</span>');
+
+        // Estado para Admin
+        var aDirect = MTPPermissions.canDirectly('admin', actKey);
+        var adminHtml = aDirect
+          ? '<span class="matrix-icon-ok">✔ Sí</span>'
+          : '<span class="matrix-icon-no">✕ No</span>';
+
+        rowsHtml += `
+          <tr>
+            <td>
+              <div style="font-weight:800;font-size:12px">${meta.label}</div>
+              <div style="font-size:10px;color:var(--txt-muted)">Grupo: ${meta.group}</div>
+            </td>
+            <td>
+              <code style="font-size:11px;background:#f8fafc;padding:2px 5px;border-radius:4px;border:1px solid #e2e8f0">${actKey}</code>
+            </td>
+            <td style="text-align:center;font-size:11.5px">${cajeroHtml}</td>
+            <td style="text-align:center;font-size:11.5px">${encHtml}</td>
+            <td style="text-align:center;font-size:11.5px">${adminHtml}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = rowsHtml;
+    }
+
+    function renderAuditTable() {
+      if (!window.MTPAuth) return;
+      var log = MTPAuth.getAuditLog();
+      var tbody = document.getElementById('auditTableBody');
+      if (!tbody) return;
+
+      if (!log.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--txt-muted)">Sin registros de auditoría aún.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = log.slice(0, 25).map(function (ev) {
+        var actionBadge = ev.action.includes('SUCCESS')
+          ? '<span class="audit-badge" style="background:#d1fae5;color:#065f46">' + ev.action + '</span>'
+          : (ev.action.includes('SUPERVISOR')
+              ? '<span class="audit-badge" style="background:#fef3c7;color:#92400e">' + ev.action + '</span>'
+              : '<span class="audit-badge" style="background:#f1f5f9;color:#334155">' + ev.action + '</span>');
+
+        var dateStr = new Date(ev.timestamp).toLocaleString('es-VE', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+
+        var detailsStr = '';
+        try {
+          detailsStr = Object.keys(ev.details || {}).map(function (k) {
+            return k + ': ' + ev.details[k];
+          }).join(' · ');
+        } catch (_) {}
+
+        return `
+          <tr>
+            <td style="font-size:11px;color:var(--txt-sec)">${dateStr}</td>
+            <td>${actionBadge}</td>
+            <td><strong style="font-size:11.5px">${ev.actor || 'sistema'}</strong></td>
+            <td style="font-size:11px;color:var(--txt-sec)">${detailsStr || '—'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Modal Crear / Editar
+    window.openCreateUserModal = function () {
+      document.getElementById('userModalTitle').textContent = 'Crear Nuevo Usuario';
+      document.getElementById('editUserId').value = '';
+      document.getElementById('userNameInput').value = '';
+      document.getElementById('userLoginInput').value = '';
+      document.getElementById('userRoleSelect').value = 'cajero';
+      document.getElementById('userPinInput').value = '';
+      document.getElementById('userActiveCheck').checked = true;
+      document.getElementById('userFormError').style.display = 'none';
+      document.getElementById('userPinWrap').style.display = 'block';
+      updatePinRequirementsNotice();
+      document.getElementById('userFormModal').classList.add('open');
+      setTimeout(function () { document.getElementById('userNameInput').focus(); }, 50);
+    };
+
+    window.openEditUserModal = function (id) {
+      var u = MTPAuth.getUserById(id);
+      if (!u) return;
+      document.getElementById('userModalTitle').textContent = 'Editar Usuario';
+      document.getElementById('editUserId').value = u.id;
+      document.getElementById('userNameInput').value = u.name;
+      document.getElementById('userLoginInput').value = u.username;
+      document.getElementById('userRoleSelect').value = u.role;
+      document.getElementById('userActiveCheck').checked = u.active !== false;
+      document.getElementById('userFormError').style.display = 'none';
+      document.getElementById('userPinInput').value = '';
+      document.getElementById('userPinWrap').style.display = 'block';
+      document.getElementById('pinNotice').textContent = 'Dejar vacío para conservar el PIN actual.';
+      document.getElementById('userFormModal').classList.add('open');
+    };
+
+    window.closeUserFormModal = function () {
+      document.getElementById('userFormModal').classList.remove('open');
+    };
+
+    window.updatePinRequirementsNotice = function () {
+      var role = document.getElementById('userRoleSelect').value;
+      var lbl = document.getElementById('userPinLabel');
+      var notice = document.getElementById('pinNotice');
+      if (role === 'admin') {
+        lbl.textContent = 'PIN de Administrador (Mínimo 6 dígitos):';
+        notice.textContent = 'Por seguridad, el rol Administrador requiere 6 o más dígitos numéricos.';
+      } else {
+        lbl.textContent = 'PIN de Acceso (Mínimo 4 dígitos):';
+        notice.textContent = 'Mínimo 4 dígitos para cajero o encargado.';
+      }
+    };
+
+    window.submitUserForm = function () {
+      var id = document.getElementById('editUserId').value;
+      var name = document.getElementById('userNameInput').value.trim();
+      var username = document.getElementById('userLoginInput').value.trim();
+      var role = document.getElementById('userRoleSelect').value;
+      var pin = document.getElementById('userPinInput').value.trim();
+      var active = document.getElementById('userActiveCheck').checked;
+      var errEl = document.getElementById('userFormError');
+
+      if (!name || !username) {
+        errEl.textContent = 'El nombre y el usuario son obligatorios.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      var payload = {
+        id: id || undefined,
+        name: name,
+        username: username,
+        role: role,
+        active: active
+      };
+
+      if (pin) payload.pin = pin;
+
+      var res = MTPAuth.saveUser(payload);
+      if (res.success) {
+        closeUserFormModal();
+        renderUsersTable();
+        renderAuditTable();
+        if (window.MTP) MTP.toast('Usuario guardado exitosamente');
+      } else {
+        errEl.textContent = res.error || 'Error al guardar usuario';
+        errEl.style.display = 'block';
+      }
+    };
+
+    // Modal Cambiar PIN
+    window.openChangePinModal = function (id, name, role) {
+      document.getElementById('changePinUserId').value = id;
+      document.getElementById('changePinTargetName').textContent = name + ' (' + (window.MTPPermissions ? MTPPermissions.getRoleLabel(role) : role) + ')';
+      document.getElementById('newPinInput').value = '';
+      document.getElementById('confirmPinInput').value = '';
+      document.getElementById('changePinError').style.display = 'none';
+      document.getElementById('changePinModal').classList.add('open');
+      setTimeout(function () { document.getElementById('newPinInput').focus(); }, 50);
+    };
+
+    window.closeChangePinModal = function () {
+      document.getElementById('changePinModal').classList.remove('open');
+    };
+
+    window.submitChangePin = function () {
+      var id = document.getElementById('changePinUserId').value;
+      var p1 = document.getElementById('newPinInput').value.trim();
+      var p2 = document.getElementById('confirmPinInput').value.trim();
+      var errEl = document.getElementById('changePinError');
+
+      if (!p1) {
+        errEl.textContent = 'Ingrese el nuevo PIN.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (p1 !== p2) {
+        errEl.textContent = 'Los PIN ingresados no coinciden.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      var res = MTPAuth.setUserPin(id, p1);
+      if (res.success) {
+        closeChangePinModal();
+        renderUsersTable();
+        renderAuditTable();
+        if (window.MTP) MTP.toast('PIN actualizado correctamente');
+      } else {
+        errEl.textContent = res.error || 'Error al actualizar el PIN';
+        errEl.style.display = 'block';
+      }
+    };
+
+    window.deleteUserPrompt = function (id, name) {
+      if (!confirm('¿Está seguro de eliminar al usuario "' + name + '"?')) return;
+      var res = MTPAuth.deleteUser(id);
+      if (res.success) {
+        renderUsersTable();
+        renderAuditTable();
+        if (window.MTP) MTP.toast('Usuario eliminado');
+      } else {
+        alert(res.error || 'No se pudo eliminar el usuario');
+      }
+    };
+
+    window.openResetSeedModal = function () {
+      if (confirm('¿Restablecer usuarios a la configuración inicial de fábrica?\n\n- admin: PIN 123456\n- cajero: PIN 1234\n- encargado: PIN 2244')) {
+        MTPAuth.resetToSeedUsers();
+        renderUsersTable();
+        renderAuditTable();
+        if (window.MTP) MTP.toast('Usuarios restablecidos a la semilla inicial');
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+      initUserModuleIcons();
+      renderUsersTable();
+      renderPermissionsMatrix();
+      renderAuditTable();
+    });
+  </script>
+</body>
+</html>

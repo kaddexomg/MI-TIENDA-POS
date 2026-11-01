@@ -1,14 +1,12 @@
 /* ==========================================================================
-   MI-TIENDA-POS — Componentes de Alta Velocidad y Fácil Acceso
+   MI-TIENDA-POS — Componentes del Sistema Visual Base v5 (Chrome 109 / Win7)
+   - Contraste estricto, bordes limpios, franjas por sección y alta velocidad
+   - Cero textos ilegibles (mínimo 11px en toda la interfaz)
    ========================================================================== */
 
 /* ==========================================================================
-   MI-TIENDA-POS — Componentes de Alta Densidad y Velocidad (Windows 7 / PC Oficina)
-   - Escala compacta de escritorio para monitores 1024x768 / 1366x768
-   - Cero sensación de zoom excesivo, aprovechamiento óptimo de pantalla
+   1. Botones de Acción (UN SOLO botón de acción principal por vista)
    ========================================================================== */
-
-/* Botones de Acción Rápida Compactos */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -16,94 +14,309 @@
   gap: 5px;
   padding: 4px 10px;
   height: 28px;
+  min-height: 28px;
   border-radius: var(--radius-sm);
-  font-weight: 700;
-  font-size: 11.5px;
+  font-weight: var(--fw-semibold);
+  font-size: 12px;
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.12s ease;
   user-select: none;
   white-space: nowrap;
+  line-height: 1;
 }
+
 .btn:active {
   transform: translateY(1px);
 }
-.btn-p {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2);
-}
-.btn-p:hover {
-  background: var(--primary-hover);
-}
+
+/* Botón de Acción Principal (Ámbar) */
+.btn-action,
 .btn-amber {
-  background: var(--accent);
-  color: #111827;
+  background: var(--action);
+  color: var(--action-txt);
+  border-color: #D49514;
+  font-weight: var(--fw-bold);
+  box-shadow: 0 1px 2px rgba(232, 163, 23, 0.25);
 }
+
+.btn-action:hover,
 .btn-amber:hover {
-  background: var(--accent-hover);
-  color: #fff;
+  background: var(--action-hover);
+  color: var(--action-txt);
+  border-color: #B57B0A;
 }
-.btn-blue {
-  background: var(--blue);
-  color: #fff;
-}
-.btn-blue:hover {
-  background: #1d4ed8;
-}
-.btn-danger {
-  background: var(--danger);
-  color: #fff;
-}
-.btn-danger:hover {
-  background: var(--danger-hover);
-}
+
+/* Botón Secundario / Ghost */
+.btn-secondary,
 .btn-ghost {
-  background: #fff;
+  background: var(--surface);
   color: var(--txt);
-  border-color: var(--border);
+  border: 1px solid var(--line);
+  font-weight: var(--fw-semibold);
 }
+
+.btn-secondary:hover,
 .btn-ghost:hover {
-  background: var(--bg-muted);
-  border-color: var(--border-strong);
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+  color: var(--txt);
 }
+
+/* Botón de Éxito / Cobro / Afirmativo */
+.btn-success,
+.btn-p {
+  background: var(--money-in);
+  color: #FFFFFF;
+  border-color: #126D34;
+  font-weight: var(--fw-semibold);
+  box-shadow: 0 1px 2px rgba(21, 128, 61, 0.2);
+}
+
+.btn-success:hover,
+.btn-p:hover {
+  background: var(--money-in-hover);
+  color: #FFFFFF;
+  border-color: #0F582A;
+}
+
+/* Botón de Peligro / Gastos / Anulación */
+.btn-danger {
+  background: var(--money-out);
+  color: #FFFFFF;
+  border-color: #991B1B;
+  font-weight: var(--fw-semibold);
+  box-shadow: 0 1px 2px rgba(185, 28, 28, 0.2);
+}
+
+.btn-danger:hover {
+  background: var(--money-out-hover);
+  color: #FFFFFF;
+  border-color: #7F1D1D;
+}
+
+/* Botón Informativo / Azul */
+.btn-blue,
+.btn-info {
+  background: var(--info);
+  color: #FFFFFF;
+  border-color: #1A44BD;
+  font-weight: var(--fw-semibold);
+}
+
+.btn-blue:hover,
+.btn-info:hover {
+  background: var(--info-hover);
+  color: #FFFFFF;
+  border-color: #16369E;
+}
+
+/* Modificadores de Tamaño */
 .btn-sm {
-  padding: 2px 7px;
+  padding: 2px 8px;
   height: 24px;
-  font-size: 10.5px;
-  border-radius: 4px;
+  min-height: 24px;
+  font-size: 11px;
+  border-radius: var(--radius-sm);
   gap: 4px;
 }
+
 .btn-lg {
   padding: 7px 14px;
   height: 34px;
+  min-height: 34px;
   font-size: 13px;
+  font-weight: var(--fw-bold);
   border-radius: var(--radius);
 }
 
-/* Tarjetas de Estadísticas Compactas (Stat Grid) */
+/* ==========================================================================
+   2. Toolbars Unificadas
+   ========================================================================== */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  padding: 2px 0;
+}
+
+.toolbar-primary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.toolbar-secondary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.toolbar-more {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ==========================================================================
+   3. Secciones de Página (Page Section & Page Section Title)
+   ========================================================================== */
+.page-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.page-section-title {
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--txt-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.page-section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* ==========================================================================
+   4. Clases Semánticas de Dinero y Números (tabular-nums)
+   ========================================================================== */
+.money-in {
+  color: var(--money-in);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.money-out {
+  color: var(--money-out);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.money-bs {
+  color: var(--info);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   5. Tarjetas y Franjas de Sección (.card y .card-hd con data-section)
+   ========================================================================== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.card-hd {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: var(--surface-2);
+}
+
+.card-hd h3 {
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--txt);
+  line-height: 1.2;
+}
+
+.card-hd p {
+  font-size: 11px;
+  color: var(--txt-2);
+  margin-top: 2px;
+}
+
+.card-bd {
+  padding: 10px 12px;
+}
+
+/* Franjas Laterales de 4px por Sección */
+.card[data-section="cocina"] .card-hd,
+.card-hd[data-section="cocina"] {
+  border-left: 4px solid var(--sec-cocina);
+}
+
+.card[data-section="abasto"] .card-hd,
+.card-hd[data-section="abasto"] {
+  border-left: 4px solid var(--sec-abasto);
+}
+
+.card[data-section="dinero"] .card-hd,
+.card-hd[data-section="dinero"] {
+  border-left: 4px solid var(--sec-dinero);
+}
+
+.card[data-section="gastos"] .card-hd,
+.card-hd[data-section="gastos"] {
+  border-left: 4px solid var(--sec-gastos);
+}
+
+.card[data-section="fiscal"] .card-hd,
+.card-hd[data-section="fiscal"] {
+  border-left: 4px solid var(--sec-fiscal);
+}
+
+/* ==========================================================================
+   6. KPI / Stat Cards Limpias y Legibles (Mínimo 11px)
+   ========================================================================== */
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
-.stat-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+
+.stat-card,
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 7px 10px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   box-shadow: var(--shadow-xs);
+  transition: border-color 0.12s ease;
 }
-.stat-card:hover {
-  border-color: var(--border-strong);
+
+.stat-card:hover,
+.kpi:hover {
+  border-color: var(--line-strong);
 }
+
 .stat-ico {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 7px;
   display: flex;
   align-items: center;
@@ -111,190 +324,200 @@
   font-size: 15px;
   flex-shrink: 0;
 }
-.stat-ico.green { background: var(--primary-light); color: var(--primary); }
-.stat-ico.yellow { background: var(--accent-light); color: var(--accent-hover); }
-.stat-ico.blue { background: var(--blue-light); color: var(--blue); }
-.stat-ico.red { background: var(--danger-light); color: var(--danger); }
+
+.stat-ico.green { background: var(--money-in-light); color: var(--money-in); }
+.stat-ico.yellow { background: #FEF3C7; color: #C98A0C; }
+.stat-ico.blue { background: var(--info-light); color: var(--info); }
+.stat-ico.red { background: var(--money-out-light); color: var(--money-out); }
 .stat-ico.purple { background: var(--purple-light); color: var(--purple); }
 
-.stat-n {
-  font-size: 15px;
-  font-weight: 800;
+.stat-n,
+.kpi-val {
+  font-size: 16px;
+  font-weight: var(--fw-bold);
   color: var(--txt);
   line-height: 1.15;
   letter-spacing: -0.01em;
-}
-.stat-l {
-  font-size: 10.5px;
-  color: var(--txt-sec);
-  font-weight: 600;
-  margin-top: 1px;
-}
-.stat-sub {
-  font-size: 9.5px;
-  color: var(--txt-muted);
-  margin-top: 1px;
-  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Badges y Etiquetas Compactas */
+.stat-l,
+.kpi-label {
+  font-size: 11px;
+  color: var(--txt-2);
+  font-weight: var(--fw-semibold);
+  margin-top: 2px;
+}
+
+.stat-sub,
+.kpi-sub {
+  font-size: 11px;
+  color: var(--txt-3);
+  margin-top: 1px;
+  font-weight: var(--fw-normal);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   7. Tablas (.data-table) Legibles con Cabeceras var(--surface-2)
+   ========================================================================== */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+table.data-table th {
+  background: var(--surface-2);
+  color: var(--txt-2);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+table.data-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  vertical-align: middle;
+  color: var(--txt);
+}
+
+table.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+table.data-table tbody tr:hover {
+  background: #F8FAFC;
+}
+
+table.data-table td.num,
+table.data-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   8. Badges y Pills de Identificación
+   ========================================================================== */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 1.5px 6px;
+  padding: 2px 7px;
   border-radius: 99px;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
   line-height: 1.2;
 }
-.badge-green { background: #d1fae5; color: #065f46; }
-.badge-yellow { background: #fef3c7; color: #92400e; }
-.badge-red { background: #fee2e2; color: #991b1b; }
-.badge-blue { background: #dbeafe; color: #1e40af; }
-.badge-purple { background: #ede9fe; color: #5b21b6; }
-.badge-dark { background: #1e293b; color: #f8fafc; font-family: var(--font-mono); }
+
+.badge-green { background: var(--money-in-light); color: #065F46; }
+.badge-yellow { background: #FEF3C7; color: #92400E; }
+.badge-red { background: var(--money-out-light); color: #991B1B; }
+.badge-blue { background: var(--info-light); color: #1E40AF; }
+.badge-purple { background: var(--purple-light); color: #5B21B6; }
+.badge-dark { background: #1E293B; color: #F8FAFC; font-family: var(--font-mono); font-size: 11px; }
 
 /* Código Rápido / Barcode Pill */
 .code-pill {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  background: #0f172a;
-  color: #38bdf8;
+  background: #0F172A;
+  color: #38BDF8;
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 1.5px 5px;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  padding: 2px 6px;
   border-radius: 4px;
   letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
 }
+
 .code-pill.plu {
-  background: #064e3b;
-  color: #6ee7b7;
+  background: #064E3B;
+  color: #6EE7B7;
 }
 
-/* Contenedores y Tablas Compactas */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-xs);
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-.card-hd {
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-  background: #fafcfb;
-}
-.card-hd h3 {
-  font-size: 12.5px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #0f172a;
-}
-.card-hd p {
-  font-size: 10.5px;
-  color: var(--txt-sec);
-  margin-top: 1px;
-}
-.card-bd {
-  padding: 8px 10px;
-}
-
-.table-wrap {
-  width: 100%;
-  overflow-x: auto;
-}
-table.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-table.data-table th {
-  background: #f8faf9;
-  color: var(--txt-sec);
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 5px 8px;
-  border-bottom: 1px solid var(--border);
-  white-space: nowrap;
-}
-table.data-table td {
-  padding: 5px 8px;
-  border-bottom: 1px solid #edf2ef;
-  font-size: 11.5px;
-  vertical-align: middle;
-}
-table.data-table tbody tr:hover {
-  background: #f4faf7;
-}
-
-/* Grids Multicolumna para Administración */
+/* ==========================================================================
+   9. Grids Multicolumna
+   ========================================================================== */
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
+
 .grid-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
 }
+
 @media (max-width: 900px) {
   .grid-2, .grid-3 {
     grid-template-columns: 1fr;
   }
 }
 
-/* Inputs y Formularios Compactos */
+/* ==========================================================================
+   10. Inputs y Formularios Compactos
+   ========================================================================== */
 .input, .select {
   width: 100%;
-  padding: 4px 7px;
+  padding: 4px 8px;
   height: 28px;
-  border: 1.5px solid var(--border);
+  border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: var(--surface);
   color: var(--txt);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   transition: border-color 0.12s, box-shadow 0.12s;
 }
+
 .input:focus, .select:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-glow);
+  border-color: var(--action);
+  box-shadow: 0 0 0 2px rgba(232, 163, 23, 0.2);
 }
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 8px;
 }
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 6px;
   margin-bottom: 6px;
 }
+
 .form-group label {
   display: block;
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--txt-sec);
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  color: var(--txt-2);
   margin-bottom: 2px;
 }
 
-/* Modales Rápidos Compactos */
+/* ==========================================================================
+   11. Modales Rápidos (Popups de Control y Autorización)
+   ========================================================================== */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -305,11 +528,13 @@ table.data-table tbody tr:hover {
   z-index: 2000;
   padding: 10px;
 }
+
 .modal-backdrop.open {
   display: flex;
 }
+
 .modal-box {
-  background: #fff;
+  background: var(--surface);
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 620px;
@@ -317,42 +542,51 @@ table.data-table tbody tr:hover {
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   animation: modalPop 0.14s ease-out;
 }
+
 @keyframes modalPop {
   from { opacity: 0; transform: scale(0.97) translateY(4px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
+
 .modal-hd {
   padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f8faf9;
+  background: var(--surface-2);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
+
 .modal-hd h3 {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: var(--fw-bold);
+  color: var(--txt);
 }
+
 .modal-bd {
   padding: 10px 12px;
   overflow-y: auto;
+  font-size: 12px;
 }
+
 .modal-ft {
-  padding: 7px 12px;
-  border-top: 1px solid var(--border);
+  padding: 8px 12px;
+  border-top: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  background: #f8faf9;
+  background: var(--surface-2);
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
-/* Toast Notifications */
+/* ==========================================================================
+   12. Toast Notifications
+   ========================================================================== */
 #mtpToastContainer {
   position: fixed;
   bottom: 14px;
@@ -362,36 +596,44 @@ table.data-table tbody tr:hover {
   flex-direction: column;
   gap: 6px;
 }
+
 .mtp-toast {
-  background: #0f172a;
-  color: #fff;
+  background: #0F172A;
+  color: #FFFFFF;
   padding: 7px 12px;
   border-radius: 6px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   font-size: 11.5px;
   box-shadow: var(--shadow-md);
   display: flex;
   align-items: center;
   gap: 7px;
-  border-left: 3px solid var(--primary);
+  border-left: 3px solid var(--money-in);
   animation: modalPop 0.14s ease-out;
 }
-.mtp-toast.warn { border-left-color: var(--accent); }
-.mtp-toast.err { border-left-color: var(--danger); }
 
-/* Precio Dual USD / Bs */
+.mtp-toast.warn { border-left-color: var(--action); }
+.mtp-toast.err { border-left-color: var(--money-out); }
+
+/* ==========================================================================
+   13. Precio Dual USD / Bs
+   ========================================================================== */
 .price-dual {
   display: inline-flex;
   flex-direction: column;
   line-height: 1.15;
 }
+
 .price-usd {
-  font-weight: 800;
+  font-weight: var(--fw-bold);
   color: var(--txt);
-  font-size: 12.5px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
+
 .price-bs {
-  font-weight: 700;
-  color: var(--primary);
-  font-size: 10.5px;
+  font-weight: var(--fw-bold);
+  color: var(--info);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }

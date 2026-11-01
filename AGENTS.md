@@ -103,6 +103,16 @@
    - Creación de `INSTALADOR-WINDOWS-7.bat`, configuración de carpetas seguras `C:\MI-TIENDA-DATOS\`, manual `INSTALACION-WINDOWS7.md` y sincronización con GitHub `kaddexomg/MI-TIENDA-POS`.
 18. **Módulo de Máquinas Fiscales Homologadas SENIAT (Providencias 0141 y 0071)**:
    - Formato fiscal oficial en ticket con alícuotas de IVA (Exento `(E)` vs Gravado 16% `(G)`), percepción legal de IGTF 3% en pagos con divisas en efectivo/Zelle, generación de trama fiscal The Factory HKA / Bixolon / Aclas (`FACTURA.TXT`), emisión de Reporte X y Reporte Z diario, y panel de configuración fiscal en `admin/ajustes.html`.
+19. **Paquete P2: Autenticación, Roles, PINs y Control de Acceso (RBAC)**:
+   - Pantalla de acceso por PIN táctil/físico en `index.html` con detección de usuario, dot-indicators y selección de destino para encargados y administradores.
+   - Motor criptográfico puro SHA-256 con salt en `assets/js/auth.js` (100% offline y compatible con Windows 7).
+   - Usuarios semilla con hash seguro: `admin` (PIN 123456), `cajero` (PIN 1234), `encargado` (PIN 2244) y detector de PIN de fábrica.
+   - Matriz oficial de permisos RBAC en `assets/js/permissions.js` según PLAN_IMPLEMENTACION_V5 §3.2 (`can`, `canDirectly`, `requiresSupervisor`).
+   - Modal 🔑 de Supervisor para autorizaciones en caliente (descuentos, anulaciones y gastos superiores al límite de caja).
+   - Bloqueo automático por inactividad (5 min configurables) con retorno seguro a login.
+   - Protección estricta de rutas (`MTPAuth.guardRoute`) en todas las vistas administrativas y de caja.
+   - Panel de administración de usuarios en `admin/usuarios.html` con directorio, cambio de PIN, visor de matriz RBAC y kardex de auditoría de seguridad.
+   - Barra lateral `assets/js/sidenav.js` actualizada con identificación de usuario, badge de rol, botón de cierre de sesión y bloqueo de acceso al panel admin para rol cajero.
 
 ### 5.2. Lo que se va a realizar (Próximos Pasos Windows 7)
 1. **Persistencia Transaccional con Respaldo en Disco**:

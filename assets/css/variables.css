@@ -1,74 +1,120 @@
 /* ==========================================================================
-   MI-TIENDA-POS — Variables & Design Tokens (Zero-Friction High-Speed UI)
+   MI-TIENDA-POS — Variables & Design Tokens (Sistema Visual Base v5)
+   - Objetivo: Windows 7 / Chrome 109 / PC de Bajos Recursos
+   - Paleta semántica estricta, alta legibilidad y contraste óptimo
    ========================================================================== */
+
 :root {
-  /* Paleta Principal Evolucionada (Oscuro Ejecutivo + Esmeralda Gastronómico/Comercial) */
-  --bg-app: #f3f6f5;
-  --bg-card: #ffffff;
-  --bg-muted: #e9efec;
-  --bg-aside: #0d1b16;
-  --bg-aside-hover: #162d24;
-  --bg-aside-active: #10b981;
+  /* ========================================================================
+     1. Paleta Semántica Estricta (PLAN_IMPLEMENTACION_V5 §6.1)
+     ======================================================================== */
+  --nav-bg: #0F2A3D;             /* Sidebar, cabeceras dark, login header */
+  --nav-border: #1B3A50;         /* Borde sutil para contenedores dark */
+  --nav-hover: #16364D;          /* Hover de elementos en sidebar */
+  --nav-txt: #F1F5F9;            /* Texto claro en sidebar */
+  --nav-txt-muted: #94A3B8;      /* Texto secundario en sidebar */
 
-  /* Colores de Acción y Estado */
-  --primary: #059669;
-  --primary-hover: #047857;
-  --primary-light: #d1fae5;
-  --primary-glow: rgba(16, 185, 129, 0.22);
+  --action: #E8A317;             /* Acción principal (UN SOLO botón principal por vista) */
+  --action-hover: #C98A0C;       /* Hover acción principal */
+  --action-txt: #1A1A1A;         /* Texto de alto contraste sobre ámbar */
 
-  --accent: #f59e0b;
-  --accent-hover: #d97706;
-  --accent-light: #fef3c7;
+  --money-in: #15803D;           /* Montos positivos, cobranzas, activo, éxito */
+  --money-in-hover: #166534;     /* Hover dinero entrante */
+  --money-in-light: #DCFCE7;     /* Fondo suave para badges/estados positivos */
 
-  --blue: #2563eb;
-  --blue-light: #dbeafe;
+  --money-out: #B91C1C;          /* Gastos, mermas, faltantes, eliminar, peligro */
+  --money-out-hover: #991B1B;    /* Hover dinero saliente */
+  --money-out-light: #FEE2E2;    /* Fondo suave para alertas de gasto/peligro */
 
-  --purple: #7c3aed;
-  --purple-light: #ede9fe;
+  --info: #1D4ED8;               /* Bolívares e información general */
+  --info-hover: #1E40AF;         /* Hover info */
+  --info-light: #DBEAFE;         /* Fondo suave info */
 
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
-  --danger-light: #fee2e2;
+  --page: #E9EDF1;               /* Fondo de página con contraste claro frente a tarjetas */
+  --surface: #FFFFFF;            /* Fondo de tarjetas, modales y superficies */
+  --surface-2: #F4F6F8;          /* Fondo de cabecera de tarjetas, th de tablas, inputs muted */
 
-  /* Texto y Contraste */
-  --txt: #0f172a;
-  --txt-sec: #475569;
-  --txt-muted: #64748b;
-  --txt-inv: #ffffff;
+  --line: #CBD5E1;               /* Bordes claros y bien definidos */
+  --line-strong: #94A3B8;        /* Bordes reforzados / divisores fuertes */
 
-  /* Bordes y Sombras */
-  --border: #d8e2dc;
-  --border-strong: #b8c9bf;
-  --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --txt: #0F172A;                /* Texto principal (alta legibilidad) */
+  --txt-2: #334155;              /* Texto secundario / subtítulos / labels */
+  --txt-3: #64748B;              /* Texto terciario / metadatos / hints */
+  --txt-inv: #FFFFFF;            /* Texto invertido */
 
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.09);
-  --shadow-lg: 0 14px 34px rgba(15, 23, 42, 0.14);
+  /* ========================================================================
+     2. Colores de Sección (Franjas laterales de 4px en .card-hd)
+     ======================================================================== */
+  --sec-cocina: #E8A317;
+  --sec-abasto: #1D4ED8;
+  --sec-dinero: #15803D;
+  --sec-gastos: #B91C1C;
+  --sec-fiscal: #6B7280;
 
-  /* Dimensiones Layout */
-  --aside-w: 200px;
-  --topbar-h: 42px;
+  /* ========================================================================
+     3. Tokens de Compatibilidad Hacia Atrás (Evita regresiones)
+     ======================================================================== */
+  --bg-app: var(--page);
+  --bg-card: var(--surface);
+  --bg-muted: var(--surface-2);
+  --bg-aside: var(--nav-bg);
+  --bg-aside-hover: var(--nav-hover);
+  --bg-aside-active: var(--action);
 
-  /* Bordes y Sombras Compactos */
-  --border: #d8e2dc;
-  --border-strong: #b8c9bf;
-  --radius-sm: 5px;
+  --primary: var(--money-in);
+  --primary-hover: var(--money-in-hover);
+  --primary-light: var(--money-in-light);
+  --primary-glow: rgba(21, 128, 61, 0.22);
+
+  --accent: var(--action);
+  --accent-hover: var(--action-hover);
+  --accent-light: #FEF3C7;
+
+  --blue: var(--info);
+  --blue-light: var(--info-light);
+
+  --purple: #7C3AED;
+  --purple-light: #EDE9FE;
+
+  --danger: var(--money-out);
+  --danger-hover: var(--money-out-hover);
+  --danger-light: var(--money-out-light);
+
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+
+  --txt-sec: var(--txt-2);
+  --txt-muted: var(--txt-3);
+
+  /* ========================================================================
+     4. Radios y Sombras Únicos (Sin duplicaciones)
+     ======================================================================== */
+  --radius-sm: 4px;
   --radius: 8px;
-  --radius-lg: 11px;
-  --radius-xl: 14px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 
   --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
   --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.12);
 
-  /* Tipografía Compacta de Alta Densidad (Windows 7 / Modo Escritorio) */
+  /* ========================================================================
+     5. Dimensiones de Layout
+     ======================================================================== */
+  --aside-w: 195px;
+  --aside-collapsed-w: 52px;
+  --topbar-h: 38px;
+
+  /* ========================================================================
+     6. Tipografía y Pesos
+     ======================================================================== */
   --font-sans: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   --font-mono: 'Consolas', 'JetBrains Mono', 'Fira Code', monospace;
+
+  --fw-normal: 400;
+  --fw-semibold: 600;
+  --fw-bold: 700;
 }
 
 * {
@@ -80,10 +126,11 @@
 html, body {
   height: 100%;
   font-family: var(--font-sans);
-  background: var(--bg-app);
+  background: var(--page);
   color: var(--txt);
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: 13px;
+  font-weight: var(--fw-normal);
+  line-height: 1.4;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -95,9 +142,12 @@ a {
 button, input, select, textarea {
   font-family: inherit;
   font-size: inherit;
+  color: inherit;
 }
 
-/* Scrollbars limpios */
+/* ==========================================================================
+   Scrollbars Limpios y Rápidos (Windows 7 / Chrome 109)
+   ========================================================================== */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
@@ -106,9 +156,9 @@ button, input, select, textarea {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--line);
   border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--line-strong);
 }

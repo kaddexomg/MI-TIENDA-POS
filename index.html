@@ -3,171 +3,655 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MI TIENDA POS · Restaurante & Abasto (Caja y Admin)</title>
+  <title>Acceso Seguro por PIN | MI TIENDA POS</title>
   <link rel="stylesheet" href="assets/css/variables.css">
   <link rel="stylesheet" href="assets/css/components.css">
   <style>
     body {
-      background: radial-gradient(circle at top right, #064e3b, #07100d 65%);
-      color: #fff;
+      background: radial-gradient(circle at 50% 20%, #133a52 0%, #071520 85%);
+      color: #f8fafc;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      font-family: var(--font-sans, 'Segoe UI', sans-serif);
+      user-select: none;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 480px;
+      background: #0f2230;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .login-hd {
+      text-align: center;
+    }
+
+    .brand-logo-badge {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 10px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+      color: #ffffff;
     }
-    .launcher-wrap {
-      max-width: 920px;
-      width: 100%;
-    }
-    .launcher-hd {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-    .launcher-logo {
-      width: 58px;
-      height: 58px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #10b981, #059669);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      margin-bottom: 10px;
-      box-shadow: 0 10px 28px rgba(16, 185, 129, 0.4);
-    }
-    .launcher-hd h1 {
-      font-size: 28px;
+
+    .login-hd h1 {
+      font-size: 24px;
       font-weight: 900;
       letter-spacing: -0.02em;
+      margin: 0;
+      color: #ffffff;
     }
-    .launcher-hd h1 em {
+
+    .login-hd h1 em {
       color: #34d399;
       font-style: normal;
     }
-    .launcher-hd p {
+
+    .login-hd p {
+      font-size: 12.5px;
       color: #94a3b8;
-      font-size: 14px;
-      margin-top: 5px;
+      margin: 4px 0 0 0;
     }
-    .role-grid {
+
+    .rates-bar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 99px;
+      padding: 5px 14px;
+      font-size: 11.5px;
+      margin: 8px auto 0;
+    }
+
+    .rates-bar span strong {
+      font-weight: 800;
+    }
+
+    /* Banners de estado */
+    .status-alert {
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.35;
+    }
+    .status-locked {
+      background: rgba(239, 68, 68, 0.18);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    .status-logout {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #a7f3d0;
+    }
+
+    /* Selector de Usuarios */
+    .user-select-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
-      gap: 18px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
     }
-    .role-card {
-      background: #0f172a;
-      border: 1.5px solid rgba(255, 255, 255, 0.14);
-      border-radius: 18px;
-      padding: 22px;
+
+    .user-card-btn {
+      background: #162b3a;
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px 6px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      gap: 16px;
-      transition: all 0.18s ease;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      color: #cbd5e1;
+      text-align: center;
     }
-    .role-card:hover {
+    .user-card-btn:hover {
+      background: #1c3649;
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+    .user-card-btn.active {
+      background: #1e4056;
       border-color: #34d399;
-      transform: translateY(-3px);
-      background: #1e293b;
-      box-shadow: 0 16px 38px rgba(0, 0, 0, 0.35);
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(52, 211, 153, 0.35);
     }
-    .role-ico {
-      width: 48px;
+
+    .user-role-badge {
+      font-size: 9.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 1px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.03em;
+    }
+    .badge-cajero { background: rgba(16, 185, 129, 0.25); color: #34d399; }
+    .badge-encargado { background: rgba(59, 130, 246, 0.25); color: #60a5fa; }
+    .badge-admin { background: rgba(239, 68, 68, 0.25); color: #f87171; }
+
+    /* Indicador Visual de PIN (Puntitos) */
+    .pin-display-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      margin: 4px 0;
+    }
+
+    .pin-dots-container {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      height: 38px;
+      padding: 0 16px;
+      background: #081622;
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      min-width: 200px;
+    }
+
+    .pin-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid #64748b;
+      background: transparent;
+      transition: all 0.12s ease;
+    }
+    .pin-dot.filled {
+      background: #34d399;
+      border-color: #34d399;
+      box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+      transform: scale(1.15);
+    }
+
+    .pin-error-msg {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #f87171;
+      height: 16px;
+      text-align: center;
+    }
+
+    /* Teclado Numérico en Pantalla */
+    .keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .key-btn {
       height: 48px;
-      border-radius: 12px;
+      background: #172d3d;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.1s ease;
     }
-    .role-card h2 {
-      font-size: 19px;
-      font-weight: 900;
-      margin-bottom: 5px;
+    .key-btn:active {
+      transform: translateY(2px);
+      background: #23435a;
     }
-    .role-card p {
-      color: #cbd5e1;
+    .key-btn.action-clear {
       font-size: 13px;
-      line-height: 1.45;
+      font-weight: 800;
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
     }
-    .role-features {
-      list-style: none;
+    .key-btn.action-enter {
+      font-size: 13px;
+      font-weight: 900;
+      background: #059669;
+      border-color: #10b981;
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+    }
+    .key-btn.action-enter:hover {
+      background: #047857;
+    }
+
+    /* Modal de Selección de Destino para Admin / Encargado */
+    .destination-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(3px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+    .destination-modal.open {
+      display: flex;
+    }
+    .destination-box {
+      background: #0f2230;
+      border: 1.5px solid #34d399;
+      border-radius: 16px;
+      padding: 22px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6);
+      text-align: center;
+    }
+
+    .destination-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .dest-card {
+      background: #172d3d;
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 16px 12px;
       display: flex;
       flex-direction: column;
-      gap: 5px;
-      font-size: 12.5px;
-      color: #a7f3d0;
-      margin-top: 8px;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: #ffffff;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .dest-card:hover {
+      border-color: #34d399;
+      background: #1f3b50;
+      transform: translateY(-2px);
+    }
+
+    .hidden-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      left: -9999px;
     }
   </style>
 </head>
 <body>
-  <div class="launcher-wrap">
-    <div class="launcher-hd">
-      <div class="launcher-logo" id="mainLaunchLogo"></div>
+
+  <!-- Input invisible para captura física de teclado y autofoco -->
+  <input type="password" id="hiddenPinInput" class="hidden-input" maxlength="6" inputmode="numeric" autocomplete="off">
+
+  <div class="login-container">
+    <div class="login-hd">
+      <div class="brand-logo-badge" id="brandLogoBox"></div>
       <h1>MI TIENDA <em>POS</em></h1>
-      <p>Sistema Híbrido Profesional: Restaurante (Empanadas, Pastelitos, Almuerzos, Café) + Abasto (Víveres, Chucherías, Cigarros, Cervezas)</p>
-      <div style="margin-top:12px;display:inline-flex;gap:12px;background:rgba(0,0,0,0.4);padding:7px 15px;border-radius:99px;border:1px solid rgba(255,255,255,0.14);font-size:12.5px;flex-wrap:wrap;justify-content:center">
-        <span>Dólar BCV: <strong id="launchBcv" style="color:#34d399">—</strong></span>
-        <span>·</span>
-        <span>Euro BCV: <strong id="launchEur" style="color:#60a5fa">—</strong></span>
-        <span>·</span>
-        <span>USDT Binance: <strong id="launchUsdt" style="color:#fbbf24">—</strong></span>
+      <p>Restaurante & Abasto · Acceso Rápido por PIN</p>
+
+      <div class="rates-bar">
+        <span>BCV: <strong id="rateBcv" style="color:#34d399">—</strong></span>
+        <span style="opacity:0.4">·</span>
+        <span>EUR: <strong id="rateEur" style="color:#60a5fa">—</strong></span>
+        <span style="opacity:0.4">·</span>
+        <span>USDT: <strong id="rateUsdt" style="color:#fbbf24">—</strong></span>
       </div>
     </div>
 
-    <div class="role-grid">
-      <div class="role-card">
-        <div>
-          <div class="role-ico" style="background:rgba(16,185,129,0.2);color:#34d399" id="roleIcoCaja"></div>
-          <h2>Modo Caja Rápida Compacta (POS)</h2>
-          <p>Interfaz ajustada 100% a la pantalla con fotos reales de platos y productos, escáner QR/Barras y verificación bancaria.</p>
-          <ul class="role-features">
-            <li>✔ Variedad de Empanadas, Pastelitos, Papa Rellena, Arroz Chino y Pollo Frito</li>
-            <li>✔ Harina PAN, Espagueti, Pepito, Cigarros, Refrescos y Cervezas</li>
-            <li>✔ Botón de Reemplazar rápido, Verificador de Pago Móvil y Distribución de Vuelto</li>
-          </ul>
-        </div>
-        <a href="caja/pos.html" class="btn btn-p btn-lg" style="width:100%">Entrar a Caja Compacta (POS) →</a>
+    <!-- Banner de Inactividad o Cierre de Sesión -->
+    <div id="statusAlertBox" style="display:none"></div>
+
+    <!-- 1. Selector Rápido de Usuario -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em">Seleccionar Usuario o Ingresar PIN:</span>
+        <span id="selectedUserLabel" style="font-size:11px;font-weight:800;color:#34d399">Detección automática</span>
+      </div>
+      <div class="user-select-grid" id="userSelectGrid">
+        <!-- Renderizado dinámicamente desde MTPAuth.getUsers() -->
+      </div>
+    </div>
+
+    <!-- 2. Display de PIN (Puntitos) -->
+    <div class="pin-display-wrap">
+      <div class="pin-dots-container" id="pinDotsContainer" title="Haz clic aquí o escribe en tu teclado">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+      <div class="pin-error-msg" id="pinErrorMsg"></div>
+    </div>
+
+    <!-- 3. Teclado Numérico Táctil -->
+    <div class="keypad-grid">
+      <button type="button" class="key-btn" data-key="1">1</button>
+      <button type="button" class="key-btn" data-key="2">2</button>
+      <button type="button" class="key-btn" data-key="3">3</button>
+      <button type="button" class="key-btn" data-key="4">4</button>
+      <button type="button" class="key-btn" data-key="5">5</button>
+      <button type="button" class="key-btn" data-key="6">6</button>
+      <button type="button" class="key-btn" data-key="7">7</button>
+      <button type="button" class="key-btn" data-key="8">8</button>
+      <button type="button" class="key-btn" data-key="9">9</button>
+      <button type="button" class="key-btn action-clear" id="keyClear">BORRAR</button>
+      <button type="button" class="key-btn" data-key="0">0</button>
+      <button type="button" class="key-btn action-enter" id="keyEnter">ENTRAR ↵</button>
+    </div>
+
+    <div style="text-align:center;font-size:11px;color:#64748b;margin-top:2px">
+      Compatible con teclado físico, numpad y pantallas táctiles
+    </div>
+  </div>
+
+  <!-- Modal de Destino para Admin / Encargado -->
+  <div class="destination-modal" id="destinationModal">
+    <div class="destination-box">
+      <div style="font-size:32px;margin-bottom:6px">🔑</div>
+      <h3 style="margin:0;font-size:18px;font-weight:900;color:#ffffff" id="destGreeting">¡Bienvenido!</h3>
+      <p style="font-size:12.5px;color:#cbd5e1;margin:6px 0 0 0" id="destSub">Tienes acceso a todas las áreas del sistema. ¿A dónde deseas ingresar?</p>
+
+      <div class="destination-grid">
+        <a href="caja/pos.html" class="dest-card" id="destCajaLink">
+          <div id="destIcoCaja"></div>
+          <strong style="font-size:13px">Caja Mostrador</strong>
+          <span style="font-size:10.5px;color:#94a3b8">Facturar, pedidos y cobros</span>
+        </a>
+
+        <a href="admin/index.html" class="dest-card" id="destAdminLink" style="border-color:#fbbf24">
+          <div id="destIcoAdmin"></div>
+          <strong style="font-size:13px;color:#fbbf24">Panel Administrador</strong>
+          <span style="font-size:10.5px;color:#94a3b8">Inventario, finanzas y tasas</span>
+        </a>
       </div>
 
-      <div class="role-card">
-        <div>
-          <div class="role-ico" style="background:rgba(245,158,11,0.2);color:#fbbf24" id="roleIcoAdmin"></div>
-          <h2>Panel Administrador Total</h2>
-          <p>Almacén de cocina separado de los productos de venta, API diaria de 3 tasas (BCV, Euro, USDT Binance) y Cuadre Legal.</p>
-          <ul class="role-features">
-            <li>✔ Almacén Cocina (Papa, Aliños, Carnes — exclusivos para elaborar comida)</li>
-            <li>✔ API Diaria BCV / Euro / USDT Binance y Recomendador Antiperdida</li>
-            <li>✔ Cuadre de Caja Venezolano (Control Interno, Pago Móvil y Vueltos)</li>
-          </ul>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <a href="admin/index.html" class="btn btn-amber btn-lg">Dashboard Admin</a>
-          <a href="admin/pos.html" class="btn btn-ghost btn-lg" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.2)">POS Admin</a>
-        </div>
+      <div style="margin-top:14px">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeDestModal()">Cambiar de usuario</button>
       </div>
     </div>
   </div>
 
+  <!-- Librerías del Sistema -->
   <script src="assets/js/icons.js"></script>
   <script src="assets/js/config.js"></script>
   <script src="assets/js/rates.js"></script>
+  <script src="assets/js/permissions.js"></script>
+  <script src="assets/js/auth.js"></script>
+
   <script>
-    function updateLaunchRates() {
-      if (window.MTPIcons) {
-        document.getElementById('mainLaunchLogo').innerHTML = MTPIcons.get('bolt', { size: 30, color: '#fff' });
-        document.getElementById('roleIcoCaja').innerHTML = MTPIcons.get('pos', { size: 26, color: '#34d399' });
-        document.getElementById('roleIcoAdmin').innerHTML = MTPIcons.get('settings', { size: 26, color: '#fbbf24' });
+    (function () {
+      var currentPin = '';
+      var selectedUserId = null;
+      var hiddenInput = document.getElementById('hiddenPinInput');
+      var dotsEl = document.getElementById('pinDotsContainer');
+      var errorEl = document.getElementById('pinErrorMsg');
+      var destModal = document.getElementById('destinationModal');
+
+      function initIcons() {
+        if (!window.MTPIcons) return;
+        document.getElementById('brandLogoBox').innerHTML = MTPIcons.get('bolt', { size: 28, color: '#ffffff' });
+        document.getElementById('destIcoCaja').innerHTML = MTPIcons.get('pos', { size: 28, color: '#34d399' });
+        document.getElementById('destIcoAdmin').innerHTML = MTPIcons.get('settings', { size: 28, color: '#fbbf24' });
       }
-      if (!window.MTP) return;
-      document.getElementById('launchBcv').textContent = MTP.state.settings.rateBcv.toFixed(2) + ' Bs/$';
-      document.getElementById('launchEur').textContent = (MTP.state.settings.rateEur || 46.60).toFixed(2) + ' Bs/€';
-      document.getElementById('launchUsdt').textContent = MTP.state.settings.rateUsdt.toFixed(2) + ' Bs/$';
-    }
-    document.addEventListener('DOMContentLoaded', updateLaunchRates);
-    window.addEventListener('mtp:state-updated', updateLaunchRates);
+
+      function updateRatesDisplay() {
+        if (!window.MTP) return;
+        var s = window.MTP.state.settings;
+        document.getElementById('rateBcv').textContent = (s.rateBcv || 42.85).toFixed(2) + ' Bs/$';
+        document.getElementById('rateEur').textContent = (s.rateEur || 46.60).toFixed(2) + ' Bs/€';
+        document.getElementById('rateUsdt').textContent = (s.rateUsdt || 51.40).toFixed(2) + ' Bs/$';
+      }
+
+      function checkUrlParams() {
+        var params = new URLSearchParams(window.location.search);
+        var alertBox = document.getElementById('statusAlertBox');
+        if (params.get('locked') === '1') {
+          alertBox.className = 'status-alert status-locked';
+          alertBox.innerHTML = '🔒 <span>Sesión bloqueada por inactividad (5 min). Ingrese su PIN para reanudar.</span>';
+          alertBox.style.display = 'flex';
+        } else if (params.get('logout') === '1') {
+          alertBox.className = 'status-alert status-logout';
+          alertBox.innerHTML = '✔ <span>Sesión cerrada correctamente. Hasta pronto.</span>';
+          alertBox.style.display = 'flex';
+        }
+      }
+
+      function renderUserCards() {
+        if (!window.MTPAuth) return;
+        var users = MTPAuth.getUsers().filter(function (u) { return u.active !== false; });
+        var container = document.getElementById('userSelectGrid');
+        if (!container) return;
+
+        var html = users.map(function (u) {
+          var badgeCls = 'badge-' + u.role;
+          var roleName = u.role === 'admin' ? 'Admin' : (u.role === 'encargado' ? 'Encargado' : 'Cajero');
+          var isSel = selectedUserId === u.id;
+          return `
+            <div class="user-card-btn ${isSel ? 'active' : ''}" data-user-id="${u.id}" onclick="window.selectUser('${u.id}')">
+              <span class="user-role-badge ${badgeCls}">${roleName}</span>
+              <strong style="font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${u.name}</strong>
+              <span style="font-size:10px;color:#94a3b8">@${u.username}</span>
+            </div>
+          `;
+        }).join('');
+
+        container.innerHTML = html;
+      }
+
+      window.selectUser = function (userId) {
+        if (selectedUserId === userId) {
+          selectedUserId = null;
+          document.getElementById('selectedUserLabel').textContent = 'Detección automática';
+        } else {
+          selectedUserId = userId;
+          var u = MTPAuth.getUserById(userId);
+          document.getElementById('selectedUserLabel').textContent = u ? u.name : 'Usuario';
+        }
+        renderUserCards();
+        clearPin();
+        focusHiddenInput();
+      };
+
+      function updateDots() {
+        var dots = dotsEl.querySelectorAll('.pin-dot');
+        for (var i = 0; i < dots.length; i++) {
+          if (i < currentPin.length) {
+            dots[i].classList.add('filled');
+          } else {
+            dots[i].classList.remove('filled');
+          }
+        }
+      }
+
+      function addDigit(digit) {
+        if (currentPin.length >= 6) return;
+        currentPin += String(digit);
+        errorEl.textContent = '';
+        updateDots();
+
+        // Si se seleccionó usuario y se alcanzó la longitud de su PIN, intentar entrar automáticamente
+        if (selectedUserId) {
+          var u = MTPAuth.getUserById(selectedUserId);
+          var targetLen = (u && u.role === 'admin') ? 6 : 4;
+          if (currentPin.length === targetLen) {
+            setTimeout(submitPin, 50);
+          }
+        } else if (currentPin.length === 6) {
+          // Si llega a 6 dígitos en modo auto, intentar
+          setTimeout(submitPin, 50);
+        }
+      }
+
+      function backspace() {
+        if (currentPin.length > 0) {
+          currentPin = currentPin.slice(0, -1);
+          errorEl.textContent = '';
+          updateDots();
+        }
+      }
+
+      function clearPin() {
+        currentPin = '';
+        errorEl.textContent = '';
+        updateDots();
+      }
+
+      function focusHiddenInput() {
+        if (hiddenInput) {
+          hiddenInput.value = '';
+          hiddenInput.focus();
+        }
+      }
+
+      function submitPin() {
+        if (!currentPin) {
+          errorEl.textContent = 'Ingrese su PIN';
+          return;
+        }
+
+        var result = MTPAuth.loginByPin(currentPin, selectedUserId);
+
+        if (result.success) {
+          var user = result.user;
+          errorEl.style.color = '#34d399';
+          errorEl.textContent = '¡Acceso concedido! Entrando...';
+
+          // Verificar si hay redirección pendiente
+          var params = new URLSearchParams(window.location.search);
+          var redirectUrl = params.get('redirect');
+
+          if (user.role === 'cajero') {
+            // Cajero va directo a Caja Mostrador
+            setTimeout(function () {
+              window.location.href = redirectUrl && redirectUrl.includes('/caja/') ? redirectUrl : 'caja/pos.html';
+            }, 250);
+          } else {
+            // Admin o Encargado: si venía con redirect específico, ir a ese
+            if (redirectUrl) {
+              setTimeout(function () { window.location.href = redirectUrl; }, 250);
+              return;
+            }
+            // Abrir modal de selección de destino
+            openDestModal(user);
+          }
+        } else {
+          errorEl.style.color = '#f87171';
+          errorEl.textContent = result.error || 'PIN incorrecto';
+          clearPin();
+          // Efecto de sacudida
+          dotsEl.style.borderColor = '#f87171';
+          setTimeout(function () {
+            dotsEl.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+          }, 450);
+        }
+      }
+
+      function openDestModal(user) {
+        document.getElementById('destGreeting').textContent = '¡Hola, ' + user.name + '!';
+        if (user.role === 'encargado') {
+          document.getElementById('destSub').textContent = 'Rol Encargado: acceso a caja, inventario, mermas y cuadre de turno.';
+        } else {
+          document.getElementById('destSub').textContent = 'Rol Administrador: control total del restaurante, abasto y finanzas.';
+        }
+        destModal.classList.add('open');
+      }
+
+      window.closeDestModal = function () {
+        destModal.classList.remove('open');
+        MTPAuth.logout({ redirect: false });
+        clearPin();
+        focusHiddenInput();
+      };
+
+      // Eventos del Teclado Numérico en Pantalla
+      document.querySelectorAll('.keypad-grid .key-btn[data-key]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          addDigit(btn.getAttribute('data-key'));
+          focusHiddenInput();
+        });
+      });
+
+      document.getElementById('keyClear').addEventListener('click', function () {
+        clearPin();
+        focusHiddenInput();
+      });
+
+      document.getElementById('keyEnter').addEventListener('click', function () {
+        submitPin();
+      });
+
+      dotsEl.addEventListener('click', focusHiddenInput);
+
+      // Captura de Teclado Físico
+      document.addEventListener('keydown', function (e) {
+        if (destModal.classList.contains('open')) {
+          if (e.key === 'Escape') closeDestModal();
+          return;
+        }
+
+        if (e.key >= '0' && e.key <= '9') {
+          e.preventDefault();
+          addDigit(e.key);
+        } else if (e.key === 'Backspace') {
+          e.preventDefault();
+          backspace();
+        } else if (e.key === 'Escape' || e.key === 'Delete') {
+          e.preventDefault();
+          clearPin();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          submitPin();
+        }
+      });
+
+      // Inicialización
+      document.addEventListener('DOMContentLoaded', function () {
+        initIcons();
+        updateRatesDisplay();
+        checkUrlParams();
+        renderUserCards();
+        focusHiddenInput();
+
+        // Si ya hay sesión activa válida, ofrecer continuar o cerrar
+        var cur = MTPAuth.getCurrentUser();
+        if (cur) {
+          if (cur.role === 'cajero') {
+            window.location.href = 'caja/pos.html';
+          } else {
+            openDestModal(cur);
+          }
+        }
+      });
+
+      window.addEventListener('mtp:state-updated', updateRatesDisplay);
+    })();
   </script>
 </body>
 </html>
