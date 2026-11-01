@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lector de Código de Barras y Cámara · Carga de Productos | MI TIENDA POS</title>
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+</head>
+<body>
+  <div class="admin-wrap">
+    <aside class="admin-aside" id="adminAside"></aside>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle" id="menuToggleBtn">☰</button>
+          <div class="topbar-title">
+            <h2>Lector de Código de Barras (Cámara / USB) y Catálogo</h2>
+            <p>Escanea el código de barras real del empaque para cargar mercancía al inventario o registrar nuevos productos</p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
+          <button class="btn btn-p btn-sm" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">Abrir Cámara Escáner</button>
+          <a href="pos.html" class="btn btn-amber btn-sm">Ir a Caja POS</a>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <div class="grid-2" style="margin-bottom:8px">
+          <!-- Panel Izquierdo: Escáner en Vivo / Pistola Lectora USB -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-hd">
+              <div>
+                <h3>Escáner Activo para Recepción de Mercancía</h3>
+                <p>Dispara con lector USB o cámara para identificar empaques</p>
+              </div>
+              <span class="badge badge-green">ACTIVO</span>
+            </div>
+            <div class="card-bd" style="padding:6px 10px">
+              <div style="background:#0f172a;padding:8px 10px;border-radius:6px;color:#fff;margin-bottom:8px">
+                <label style="font-size:10px;font-weight:800;color:#34d399;text-transform:uppercase;display:block;margin-bottom:3px">
+                  Código de Barras EAN-13 / UPC / Código Interno:
+                </label>
+                <div style="display:flex;gap:6px">
+                  <input type="text" id="liveBarcodeInput" class="input"
+                    placeholder="Dispara el lector aquí o escribe..."
+                    style="font-family:var(--font-mono);font-size:13px;font-weight:900;background:#1e293b;color:#fff;border-color:#334155;height:30px">
+                  <button class="btn btn-p btn-sm" onclick="handleScannedCode(document.getElementById('liveBarcodeInput').value)">Buscar</button>
+                  <button class="btn btn-amber btn-sm" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">Cámara</button>
+                </div>
+              </div>
+
+              <div id="scanResultBox" style="padding:8px 10px;border-radius:6px;border:1.5px dashed var(--border);background:#f8fafc;text-align:center;color:var(--txt-sec)">
+                <div style="margin-bottom:2px">${window.MTPIcons ? MTPIcons.get('barcode', { size: 22 }) : ''}</div>
+                <strong style="font-size:11.5px">Escanea un producto (Harina, Pepito, Refresco, Cerveza)</strong>
+                <p style="font-size:10.5px;margin-top:2px">Si existe sumas unidades. Si es nuevo se completa el formulario.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel Derecho: Vincular o Crear Producto con Código de Barras -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-hd">
+              <div>
+                <h3 id="formCardTitle">Registrar / Actualizar con Código de Barras</h3>
+                <p>Asigna el código de barras a tu inventario</p>
+              </div>
+            </div>
+            <div class="card-bd" style="padding:6px 10px">
+              <form id="barcodeProductForm" onsubmit="saveBarcodeProduct(event)">
+                <input type="hidden" id="bpId">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Código de Barras (EAN)</label>
+                    <input type="text" id="bpBarcode" class="input" required placeholder="Ej: 7591001000015" style="font-family:var(--font-mono);font-weight:800">
+                  </div>
+                  <div class="form-group">
+                    <label>Código Corto</label>
+                    <input type="text" id="bpCode" class="input" required placeholder="Ej: 107">
+                  </div>
+                  <div class="form-group">
+                    <label>Familia en Caja</label>
+                    <select id="bpGroup" class="select">
+                      <option value="viveres">🌽 Víveres</option>
+                      <option value="chucherias">🧀 Chucherías</option>
+                      <option value="refrescos">🥤 Refrescos</option>
+                      <option value="cervezas">🍻 Cervezas</option>
+                      <option value="cigarros">🚬 Cigarros</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row" style="margin-top:4px">
+                  <div class="form-group" style="grid-column:span 2">
+                    <label>Nombre del Producto</label>
+                    <input type="text" id="bpName" class="input" required placeholder="Ej: Pepito Queso / Frescolita 1.5L">
+                  </div>
+                  <div class="form-group">
+                    <label>Stock Actual (Und)</label>
+                    <input type="number" step="1" id="bpStock" class="input" required value="24">
+                  </div>
+                </div>
+
+                <div class="form-row" style="margin-top:4px">
+                  <div class="form-group">
+                    <label>Costo USD ($)</label>
+                    <input type="number" step="0.01" id="bpCost" class="input" required value="0.80">
+                  </div>
+                  <div class="form-group">
+                    <label>PVP USD ($)</label>
+                    <input type="number" step="0.01" id="bpPrice" class="input" required value="1.35">
+                  </div>
+                  <div class="form-group" style="display:flex;align-items:flex-end">
+                    <button type="submit" class="btn btn-p" style="width:100%;height:28px">💾 Guardar</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Productos con Código de Barras Registrado -->
+        <div class="card">
+          <div class="card-hd">
+            <div>
+              <h3>📋 Productos con Código de Barras Vinculado en Inventario</h3>
+              <p>Todos estos artículos se pueden escanear directamente en la Caja POS o con la cámara</p>
+            </div>
+            <input type="text" id="filterBarcodesInput" class="input" style="max-width:260px" placeholder="🔎 Filtrar por nombre o código..." oninput="renderRegisteredBarcodes()">
+          </div>
+          <div class="card-bd" style="padding:0">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Foto</th>
+                    <th>Código Corto</th>
+                    <th>Código de Barras (EAN)</th>
+                    <th>Producto</th>
+                    <th>Familia POS</th>
+                    <th>Stock</th>
+                    <th>Costo USD</th>
+                    <th>Precio Venta</th>
+                    <th>Acción Rápida</th>
+                  </tr>
+                </thead>
+                <tbody id="registeredBarcodesBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/rates.js"></script>
+  <script src="../assets/js/barcode-engine.js"></script>
+  <script src="../assets/js/sidenav.js"></script>
+  <script>
+    const GROUP_IMG_MAP = {
+      viveres: '../assets/img/productos/viveres.jpg',
+      chucherias: '../assets/img/productos/pepito.jpg',
+      refrescos: '../assets/img/productos/refrescos.jpg',
+      cervezas: '../assets/img/productos/cervezas.jpg',
+      cigarros: '../assets/img/productos/cigarros.jpg'
+    };
+
+    const GROUP_CAT_MAP = {
+      viveres: 'Víveres',
+      chucherias: 'Chucherías',
+      refrescos: 'Refrescos & Cervezas',
+      cervezas: 'Refrescos & Cervezas',
+      cigarros: 'Cigarros'
+    };
+
+    function handleScannedCode(rawCode) {
+      const code = String(rawCode || '').trim();
+      if (!code) return;
+      document.getElementById('liveBarcodeInput').value = code;
+
+      const found = MTP.findByCodeOrBarcode(code, true);
+      const box = document.getElementById('scanResultBox');
+
+      if (found && found.kind === 'inventory') {
+        const it = found.item;
+        box.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left">
+            <div style="display:flex;align-items:center;gap:10px">
+              <img src="${it.img}" style="width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid #cbd5e1">
+              <div>
+                <span class="badge badge-green">✔ CÓDIGO REGISTRADO (${it.barcode})</span>
+                <div style="font-size:15px;font-weight:900;color:#0f172a;margin-top:2px">${it.name}</div>
+                <div style="font-size:12px;color:#475569">Stock actual: <strong>${it.stock} ${it.unit}</strong> · Venta: <strong>${MTP.fmtUSD(it.priceUsd)}</strong></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn btn-p btn-sm" onclick="quickAddStock('${it.id}', 1)">+1 Und</button>
+              <button class="btn btn-p btn-sm" onclick="quickAddStock('${it.id}', 12)">+12 (Docena)</button>
+              <button class="btn btn-amber btn-sm" onclick="quickAddStock('${it.id}', 24)">+24 (Bulto/Caja)</button>
+              <button class="btn btn-ghost btn-sm" onclick="loadProductIntoForm('${it.id}')">Editar</button>
+            </div>
+          </div>
+        `;
+        loadProductIntoForm(it.id);
+        MTP.toast(`Producto detectado: ${it.name}`);
+      } else {
+        box.innerHTML = `
+          <div style="text-align:left;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <span class="badge badge-yellow">CÓDIGO DE BARRAS NUEVO: ${code}</span>
+              <div style="font-weight:800;color:#0f172a;margin-top:4px">Este empaque aún no está en el inventario.</div>
+              <div style="font-size:12px;color:#475569">Completa el nombre y precio a la derecha para guardarlo.</div>
+            </div>
+          </div>
+        `;
+        document.getElementById('bpId').value = '';
+        document.getElementById('bpBarcode').value = code;
+        document.getElementById('bpCode').value = String(100 + MTP.state.inventory.length);
+        document.getElementById('bpName').value = '';
+        document.getElementById('bpName').focus();
+      }
+    }
+
+    function quickAddStock(invId, qty) {
+      const it = MTP.getInsumoById(invId);
+      if (!it) return;
+      it.stock = Number((Number(it.stock) + qty).toFixed(2));
+      MTP.save();
+      handleScannedCode(it.barcode || it.code);
+      renderRegisteredBarcodes();
+      MTP.toast(`Se sumaron +${qty} ${it.unit} a "${it.name}" (Stock: ${it.stock})`);
+    }
+
+    function loadProductIntoForm(invId) {
+      const it = MTP.getInsumoById(invId);
+      if (!it) return;
+      document.getElementById('formCardTitle').textContent = `✏️ Editando: ${it.name}`;
+      document.getElementById('bpId').value = it.id;
+      document.getElementById('bpBarcode').value = it.barcode || '';
+      document.getElementById('bpCode').value = it.code || '';
+      document.getElementById('bpGroup').value = it.group || 'viveres';
+      document.getElementById('bpName').value = it.name || '';
+      document.getElementById('bpStock').value = it.stock || 0;
+      document.getElementById('bpCost').value = it.costUsd || 0;
+      document.getElementById('bpPrice').value = it.priceUsd || 0;
+    }
+
+    function saveBarcodeProduct(e) {
+      e.preventDefault();
+      const id = document.getElementById('bpId').value;
+      const barcode = document.getElementById('bpBarcode').value.trim();
+      const code = document.getElementById('bpCode').value.trim();
+      const group = document.getElementById('bpGroup').value;
+      const name = document.getElementById('bpName').value.trim();
+      const stock = parseFloat(document.getElementById('bpStock').value) || 0;
+      const costUsd = parseFloat(document.getElementById('bpCost').value) || 0;
+      const priceUsd = parseFloat(document.getElementById('bpPrice').value) || 0;
+
+      if (id) {
+        const existing = MTP.getInsumoById(id);
+        if (existing) {
+          existing.barcode = barcode;
+          existing.code = code;
+          existing.group = group;
+          existing.category = GROUP_CAT_MAP[group] || 'Víveres';
+          existing.name = name;
+          existing.stock = stock;
+          existing.costUsd = costUsd;
+          existing.priceUsd = priceUsd;
+        }
+      } else {
+        MTP.state.inventory.push({
+          id: 'prod-' + Date.now(),
+          code,
+          barcode,
+          qrCode: 'QR-' + code,
+          group,
+          name,
+          category: GROUP_CAT_MAP[group] || 'Víveres',
+          type: 'venta',
+          sellable: true,
+          unit: 'und',
+          stock,
+          minStock: 6,
+          costUsd,
+          prevCostUsd: costUsd,
+          priceUsd,
+          emoji: '📦',
+          img: GROUP_IMG_MAP[group] || '../assets/img/productos/viveres.jpg'
+        });
+      }
+
+      MTP.save();
+      renderRegisteredBarcodes();
+      MTP.toast(`Producto "${name}" guardado con código de barras ${barcode}`);
+    }
+
+    function renderRegisteredBarcodes() {
+      const tbody = document.getElementById('registeredBarcodesBody');
+      const q = (document.getElementById('filterBarcodesInput')?.value || '').toLowerCase();
+      const bcv = MTP.state.settings.rateBcv;
+
+      const items = MTP.state.inventory.filter(i => i.sellable && (
+        !q || i.name.toLowerCase().includes(q) || String(i.barcode).toLowerCase().includes(q) || String(i.code).toLowerCase().includes(q)
+      ));
+
+      tbody.innerHTML = items.map(it => `
+        <tr>
+          <td><img src="${it.img}" style="width:38px;height:38px;border-radius:6px;object-fit:cover"></td>
+          <td><span class="code-pill">#${it.code}</span></td>
+          <td style="font-family:var(--font-mono);font-weight:800">${it.barcode}</td>
+          <td><strong>${it.name}</strong></td>
+          <td><span class="badge badge-blue">${it.group || it.category}</span></td>
+          <td><strong>${it.stock} ${it.unit}</strong></td>
+          <td>${MTP.fmtUSD(it.costUsd)}</td>
+          <td><strong>${MTP.fmtUSD(it.priceUsd)}</strong> <span style="font-size:11px;color:var(--primary)">(${(it.priceUsd * bcv).toFixed(2)} Bs)</span></td>
+          <td>
+            <button class="btn btn-p btn-sm" onclick="quickAddStock('${it.id}', 6)">+6</button>
+            <button class="btn btn-ghost btn-sm" onclick="loadProductIntoForm('${it.id}')">Editar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderRegisteredBarcodes();
+      const inp = document.getElementById('liveBarcodeInput');
+      if (inp) {
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleScannedCode(inp.value);
+          }
+        });
+      }
+      if (window.MTPBarcode) {
+        window.MTPBarcode.onBarcodeScan(handleScannedCode);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Archivos del sistema y temporales
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.bak
+
+# Logs y trazas de agentes
+.system_generated/
+*.log
+
+# Respaldos generados localmente
+respaldos/
+*.json.bak

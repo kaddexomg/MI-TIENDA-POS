@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasas API (BCV · Euro · USDT Binance), Brechas y Recomendador | MI TIENDA POS</title>
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+</head>
+<body>
+  <div class="admin-wrap">
+    <aside class="admin-aside" id="adminAside"></aside>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle" id="menuToggleBtn">☰</button>
+          <div class="topbar-title">
+            <h2>Tasas en Vivo (BCV USD · Euro BCV · USDT Binance) y Precios</h2>
+            <p>Sincronización de tasas + Cálculo de brechas cambiarias para proteger la reposición</p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-ghost btn-sm" onclick="window.MTPRates.syncOfficialRates(false)">Actualizar Tasas Hoy</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.MTPRates.openQuickRateModal()">Editar Tasas</button>
+          <button class="btn btn-p btn-sm" onclick="applyAllRecommendedPrices()">Aplicar Precios Protegidos</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- 6 Tarjetas de Tasas y Brechas Exactas -->
+        <div class="stat-grid" id="ratesStatGrid"></div>
+
+        <!-- TABLA 1: PLATOS DE COMIDA -->
+        <div class="card">
+          <div class="card-hd">
+            <h3>Recomendación de Precios en Platos (Cocina)</h3>
+            <span class="badge badge-yellow">Costo recetas + margen reposición</span>
+          </div>
+          <div class="table-wrap" style="max-height:220px;overflow-y:auto">
+            <table class="data-table">
+              <thead style="position:sticky;top:0;z-index:5">
+                <tr>
+                  <th>Plato</th>
+                  <th>Costo Receta</th>
+                  <th>Precio Actual (USD / Bs)</th>
+                  <th>Euro BCV</th>
+                  <th>Sugerido Antiperdida</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="dishPricingTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TABLA 2: PRODUCTOS DE VENTA (HARINA PAN, ESPAGUETI, PEPITO, CIGARROS, CERVEZAS) -->
+        <div class="card">
+          <div class="card-hd">
+            <h3>Mercancía de Mostrador (Víveres, Chucherías, Refrescos, Cervezas)</h3>
+            <span class="badge badge-green">Protección cambiaria BCV ↔ USDT</span>
+          </div>
+          <div class="table-wrap" style="max-height:220px;overflow-y:auto">
+            <table class="data-table">
+              <thead style="position:sticky;top:0;z-index:5">
+                <tr>
+                  <th>Producto</th>
+                  <th>Costo Compra</th>
+                  <th>Precio Venta Actual</th>
+                  <th>Sugerido Protegido</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="invPricingTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/rates.js"></script>
+  <script src="../assets/js/sidenav.js"></script>
+  <script>
+    function renderPricingPage() {
+      const bcv = MTP.state.settings.rateBcv;
+      const eur = MTP.state.settings.rateEur || Number((bcv * 1.088).toFixed(2));
+      const usdt = MTP.state.settings.rateUsdt;
+
+      const gapBcvUsdt = (((usdt / bcv) - 1) * 100).toFixed(2);
+      const gapBcvEur = (((eur / bcv) - 1) * 100).toFixed(2);
+      const gapEurUsdt = (((usdt / eur) - 1) * 100).toFixed(2);
+      const factor = (usdt / bcv).toFixed(3);
+
+      document.getElementById('ratesStatGrid').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-ico green">${window.MTPIcons ? window.MTPIcons.get('bank', { size: 16 }) : ''}</div>
+          <div>
+            <div class="stat-n">${bcv.toFixed(2)} Bs/$</div>
+            <div class="stat-l">Tasa Oficial Dólar BCV</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico blue">${window.MTPIcons ? window.MTPIcons.get('bank', { size: 16 }) : ''}</div>
+          <div>
+            <div class="stat-n">${eur.toFixed(2)} Bs/€</div>
+            <div class="stat-l">Tasa Oficial Euro BCV</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico yellow">${window.MTPIcons ? window.MTPIcons.get('dollar', { size: 16 }) : ''}</div>
+          <div>
+            <div class="stat-n">${usdt.toFixed(2)} Bs/$</div>
+            <div class="stat-l">Tasa USDT Binance P2P</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico red">${window.MTPIcons ? window.MTPIcons.get('chart', { size: 16 }) : ''}</div>
+          <div>
+            <div class="stat-n">+${gapBcvUsdt}%</div>
+            <div class="stat-l">Brecha BCV ↔ USDT (×${factor})</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico purple">${window.MTPIcons ? window.MTPIcons.get('scale', { size: 16 }) : ''}</div>
+          <div>
+            <div class="stat-n">+${gapBcvEur}%</div>
+            <div class="stat-l">Brecha Dólar BCV ↔ Euro</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico green">${window.MTPIcons ? window.MTPIcons.get('scale', { size: 16 }) : ''}</div>
+          <div>
+            <div class="stat-n">${gapEurUsdt}%</div>
+            <div class="stat-l">Diferencia Euro ↔ USDT</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('dishPricingTable').innerHTML = MTP.state.dishes.map(d => {
+        const cost = MTP.calcDishCost(d);
+        const recUsd = Number(MTP.calcRecommendedPriceUsd(cost, 45).toFixed(2));
+        const needsRaise = recUsd > d.priceUsd + 0.10;
+
+        return `
+          <tr>
+            <td>
+              <span class="code-pill plu">#${d.code}</span>
+              <strong style="margin-left:6px">${d.name}</strong>
+            </td>
+            <td><strong style="color:var(--danger)">${MTP.fmtUSD(cost)}</strong> <span style="font-size:11px;color:var(--txt-sec)">(${(cost * bcv).toFixed(2)} Bs)</span></td>
+            <td>
+              <div class="price-dual">
+                <span class="price-usd">${MTP.fmtUSD(d.priceUsd)}</span>
+                <span class="price-bs">${(d.priceUsd * bcv).toFixed(2)} Bs</span>
+              </div>
+            </td>
+            <td><span class="badge badge-blue">${MTP.fmtEur(d.priceUsd)}</span></td>
+            <td>
+              <div class="price-dual">
+                <span class="price-usd" style="color:${needsRaise ? 'var(--danger)' : 'var(--primary)'}">${MTP.fmtUSD(recUsd)}</span>
+                <span class="price-bs">${(recUsd * bcv).toFixed(2)} Bs</span>
+              </div>
+            </td>
+            <td>
+              <button class="btn ${needsRaise ? 'btn-amber' : 'btn-ghost'} btn-sm" onclick="applyDishPrice('${d.id}', ${recUsd})">
+                Aplicar ${MTP.fmtUSD(recUsd)}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('invPricingTable').innerHTML = MTP.state.inventory
+        .filter(i => i.sellable)
+        .map(i => {
+          const recUsd = Number(MTP.calcRecommendedPriceUsd(i.costUsd, 34).toFixed(2));
+          const isCostly = i.costUsd > (i.prevCostUsd || i.costUsd);
+          return `
+            <tr style="${isCostly ? 'background:#fffbeb' : ''}">
+              <td>
+                <span class="code-pill">#${i.code}</span>
+                <strong style="margin-left:6px">${i.name}</strong>
+              </td>
+              <td>
+                <strong>${MTP.fmtUSD(i.costUsd)}</strong>
+                ${isCostly ? `<span class="badge badge-red" style="margin-left:4px">+ Costo</span>` : ''}
+              </td>
+              <td>
+                <div class="price-dual">
+                  <span class="price-usd">${MTP.fmtUSD(i.priceUsd)}</span>
+                  <span class="price-bs">${(i.priceUsd * bcv).toFixed(2)} Bs</span>
+                </div>
+              </td>
+              <td>
+                <div class="price-dual">
+                  <span class="price-usd" style="color:var(--primary)">${MTP.fmtUSD(recUsd)}</span>
+                  <span class="price-bs">${(recUsd * bcv).toFixed(2)} Bs</span>
+                </div>
+              </td>
+              <td>
+                <button class="btn btn-p btn-sm" onclick="applyInvPrice('${i.id}', ${recUsd})">Aplicar ${MTP.fmtUSD(recUsd)}</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+    }
+
+    function applyDishPrice(dishId, newPrice) {
+      const dish = MTP.state.dishes.find(d => d.id === dishId);
+      if (!dish) return;
+      dish.priceUsd = Number(newPrice.toFixed(2));
+      MTP.save();
+      renderPricingPage();
+      MTP.toast(`Precio actualizado: ${dish.name} -> ${MTP.fmtUSD(dish.priceUsd)}`);
+    }
+
+    function applyInvPrice(invId, newPrice) {
+      const item = MTP.getInsumoById(invId);
+      if (!item) return;
+      item.priceUsd = Number(newPrice.toFixed(2));
+      item.prevCostUsd = item.costUsd;
+      MTP.save();
+      renderPricingPage();
+      MTP.toast(`Precio actualizado: ${item.name} -> ${MTP.fmtUSD(item.priceUsd)}`);
+    }
+
+    function applyAllRecommendedPrices() {
+      MTP.state.dishes.forEach(d => {
+        d.priceUsd = Number(MTP.calcRecommendedPriceUsd(MTP.calcDishCost(d), 45).toFixed(2));
+      });
+      MTP.state.inventory.filter(i => i.sellable).forEach(i => {
+        i.priceUsd = Number(MTP.calcRecommendedPriceUsd(i.costUsd, 34).toFixed(2));
+        i.prevCostUsd = i.costUsd;
+      });
+      MTP.save();
+      renderPricingPage();
+      MTP.toast('Precios protegidos aplicados en todo el menú y catálogo');
+    }
+
+    document.addEventListener('DOMContentLoaded', renderPricingPage);
+    window.addEventListener('mtp:state-updated', renderPricingPage);
+  </script>
+</body>
+</html>

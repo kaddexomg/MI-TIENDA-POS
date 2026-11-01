@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administración de Inventario, Bultos/Cajas y Almacén Cocina | MI TIENDA POS</title>
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+</head>
+<body>
+  <div class="admin-wrap">
+    <aside class="admin-aside" id="adminAside"></aside>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle" id="menuToggleBtn">☰</button>
+          <div class="topbar-title">
+            <h2>Control Total de Inventario, Entradas, Salidas y Kardex</h2>
+            <p>Auditoría inmutable, recepción de facturas a proveedores, control de mermas y separación Cocina vs. Minimercado</p>
+          </div>
+        </div>
+        <div class="topbar-right" style="gap:4px">
+          <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
+          <button class="btn btn-sm btn-ghost" onclick="openKardexModal('ALL')" style="border:1px solid var(--border)">Kardex</button>
+          <button class="btn btn-sm" style="background:#0284c7;color:#fff" onclick="openMultiPurchaseModal()">+ Factura</button>
+          <button class="btn btn-sm" style="background:#dc2626;color:#fff" onclick="openWasteModal()">+ Merma</button>
+          <button class="btn btn-sm" style="background:#475569;color:#fff" onclick="openAuditModal()">Conteo Ciego</button>
+          <button class="btn btn-amber btn-sm" onclick="openInvItemModal(null, 'insumo')">+ Insumo Cocina</button>
+          <button class="btn btn-p btn-sm" onclick="openInvItemModal(null, 'venta')">+ Mercancía Venta</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <div class="stat-grid" id="invStatsGrid"></div>
+
+        <!-- HERRAMIENTA 1: CALCULADORA DE COMPRA POR BULTO / CAJA / CARTÓN / SACO -> UNIDAD O KILO -->
+        <div class="card" id="bulkCard" style="border:1.5px solid #059669;margin-bottom:6px">
+          <div class="card-hd" style="background:#ecfdf5;padding:4px 8px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <strong style="color:#065f46;font-size:11.5px">Calculadora de Entrada por Bulto / Saco → Unidad o Kg</strong>
+              <span style="font-size:10px;color:#047857">Costo unitario y sugerencia USDT</span>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center">
+              <button type="button" class="btn btn-ghost btn-sm" style="font-size:10px;padding:1px 5px" onclick="applyBulkPreset('prod-harina-pan', 1, 20, 21.60)">Harina (20u)</button>
+              <button type="button" class="btn btn-ghost btn-sm" style="font-size:10px;padding:1px 5px" onclick="applyBulkPreset('prod-cerveza-polar', 1, 36, 25.90)">Cerveza (36u)</button>
+              <button type="button" class="btn btn-ghost btn-sm" style="font-size:10px;padding:1px 5px" onclick="applyBulkPreset('ins-papa', 1, 25, 33.75)">Papa (25kg)</button>
+              <button type="button" class="btn btn-ghost btn-sm" style="font-size:10px;padding:1px 5px" onclick="toggleBulkCard()" id="bulkToggleBtn">Ocultar ▲</button>
+            </div>
+          </div>
+          <div class="card-bd" id="bulkCardBody" style="padding:6px 8px">
+            <div style="display:grid;grid-template-columns:1.8fr 0.8fr 0.8fr 0.9fr 0.9fr 1fr auto;gap:6px;align-items:end">
+              <div class="form-group">
+                <label>1. Artículo</label>
+                <select id="bulkItemSelect" class="select" onchange="recalcBulkPreview()"></select>
+              </div>
+              <div class="form-group">
+                <label>2. Bultos</label>
+                <input type="number" step="1" min="1" id="bulkPacksCount" class="input" value="1" style="font-weight:900" oninput="recalcBulkPreview()">
+              </div>
+              <div class="form-group">
+                <label>3. Und/Kg x Bulto</label>
+                <input type="number" step="0.5" min="1" id="bulkUnitsPerPack" class="input" value="20" style="font-weight:900" oninput="recalcBulkPreview()">
+              </div>
+              <div class="form-group">
+                <label>4. Costo Bulto ($)</label>
+                <input type="number" step="0.01" min="0" id="bulkPackCostUsd" class="input" value="21.60" style="font-weight:900" oninput="recalcBulkPreview()">
+              </div>
+              <div class="form-group">
+                <label>Nuevo PVP ($)</label>
+                <input type="number" step="0.05" min="0" id="bulkNewSalePrice" class="input" style="font-weight:900;color:var(--primary)">
+              </div>
+              <div class="form-group">
+                <label>¿Registrar Gasto?</label>
+                <select id="bulkExpenseSource" class="select">
+                  <option value="NONE">No (Solo stock)</option>
+                  <option value="Efectivo USD">Efectivo USD</option>
+                  <option value="Pago Móvil">Pago Móvil</option>
+                  <option value="Efectivo Bs">Efectivo Bs</option>
+                </select>
+              </div>
+              <button class="btn btn-p" onclick="submitBulkEntry()">📥 Ingresar</button>
+            </div>
+
+            <div id="bulkCalcSummaryBar" style="margin-top:6px;padding:4px 8px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:11px"></div>
+          </div>
+        </div>
+
+        <!-- PESTAÑAS ESTRUCTURADAS DEL INVENTARIO -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-hd" style="padding:4px 8px">
+            <div style="display:flex;gap:3px;flex-wrap:wrap" id="invFilterBtns">
+              <button class="btn btn-p btn-sm" onclick="setInvFilter('ALL', this)">Todo</button>
+              <button class="btn btn-ghost btn-sm" onclick="setInvFilter('COCINA', this)">🍲 Cocina (No Venta)</button>
+              <button class="btn btn-ghost btn-sm" onclick="setInvFilter('Víveres', this)">🌽 Víveres</button>
+              <button class="btn btn-ghost btn-sm" onclick="setInvFilter('Chucherías', this)">🧀 Chucherías</button>
+              <button class="btn btn-ghost btn-sm" onclick="setInvFilter('Refrescos & Cervezas', this)">🍻 Bebidas</button>
+              <button class="btn btn-ghost btn-sm" onclick="setInvFilter('Cigarros', this)">🚬 Cigarros</button>
+              <button class="btn btn-ghost btn-sm" onclick="setInvFilter('LOW', this)">🔴 Stock Bajo</button>
+            </div>
+            <input type="text" id="invSearchInput" class="input" style="max-width:200px;height:24px;font-size:11px" placeholder="🔎 Buscar..." oninput="renderInventoryTable()">
+          </div>
+          <div class="table-wrap" style="max-height:calc(100vh - 210px);overflow-y:auto">
+            <table class="data-table">
+              <thead style="position:sticky;top:0;z-index:5">
+                <tr>
+                  <th style="width:40px">Img</th>
+                  <th>Cód / Barras</th>
+                  <th>Artículo y Categoría</th>
+                  <th>Destino</th>
+                  <th>Stock</th>
+                  <th>Costo Unit.</th>
+                  <th>PVP ($ / Bs)</th>
+                  <th>Margen</th>
+                  <th style="width:140px">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="invTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL CREAR / EDITAR ARTÍCULO DE INVENTARIO CON SELECCIÓN DE FAMILIA DE CAJA -->
+  <div class="modal-backdrop" id="invItemModal">
+    <div class="modal-box" style="max-width:650px">
+      <div class="modal-hd">
+        <h3 id="invModalTitle">📦 Registro de Inventario (Cocina o Venta Directa)</h3>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('invItemModal').classList.remove('open')">✕</button>
+      </div>
+      <div class="modal-bd">
+        <input type="hidden" id="invEditId">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Destino en el Negocio</label>
+            <select id="invEditType" class="select" onchange="toggleInvTypeFields()">
+              <option value="venta">🛒 Producto para Vender al Público (Sale en Caja)</option>
+              <option value="insumo">🍲 Insumo Exclusivo de Cocina (Materia Prima Recetas)</option>
+            </select>
+          </div>
+          <div class="form-group" id="invGroupWrap">
+            <label>Familia donde Aparece en Caja POS</label>
+            <select id="invEditGroup" class="select">
+              <option value="viveres">🌽 Harina PAN y Víveres Empaquetados</option>
+              <option value="chucherias">🧀 Pepitos, Cheetos y Chucherías</option>
+              <option value="refrescos">🥤 Refrescos y Maltas</option>
+              <option value="cervezas">🍻 Cervezas Bien Frías</option>
+              <option value="cigarros">🚬 Cigarros (Detal y Cajetilla)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Categoría Administrativa</label>
+            <select id="invEditCategory" class="select">
+              <option value="Víveres">🌽 Víveres (Harina PAN, Espagueti, Arroz)</option>
+              <option value="Chucherías">🧀 Chucherías (Pepito, Doritos, Galletas)</option>
+              <option value="Refrescos & Cervezas">🍻 Refrescos, Malta & Cervezas</option>
+              <option value="Cigarros">🚬 Cigarros</option>
+              <option value="Insumos de Cocina (Materia Prima)">🍲 Insumos de Cocina (Papa, Aliños, Carnes)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Código Corto</label>
+            <input type="text" id="invEditCode" class="input" placeholder="Ej: 107 o COC-15">
+          </div>
+          <div class="form-group">
+            <label>🔫 Código de Barras / QR</label>
+            <input type="text" id="invEditBarcode" class="input" placeholder="Escanea o genera automático">
+          </div>
+          <div class="form-group">
+            <label>Unidad de Medida</label>
+            <select id="invEditUnit" class="select">
+              <option value="und">Unidades / Paquetes / Botellas (und)</option>
+              <option value="kg">Kilogramos (kg / gramos)</option>
+              <option value="L">Litros (L / ml)</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Nombre Completo del Producto o Insumo</label>
+            <input type="text" id="invEditName" class="input" placeholder="Ej: Harina P.A.N. 1Kg / Pepito / Papa para Cocina">
+          </div>
+          <div class="form-group">
+            <label>Stock Actual</label>
+            <input type="number" step="0.01" id="invEditStock" class="input" style="font-weight:900">
+          </div>
+          <div class="form-group">
+            <label>Stock Mínimo (Alerta)</label>
+            <input type="number" step="0.5" id="invEditMin" class="input" value="8">
+          </div>
+          <div class="form-group">
+            <label>Costo Unitario USD ($)</label>
+            <input type="number" step="0.01" id="invEditCost" class="input" style="font-weight:800">
+          </div>
+          <div class="form-group" id="invPriceGroupWrap">
+            <label>Precio de Venta en Caja USD ($)</label>
+            <input type="number" step="0.01" id="invEditPrice" class="input" style="font-weight:800;color:var(--primary)">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>🖼️ Ruta o URL de Imagen (Opcional)</label>
+            <input type="text" id="invEditImg" class="input" placeholder="../assets/img/productos/viveres.jpg">
+          </div>
+        </div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-ghost" onclick="document.getElementById('invItemModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-p" onclick="saveInvItem()">💾 Guardar en Inventario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE LIBRO MAYOR KARDEX: MOVIMIENTOS HISTÓRICOS Y AUDITORÍA -->
+  <div class="modal-backdrop" id="kardexModal">
+    <div class="modal-box" style="max-width:960px;width:95%">
+      <div class="modal-hd" style="background:#0f172a;color:#fff;border-radius:12px 12px 0 0;padding:12px 16px">
+        <div>
+          <h3 style="color:#fff;margin:0;font-size:15px">📜 Libro Mayor Kardex · Auditoría Inmutable de Entradas y Salidas</h3>
+          <p style="color:#94a3b8;font-size:11.5px;margin:3px 0 0 0">Historial trazable de compras, ventas de mostrador, mermas, consumo de personal y ajustes</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="color:#fff" onclick="document.getElementById('kardexModal').classList.remove('open')">✕</button>
+      </div>
+      <div class="modal-bd">
+        <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <label style="font-size:12px;font-weight:800">Filtrar Artículo:</label>
+            <select id="kardexItemFilter" class="select" style="min-width:260px" onchange="renderKardexTable()"></select>
+            <select id="kardexActionFilter" class="select" style="min-width:160px" onchange="renderKardexTable()">
+              <option value="ALL">⚡ Todas las acciones</option>
+              <option value="COMPRA">📥 Compras / Entradas</option>
+              <option value="VENTA">📤 Ventas Mostrador</option>
+              <option value="MERMA">🗑️ Mermas / Desperdicio</option>
+              <option value="CONSUMO_PERSONAL">🍲 Consumo de Personal</option>
+              <option value="AJUSTE_AUDITORIA">⚖️ Ajustes de Auditoría</option>
+            </select>
+          </div>
+          <div id="kardexQuickSummary" style="font-size:12px;font-weight:700;color:var(--txt-sec)"></div>
+        </div>
+        <div class="table-wrap" style="max-height:420px;overflow-y:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha / Hora</th>
+                <th>Acción</th>
+                <th>Artículo / Código</th>
+                <th>Movimiento</th>
+                <th>Saldo Resultante</th>
+                <th>Costo Unit.</th>
+                <th>Doc. Referencia</th>
+                <th>Responsable</th>
+                <th>Detalle / Notas</th>
+              </tr>
+            </thead>
+            <tbody id="kardexTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-ghost" onclick="document.getElementById('kardexModal').classList.remove('open')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL RECEPCIÓN FORMAL DE MERCANCÍA / FACTURA MULTI-ÍTEM A PROVEEDOR -->
+  <div class="modal-backdrop" id="multiPurchaseModal">
+    <div class="modal-box" style="max-width:920px;width:95%">
+      <div class="modal-hd" style="background:#0284c7;color:#fff;border-radius:12px 12px 0 0;padding:12px 16px">
+        <div>
+          <h3 style="color:#fff;margin:0;font-size:15px">🚚 Recepción de Mercancía / Factura de Proveedor Multi-Ítem</h3>
+          <p style="color:#e0f2fe;font-size:11.5px;margin:3px 0 0 0">Registra varios productos de una misma factura o nota de entrega y sincroniza la gaveta de caja</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="color:#fff" onclick="document.getElementById('multiPurchaseModal').classList.remove('open')">✕</button>
+      </div>
+      <div class="modal-bd">
+        <div class="form-grid" style="grid-template-columns:1.8fr 1.2fr 1.2fr 1.2fr;gap:10px;margin-bottom:12px">
+          <div class="form-group">
+            <label>Proveedor</label>
+            <input type="text" id="mpSupplier" list="suppliersList" class="input" placeholder="Ej: Empresas Polar / Mayorista...">
+            <datalist id="suppliersList"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Nro. Factura / Control / Nota</label>
+            <input type="text" id="mpDocNumber" class="input" placeholder="Ej: FAC-8921">
+          </div>
+          <div class="form-group">
+            <label>Forma de Pago</label>
+            <select id="mpPaymentMethod" class="select" onchange="updateMpPaymentNotice()">
+              <option value="Efectivo USD">💵 Efectivo USD (Sale de Gaveta)</option>
+              <option value="Pago Móvil">📱 Pago Móvil (Sale de Banco Negocio)</option>
+              <option value="Efectivo Bs">🇻🇪 Efectivo Bs (Sale de Gaveta)</option>
+              <option value="Crédito / Cuentas por Pagar">⏳ Crédito (Por Pagar)</option>
+              <option value="NONE">🚫 No registrar salida de dinero</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Responsable</label>
+            <input type="text" id="mpResponsible" class="input" value="Administrador">
+          </div>
+        </div>
+
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong style="font-size:13px;color:#0f172a">📦 Renglones de la Factura:</strong>
+            <button type="button" class="btn btn-p btn-sm" onclick="addPurchaseRow()">+ Agregar Producto / Insumo</button>
+          </div>
+          <div class="table-wrap" style="max-height:240px;overflow-y:auto">
+            <table class="data-table" style="font-size:12px">
+              <thead>
+                <tr>
+                  <th style="min-width:200px">Producto / Insumo</th>
+                  <th style="width:90px">Bultos/Cajas</th>
+                  <th style="width:100px">Und/Kg x Bulto</th>
+                  <th style="width:110px">Costo Bulto ($)</th>
+                  <th style="width:100px">Costo Unit.</th>
+                  <th style="width:100px">Total ($)</th>
+                  <th style="width:40px"></th>
+                </tr>
+              </thead>
+              <tbody id="mpRowsBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:#ecfdf5;border:1px solid #10b981;border-radius:8px;padding:10px 14px">
+          <div>
+            <div style="font-size:11.5px;color:#065f46" id="mpPaymentNotice">💡 Esta compra descontará dinero físico de la gaveta de caja para que el arqueo cuadre.</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:#047857">TOTAL DE LA FACTURA:</div>
+            <div style="font-size:20px;font-weight:900;color:#065f46" id="mpTotalUsdDisplay">$0.00 USD</div>
+            <div style="font-size:12px;font-weight:700;color:#047857" id="mpTotalBsDisplay">0.00 Bs</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-ghost" onclick="document.getElementById('multiPurchaseModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-p" onclick="submitMultiPurchase()">📥 Procesar Factura y Asentar en Kardex</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE REGISTRO FORMAL DE MERMAS, VENCIMIENTOS Y AUTOCONSUMO -->
+  <div class="modal-backdrop" id="wasteModal">
+    <div class="modal-box" style="max-width:550px">
+      <div class="modal-hd" style="background:#dc2626;color:#fff;border-radius:12px 12px 0 0;padding:12px 16px">
+        <div>
+          <h3 style="color:#fff;margin:0;font-size:15px">🗑️ Registro de Merma, Desperdicio o Autoconsumo</h3>
+          <p style="color:#fee2e2;font-size:11.5px;margin:3px 0 0 0">Controla fugas de comida, mercancía vencida o comidas de empleados valorizadas en $</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="color:#fff" onclick="document.getElementById('wasteModal').classList.remove('open')">✕</button>
+      </div>
+      <div class="modal-bd">
+        <div class="form-grid">
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Artículo a Dar de Baja</label>
+            <select id="wasteItemSelect" class="select" onchange="updateWastePreview()"></select>
+          </div>
+          <div class="form-group">
+            <label>Cantidad a Descontar</label>
+            <input type="number" step="0.1" min="0.1" id="wasteQty" class="input" value="1" style="font-weight:900" oninput="updateWastePreview()">
+          </div>
+          <div class="form-group">
+            <label>Motivo de la Salida</label>
+            <select id="wasteReason" class="select" onchange="updateWastePreview()">
+              <option value="Deterioro / Descomposición">🥀 Deterioro / Descomposición (Podrido/Magullado)</option>
+              <option value="Quemado / Error en Cocina">🔥 Quemado / Error en Cocina</option>
+              <option value="Vencido en Mostrador">⌛ Vencido en Mostrador / Anaquel</option>
+              <option value="Rotura / Daño Accidental">💔 Rotura Accidental (Botella/Paquete Roto)</option>
+              <option value="Consumo de Personal (Almuerzo Empleado)">🍲 Consumo de Personal (Almuerzo Empleado)</option>
+              <option value="Otro Motivo">❓ Otro Motivo</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Responsable</label>
+            <input type="text" id="wasteResponsible" class="input" value="Encargado de Turno">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Notas / Explicación del Descarte</label>
+            <input type="text" id="wasteNotes" class="input" placeholder="Ej: Se cayó el botellín al abrir la cava...">
+          </div>
+        </div>
+
+        <div id="wasteCostNotice" style="margin-top:10px;padding:10px 14px;background:#fef2f2;border:1px solid #f87171;border-radius:8px;font-size:12.5px;color:#991b1b;font-weight:700"></div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-ghost" onclick="document.getElementById('wasteModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-danger" style="background:#dc2626;color:#fff" onclick="submitWasteRecord()">🗑️ Dar de Baja y Asentar en Kardex</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE AUDITORÍA Y CONTEO FÍSICO CIEGO -->
+  <div class="modal-backdrop" id="auditModal">
+    <div class="modal-box" style="max-width:550px">
+      <div class="modal-hd" style="background:#334155;color:#fff;border-radius:12px 12px 0 0;padding:12px 16px">
+        <div>
+          <h3 style="color:#fff;margin:0;font-size:15px">⚖️ Auditoría de Inventario por Conteo Físico Real</h3>
+          <p style="color:#cbd5e1;font-size:11.5px;margin:3px 0 0 0">Cuadra la existencia física de los anaqueles contra el sistema y asienta la diferencia</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="color:#fff" onclick="document.getElementById('auditModal').classList.remove('open')">✕</button>
+      </div>
+      <div class="modal-bd">
+        <div class="form-grid">
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Artículo a Auditar</label>
+            <select id="auditItemSelect" class="select" onchange="updateAuditPreview()"></select>
+          </div>
+          <div class="form-group">
+            <label>Stock según Sistema</label>
+            <input type="text" id="auditSystemStock" class="input" readonly style="background:#f1f5f9;font-weight:900">
+          </div>
+          <div class="form-group">
+            <label>Conteo Físico Real en Anaquel</label>
+            <input type="number" step="0.5" id="auditRealStock" class="input" style="font-weight:900;color:#0284c7" oninput="updateAuditPreview()">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Motivo / Observación del Ajuste</label>
+            <input type="text" id="auditReason" class="input" placeholder="Ej: Conteo semanal de cierre de mes...">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Auditor / Responsable</label>
+            <input type="text" id="auditResponsible" class="input" value="Dueño / Auditor">
+          </div>
+        </div>
+
+        <div id="auditDiffNotice" style="margin-top:10px;padding:10px 14px;border-radius:8px;font-size:12.5px;font-weight:700"></div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-ghost" onclick="document.getElementById('auditModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-p" onclick="submitAuditAdjustment()">Aplicar Ajuste y Registrar en Kardex</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/rates.js"></script>
+  <script src="../assets/js/sidenav.js"></script>
+  <script src="../assets/js/barcode-engine.js"></script>
+  <script>
+    let currentFilter = 'ALL';
+
+    function initInvPage() {
+      populateBulkSelect();
+      renderInvStats();
+      renderInventoryTable();
+      recalcBulkPreview();
+    }
+
+    function populateBulkSelect() {
+      const sel = document.getElementById('bulkItemSelect');
+      if (!sel) return;
+      const curVal = sel.value;
+      sel.innerHTML = MTP.state.inventory.map(i =>
+        `<option value="${i.id}">${i.emoji || ''} [${i.code}] ${i.name} (Actual: ${i.stock} ${i.unit} · Costo $${i.costUsd.toFixed(2)})</option>`
+      ).join('');
+      if (curVal && MTP.getInsumoById(curVal)) sel.value = curVal;
+    }
+
+    function applyBulkPreset(itemId, packs, unitsPerPack, packCost) {
+      const sel = document.getElementById('bulkItemSelect');
+      if (sel && MTP.getInsumoById(itemId)) sel.value = itemId;
+      document.getElementById('bulkPacksCount').value = packs;
+      document.getElementById('bulkUnitsPerPack').value = unitsPerPack;
+      document.getElementById('bulkPackCostUsd').value = packCost.toFixed(2);
+      recalcBulkPreview();
+    }
+
+    function recalcBulkPreview() {
+      const itemId = document.getElementById('bulkItemSelect')?.value;
+      const item = MTP.getInsumoById(itemId);
+      const packs = Math.max(0.01, parseFloat(document.getElementById('bulkPacksCount')?.value) || 1);
+      const unitsPerPack = Math.max(0.01, parseFloat(document.getElementById('bulkUnitsPerPack')?.value) || 1);
+      const packCost = Math.max(0, parseFloat(document.getElementById('bulkPackCostUsd')?.value) || 0);
+      const bcv = MTP.state.settings.rateBcv;
+
+      const totalUnits = Number((packs * unitsPerPack).toFixed(2));
+      const totalCost = Number((packs * packCost).toFixed(2));
+      const unitCost = totalUnits > 0 ? totalCost / totalUnits : 0;
+      const recPrice = item && item.sellable ? MTP.calcRecommendedPriceUsd(unitCost, 38) : 0;
+
+      const priceInput = document.getElementById('bulkNewSalePrice');
+      if (priceInput && item) {
+        if (!item.sellable) {
+          priceInput.value = '0.00';
+          priceInput.disabled = true;
+        } else {
+          priceInput.disabled = false;
+          priceInput.value = Math.max(item.priceUsd, Number(recPrice.toFixed(2))).toFixed(2);
+        }
+      }
+
+      const bar = document.getElementById('bulkCalcSummaryBar');
+      if (bar && item) {
+        bar.innerHTML = `
+          <div>
+            📥 Entrarán al stock: <strong style="color:#059669;font-size:13.5px">+${totalUnits} ${item.unit}</strong>
+            (Nuevo stock total: <strong>${(item.stock + totalUnits).toFixed(2)} ${item.unit}</strong>)
+          </div>
+          <div>
+            💵 Inversión Total: <strong>${MTP.fmtUSD(totalCost)}</strong> (${(totalCost * bcv).toFixed(2)} Bs)
+            · Costo Unitario Resultante: <strong style="color:#0f172a;background:#fef3c7;padding:2px 6px;border-radius:4px">$${unitCost.toFixed(3)} / ${item.unit}</strong>
+          </div>
+          ${item.sellable ? `<div>🛡️ Precio Sugerido Antiperdida (Brecha USDT): <strong style="color:#059669">${MTP.fmtUSD(recPrice)}</strong></div>` : `<div>🍲 Insumo exclusivo de cocina (se descuenta en recetas)</div>`}
+        `;
+      }
+    }
+
+    function submitBulkEntry() {
+      const itemId = document.getElementById('bulkItemSelect').value;
+      const packsCount = parseFloat(document.getElementById('bulkPacksCount').value) || 1;
+      const unitsPerPack = parseFloat(document.getElementById('bulkUnitsPerPack').value) || 1;
+      const packCostUsd = parseFloat(document.getElementById('bulkPackCostUsd').value) || 0;
+      const newSalePriceUsd = parseFloat(document.getElementById('bulkNewSalePrice').value) || 0;
+      const expSource = document.getElementById('bulkExpenseSource').value;
+
+      const res = MTP.addBulkStockEntry({
+        itemId,
+        packsCount,
+        unitsPerPack,
+        packCostUsd,
+        newSalePriceUsd,
+        registerAsExpense: expSource !== 'NONE',
+        paymentSource: expSource
+      });
+
+      if (res) {
+        initInvPage();
+        MTP.toast(`¡Sumados +${res.totalUnitsAdded} ${res.item.unit} de "${res.item.name}"! Costo unitario: $${res.unitCostUsd.toFixed(2)}`);
+      }
+    }
+
+    function setInvFilter(f, btnEl) {
+      currentFilter = f;
+      document.querySelectorAll('#invFilterBtns .btn').forEach(b => b.className = 'btn btn-ghost btn-sm');
+      if (btnEl) btnEl.className = 'btn btn-p btn-sm';
+      renderInventoryTable();
+    }
+
+    function renderInvStats() {
+      const inv = MTP.state.inventory;
+      const kitchenItems = inv.filter(i => !i.sellable);
+      const saleItems = inv.filter(i => i.sellable);
+      const kitchenCapital = kitchenItems.reduce((acc, i) => acc + (i.stock * i.costUsd), 0);
+      const saleCapital = saleItems.reduce((acc, i) => acc + (i.stock * i.costUsd), 0);
+      const saleRevenue = saleItems.reduce((acc, i) => acc + (i.stock * i.priceUsd), 0);
+      const expectedRetailProfit = saleRevenue - saleCapital;
+      const lowCount = inv.filter(i => i.stock <= i.minStock).length;
+
+      const kitchenIco = window.MTPIcons ? MTPIcons.get('kitchen', { size: 16 }) : '';
+      const pkgIco = window.MTPIcons ? MTPIcons.get('package', { size: 16 }) : '';
+      const alertIco = window.MTPIcons ? MTPIcons.get('alert', { size: 16 }) : '';
+
+      document.getElementById('invStatsGrid').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-ico yellow">${kitchenIco}</div>
+          <div>
+            <div class="stat-n">${MTP.fmtUSD(kitchenCapital)}</div>
+            <div class="stat-l">Capital en Almacén de Cocina (${kitchenItems.length} insumos)</div>
+            <div class="stat-sub">Papa, aliños, carnes, pollo, queso, aceite</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico green">${pkgIco}</div>
+          <div>
+            <div class="stat-n">${MTP.fmtUSD(saleCapital)}</div>
+            <div class="stat-l">Costo en Mercancía de Venta (${saleItems.length} productos)</div>
+            <div class="stat-sub">Valor venta: <strong>${MTP.fmtUSD(saleRevenue)}</strong> (+${MTP.fmtUSD(expectedRetailProfit)} ganancia)</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico ${lowCount ? 'red' : 'blue'}">${alertIco}</div>
+          <div>
+            <div class="stat-n">${lowCount} alertas</div>
+            <div class="stat-l">Ítems en Punto de Reposición</div>
+            <div class="stat-sub"><a href="#" onclick="setInvFilter('LOW');return false;" style="color:var(--danger);font-weight:800">Ver agotándose →</a></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderInventoryTable() {
+      const tbody = document.getElementById('invTableBody');
+      const q = (document.getElementById('invSearchInput').value || '').toLowerCase();
+      const bcv = MTP.state.settings.rateBcv;
+
+      const rows = MTP.state.inventory.filter(i => {
+        if (currentFilter === 'LOW' && i.stock > i.minStock) return false;
+        if (currentFilter === 'COCINA' && i.sellable) return false;
+        if (currentFilter !== 'ALL' && currentFilter !== 'LOW' && currentFilter !== 'COCINA' && i.category !== currentFilter) return false;
+        if (q && !i.name.toLowerCase().includes(q) && !i.code.toLowerCase().includes(q) && !i.barcode.includes(q)) return false;
+        return true;
+      });
+
+      tbody.innerHTML = rows.map(i => {
+        const isLow = i.stock <= i.minStock;
+        const isCostly = i.costUsd > (i.prevCostUsd || i.costUsd);
+        const fallbackImg = MTP.getFallbackSvgDataUri(i.name, i.emoji);
+        const marginPct = i.sellable && i.priceUsd > 0 ? (((i.priceUsd - i.costUsd) / i.priceUsd) * 100).toFixed(0) : 0;
+
+        return `
+          <tr>
+            <td style="width:34px;padding:3px 5px">
+              <img src="${i.img || fallbackImg}" alt="${i.name}" onerror="this.onerror=null;this.src='${fallbackImg}'"
+                style="width:28px;height:24px;object-fit:cover;border-radius:4px;border:1px solid var(--border)">
+            </td>
+            <td style="padding:3px 6px">
+              <span class="code-pill">#${i.code}</span>
+              <div style="font-family:var(--font-mono);font-size:9.5px;color:var(--txt-muted)">${i.barcode}</div>
+            </td>
+            <td style="padding:3px 6px">
+              <div style="font-weight:700;font-size:11.5px">${i.emoji || ''} ${i.name}</div>
+              <div style="font-size:9.5px;color:var(--txt-sec)">${i.category}</div>
+            </td>
+            <td style="padding:3px 6px">
+              ${i.sellable
+                ? `<span class="badge badge-green">🛒 ${i.group || 'Venta'}</span>`
+                : `<span class="badge badge-yellow">🍲 Cocina</span>`}
+            </td>
+            <td style="padding:3px 6px">
+              <span class="badge ${isLow ? 'badge-red' : 'badge-green'}" style="font-size:11px">
+                ${MTP.fmtWeight(i.stock, i.unit)}
+              </span>
+            </td>
+            <td style="padding:3px 6px;font-weight:700">${MTP.fmtUSD(i.costUsd)}</td>
+            <td style="padding:3px 6px">
+              ${i.sellable
+                ? `<div class="price-dual">
+                     <span class="price-usd">${MTP.fmtUSD(i.priceUsd)}</span>
+                     <span class="price-bs">${(i.priceUsd * bcv).toFixed(2)} Bs</span>
+                   </div>`
+                : `<span style="font-size:10px;color:var(--txt-muted)">Cocina</span>`}
+            </td>
+            <td style="padding:3px 6px">
+              ${i.sellable
+                ? `<span class="badge ${marginPct >= 30 ? 'badge-green' : 'badge-yellow'}">${marginPct}%</span>`
+                : '—'}
+            </td>
+            <td style="padding:3px 6px">
+              <div style="display:flex;gap:3px;flex-wrap:wrap">
+                <button class="btn btn-ghost btn-sm" style="padding:1px 5px;font-size:10px" onclick="openKardexModal('${i.id}')" title="Kardex">📜</button>
+                <button class="btn btn-ghost btn-sm" style="color:#0284c7;padding:1px 5px;font-size:10px" onclick="openAuditModal('${i.id}')" title="Conteo">⚖️</button>
+                <button class="btn btn-ghost btn-sm" style="color:#dc2626;padding:1px 5px;font-size:10px" onclick="openWasteModal('${i.id}')" title="Merma">🗑️</button>
+                <button class="btn btn-ghost btn-sm" style="padding:1px 5px;font-size:10px" onclick="openInvItemModal('${i.id}')" title="Editar">✏️</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function toggleBulkCard() {
+      const bd = document.getElementById('bulkCardBody');
+      const btn = document.getElementById('bulkToggleBtn');
+      if (!bd) return;
+      const isHidden = bd.style.display === 'none';
+      bd.style.display = isHidden ? 'block' : 'none';
+      if (btn) btn.textContent = isHidden ? 'Ocultar ▲' : 'Mostrar Calculadora ▼';
+    }
+
+    /* ==========================================================================
+       CONTROLADOR DEL LIBRO MAYOR KARDEX (HISTORIAL DE ENTRADAS Y SALIDAS)
+       ========================================================================== */
+    function openKardexModal(filterItemId = 'ALL') {
+      const sel = document.getElementById('kardexItemFilter');
+      if (sel) {
+        sel.innerHTML = `<option value="ALL">⚡ Todos los Artículos del Negocio</option>` +
+          MTP.state.inventory.map(i => `<option value="${i.id}">[${i.code}] ${i.name} (Stock: ${i.stock} ${i.unit})</option>`).join('');
+        sel.value = filterItemId || 'ALL';
+      }
+      renderKardexTable();
+      document.getElementById('kardexModal').classList.add('open');
+    }
+
+    function renderKardexTable() {
+      const tbody = document.getElementById('kardexTableBody');
+      const itemFilter = document.getElementById('kardexItemFilter')?.value || 'ALL';
+      const actionFilter = document.getElementById('kardexActionFilter')?.value || 'ALL';
+      const kardex = MTP.state.kardex || [];
+
+      const filtered = kardex.filter(k => {
+        if (itemFilter !== 'ALL' && k.itemId !== itemFilter) return false;
+        if (actionFilter !== 'ALL' && k.action !== actionFilter) return false;
+        return true;
+      });
+
+      let totalIn = 0;
+      let totalOut = 0;
+      filtered.forEach(k => {
+        if (k.qty > 0) totalIn += k.qty;
+        else totalOut += Math.abs(k.qty);
+      });
+
+      const summaryEl = document.getElementById('kardexQuickSummary');
+      if (summaryEl) {
+        summaryEl.innerHTML = `Mostrando <strong>${filtered.length}</strong> movimientos · <span style="color:#059669">+${totalIn.toFixed(2)} entradas</span> · <span style="color:#dc2626">-${totalOut.toFixed(2)} salidas</span>`;
+      }
+
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:25px;color:var(--txt-muted)">No hay movimientos registrados para este filtro.</td></tr>`;
+        return;
+      }
+
+      const ACTION_BADGES = {
+        'COMPRA': '<span class="badge badge-green">📥 COMPRA</span>',
+        'VENTA': '<span class="badge" style="background:#e0f2fe;color:#0369a1">📤 VENTA</span>',
+        'MERMA': '<span class="badge badge-red">🗑️ MERMA</span>',
+        'CONSUMO_PERSONAL': '<span class="badge" style="background:#f3e8ff;color:#7e22ce">🍲 CONSUMO PERS.</span>',
+        'AJUSTE_AUDITORIA': '<span class="badge badge-yellow">⚖️ AJUSTE AUDITORÍA</span>',
+        'PRODUCCION_COCINA': '<span class="badge" style="background:#ccfbf1;color:#0f766e">🍳 PRODUCCIÓN</span>'
+      };
+
+      tbody.innerHTML = filtered.map(k => {
+        const d = new Date(k.timestamp);
+        const dateStr = d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+                        d.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+        const isPos = k.qty > 0;
+        const qtyStr = (isPos ? '+' : '') + k.qty + ' ' + (k.unit || 'und');
+        const badgeHtml = ACTION_BADGES[k.action] || `<span class="badge">${k.action}</span>`;
+
+        return `
+          <tr>
+            <td style="font-size:11px;color:var(--txt-sec);white-space:nowrap">${dateStr}</td>
+            <td>${badgeHtml}</td>
+            <td>
+              <div style="font-weight:800;font-size:12.5px">${k.itemName || '—'}</div>
+              <span class="code-pill">#${k.itemCode || '—'}</span>
+            </td>
+            <td>
+              <strong style="color:${isPos ? '#059669' : '#dc2626'};font-size:13px">${qtyStr}</strong>
+            </td>
+            <td>
+              <span style="font-weight:900;background:#f8fafc;padding:3px 6px;border-radius:4px;border:1px solid var(--border)">
+                ${k.nextStock} ${k.unit || 'und'}
+              </span>
+              <div style="font-size:10px;color:var(--txt-muted)">Antes: ${k.prevStock}</div>
+            </td>
+            <td style="font-weight:700;font-size:11.5px">${MTP.fmtUSD(k.costUsd || 0)}</td>
+            <td>
+              <span style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:#0284c7">${k.docRef || '—'}</span>
+            </td>
+            <td style="font-size:11.5px;color:var(--txt-sec)">${k.responsible || '—'}</td>
+            <td style="font-size:11.5px;max-width:220px;color:var(--txt-main)">${k.notes || (k.supplier ? 'Prov: ' + k.supplier : '—')}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    /* ==========================================================================
+       CONTROLADOR DE RECEPCIÓN / FACTURA MULTI-ÍTEM A PROVEEDORES
+       ========================================================================== */
+    function openMultiPurchaseModal() {
+      const dl = document.getElementById('suppliersList');
+      if (dl) {
+        dl.innerHTML = (MTP.state.suppliers || []).map(s => `<option value="${s.name}">`).join('');
+      }
+      document.getElementById('mpDocNumber').value = 'FAC-' + Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('mpSupplier').value = (MTP.state.suppliers && MTP.state.suppliers[0]) ? MTP.state.suppliers[0].name : '';
+      document.getElementById('mpPaymentMethod').value = 'Efectivo USD';
+
+      const tbody = document.getElementById('mpRowsBody');
+      tbody.innerHTML = '';
+      addPurchaseRow();
+      addPurchaseRow();
+      recalcPurchaseTotals();
+      updateMpPaymentNotice();
+      document.getElementById('multiPurchaseModal').classList.add('open');
+    }
+
+    function addPurchaseRow() {
+      const tbody = document.getElementById('mpRowsBody');
+      if (!tbody) return;
+      const rowId = 'mpRow_' + Date.now() + '_' + Math.floor(Math.random() * 100);
+      const tr = document.createElement('tr');
+      tr.id = rowId;
+
+      const optsHtml = MTP.state.inventory.map(i =>
+        `<option value="${i.id}" data-unit="${i.unit}" data-cost="${i.costUsd}">[${i.code}] ${i.name} (${i.unit})</option>`
+      ).join('');
+
+      tr.innerHTML = `
+        <td>
+          <select class="select mp-item-select" onchange="onMpItemChange('${rowId}')" style="font-size:11.5px;padding:5px">
+            ${optsHtml}
+          </select>
+        </td>
+        <td>
+          <input type="number" step="1" min="1" value="1" class="input mp-packs" style="padding:4px 6px;font-weight:900" oninput="recalcPurchaseTotals()">
+        </td>
+        <td>
+          <input type="number" step="0.5" min="1" value="20" class="input mp-units-per-pack" style="padding:4px 6px;font-weight:900" oninput="recalcPurchaseTotals()">
+        </td>
+        <td>
+          <input type="number" step="0.01" min="0" value="21.60" class="input mp-pack-cost" style="padding:4px 6px;font-weight:900" oninput="recalcPurchaseTotals()">
+        </td>
+        <td>
+          <span class="mp-unit-cost-preview" style="font-weight:800;color:#0f172a;font-size:12px">$1.08</span>
+        </td>
+        <td>
+          <strong class="mp-line-total-preview" style="color:#059669;font-size:13px">$21.60</strong>
+        </td>
+        <td>
+          <button type="button" class="btn btn-ghost btn-sm" style="color:#dc2626;padding:2px 6px" onclick="removePurchaseRow('${rowId}')">✕</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+      onMpItemChange(rowId);
+      recalcPurchaseTotals();
+    }
+
+    function removePurchaseRow(rowId) {
+      const tr = document.getElementById(rowId);
+      if (tr) tr.remove();
+      recalcPurchaseTotals();
+    }
+
+    function onMpItemChange(rowId) {
+      const tr = document.getElementById(rowId);
+      if (!tr) return;
+      const sel = tr.querySelector('.mp-item-select');
+      const opt = sel.options[sel.selectedIndex];
+      const unit = opt.getAttribute('data-unit') || 'und';
+      const cost = parseFloat(opt.getAttribute('data-cost')) || 1.0;
+
+      const unitsInput = tr.querySelector('.mp-units-per-pack');
+      const costInput = tr.querySelector('.mp-pack-cost');
+      if (unit === 'kg' || unit === 'L') {
+        unitsInput.value = '10';
+        costInput.value = (cost * 10).toFixed(2);
+      } else {
+        unitsInput.value = '20';
+        costInput.value = (cost * 20).toFixed(2);
+      }
+      recalcPurchaseTotals();
+    }
+
+    function recalcPurchaseTotals() {
+      const rows = document.querySelectorAll('#mpRowsBody tr');
+      let grandTotalUsd = 0;
+      const bcv = MTP.state.settings.rateBcv || 42.85;
+
+      rows.forEach(tr => {
+        const packs = Math.max(0.01, parseFloat(tr.querySelector('.mp-packs')?.value) || 1);
+        const unitsPerPack = Math.max(0.01, parseFloat(tr.querySelector('.mp-units-per-pack')?.value) || 1);
+        const packCost = Math.max(0, parseFloat(tr.querySelector('.mp-pack-cost')?.value) || 0);
+
+        const totalUnits = packs * unitsPerPack;
+        const lineTotal = packs * packCost;
+        const unitCost = totalUnits > 0 ? lineTotal / totalUnits : 0;
+
+        const uEl = tr.querySelector('.mp-unit-cost-preview');
+        const lEl = tr.querySelector('.mp-line-total-preview');
+        if (uEl) uEl.textContent = '$' + unitCost.toFixed(3);
+        if (lEl) lEl.textContent = '$' + lineTotal.toFixed(2);
+
+        grandTotalUsd += lineTotal;
+      });
+
+      document.getElementById('mpTotalUsdDisplay').textContent = MTP.fmtUSD(grandTotalUsd);
+      document.getElementById('mpTotalBsDisplay').textContent = (grandTotalUsd * bcv).toFixed(2) + ' Bs';
+    }
+
+    function updateMpPaymentNotice() {
+      const m = document.getElementById('mpPaymentMethod')?.value;
+      const el = document.getElementById('mpPaymentNotice');
+      if (!el) return;
+      if (m === 'Efectivo USD' || m === 'Efectivo Bs') {
+        el.textContent = `💡 Pago de contado (${m}): Se descontará automáticamente de la gaveta de caja para que el arqueo cuadre.`;
+        el.style.color = '#065f46';
+      } else if (m === 'Pago Móvil') {
+        el.textContent = `📱 Pago Móvil: Se registrará el egreso bancario del negocio.`;
+        el.style.color = '#0284c7';
+      } else if (m === 'Crédito / Cuentas por Pagar') {
+        el.textContent = `⏳ Crédito Proveedor: La mercancía entra al stock y queda registrada como cuenta pendiente por pagar.`;
+        el.style.color = '#b45309';
+      } else {
+        el.textContent = `🚫 Solo entrada de stock sin movimiento de dinero registrado.`;
+        el.style.color = '#64748b';
+      }
+    }
+
+    function submitMultiPurchase() {
+      const rows = document.querySelectorAll('#mpRowsBody tr');
+      if (!rows.length) {
+        MTP.toast('Agrega al menos un renglón a la factura', 'warn');
+        return;
+      }
+
+      const items = [];
+      rows.forEach(tr => {
+        const itemId = tr.querySelector('.mp-item-select')?.value;
+        const packsCount = parseFloat(tr.querySelector('.mp-packs')?.value) || 1;
+        const unitsPerPack = parseFloat(tr.querySelector('.mp-units-per-pack')?.value) || 1;
+        const packCostUsd = parseFloat(tr.querySelector('.mp-pack-cost')?.value) || 0;
+        if (itemId && packCostUsd > 0) {
+          items.push({ itemId, packsCount, unitsPerPack, packCostUsd });
+        }
+      });
+
+      if (!items.length) {
+        MTP.toast('Verifica que los renglones tengan costo válido mayor a $0.00', 'warn');
+        return;
+      }
+
+      const supplier = document.getElementById('mpSupplier').value.trim() || 'Proveedor General';
+      const docNumber = document.getElementById('mpDocNumber').value.trim() || ('FAC-' + Date.now().toString().slice(-5));
+      const paymentMethod = document.getElementById('mpPaymentMethod').value;
+      const responsible = document.getElementById('mpResponsible').value.trim() || 'Administrador';
+
+      const res = MTP.recordMultiItemPurchase({
+        supplier,
+        docNumber,
+        paymentMethod,
+        items,
+        responsible,
+        notes: `Recepción de factura ${docNumber} a ${supplier}`
+      });
+
+      if (res) {
+        document.getElementById('multiPurchaseModal').classList.remove('open');
+        initInvPage();
+        MTP.toast(`¡Factura ${docNumber} procesada con éxito! +${res.itemsCount} productos entraron al stock y Kardex.`);
+      }
+    }
+
+    /* ==========================================================================
+       CONTROLADOR DE MERMAS, VENCIMIENTOS Y AUTOCONSUMO
+       ========================================================================== */
+    function openWasteModal(itemId = null) {
+      const sel = document.getElementById('wasteItemSelect');
+      if (sel) {
+        sel.innerHTML = MTP.state.inventory.map(i =>
+          `<option value="${i.id}" data-cost="${i.costUsd}" data-unit="${i.unit}">[${i.code}] ${i.name} (Stock: ${i.stock} ${i.unit} · Costo $${i.costUsd.toFixed(2)})</option>`
+        ).join('');
+        if (itemId && MTP.getInsumoById(itemId)) sel.value = itemId;
+      }
+      document.getElementById('wasteQty').value = '1';
+      document.getElementById('wasteNotes').value = '';
+      updateWastePreview();
+      document.getElementById('wasteModal').classList.add('open');
+    }
+
+    function updateWastePreview() {
+      const sel = document.getElementById('wasteItemSelect');
+      const item = MTP.getInsumoById(sel?.value);
+      const qty = Math.max(0.01, parseFloat(document.getElementById('wasteQty')?.value) || 1);
+      const notice = document.getElementById('wasteCostNotice');
+      const bcv = MTP.state.settings.rateBcv || 42.85;
+
+      if (!item || !notice) return;
+      const totalLossUsd = qty * item.costUsd;
+      const totalLossBs = totalLossUsd * bcv;
+      const remainingStock = Math.max(0, item.stock - qty);
+
+      notice.innerHTML = `
+        <div>📉 Pérdida Monetaria Valorizada: <strong>${MTP.fmtUSD(totalLossUsd)}</strong> (${totalLossBs.toFixed(2)} Bs)</div>
+        <div style="font-size:11px;font-weight:normal;color:#7f1d1d;margin-top:2px">
+          El stock de "${item.name}" bajará de <strong>${item.stock} ${item.unit}</strong> a <strong>${remainingStock.toFixed(2)} ${item.unit}</strong>
+        </div>
+      `;
+    }
+
+    function submitWasteRecord() {
+      const itemId = document.getElementById('wasteItemSelect')?.value;
+      const qty = parseFloat(document.getElementById('wasteQty')?.value) || 0;
+      const reason = document.getElementById('wasteReason')?.value || 'Deterioro';
+      const responsible = document.getElementById('wasteResponsible')?.value || 'Encargado';
+      const notes = document.getElementById('wasteNotes')?.value || '';
+
+      if (qty <= 0) {
+        MTP.toast('Ingresa una cantidad mayor a 0 para dar de baja', 'warn');
+        return;
+      }
+
+      const res = MTP.recordWaste({
+        itemId,
+        qty,
+        reason,
+        responsible,
+        notes
+      });
+
+      if (res) {
+        document.getElementById('wasteModal').classList.remove('open');
+        initInvPage();
+        MTP.toast(`Merma registrada: -${res.qty} ${res.unit} dados de baja y asentados en Kardex`);
+      }
+    }
+
+    /* ==========================================================================
+       CONTROLADOR DE AUDITORÍA Y CONTEO FÍSICO CIEGO
+       ========================================================================== */
+    function openAuditModal(itemId = null) {
+      const sel = document.getElementById('auditItemSelect');
+      if (sel) {
+        sel.innerHTML = MTP.state.inventory.map(i =>
+          `<option value="${i.id}">[${i.code}] ${i.name} (${i.unit})</option>`
+        ).join('');
+        if (itemId && MTP.getInsumoById(itemId)) sel.value = itemId;
+      }
+      updateAuditPreview();
+      document.getElementById('auditModal').classList.add('open');
+    }
+
+    function updateAuditPreview() {
+      const sel = document.getElementById('auditItemSelect');
+      const item = MTP.getInsumoById(sel?.value);
+      if (!item) return;
+
+      const sysEl = document.getElementById('auditSystemStock');
+      const realEl = document.getElementById('auditRealStock');
+      const notice = document.getElementById('auditDiffNotice');
+
+      if (sysEl) sysEl.value = `${item.stock} ${item.unit}`;
+      if (realEl && realEl.value === '') realEl.value = item.stock;
+
+      const realStock = parseFloat(realEl.value);
+      if (isNaN(realStock)) return;
+
+      const diff = Number((realStock - item.stock).toFixed(3));
+      const bcv = MTP.state.settings.rateBcv || 42.85;
+      const diffCostUsd = Math.abs(diff) * item.costUsd;
+
+      if (diff === 0) {
+        notice.style.background = '#f0fdf4';
+        notice.style.border = '1px solid #86efac';
+        notice.style.color = '#15803d';
+        notice.innerHTML = `✅ Conteo exacto: Físico y Sistema coinciden al 100%.`;
+      } else if (diff < 0) {
+        notice.style.background = '#fef2f2';
+        notice.style.border = '1px solid #fca5a5';
+        notice.style.color = '#b91c1c';
+        notice.innerHTML = `⚠️ FALTANTE FÍSICO: Faltan <strong>${Math.abs(diff)} ${item.unit}</strong> en el anaquel (Pérdida de ${MTP.fmtUSD(diffCostUsd)} / ${(diffCostUsd * bcv).toFixed(2)} Bs).`;
+      } else {
+        notice.style.background = '#eff6ff';
+        notice.style.border = '1px solid #93c5fd';
+        notice.style.color = '#1d4ed8';
+        notice.innerHTML = `ℹ️ SOBRANTE FÍSICO: Hay <strong>+${diff} ${item.unit}</strong> de más en físico que en el sistema (+${MTP.fmtUSD(diffCostUsd)} valor).`;
+      }
+    }
+
+    function submitAuditAdjustment() {
+      const itemId = document.getElementById('auditItemSelect')?.value;
+      const realPhysicalStock = parseFloat(document.getElementById('auditRealStock')?.value);
+      const reason = document.getElementById('auditReason')?.value.trim() || 'Auditoría física de inventario';
+      const responsible = document.getElementById('auditResponsible')?.value.trim() || 'Dueño / Auditor';
+
+      if (isNaN(realPhysicalStock) || realPhysicalStock < 0) {
+        MTP.toast('Ingresa una cantidad física válida', 'warn');
+        return;
+      }
+
+      const res = MTP.recordAuditAdjustment({
+        itemId,
+        realPhysicalStock,
+        reason,
+        responsible
+      });
+
+      if (res) {
+        document.getElementById('auditModal').classList.remove('open');
+        initInvPage();
+        MTP.toast(`Ajuste aplicado: ${res.item.name} ahora tiene ${res.realStock} ${res.item.unit} (Diferencia: ${res.diff > 0 ? '+' : ''}${res.diff})`);
+      }
+    }
+
+    function toggleInvTypeFields() {
+      const t = document.getElementById('invEditType').value;
+      const priceWrap = document.getElementById('invPriceGroupWrap');
+      const grpWrap = document.getElementById('invGroupWrap');
+      if (t === 'insumo') {
+        priceWrap.style.display = 'none';
+        grpWrap.style.display = 'none';
+        document.getElementById('invEditCategory').value = 'Insumos de Cocina (Materia Prima)';
+        document.getElementById('invEditUnit').value = 'kg';
+      } else {
+        priceWrap.style.display = 'block';
+        grpWrap.style.display = 'block';
+      }
+    }
+
+    function openInvItemModal(invId, defaultType = 'venta') {
+      const item = invId ? MTP.getInsumoById(invId) : null;
+      document.getElementById('invEditId').value = item ? item.id : '';
+      document.getElementById('invEditType').value = item ? (item.sellable ? 'venta' : 'insumo') : defaultType;
+      document.getElementById('invEditGroup').value = item && item.group ? item.group : 'viveres';
+      document.getElementById('invEditCategory').value = item ? item.category : (defaultType === 'insumo' ? 'Insumos de Cocina (Materia Prima)' : 'Víveres');
+      document.getElementById('invEditCode').value = item ? item.code : (defaultType === 'insumo' ? 'COC-' + (MTP.state.inventory.length + 1) : String(MTP.state.inventory.length + 200));
+      document.getElementById('invEditBarcode').value = item ? item.barcode : ('759' + Math.floor(1000000000 + Math.random() * 8999999999));
+      document.getElementById('invEditName').value = item ? item.name : '';
+      document.getElementById('invEditImg').value = item ? (item.img || '') : '';
+      document.getElementById('invEditUnit').value = item ? item.unit : (defaultType === 'insumo' ? 'kg' : 'und');
+      document.getElementById('invEditStock').value = item ? item.stock : 24;
+      document.getElementById('invEditMin').value = item ? item.minStock : 6;
+      document.getElementById('invEditCost').value = item ? item.costUsd : 1.00;
+      document.getElementById('invEditPrice').value = item ? item.priceUsd : 1.60;
+      toggleInvTypeFields();
+      document.getElementById('invItemModal').classList.add('open');
+    }
+
+    function saveInvItem() {
+      const id = document.getElementById('invEditId').value;
+      const type = document.getElementById('invEditType').value;
+      const sellable = type === 'venta';
+      const group = sellable ? document.getElementById('invEditGroup').value : '';
+      const category = document.getElementById('invEditCategory').value;
+      const code = document.getElementById('invEditCode').value.trim();
+      const barcode = document.getElementById('invEditBarcode').value.trim();
+      const name = document.getElementById('invEditName').value.trim();
+      const img = document.getElementById('invEditImg').value.trim();
+      const unit = document.getElementById('invEditUnit').value;
+      const stock = parseFloat(document.getElementById('invEditStock').value) || 0;
+      const minStock = parseFloat(document.getElementById('invEditMin').value) || 0;
+      const costUsd = parseFloat(document.getElementById('invEditCost').value) || 0;
+      const priceUsd = sellable ? (parseFloat(document.getElementById('invEditPrice').value) || 0) : 0;
+
+      if (!name) {
+        MTP.toast('Ingresa el nombre del artículo', 'warn');
+        return;
+      }
+
+      if (id) {
+        const item = MTP.getInsumoById(id);
+        if (item) {
+          item.prevCostUsd = item.costUsd;
+          Object.assign(item, { type, sellable, group, category, code, barcode, name, img, unit, stock, minStock, costUsd, priceUsd });
+        }
+      } else {
+        MTP.state.inventory.push({
+          id: 'inv-' + Date.now(),
+          code,
+          barcode,
+          qrCode: 'QR-' + code,
+          group,
+          name,
+          category,
+          type,
+          sellable,
+          unit,
+          stock,
+          minStock,
+          costUsd,
+          prevCostUsd: costUsd,
+          priceUsd,
+          emoji: sellable ? '🛒' : '🍲',
+          img
+        });
+      }
+
+      MTP.save();
+      document.getElementById('invItemModal').classList.remove('open');
+      initInvPage();
+      MTP.toast('Artículo guardado en el inventario y sincronizado con Caja');
+    }
+
+    document.addEventListener('DOMContentLoaded', initInvPage);
+    window.addEventListener('mtp:state-updated', initInvPage);
+  </script>
+</body>
+</html>

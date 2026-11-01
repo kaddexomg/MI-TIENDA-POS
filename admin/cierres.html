@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuadre de Caja Venezolano, Conciliación Pago Móvil y Vueltos | MI TIENDA POS</title>
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+</head>
+<body>
+  <div class="admin-wrap">
+    <aside class="admin-aside" id="adminAside"></aside>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle" id="menuToggleBtn">☰</button>
+          <div class="topbar-title">
+            <h2>Cuadre de Caja (Control Interno Venezolano · Sin Descuadres)</h2>
+            <p>Arqueo neto de gaveta USD/Bs, pagos móviles recibidos, gastos pagados y distribución de vueltos</p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
+          <button class="btn btn-danger btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Registrar Gasto (F6)</button>
+          <button class="btn btn-p btn-sm" onclick="window.print()">Imprimir Acta de Cierre</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- MARCO LEGAL / DESLINDE SENIAT -->
+        <div style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:6px 10px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-left:3px solid #10b981;font-size:10.5px">
+          <div>
+            <strong style="color:#34d399">CONTROL INTERNO (NO FISCAL):</strong>
+            Comprobantes emitidos como <em>Órdenes de Despacho</em>. Audita ventas, vueltos entregados, gastos de caja chica y efectivo físico en gaveta.
+          </div>
+          <span class="badge badge-green" style="font-size:9.5px">Auditado</span>
+        </div>
+
+        <!-- TOTALES DEL TURNO -->
+        <div class="stat-grid" id="cierreTotalsGrid" style="margin-bottom:6px"></div>
+
+        <!-- ARQUEO NETO DE GAVETA FÍSICA Y BANCOS -->
+        <div class="card" style="border:1.5px solid #059669;margin-bottom:8px">
+          <div class="card-hd" style="background:#ecfdf5;padding:4px 8px">
+            <div>
+              <h3 style="color:#065f46;font-size:12px">Arqueo Neto Exacto: Efectivo en Gaveta y Pago Móvil</h3>
+              <span style="font-size:10px;color:#047857">Fórmula: [Cobrado] − [Vueltos entregados] − [Gastos de caja pagados]</span>
+            </div>
+            <span class="badge badge-green">Dinero en Mano</span>
+          </div>
+          <div class="card-bd" style="padding:6px 8px">
+            <div class="stat-grid" id="netDrawerGrid" style="margin-bottom:0"></div>
+          </div>
+        </div>
+
+        <!-- CONCILIACIÓN DE PAGOS MÓVILES DEL TURNO -->
+        <div class="card" style="margin-bottom:8px">
+          <div class="card-hd" style="padding:4px 8px">
+            <h3 style="font-size:12px">Verificación de Pago Móvil Recibidos en el Turno</h3>
+            <span class="badge badge-green">Anti-Fraude</span>
+          </div>
+          <div class="table-wrap" style="max-height:180px;overflow-y:auto">
+            <table class="data-table">
+              <thead style="position:sticky;top:0;z-index:5">
+                <tr>
+                  <th>Orden</th>
+                  <th>Cliente / Hora</th>
+                  <th>Banco Origen</th>
+                  <th>Teléfono / Cédula</th>
+                  <th>Nº Referencia</th>
+                  <th>Monto Bs</th>
+                  <th>Equiv. USD</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="pmVerificationTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- GASTOS OPERATIVOS DEL TURNO RESTADOS DE CAJA -->
+        <div class="card" style="margin-bottom:8px">
+          <div class="card-hd" style="background:#fef2f2;padding:4px 8px">
+            <div>
+              <h3 style="color:#991b1b;font-size:12px">Gastos de Caja Chica Descontados del Turno</h3>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Registrar Gasto (F6)</button>
+          </div>
+          <div class="table-wrap" style="max-height:160px;overflow-y:auto">
+            <table class="data-table">
+              <thead style="position:sticky;top:0;z-index:5">
+                <tr>
+                  <th>Hora</th>
+                  <th>Categoría</th>
+                  <th>Concepto</th>
+                  <th>Forma de Pago</th>
+                  <th>Monto USD</th>
+                  <th>Equiv. Bs</th>
+                  <th>Responsable</th>
+                </tr>
+              </thead>
+              <tbody id="cierreExpensesTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- HISTORIAL COMPLETO DE VENTAS Y VUELTOS DEL TURNO -->
+        <div class="card">
+          <div class="card-hd">
+            <h3>Libro de Órdenes de Despacho y Desglose de Vueltos</h3>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nº Orden</th>
+                  <th>Cliente / Hora</th>
+                  <th>Detalle Vendido</th>
+                  <th>Total ($ / Bs)</th>
+                  <th>Pagos Recibidos</th>
+                  <th>Cómo se Entregó el Vuelto</th>
+                  <th>Ganancia Neta</th>
+                </tr>
+              </thead>
+              <tbody id="cierreSalesTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/rates.js"></script>
+  <script src="../assets/js/sidenav.js"></script>
+  <script>
+    function renderCierrePage() {
+      const fin = MTP.getFinancialAnalytics();
+      const sales = MTP.state.sales || [];
+      const expenses = MTP.state.expenses || [];
+      const bcv = fin.bcv;
+
+      let totVueltosUsd = fin.outChangeUsdCash + (fin.outChangePmBs + fin.outChangeBsCash) / bcv;
+
+      const cashIco = window.MTPIcons ? MTPIcons.get('cash', { size: 16 }) : '';
+      const refreshIco = window.MTPIcons ? MTPIcons.get('refresh', { size: 16 }) : '';
+      const wasteIco = window.MTPIcons ? MTPIcons.get('waste', { size: 16 }) : '';
+      const chartIco = window.MTPIcons ? MTPIcons.get('chart', { size: 16 }) : '';
+
+      document.getElementById('cierreTotalsGrid').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-ico green">${cashIco}</div>
+          <div>
+            <div class="stat-n">${MTP.fmtUSD(fin.grossSalesUsd)}</div>
+            <div class="stat-l">Ventas Brutas (${sales.length} órdenes)</div>
+            <div class="stat-sub">${MTP.fmtBsRaw(fin.grossSalesUsd * bcv)}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico yellow">${refreshIco}</div>
+          <div>
+            <div class="stat-n">${MTP.fmtUSD(totVueltosUsd)}</div>
+            <div class="stat-l">Total Vueltos Entregados</div>
+            <div class="stat-sub">$${fin.outChangeUsdCash.toFixed(2)} Efec + ${fin.outChangePmBs.toFixed(2)} Bs PM</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico red">${wasteIco}</div>
+          <div>
+            <div class="stat-n">${MTP.fmtUSD(fin.totalExpensesUsd)}</div>
+            <div class="stat-l">Gastos Operativos Pagados</div>
+            <div class="stat-sub">${expenses.length} salidas de caja</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico blue">${chartIco}</div>
+          <div>
+            <div class="stat-n" style="color:#1d4ed8">+${MTP.fmtUSD(fin.netOperatingProfitUsd)}</div>
+            <div class="stat-l">Ganancia Neta Limpia</div>
+            <div class="stat-sub">+${MTP.fmtBsRaw(fin.netOperatingProfitUsd * bcv)}</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('netDrawerGrid').innerHTML = `
+        <div class="stat-card" style="background:#f0fdf4;border-color:#bbf7d0">
+          <div>
+            <div class="stat-l" style="color:#065f46">EFECTIVO USD FÍSICO EN GAVETA</div>
+            <div class="stat-n" style="color:#065f46">${MTP.fmtUSD(fin.netDrawerUsd)}</div>
+            <div class="stat-sub">Entró: $${fin.inUsdCash.toFixed(2)} − Vueltos: $${fin.outChangeUsdCash.toFixed(2)} − Gastos: $${fin.expUsdCash.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <div class="stat-card" style="background:#eff6ff;border-color:#bfdbfe">
+          <div>
+            <div class="stat-l" style="color:#1e40af">SALDO NETO PAGO MÓVIL (BS)</div>
+            <div class="stat-n" style="color:#1e40af">${MTP.fmtBsRaw(fin.netBankPmBs)}</div>
+            <div class="stat-sub">Entró: ${fin.inPmBs.toFixed(2)} Bs − Vuelto PM: ${fin.outChangePmBs.toFixed(2)} Bs − Gastos PM: ${fin.expPmBs.toFixed(2)} Bs</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div>
+            <div class="stat-l">CIERRE LOTE PUNTO / BIOPAGO</div>
+            <div class="stat-n">${MTP.fmtBsRaw(fin.inPuntoBs)}</div>
+            <div class="stat-sub">Equivalente: ${MTP.fmtUSD(bcv > 0 ? fin.inPuntoBs / bcv : 0)}</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div>
+            <div class="stat-l">EFECTIVO BS FÍSICO EN GAVETA</div>
+            <div class="stat-n">${MTP.fmtBsRaw(fin.netDrawerBs)}</div>
+            <div class="stat-sub">Zelle/USDT: ${MTP.fmtUSD(fin.inZelleUsd)}</div>
+          </div>
+        </div>
+      `;
+
+      // Pagos Móviles
+      const pmRows = [];
+      sales.forEach(s => {
+        (s.payments || []).forEach(p => {
+          if (p.method === 'Pago Móvil') {
+            pmRows.push({
+              orderNumber: s.orderNumber,
+              customer: s.customer,
+              time: new Date(s.createdAt).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' }),
+              bank: p.bank || 'Banco Nacional',
+              phone: p.phone || '—',
+              ref: p.ref || '—',
+              amountBs: Number(p.amountBs || 0),
+              amountUsd: Number(p.amountUsd || 0)
+            });
+          }
+        });
+      });
+
+      document.getElementById('pmVerificationTable').innerHTML = pmRows.length
+        ? pmRows.map(r => `
+            <tr>
+              <td><span class="code-pill plu">#${r.orderNumber}</span></td>
+              <td><strong>${r.customer}</strong> <span style="font-size:11px;color:var(--txt-muted)">(${r.time})</span></td>
+              <td>${r.bank}</td>
+              <td>${r.phone}</td>
+              <td><span class="code-pill">#${r.ref}</span></td>
+              <td><strong style="color:var(--primary)">${MTP.fmtBsRaw(r.amountBs)}</strong></td>
+              <td><strong>${MTP.fmtUSD(r.amountUsd)}</strong></td>
+              <td><span class="badge badge-green">✔ Verificado</span></td>
+            </tr>
+          `).join('')
+        : `<tr><td colspan="8" style="text-align:center;color:var(--txt-muted)">No hay pagos móviles registrados en este turno</td></tr>`;
+
+      // Gastos del Turno
+      document.getElementById('cierreExpensesTable').innerHTML = expenses.length
+        ? expenses.map(e => `
+            <tr>
+              <td>${new Date(e.createdAt).toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'})}</td>
+              <td><span class="badge badge-yellow">${e.category}</span></td>
+              <td style="font-weight:700">${e.description}</td>
+              <td><span class="badge badge-green">${e.paymentSource}</span></td>
+              <td><strong style="color:var(--danger)">-${MTP.fmtUSD(e.amountUsd)}</strong></td>
+              <td><strong style="color:var(--danger)">-${MTP.fmtBsRaw(e.amountBs)}</strong></td>
+              <td style="font-size:11.5px;color:var(--txt-sec)">${e.responsible}</td>
+            </tr>
+          `).join('')
+        : `<tr><td colspan="7" style="text-align:center;color:var(--txt-muted)">Sin gastos registrados</td></tr>`;
+
+      // Ventas
+      document.getElementById('cierreSalesTable').innerHTML = sales.map(s => {
+        const timeStr = new Date(s.createdAt).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+        return `
+          <tr>
+            <td><span class="code-pill plu">#${s.orderNumber}</span></td>
+            <td>
+              <strong>${s.customer}</strong>
+              <div style="font-size:11px;color:var(--txt-muted)">${timeStr} · ${s.cashier}</div>
+            </td>
+            <td style="font-size:12px">
+              ${s.items.map(i => `<div>• <strong>${i.qty}x</strong> ${i.name} (${MTP.fmtUSD(i.subtotalUsd || i.qty * i.priceUsd)})</div>`).join('')}
+            </td>
+            <td>
+              <div class="price-dual">
+                <span class="price-usd">${MTP.fmtUSD(s.totalUsd)}</span>
+                <span class="price-bs">${MTP.fmtBsRaw(s.totalBs)}</span>
+              </div>
+            </td>
+            <td style="font-size:11.5px">
+              ${(s.payments || []).map(p => `<div><strong>${p.method}:</strong> ${MTP.fmtUSD(p.amountUsd)} (Ref: ${p.ref || '—'})</div>`).join('')}
+            </td>
+            <td style="font-size:11.5px">
+              <strong>Total: ${MTP.fmtUSD(s.changeGiven?.totalChangeUsd || 0)}</strong>
+              <div style="color:var(--txt-sec);font-size:11px">${s.changeGiven?.breakdown || 'Exacto'}</div>
+            </td>
+            <td><span class="badge badge-green">+${MTP.fmtUSD(s.profitUsd)}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', renderCierrePage);
+    window.addEventListener('mtp:state-updated', renderCierrePage);
+  </script>
+</body>
+</html>

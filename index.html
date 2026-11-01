@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MI TIENDA POS · Restaurante & Abasto (Caja y Admin)</title>
+  <link rel="stylesheet" href="assets/css/variables.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <style>
+    body {
+      background: radial-gradient(circle at top right, #064e3b, #07100d 65%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .launcher-wrap {
+      max-width: 920px;
+      width: 100%;
+    }
+    .launcher-hd {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .launcher-logo {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 10px;
+      box-shadow: 0 10px 28px rgba(16, 185, 129, 0.4);
+    }
+    .launcher-hd h1 {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+    .launcher-hd h1 em {
+      color: #34d399;
+      font-style: normal;
+    }
+    .launcher-hd p {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 18px;
+    }
+    .role-card {
+      background: #0f172a;
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      transition: all 0.18s ease;
+    }
+    .role-card:hover {
+      border-color: #34d399;
+      transform: translateY(-3px);
+      background: #1e293b;
+      box-shadow: 0 16px 38px rgba(0, 0, 0, 0.35);
+    }
+    .role-ico {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .role-card h2 {
+      font-size: 19px;
+      font-weight: 900;
+      margin-bottom: 5px;
+    }
+    .role-card p {
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .role-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 12.5px;
+      color: #a7f3d0;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="launcher-wrap">
+    <div class="launcher-hd">
+      <div class="launcher-logo" id="mainLaunchLogo"></div>
+      <h1>MI TIENDA <em>POS</em></h1>
+      <p>Sistema Híbrido Profesional: Restaurante (Empanadas, Pastelitos, Almuerzos, Café) + Abasto (Víveres, Chucherías, Cigarros, Cervezas)</p>
+      <div style="margin-top:12px;display:inline-flex;gap:12px;background:rgba(0,0,0,0.4);padding:7px 15px;border-radius:99px;border:1px solid rgba(255,255,255,0.14);font-size:12.5px;flex-wrap:wrap;justify-content:center">
+        <span>Dólar BCV: <strong id="launchBcv" style="color:#34d399">—</strong></span>
+        <span>·</span>
+        <span>Euro BCV: <strong id="launchEur" style="color:#60a5fa">—</strong></span>
+        <span>·</span>
+        <span>USDT Binance: <strong id="launchUsdt" style="color:#fbbf24">—</strong></span>
+      </div>
+    </div>
+
+    <div class="role-grid">
+      <div class="role-card">
+        <div>
+          <div class="role-ico" style="background:rgba(16,185,129,0.2);color:#34d399" id="roleIcoCaja"></div>
+          <h2>Modo Caja Rápida Compacta (POS)</h2>
+          <p>Interfaz ajustada 100% a la pantalla con fotos reales de platos y productos, escáner QR/Barras y verificación bancaria.</p>
+          <ul class="role-features">
+            <li>✔ Variedad de Empanadas, Pastelitos, Papa Rellena, Arroz Chino y Pollo Frito</li>
+            <li>✔ Harina PAN, Espagueti, Pepito, Cigarros, Refrescos y Cervezas</li>
+            <li>✔ Botón de Reemplazar rápido, Verificador de Pago Móvil y Distribución de Vuelto</li>
+          </ul>
+        </div>
+        <a href="caja/pos.html" class="btn btn-p btn-lg" style="width:100%">Entrar a Caja Compacta (POS) →</a>
+      </div>
+
+      <div class="role-card">
+        <div>
+          <div class="role-ico" style="background:rgba(245,158,11,0.2);color:#fbbf24" id="roleIcoAdmin"></div>
+          <h2>Panel Administrador Total</h2>
+          <p>Almacén de cocina separado de los productos de venta, API diaria de 3 tasas (BCV, Euro, USDT Binance) y Cuadre Legal.</p>
+          <ul class="role-features">
+            <li>✔ Almacén Cocina (Papa, Aliños, Carnes — exclusivos para elaborar comida)</li>
+            <li>✔ API Diaria BCV / Euro / USDT Binance y Recomendador Antiperdida</li>
+            <li>✔ Cuadre de Caja Venezolano (Control Interno, Pago Móvil y Vueltos)</li>
+          </ul>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <a href="admin/index.html" class="btn btn-amber btn-lg">Dashboard Admin</a>
+          <a href="admin/pos.html" class="btn btn-ghost btn-lg" style="background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.2)">POS Admin</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/rates.js"></script>
+  <script>
+    function updateLaunchRates() {
+      if (window.MTPIcons) {
+        document.getElementById('mainLaunchLogo').innerHTML = MTPIcons.get('bolt', { size: 30, color: '#fff' });
+        document.getElementById('roleIcoCaja').innerHTML = MTPIcons.get('pos', { size: 26, color: '#34d399' });
+        document.getElementById('roleIcoAdmin').innerHTML = MTPIcons.get('settings', { size: 26, color: '#fbbf24' });
+      }
+      if (!window.MTP) return;
+      document.getElementById('launchBcv').textContent = MTP.state.settings.rateBcv.toFixed(2) + ' Bs/$';
+      document.getElementById('launchEur').textContent = (MTP.state.settings.rateEur || 46.60).toFixed(2) + ' Bs/€';
+      document.getElementById('launchUsdt').textContent = MTP.state.settings.rateUsdt.toFixed(2) + ' Bs/$';
+    }
+    document.addEventListener('DOMContentLoaded', updateLaunchRates);
+    window.addEventListener('mtp:state-updated', updateLaunchRates);
+  </script>
+</body>
+</html>

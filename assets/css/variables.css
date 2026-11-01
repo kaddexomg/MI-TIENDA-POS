@@ -1,0 +1,114 @@
+/* ==========================================================================
+   MI-TIENDA-POS — Variables & Design Tokens (Zero-Friction High-Speed UI)
+   ========================================================================== */
+:root {
+  /* Paleta Principal Evolucionada (Oscuro Ejecutivo + Esmeralda Gastronómico/Comercial) */
+  --bg-app: #f3f6f5;
+  --bg-card: #ffffff;
+  --bg-muted: #e9efec;
+  --bg-aside: #0d1b16;
+  --bg-aside-hover: #162d24;
+  --bg-aside-active: #10b981;
+
+  /* Colores de Acción y Estado */
+  --primary: #059669;
+  --primary-hover: #047857;
+  --primary-light: #d1fae5;
+  --primary-glow: rgba(16, 185, 129, 0.22);
+
+  --accent: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-light: #fef3c7;
+
+  --blue: #2563eb;
+  --blue-light: #dbeafe;
+
+  --purple: #7c3aed;
+  --purple-light: #ede9fe;
+
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --danger-light: #fee2e2;
+
+  /* Texto y Contraste */
+  --txt: #0f172a;
+  --txt-sec: #475569;
+  --txt-muted: #64748b;
+  --txt-inv: #ffffff;
+
+  /* Bordes y Sombras */
+  --border: #d8e2dc;
+  --border-strong: #b8c9bf;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.09);
+  --shadow-lg: 0 14px 34px rgba(15, 23, 42, 0.14);
+
+  /* Dimensiones Layout */
+  --aside-w: 200px;
+  --topbar-h: 42px;
+
+  /* Bordes y Sombras Compactos */
+  --border: #d8e2dc;
+  --border-strong: #b8c9bf;
+  --radius-sm: 5px;
+  --radius: 8px;
+  --radius-lg: 11px;
+  --radius-xl: 14px;
+
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.12);
+
+  /* Tipografía Compacta de Alta Densidad (Windows 7 / Modo Escritorio) */
+  --font-sans: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  --font-mono: 'Consolas', 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-sans);
+  background: var(--bg-app);
+  color: var(--txt);
+  font-size: 12px;
+  line-height: 1.35;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Scrollbars limpios */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

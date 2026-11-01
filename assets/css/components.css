@@ -1,0 +1,397 @@
+/* ==========================================================================
+   MI-TIENDA-POS — Componentes de Alta Velocidad y Fácil Acceso
+   ========================================================================== */
+
+/* ==========================================================================
+   MI-TIENDA-POS — Componentes de Alta Densidad y Velocidad (Windows 7 / PC Oficina)
+   - Escala compacta de escritorio para monitores 1024x768 / 1366x768
+   - Cero sensación de zoom excesivo, aprovechamiento óptimo de pantalla
+   ========================================================================== */
+
+/* Botones de Acción Rápida Compactos */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 4px 10px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 11.5px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn-p {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2);
+}
+.btn-p:hover {
+  background: var(--primary-hover);
+}
+.btn-amber {
+  background: var(--accent);
+  color: #111827;
+}
+.btn-amber:hover {
+  background: var(--accent-hover);
+  color: #fff;
+}
+.btn-blue {
+  background: var(--blue);
+  color: #fff;
+}
+.btn-blue:hover {
+  background: #1d4ed8;
+}
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover {
+  background: var(--danger-hover);
+}
+.btn-ghost {
+  background: #fff;
+  color: var(--txt);
+  border-color: var(--border);
+}
+.btn-ghost:hover {
+  background: var(--bg-muted);
+  border-color: var(--border-strong);
+}
+.btn-sm {
+  padding: 2px 7px;
+  height: 24px;
+  font-size: 10.5px;
+  border-radius: 4px;
+  gap: 4px;
+}
+.btn-lg {
+  padding: 7px 14px;
+  height: 34px;
+  font-size: 13px;
+  border-radius: var(--radius);
+}
+
+/* Tarjetas de Estadísticas Compactas (Stat Grid) */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  box-shadow: var(--shadow-xs);
+}
+.stat-card:hover {
+  border-color: var(--border-strong);
+}
+.stat-ico {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.stat-ico.green { background: var(--primary-light); color: var(--primary); }
+.stat-ico.yellow { background: var(--accent-light); color: var(--accent-hover); }
+.stat-ico.blue { background: var(--blue-light); color: var(--blue); }
+.stat-ico.red { background: var(--danger-light); color: var(--danger); }
+.stat-ico.purple { background: var(--purple-light); color: var(--purple); }
+
+.stat-n {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--txt);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.stat-l {
+  font-size: 10.5px;
+  color: var(--txt-sec);
+  font-weight: 600;
+  margin-top: 1px;
+}
+.stat-sub {
+  font-size: 9.5px;
+  color: var(--txt-muted);
+  margin-top: 1px;
+  font-weight: 500;
+}
+
+/* Badges y Etiquetas Compactas */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1.5px 6px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.badge-green { background: #d1fae5; color: #065f46; }
+.badge-yellow { background: #fef3c7; color: #92400e; }
+.badge-red { background: #fee2e2; color: #991b1b; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+.badge-purple { background: #ede9fe; color: #5b21b6; }
+.badge-dark { background: #1e293b; color: #f8fafc; font-family: var(--font-mono); }
+
+/* Código Rápido / Barcode Pill */
+.code-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #0f172a;
+  color: #38bdf8;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+.code-pill.plu {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+
+/* Contenedores y Tablas Compactas */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.card-hd {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #fafcfb;
+}
+.card-hd h3 {
+  font-size: 12.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #0f172a;
+}
+.card-hd p {
+  font-size: 10.5px;
+  color: var(--txt-sec);
+  margin-top: 1px;
+}
+.card-bd {
+  padding: 8px 10px;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+table.data-table th {
+  background: #f8faf9;
+  color: var(--txt-sec);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+table.data-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid #edf2ef;
+  font-size: 11.5px;
+  vertical-align: middle;
+}
+table.data-table tbody tr:hover {
+  background: #f4faf7;
+}
+
+/* Grids Multicolumna para Administración */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 900px) {
+  .grid-2, .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Inputs y Formularios Compactos */
+.input, .select {
+  width: 100%;
+  padding: 4px 7px;
+  height: 28px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--txt);
+  font-size: 11.5px;
+  font-weight: 500;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.input:focus, .select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.form-group label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--txt-sec);
+  margin-bottom: 2px;
+}
+
+/* Modales Rápidos Compactos */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 10px;
+}
+.modal-backdrop.open {
+  display: flex;
+}
+.modal-box {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 620px;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  animation: modalPop 0.14s ease-out;
+}
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.97) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-hd {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8faf9;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.modal-hd h3 {
+  font-size: 13px;
+  font-weight: 800;
+}
+.modal-bd {
+  padding: 10px 12px;
+  overflow-y: auto;
+}
+.modal-ft {
+  padding: 7px 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  background: #f8faf9;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* Toast Notifications */
+#mtpToastContainer {
+  position: fixed;
+  bottom: 14px;
+  right: 14px;
+  z-index: 5000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mtp-toast {
+  background: #0f172a;
+  color: #fff;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 11.5px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-left: 3px solid var(--primary);
+  animation: modalPop 0.14s ease-out;
+}
+.mtp-toast.warn { border-left-color: var(--accent); }
+.mtp-toast.err { border-left-color: var(--danger); }
+
+/* Precio Dual USD / Bs */
+.price-dual {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.price-usd {
+  font-weight: 800;
+  color: var(--txt);
+  font-size: 12.5px;
+}
+.price-bs {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 10.5px;
+}

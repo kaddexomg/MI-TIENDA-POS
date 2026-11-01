@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS a Caja Compacto · Comida, Víveres, Pago Móvil y Vuelto | MI TIENDA POS</title>
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/pos.css">
+</head>
+<body class="pos-fullscreen-body">
+  <div class="admin-wrap">
+    <aside class="admin-aside" id="adminAside"></aside>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle" id="menuToggleBtn">☰</button>
+          <div class="topbar-title">
+            <h2>POS a Caja Compacto · Familias de Comida, Víveres y Bebidas</h2>
+            <p>Familias Agrupadas · Lector Cámara/USB · Pago Móvil y Vueltos</p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
+          <button class="btn btn-ghost btn-sm" onclick="window.MTPBarcode && window.MTPBarcode.openCameraScannerModal()">Cámara / Lector</button>
+          <button class="btn btn-amber btn-sm" onclick="window.MTPPos.openQuickKitchenTicketPreview()">Comanda / Orden (F4)</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- Banner de Modo Reemplazo (se activa al tocar ⇄ Reemplazar en una línea del ticket) -->
+        <div id="posReplaceBanner" style="display:none;align-items:center;justify-content:space-between;background:#fef3c7;border:1.5px solid #f59e0b;color:#92400e;padding:6px 12px;border-radius:8px;margin-bottom:8px;font-size:12.5px;font-weight:700"></div>
+
+        <div class="pos-layout">
+          <!-- COLUMNA IZQUIERDA COMPACTA: ESCÁNER + PESTAÑAS + FAMILIAS AGRUPADAS -->
+          <div class="pos-left-col">
+            <div class="scanner-bar">
+              <div class="scanner-input-wrap">
+                <span class="scanner-icon" id="posScanIco"></span>
+                <input type="text" id="posScannerInput" class="scanner-input"
+                  placeholder="Escanea Código de Barras o escribe código (#01-#24, 101 Harina PAN, 201 Pepito) + Enter..." autocomplete="off">
+              </div>
+              <button type="button" class="btn btn-sm" style="background:#10b981;color:#fff;border:none;font-weight:800;padding:6px 10px"
+                onclick="window.MTPBarcode && window.MTPBarcode.openCameraScannerModal()">
+                Escanear Cámara
+              </button>
+              <div class="scanner-status">
+                <span class="pulse-dot"></span>
+                <span>LISTO (F1)</span>
+              </div>
+            </div>
+
+            <div class="pos-cats" id="posCategoryTabs"></div>
+
+            <div class="pos-grid-scroll">
+              <div class="pos-grid" id="posItemsGrid"></div>
+            </div>
+          </div>
+
+          <!-- COLUMNA DERECHA COMPACTA: TICKET 100% EN PANTALLA -->
+          <div class="pos-ticket-panel">
+            <div class="ticket-hd">
+              <h3>Orden Activa en Caja</h3>
+              <span class="badge badge-green" id="posTicketCount">0 ítems</span>
+            </div>
+
+            <div class="ticket-customer-bar">
+              <input type="text" id="posCustomerInput" class="input" placeholder="Cliente / Mesa / Para Llevar" style="padding:5px 9px;font-size:12px">
+              <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.clearCart()" title="Vaciar todo el ticket">Vaciar</button>
+            </div>
+
+            <div class="ticket-items" id="posTicketItems"></div>
+
+            <div class="ticket-totals">
+              <div class="tot-main-grid">
+                <div class="tot-box">
+                  <span>Total Ref. USD</span>
+                  <strong id="posTotalUsd">$0.00</strong>
+                </div>
+                <div class="tot-box bs">
+                  <span>Total Bolívares (BCV)</span>
+                  <strong id="posTotalBs">0,00 Bs</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="ticket-actions">
+              <button class="btn-cobrar-big" onclick="window.MTPPos.openCheckoutModal()">
+                <span>💵 COBRAR Y ENTREGAR VUELTO (F2)</span>
+              </button>
+              <button class="btn btn-amber btn-sm" onclick="window.MTPPos.holdCurrentCart()">⏸ Mesa / Espera (F3)</button>
+              <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.openQuickKitchenTicketPreview()">🍳 Comanda Cocina (F4)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL: COBRANZA MULTIMONEDA, VERIFICADOR DE PAGO MÓVIL Y DISTRIBUCIÓN DE VUELTO -->
+  <div class="modal-backdrop" id="posCheckoutModal">
+    <div class="modal-box" style="max-width:690px">
+      <div class="modal-hd">
+        <h3>💵 Cobro, Verificación de Pago Móvil y Distribución de Vuelto</h3>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('posCheckoutModal').classList.remove('open')">✕</button>
+      </div>
+      <div class="modal-bd">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div style="background:#f8faf9;border:1.5px solid var(--border);padding:8px 12px;border-radius:9px">
+            <span style="font-size:10.5px;font-weight:800;color:var(--txt-sec);text-transform:uppercase">Total Orden en USD</span>
+            <div id="chkTotalUsd" style="font-size:21px;font-weight:900;font-family:var(--font-mono)">$0.00</div>
+          </div>
+          <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;padding:8px 12px;border-radius:9px">
+            <span style="font-size:10.5px;font-weight:800;color:#065f46;text-transform:uppercase">Total Orden en Bolívares (BCV)</span>
+            <div id="chkTotalBs" style="font-size:21px;font-weight:900;font-family:var(--font-mono);color:#059669">0,00 Bs</div>
+          </div>
+        </div>
+
+        <!-- Billetes Rápidos USD -->
+        <div style="margin-bottom:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-size:11.5px;font-weight:800;color:var(--txt-sec)">⚡ Billete Recibido:</span>
+          <button class="btn btn-p btn-sm" onclick="window.MTPPos.quickAddBillUsd('EXACT')">✅ Exacto</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.quickAddBillUsd(1)">💵 $1</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.quickAddBillUsd(5)">💵 $5</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.quickAddBillUsd(10)">💵 $10</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.quickAddBillUsd(20)">💵 $20</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.quickAddBillUsd(50)">💵 $50</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.quickAddBillUsd(100)">💵 $100</button>
+        </div>
+
+        <!-- Métodos de Pago -->
+        <div class="pay-methods-grid">
+          <button class="pay-method-btn active" data-method="Efectivo USD" onclick="window.MTPPos.selectPayMethod('Efectivo USD')">💵 Efectivo $</button>
+          <button class="pay-method-btn" data-method="Pago Móvil" onclick="window.MTPPos.selectPayMethod('Pago Móvil')">📱 Pago Móvil</button>
+          <button class="pay-method-btn" data-method="Punto de Venta" onclick="window.MTPPos.selectPayMethod('Punto de Venta')">💳 Punto / Bio</button>
+          <button class="pay-method-btn" data-method="Efectivo Bs" onclick="window.MTPPos.selectPayMethod('Efectivo Bs')">🇻🇪 Efectivo Bs</button>
+          <button class="pay-method-btn" data-method="Zelle / Transf" onclick="window.MTPPos.selectPayMethod('Zelle / Transf')">⚡ Zelle / Binance</button>
+          <button class="pay-method-btn" data-method="Crédito / Vale" onclick="window.MTPPos.selectPayMethod('Crédito / Vale')">📝 Por Cobrar</button>
+        </div>
+
+        <input type="hidden" id="payMethodSelect" value="Efectivo USD">
+
+        <!-- Campos de Verificación de Pago Móvil (se muestran al elegir Pago Móvil) -->
+        <div id="pagoMovilExtraFields" style="display:none;grid-template-columns:1fr 1fr auto;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;padding:9px;border-radius:8px;margin-bottom:8px;align-items:center">
+          <div class="form-group">
+            <label>🏦 Banco Origen del Pago Móvil</label>
+            <select id="pmBankSelect" class="select" style="padding:6px">
+              <option value="0102 - Banco de Venezuela">0102 - Banco de Venezuela</option>
+              <option value="0134 - Banesco">0134 - Banesco</option>
+              <option value="0105 - Mercantil">0105 - Mercantil</option>
+              <option value="0108 - Provincial">0108 - Provincial</option>
+              <option value="0191 - BNC">0191 - BNC</option>
+              <option value="0172 - Bancamiga">0172 - Bancamiga</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>📱 Teléfono / Cédula del Cliente</label>
+            <input type="text" id="pmPhoneInput" class="input" style="padding:6px" placeholder="Ej: 0412-1234567">
+          </div>
+          <div>
+            <span id="pmRefVerifyBadge" class="badge badge-yellow">⏳ Verificar Ref</span>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr auto;gap:8px;align-items:end;margin-bottom:10px">
+          <div class="form-group">
+            <label>Monto Recibido USD ($)</label>
+            <input type="number" step="0.01" id="payAmountUsd" class="input" style="font-weight:800;padding:7px"
+              oninput="window.MTPPos.syncPayInputsFromUsd(this.value)">
+          </div>
+          <div class="form-group">
+            <label>Monto Recibido en Bs</label>
+            <input type="number" step="0.10" id="payAmountBs" class="input" style="font-weight:800;padding:7px"
+              oninput="window.MTPPos.syncPayInputsFromBs(this.value)">
+          </div>
+          <div class="form-group">
+            <label>Nº Referencia (4-6 dígitos) / Nota</label>
+            <input type="text" id="payRefInput" class="input" style="padding:7px;font-weight:700" placeholder="Ej: 849201"
+              oninput="window.MTPPos.checkPagoMovilRefLive(this.value)">
+          </div>
+          <button class="btn btn-blue" style="padding:8px 12px" onclick="window.MTPPos.addCurrentPaymentLine()">➕ Sumar Pago</button>
+        </div>
+
+        <div id="chkPaymentsList" style="margin-bottom:8px"></div>
+
+        <!-- Panel de Distribución Exacta del Vuelto -->
+        <div class="vuelto-panel">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div id="vueltoStatusLabel" style="font-size:11.5px;font-weight:800;color:#a7f3d0">VUELTO A ENTREGAR:</div>
+            <div style="display:flex;gap:5px">
+              <button class="btn btn-ghost btn-sm" style="padding:2px 7px;font-size:10.5px;background:rgba(255,255,255,0.12);color:#fff;border:none" onclick="window.MTPPos.rebalanceChangeDistribution('ALL_USD')">Todo en $ Efectivo</button>
+              <button class="btn btn-ghost btn-sm" style="padding:2px 7px;font-size:10.5px;background:rgba(255,255,255,0.12);color:#fff;border:none" onclick="window.MTPPos.rebalanceChangeDistribution('ALL_PM')">Todo por Pago Móvil Bs</button>
+            </div>
+          </div>
+          <div class="vuelto-grid">
+            <div class="vuelto-card" id="vueltoCardUsd">
+              <span>Total Vuelto en USD ($)</span>
+              <strong id="vueltoUsdAmount">$0.00</strong>
+            </div>
+            <div class="vuelto-card" id="vueltoCardBs">
+              <span>Total Vuelto en Bolívares (BCV)</span>
+              <strong id="vueltoBsAmount">0,00 Bs</strong>
+            </div>
+          </div>
+
+          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,0.15)">
+            <label style="font-size:11px;color:#cbd5e1;font-weight:700;display:block;margin-bottom:5px">🔄 Cómo se distribuye el vuelto entregado al cliente:</label>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+              <div>
+                <span style="font-size:10.5px;color:#94a3b8;display:block">Efectivo USD ($)</span>
+                <input type="number" step="1" id="vueltoDistUsd" class="input" style="padding:5px 8px;background:rgba(255,255,255,0.12);color:#34d399;font-weight:900;border-color:rgba(255,255,255,0.2)"
+                  oninput="window.MTPPos.rebalanceChangeDistribution('USD')">
+              </div>
+              <div>
+                <span style="font-size:10.5px;color:#94a3b8;display:block">Efectivo Bolívares (Bs)</span>
+                <input type="number" step="1" id="vueltoDistBsCash" class="input" style="padding:5px 8px;background:rgba(255,255,255,0.12);color:#fff;font-weight:900;border-color:rgba(255,255,255,0.2)"
+                  oninput="window.MTPPos.rebalanceChangeDistribution('BS_CASH')">
+              </div>
+              <div>
+                <span style="font-size:10.5px;color:#94a3b8;display:block">Pago Móvil Vuelto (Bs)</span>
+                <input type="number" step="0.1" id="vueltoDistBsPm" class="input" style="padding:5px 8px;background:rgba(255,255,255,0.12);color:#fbbf24;font-weight:900;border-color:rgba(255,255,255,0.2)">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-ghost" onclick="document.getElementById('posCheckoutModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-p btn-lg" onclick="window.MTPPos.finalizeSale()">Confirmar Cobro y Emitir Comanda / Nota</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TICKETS IMPRESOS -->
+  <div class="modal-backdrop" id="posTicketPrintModal">
+    <div class="modal-box" style="max-width:680px">
+      <div class="modal-hd">
+        <h3>Comanda de Cocina y Nota de Despacho (Control Interno)</h3>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('posTicketPrintModal').classList.remove('open')">✕</button>
+      </div>
+      <div class="modal-bd" id="printModalContent"></div>
+      <div class="modal-ft">
+        <button class="btn btn-ghost" onclick="document.getElementById('posTicketPrintModal').classList.remove('open')">Cerrar</button>
+        <button class="btn btn-p" onclick="window.print()">Imprimir Tickets</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/rates.js"></script>
+  <script src="../assets/js/sidenav.js"></script>
+  <script src="../assets/js/barcode-engine.js"></script>
+  <script src="../assets/js/pos-engine.js"></script>
+</body>
+</html>

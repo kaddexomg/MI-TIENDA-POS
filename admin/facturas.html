@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facturas de Proveedores y Compras | MI TIENDA POS</title>
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+</head>
+<body>
+  <div class="admin-wrap">
+    <aside class="admin-aside" id="adminAside"></aside>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <button class="menu-toggle" id="menuToggleBtn">☰</button>
+          <div class="topbar-title">
+            <h2>Facturas de Proveedores y Cuentas por Pagar</h2>
+            <p>Registra facturas de compras: suma automáticamente los kilos/unidades al inventario y detecta subidas de costo</p>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
+          <button class="btn btn-p" onclick="openNewInvoiceModal()">+ Registrar Factura de Compra</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <div class="stat-grid" id="invInvoicesStats"></div>
+
+        <div class="card">
+          <div class="card-hd">
+            <h3>Facturas de Proveedores Registradas</h3>
+            <span style="font-size:12.5px;color:var(--txt-sec)">Control de vencimientos, abonos y entrada de mercancía</span>
+          </div>
+          <div class="table-wrap" style="max-height:calc(100vh - 200px);overflow-y:auto">
+            <table class="data-table">
+              <thead style="position:sticky;top:0;z-index:5">
+                <tr>
+                  <th>Nº Factura</th>
+                  <th>Proveedor</th>
+                  <th>Fecha / Vence</th>
+                  <th>Mercancía Ingresada al Inventario</th>
+                  <th>Total Factura</th>
+                  <th>Pagado / Pendiente</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="invoicesTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL REGISTRAR NUEVA FACTURA DE COMPRA CON ENTRADA A INVENTARIO -->
+  <div class="modal-backdrop" id="newInvoiceModal">
+    <div class="modal-box" style="max-width:660px">
+      <div class="modal-hd">
+        <h3>Cargar Factura de Proveedor (Suma Kilos / Unidades al Inventario)</h3>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('newInvoiceModal').classList.remove('open')">✕</button>
+      </div>
+      <div class="modal-bd">
+        <div class="form-grid" style="margin-bottom:14px">
+          <div class="form-group">
+            <label>Nº de Factura / Nota</label>
+            <input type="text" id="facNumber" class="input" placeholder="Ej: 0049120">
+          </div>
+          <div class="form-group">
+            <label>Proveedor (Carnicería, Verduras, Víveres)</label>
+            <input type="text" id="facSupplier" class="input" placeholder="Ej: Verduras y Aliños El Páramo">
+          </div>
+          <div class="form-group">
+            <label>Fecha de Vencimiento</label>
+            <input type="date" id="facDueDate" class="input">
+          </div>
+          <div class="form-group">
+            <label>Condición Inicial de Pago</label>
+            <select id="facPayStatus" class="select">
+              <option value="pendiente">Crédito / Pendiente por Pagar</option>
+              <option value="pagada">Pagada de Contado</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong style="font-size:13px;color:#065f46">Productos / Kilos Comprados en esta Factura:</strong>
+            <button class="btn btn-ghost btn-sm" onclick="addInvoiceLineRow()">+ Añadir Renglón</button>
+          </div>
+          <div id="facLinesContainer"></div>
+        </div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-ghost" onclick="document.getElementById('newInvoiceModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-p" onclick="saveNewInvoice()">Guardar Factura y Sumar al Inventario</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/rates.js"></script>
+  <script src="../assets/js/sidenav.js"></script>
+  <script>
+    let invoiceDraftLines = [];
+
+    function renderInvoicesPage() {
+      const list = MTP.state.invoices;
+      const bcv = MTP.state.settings.rateBcv;
+      const totalDebtUsd = list.reduce((acc, f) => acc + Math.max(0, f.totalUsd - f.paidUsd), 0);
+      const totalBoughtUsd = list.reduce((acc, f) => acc + f.totalUsd, 0);
+      const pendingCount = list.filter(f => f.status !== 'pagada').length;
+
+      const debtIco = window.MTPIcons ? MTPIcons.get('cash', { size: 16 }) : '';
+      const clockIco = window.MTPIcons ? MTPIcons.get('history', { size: 16 }) : '';
+      const pkgIco = window.MTPIcons ? MTPIcons.get('package', { size: 16 }) : '';
+
+      document.getElementById('invInvoicesStats').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-ico red">${debtIco}</div>
+          <div>
+            <div class="stat-n">${MTP.fmtUSD(totalDebtUsd)}</div>
+            <div class="stat-l">Total Cuentas por Pagar</div>
+            <div class="stat-sub">${(totalDebtUsd * bcv).toFixed(2)} Bs</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico yellow">${clockIco}</div>
+          <div>
+            <div class="stat-n">${pendingCount} facturas</div>
+            <div class="stat-l">Facturas Pendientes o con Abono</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-ico green">${pkgIco}</div>
+          <div>
+            <div class="stat-n">${MTP.fmtUSD(totalBoughtUsd)}</div>
+            <div class="stat-l">Total Compras Registradas</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('invoicesTableBody').innerHTML = list.map(f => {
+        const debt = Math.max(0, f.totalUsd - f.paidUsd);
+        const badge = f.status === 'pagada'
+          ? `<span class="badge badge-green">Pagada</span>`
+          : f.status === 'parcial'
+          ? `<span class="badge badge-yellow">Abono Parcial</span>`
+          : `<span class="badge badge-red">Pendiente</span>`;
+
+        return `
+          <tr>
+            <td><span class="code-pill">#${f.number}</span></td>
+            <td>
+              <strong>${f.supplier}</strong>
+              <div style="font-size:11.5px;color:var(--txt-muted)">${f.rif || ''}</div>
+            </td>
+            <td>
+              <div>Emitida: ${f.date}</div>
+              <div style="font-size:11.5px;color:var(--danger);font-weight:700">Vence: ${f.dueDate}</div>
+            </td>
+            <td style="max-width:270px;font-size:12.5px;color:var(--txt-sec)">${f.itemsSummary}</td>
+            <td>
+              <div class="price-dual">
+                <span class="price-usd">${MTP.fmtUSD(f.totalUsd)}</span>
+                <span class="price-bs">${(f.totalUsd * bcv).toFixed(2)} Bs</span>
+              </div>
+            </td>
+            <td>
+              <div style="font-size:12.5px">Pagado: <strong style="color:var(--primary)">${MTP.fmtUSD(f.paidUsd)}</strong></div>
+              <div style="font-size:12.5px">Resta: <strong style="color:var(--danger)">${MTP.fmtUSD(debt)}</strong></div>
+            </td>
+            <td>${badge}</td>
+            <td>
+              ${debt > 0.01
+                ? `<button class="btn btn-p btn-sm" onclick="payInvoicePrompt('${f.id}')">💵 Abonar / Pagar</button>`
+                : `<span style="font-size:12px;color:var(--txt-muted)">Solvente</span>`}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function payInvoicePrompt(facId) {
+      const fac = MTP.state.invoices.find(f => f.id === facId);
+      if (!fac) return;
+      const debt = Number((fac.totalUsd - fac.paidUsd).toFixed(2));
+      const val = prompt(`Monto en USD a abonar/pagar a "${fac.supplier}" (Deuda actual: $${debt}):`, String(debt));
+      if (val === null) return;
+      const pay = parseFloat(val) || 0;
+      if (pay <= 0) return;
+
+      fac.paidUsd = Math.min(fac.totalUsd, Number((fac.paidUsd + pay).toFixed(2)));
+      fac.status = fac.paidUsd >= fac.totalUsd - 0.01 ? 'pagada' : 'parcial';
+      MTP.save();
+      renderInvoicesPage();
+      MTP.toast(`Abono de ${MTP.fmtUSD(pay)} registrado en Factura #${fac.number}`);
+    }
+
+    function openNewInvoiceModal() {
+      document.getElementById('facNumber').value = '00' + Math.floor(10000 + Math.random() * 89999);
+      document.getElementById('facSupplier').value = '';
+      document.getElementById('facDueDate').value = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+      invoiceDraftLines = [
+        { insumoId: 'ins-papa', qty: 20, unitCostUsd: 1.40 },
+        { insumoId: 'ins-alinos', qty: 5, unitCostUsd: 2.50 }
+      ];
+      renderInvoiceDraftLines();
+      document.getElementById('newInvoiceModal').classList.add('open');
+    }
+
+    function renderInvoiceDraftLines() {
+      const container = document.getElementById('facLinesContainer');
+      container.innerHTML = invoiceDraftLines.map((line, idx) => `
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center">
+          <select class="select" onchange="invoiceDraftLines[${idx}].insumoId=this.value">
+            ${MTP.state.inventory.map(ins => `<option value="${ins.id}" ${ins.id === line.insumoId ? 'selected' : ''}>${ins.emoji || ''} ${ins.name} (${ins.unit})</option>`).join('')}
+          </select>
+          <input type="number" step="0.1" class="input" value="${line.qty}" placeholder="Cant (Kg/Und)"
+            oninput="invoiceDraftLines[${idx}].qty=parseFloat(this.value)||0">
+          <input type="number" step="0.01" class="input" value="${line.unitCostUsd}" placeholder="Costo Unit $"
+            oninput="invoiceDraftLines[${idx}].unitCostUsd=parseFloat(this.value)||0">
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="invoiceDraftLines.splice(${idx},1);renderInvoiceDraftLines()">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function addInvoiceLineRow() {
+      invoiceDraftLines.push({ insumoId: 'ins-carne', qty: 10, unitCostUsd: 6.90 });
+      renderInvoiceDraftLines();
+    }
+
+    function saveNewInvoice() {
+      const number = document.getElementById('facNumber').value.trim() || 'S/N';
+      const supplier = document.getElementById('facSupplier').value.trim();
+      const dueDate = document.getElementById('facDueDate').value || new Date().toISOString().slice(0, 10);
+      const status = document.getElementById('facPayStatus').value;
+
+      if (!supplier || !invoiceDraftLines.length) {
+        MTP.toast('Completa el nombre del proveedor y al menos un producto comprado', 'warn');
+        return;
+      }
+
+      let totalUsd = 0;
+      const summaryParts = [];
+      let costlyAlerts = 0;
+
+      invoiceDraftLines.forEach(line => {
+        const ins = MTP.getInsumoById(line.insumoId);
+        if (ins && line.qty > 0) {
+          totalUsd += line.qty * line.unitCostUsd;
+          ins.stock = Number((ins.stock + line.qty).toFixed(3));
+          if (line.unitCostUsd > ins.costUsd) {
+            costlyAlerts++;
+          }
+          ins.prevCostUsd = ins.costUsd;
+          ins.costUsd = Number(line.unitCostUsd.toFixed(2));
+          summaryParts.push(`${line.qty} ${ins.unit} ${ins.name} ($${line.unitCostUsd.toFixed(2)}/${ins.unit})`);
+        }
+      });
+
+      MTP.state.invoices.unshift({
+        id: 'FAC-' + Date.now(),
+        number,
+        supplier,
+        rif: '',
+        date: new Date().toISOString().slice(0, 10),
+        dueDate,
+        totalUsd: Number(totalUsd.toFixed(2)),
+        paidUsd: status === 'pagada' ? Number(totalUsd.toFixed(2)) : 0,
+        status,
+        itemsSummary: summaryParts.join(', ')
+      });
+
+      MTP.save();
+      document.getElementById('newInvoiceModal').classList.remove('open');
+      renderInvoicesPage();
+
+      if (costlyAlerts > 0) {
+        MTP.toast(`Factura cargada y stock sumado. ⚠️ ${costlyAlerts} insumo(s) subieron de costo (Ver Recomendador de Precios)`, 'warn');
+      } else {
+        MTP.toast('Factura registrada y kilos/unidades sumados al inventario');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', renderInvoicesPage);
+    window.addEventListener('mtp:state-updated', renderInvoicesPage);
+  </script>
+</body>
+</html>

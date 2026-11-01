@@ -1,0 +1,440 @@
+/* ==========================================================================
+   MI-TIENDA-POS — Layout Optimizado para PC de Oficina (Windows 7 / Sin GPU)
+   - Cero desborde horizontal, cero efectos pesados de tarjeta gráfica
+   - Soporte de Barra Lateral Colapsable (Ctrl+B) para monitores de oficina
+   ========================================================================== */
+
+.admin-wrap {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.admin-aside {
+  width: 195px;
+  background: #0f172a;
+  color: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  border-right: 1px solid #1e293b;
+  user-select: none;
+}
+
+.aside-brand {
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  border-bottom: 1px solid #1e293b;
+  background: #090d16;
+}
+.aside-brand-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.aside-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+  flex-shrink: 0;
+}
+.aside-brand-txt {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  min-width: 0;
+}
+.aside-brand-txt strong {
+  font-size: 12px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.aside-brand-txt strong em {
+  color: #fbbf24;
+  font-style: normal;
+}
+.aside-brand-txt span {
+  font-size: 8.5px;
+  color: #94a3b8;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.aside-collapse-btn {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.aside-collapse-btn:hover {
+  background: #334155;
+  color: #fff;
+}
+
+/* Widget Compacto de 3 Tasas Vivas en Sidebar */
+.aside-rates-box {
+  margin: 4px 6px 3px;
+  padding: 4px 7px;
+  border-radius: 6px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5px;
+  cursor: pointer;
+}
+.aside-rates-box:hover {
+  border-color: #fbbf24;
+}
+.aside-rate-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+}
+.aside-rate-row span {
+  color: #cbd5e1;
+  font-weight: 600;
+}
+.aside-rate-row strong {
+  color: #34d399;
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+.aside-rate-row.eur strong {
+  color: #60a5fa;
+}
+.aside-rate-row.usdt strong {
+  color: #fbbf24;
+}
+
+/* Acciones Rápidas Globales en Sidebar (Gasto F6 / Respaldo) */
+.aside-quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 4px 8px;
+}
+.aside-qbtn {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  padding: 5px 6px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.aside-qbtn:hover {
+  background: #334155;
+  border-color: #64748b;
+}
+.aside-qbtn.expense {
+  background: #7f1d1d;
+  border-color: #b91c1c;
+  color: #fecaca;
+}
+.aside-qbtn.expense:hover {
+  background: #991b1b;
+  color: #fff;
+}
+
+/* Navegación Lateral Estructurada */
+.aside-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aside-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.aside-group-btn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 5px 6px 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: left;
+}
+.aside-group-btn:hover {
+  color: #e2e8f0;
+}
+.aside-group.collapsed .aside-group-items {
+  display: none;
+}
+.aside-group-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.aside-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4.5px 7px;
+  border-radius: 5px;
+  color: #d1d5db;
+  font-weight: 600;
+  font-size: 11px;
+  text-decoration: none;
+}
+.aside-link-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.aside-link-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.aside-ico {
+  font-size: 13px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.aside-link:hover {
+  background: #1e293b;
+  color: #fff;
+}
+.aside-link.active {
+  background: #059669;
+  color: #fff;
+  font-weight: 800;
+}
+.aside-badge {
+  background: #ef4444;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 4.5px;
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+.aside-badge.kbd {
+  background: rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+}
+
+.aside-ft {
+  padding: 5px 8px;
+  border-top: 1px solid #1e293b;
+  background: #090d16;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  font-size: 10px;
+}
+.role-switch-btn {
+  background: #1e293b;
+  color: #fff;
+  border: 1px solid #334155;
+  padding: 2.5px 6px;
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+.role-switch-btn:hover {
+  background: #334155;
+}
+
+/* Contenido Principal */
+.admin-main {
+  flex: 1;
+  margin-left: 195px;
+  width: calc(100vw - 195px);
+  max-width: calc(100vw - 195px);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* MODO BARRA LATERAL COLAPSADA (Ideal para pantallas de oficina 1024px/1366px en Windows 7) */
+body.aside-collapsed .admin-aside {
+  width: 52px;
+}
+body.aside-collapsed .aside-brand-txt,
+body.aside-collapsed .aside-rates-box,
+body.aside-collapsed .aside-group-btn,
+body.aside-collapsed .aside-link-label,
+body.aside-collapsed .aside-badge,
+body.aside-collapsed .aside-ft-info,
+body.aside-collapsed .aside-qbtn span.qtxt {
+  display: none !important;
+}
+body.aside-collapsed .aside-brand {
+  justify-content: center;
+  padding: 6px 3px;
+}
+body.aside-collapsed .aside-logo {
+  display: none;
+}
+body.aside-collapsed .aside-quick-actions {
+  grid-template-columns: 1fr;
+  padding: 3px 4px;
+}
+body.aside-collapsed .aside-link {
+  justify-content: center;
+  padding: 7px 3px;
+}
+body.aside-collapsed .aside-ft {
+  justify-content: center;
+  padding: 5px 3px;
+}
+body.aside-collapsed .admin-main,
+body.pos-fullscreen-body.aside-collapsed .admin-main {
+  margin-left: 52px;
+  width: calc(100vw - 52px);
+  max-width: calc(100vw - 52px);
+}
+
+.admin-topbar {
+  height: 38px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  position: sticky;
+  top: 0;
+  z-index: 900;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.menu-toggle {
+  display: none;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.topbar-title h2 {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--txt);
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-title p {
+  font-size: 9.5px;
+  color: var(--txt-sec);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.topbar-rate-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 2.5px 7px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #065f46;
+  cursor: pointer;
+}
+.topbar-rate-pill strong {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+.admin-content {
+  padding: 6px 10px 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .admin-aside {
+    transform: translateX(-100%);
+  }
+  .admin-aside.open {
+    transform: translateX(0);
+  }
+  .admin-main,
+  body.aside-collapsed .admin-main {
+    margin-left: 0;
+    width: 100vw;
+    max-width: 100vw;
+  }
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
