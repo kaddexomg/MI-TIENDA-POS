@@ -83,6 +83,58 @@
           </div>
         </div>
 
+        <!-- GESTIÓN DE TERMINALES / PUNTOS DE VENTA (POS) -->
+        <div class="card" style="margin-bottom:8px">
+          <div class="card-hd" style="padding:4px 8px;background:#f0fdf4">
+            <div>
+              <h3 style="color:#166534;font-size:12px">💳 Puntos de Venta (POS) y Terminales de Tarjeta</h3>
+              <span style="font-size:10px;color:#15803d">Dispositivos físicos (Pax, Verifone, Biopago) habilitados para cobrar y auditar por lote</span>
+            </div>
+            <button class="btn btn-p btn-sm" onclick="openTerminalModal()">+ Agregar Punto de Venta</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nombre del Punto</th>
+                  <th>Banco Adquirente</th>
+                  <th>Modelo</th>
+                  <th>Lote Activo</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="terminalsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- GESTIÓN DE CUENTAS BANCARIAS DESTINO PARA PAGO MÓVIL -->
+        <div class="card" style="margin-bottom:8px">
+          <div class="card-hd" style="padding:4px 8px;background:#eff6ff">
+            <div>
+              <h3 style="color:#1e40af;font-size:12px">📱 Cuentas Bancarias de Destino para Pago Móvil</h3>
+              <span style="font-size:10px;color:#1d4ed8">Cuentas receptoras del negocio donde los clientes transfieren el dinero</span>
+            </div>
+            <button class="btn btn-blue btn-sm" onclick="openPagoMovilAccountModal()">+ Agregar Cuenta Bancaria</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Identificador de Cuenta</th>
+                  <th>Banco Receptor</th>
+                  <th>Teléfono Asociado</th>
+                  <th>RIF / Titular</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="pagoMovilAccountsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- DATOS DEL NEGOCIO Y CABECERA DE TICKETS -->
         <div class="card">
           <div class="card-hd">
@@ -126,6 +178,108 @@
             </div>
           </div>
         </div>
+
+        <!-- MODAL PUNTO DE VENTA (TERMINAL) -->
+        <div class="modal" id="modalPosTerminal">
+          <div class="modal-box" style="max-width:480px">
+            <div class="modal-hd" style="background:#0f172a;color:#fff;padding:8px 14px;border-radius:12px 12px 0 0">
+              <h3 id="modalTermTitle" style="color:#fff;font-size:14px;margin:0">💳 Registrar Punto de Venta (POS)</h3>
+              <button class="btn btn-sm btn-ghost" style="color:#fff" onclick="document.getElementById('modalPosTerminal').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-bd" style="padding:12px">
+              <input type="hidden" id="termEditId">
+              <div class="form-group" style="margin-bottom:8px">
+                <label>Nombre Identificador del Punto</label>
+                <input type="text" id="termNameInput" class="input" placeholder="Ej: Bancamiga Pax A920 / Banesco Mostrador">
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <label>Banco Adquirente</label>
+                <select id="termBankSelect" class="select">
+                  <option value="0172 - Bancamiga">0172 - Bancamiga</option>
+                  <option value="0134 - Banesco">0134 - Banesco</option>
+                  <option value="0102 - Banco de Venezuela">0102 - Banco de Venezuela (Biopago)</option>
+                  <option value="0105 - Mercantil">0105 - Mercantil</option>
+                  <option value="0108 - Provincial">0108 - Provincial</option>
+                  <option value="0191 - BNC">0191 - BNC</option>
+                </select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                <div class="form-group">
+                  <label>Modelo del Punto</label>
+                  <input type="text" id="termModelInput" class="input" placeholder="Ej: Pax A920 / Vx520">
+                </div>
+                <div class="form-group">
+                  <label>N° Lote Actual (Batch)</label>
+                  <input type="text" id="termBatchInput" class="input" style="font-family:var(--font-mono);font-weight:800" placeholder="0001">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Estado Operativo</label>
+                <select id="termStatusSelect" class="select">
+                  <option value="ACTIVO">ACTIVO (Disponible en Caja)</option>
+                  <option value="INACTIVO">INACTIVO (Fuera de Servicio)</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-ft" style="padding:8px 12px">
+              <button class="btn btn-ghost" onclick="document.getElementById('modalPosTerminal').classList.remove('open')">Cancelar</button>
+              <button class="btn btn-p" onclick="saveTerminalModal()">💾 Guardar Punto POS</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL CUENTA DESTINO PAGO MÓVIL -->
+        <div class="modal" id="modalPmAccount">
+          <div class="modal-box" style="max-width:480px">
+            <div class="modal-hd" style="background:#0f172a;color:#fff;padding:8px 14px;border-radius:12px 12px 0 0">
+              <h3 id="modalPmTitle" style="color:#fff;font-size:14px;margin:0">📱 Registrar Cuenta Pago Móvil Destino</h3>
+              <button class="btn btn-sm btn-ghost" style="color:#fff" onclick="document.getElementById('modalPmAccount').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-bd" style="padding:12px">
+              <input type="hidden" id="pmAccEditId">
+              <div class="form-group" style="margin-bottom:8px">
+                <label>Nombre de la Cuenta (Para mostrar en Caja)</label>
+                <input type="text" id="pmAccNameInput" class="input" placeholder="Ej: Banesco Comercio Principal">
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <label>Banco Receptor</label>
+                <select id="pmAccBankSelect" class="select">
+                  <option value="0134 - Banesco">0134 - Banesco</option>
+                  <option value="0102 - Banco de Venezuela">0102 - Banco de Venezuela</option>
+                  <option value="0172 - Bancamiga">0172 - Bancamiga</option>
+                  <option value="0105 - Mercantil">0105 - Mercantil</option>
+                  <option value="0108 - Provincial">0108 - Provincial</option>
+                  <option value="0191 - BNC">0191 - BNC</option>
+                </select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                <div class="form-group">
+                  <label>Teléfono Asociado</label>
+                  <input type="text" id="pmAccPhoneInput" class="input" placeholder="0414-1234567">
+                </div>
+                <div class="form-group">
+                  <label>RIF / Cédula Titular</label>
+                  <input type="text" id="pmAccRifInput" class="input" placeholder="J-50123456-0">
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <label>Nombre del Titular de la Cuenta</label>
+                <input type="text" id="pmAccHolderInput" class="input" placeholder="Ej: Inversiones y Alimentos C.A.">
+              </div>
+              <div class="form-group">
+                <label>Estado Operativo</label>
+                <select id="pmAccStatusSelect" class="select">
+                  <option value="ACTIVO">ACTIVO (Habilitada para recibir cobros)</option>
+                  <option value="INACTIVO">INACTIVO (Pausada)</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-ft" style="padding:8px 12px">
+              <button class="btn btn-ghost" onclick="document.getElementById('modalPmAccount').classList.remove('open')">Cancelar</button>
+              <button class="btn btn-blue" onclick="savePagoMovilAccountModal()">💾 Guardar Cuenta</button>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -149,7 +303,137 @@
       document.getElementById('dbExpensesCount').textContent = (MTP.state.expenses || []).length;
       document.getElementById('dbInventoryCount').textContent = (MTP.state.inventory || []).length;
       document.getElementById('dbDishesCount').textContent = (MTP.state.dishes || []).length;
+
+      renderTerminalsTable();
+      renderPmAccountsTable();
     });
+
+    function renderTerminalsTable() {
+      const terms = MTP.state.posTerminals || [];
+      const tb = document.getElementById('terminalsTableBody');
+      if (!tb) return;
+      tb.innerHTML = terms.map(t => `
+        <tr>
+          <td><strong>${t.name}</strong></td>
+          <td>${t.bank}</td>
+          <td>${t.model || 'POS'}</td>
+          <td><span class="code-pill">${t.currentBatch || '0001'}</span></td>
+          <td><span class="badge ${t.status === 'ACTIVO' ? 'badge-green' : 'badge-red'}">${t.status}</span></td>
+          <td>
+            <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:10.5px" onclick="openTerminalModal('${t.id}')">✏️ Editar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPmAccountsTable() {
+      const accs = MTP.state.pagoMovilAccounts || [];
+      const tb = document.getElementById('pagoMovilAccountsTableBody');
+      if (!tb) return;
+      tb.innerHTML = accs.map(a => `
+        <tr>
+          <td><strong>${a.name}</strong></td>
+          <td>${a.bank}</td>
+          <td><span class="code-pill">${a.phone}</span></td>
+          <td>${a.rif} · <span style="font-size:11px;color:var(--txt-sec)">${a.holder || '—'}</span></td>
+          <td><span class="badge ${a.status === 'ACTIVO' ? 'badge-green' : 'badge-red'}">${a.status}</span></td>
+          <td>
+            <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:10.5px" onclick="openPagoMovilAccountModal('${a.id}')">✏️ Editar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openTerminalModal(termId) {
+      const modal = document.getElementById('modalPosTerminal');
+      const title = document.getElementById('modalTermTitle');
+      if (termId) {
+        const t = (MTP.state.posTerminals || []).find(item => item.id === termId);
+        if (t) {
+          document.getElementById('termEditId').value = t.id;
+          document.getElementById('termNameInput').value = t.name;
+          document.getElementById('termBankSelect').value = t.bank;
+          document.getElementById('termModelInput').value = t.model || '';
+          document.getElementById('termBatchInput').value = t.currentBatch || '0001';
+          document.getElementById('termStatusSelect').value = t.status || 'ACTIVO';
+          if (title) title.textContent = '✏️ Editar Punto de Venta (POS)';
+        }
+      } else {
+        document.getElementById('termEditId').value = '';
+        document.getElementById('termNameInput').value = '';
+        document.getElementById('termModelInput').value = '';
+        document.getElementById('termBatchInput').value = '0001';
+        document.getElementById('termStatusSelect').value = 'ACTIVO';
+        if (title) title.textContent = '💳 Registrar Nuevo Punto de Venta (POS)';
+      }
+      modal.classList.add('open');
+    }
+
+    function saveTerminalModal() {
+      const id = document.getElementById('termEditId').value;
+      const name = document.getElementById('termNameInput').value.trim();
+      const bank = document.getElementById('termBankSelect').value;
+      const model = document.getElementById('termModelInput').value.trim();
+      const currentBatch = document.getElementById('termBatchInput').value.trim() || '0001';
+      const status = document.getElementById('termStatusSelect').value;
+
+      if (!name) {
+        MTP.toast('Escribe el nombre del punto de venta', 'warn');
+        return;
+      }
+
+      MTP.saveTerminal({ id, name, bank, model, currentBatch, status });
+      document.getElementById('modalPosTerminal').classList.remove('open');
+      renderTerminalsTable();
+      MTP.toast(`Punto de Venta "${name}" guardado.`);
+    }
+
+    function openPagoMovilAccountModal(accId) {
+      const modal = document.getElementById('modalPmAccount');
+      const title = document.getElementById('modalPmTitle');
+      if (accId) {
+        const a = (MTP.state.pagoMovilAccounts || []).find(item => item.id === accId);
+        if (a) {
+          document.getElementById('pmAccEditId').value = a.id;
+          document.getElementById('pmAccNameInput').value = a.name;
+          document.getElementById('pmAccBankSelect').value = a.bank;
+          document.getElementById('pmAccPhoneInput').value = a.phone;
+          document.getElementById('pmAccRifInput').value = a.rif;
+          document.getElementById('pmAccHolderInput').value = a.holder || '';
+          document.getElementById('pmAccStatusSelect').value = a.status || 'ACTIVO';
+          if (title) title.textContent = '✏️ Editar Cuenta Pago Móvil';
+        }
+      } else {
+        document.getElementById('pmAccEditId').value = '';
+        document.getElementById('pmAccNameInput').value = '';
+        document.getElementById('pmAccPhoneInput').value = '';
+        document.getElementById('pmAccRifInput').value = '';
+        document.getElementById('pmAccHolderInput').value = '';
+        document.getElementById('pmAccStatusSelect').value = 'ACTIVO';
+        if (title) title.textContent = '📱 Registrar Nueva Cuenta Pago Móvil';
+      }
+      modal.classList.add('open');
+    }
+
+    function savePagoMovilAccountModal() {
+      const id = document.getElementById('pmAccEditId').value;
+      const name = document.getElementById('pmAccNameInput').value.trim();
+      const bank = document.getElementById('pmAccBankSelect').value;
+      const phone = document.getElementById('pmAccPhoneInput').value.trim();
+      const rif = document.getElementById('pmAccRifInput').value.trim();
+      const holder = document.getElementById('pmAccHolderInput').value.trim();
+      const status = document.getElementById('pmAccStatusSelect').value;
+
+      if (!name || !phone) {
+        MTP.toast('Nombre identificador y teléfono son requeridos', 'warn');
+        return;
+      }
+
+      MTP.savePagoMovilAccount({ id, name, bank, phone, rif, holder, status });
+      document.getElementById('modalPmAccount').classList.remove('open');
+      renderPmAccountsTable();
+      MTP.toast(`Cuenta Pago Móvil "${name}" guardada.`);
+    }
 
     function saveSettingsForm() {
       const s = MTP.state.settings;

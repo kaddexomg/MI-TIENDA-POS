@@ -95,9 +95,13 @@
    - Comparador de existencia física real vs. sistema, con cálculo de faltante/sobrante en unidades y dinero, y ajuste atómico con justificación.
 14. **Optimización de Alta Densidad Visual de Pantallas Administrativas (Cero Zoom Excesivo)**:
    - Rediseño de escala de escritorio (`12px` base, padding reducido a la mitad, tarjetas compactas, `.grid-2`, `.form-row`) en `inventario.html`, `productos.html`, `cierres.html`, `recetas.html`, `index.html`, `ajustes.html` y `facturas.html`. Todo el contenido entra cómodamente en monitores de oficina Windows 7 (1024x768 / 1366x768) sin scroll vertical tosco ni sensación de agobio.
+15. **Conexión, Control de Lotes y Vouchers de Puntos de Venta (Pax / Verifone / Biopago)**:
+   - Identificación de terminales adquirentes (`state.posTerminals`), auditoría de lotes (`currentBatch`), registro del comprobante de voucher (`N° de Aprobación`) y conciliador de Cierre de Lote (`closeTerminalBatch`) con cálculo de faltante/sobrante en `admin/cierres.html`.
+16. **Validación Avanzada de Pago Móvil Multicuenta y Cobro Directo C2P con OTP**:
+   - Selección de cuentas bancarias receptoras del negocio (`state.pagoMovilAccounts`), ciclo de confirmación (`CONFIRMADO EN BANCO` vs `PENDIENTE DE VERIFICACIÓN` vs `RECHAZADO`), prevención de capturas falsas con cambio de estado atómico y cobro directo C2P (`processC2pPayment`) con banco, teléfono, cédula y clave dinámica OTP.
+17. **Instalador de Escritorio Windows 7 y Repositorio Oficial GitHub**:
+   - Creación de `INSTALADOR-WINDOWS-7.bat`, configuración de carpetas seguras `C:\MI-TIENDA-DATOS\`, manual `INSTALACION-WINDOWS7.md` y sincronización con GitHub `kaddexomg/MI-TIENDA-POS`.
 
 ### 5.2. Lo que se va a realizar (Próximos Pasos Windows 7)
-1. **Instalador de Escritorio (`INSTALADOR-WINDOWS-7.bat`)**:
-   - Creación de accesos directos en el escritorio de Windows 7 en modo `--app` y carpeta de datos en `C:\MI-TIENDA-DATOS\`.
-2. **Persistencia Transaccional con Respaldo en Disco**:
-   - Exportación automática a archivo JSON espejo en disco ante cada movimiento.
+1. **Persistencia Transaccional con Respaldo en Disco**:
+   - Exportación automática a archivo JSON espejo en disco ante cada movimiento para blindaje anti-apagones.

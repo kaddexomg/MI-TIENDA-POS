@@ -45,6 +45,18 @@ El motor calcula en tiempo real la **brecha cambiaria** entre BCV y USDT, recome
 ### 2.4. Marco Legal Venezolano y SENIAT
 Los comprobantes emitidos por el sistema son estrictamente **Notas de Despacho y Comandas de Control Interno (SIN DERECHO A CRÉDITO FISCAL)**. Funcionan como libro contable administrativo y auditoría de inventario, permitiendo operar con transparencia sin sustituir máquinas fiscales homologadas.
 
+### 2.5. Conexión de Puntos de Venta (POS) y Cierre de Lotes
+- **Terminales Físicos Autónomos (Pax A920, Verifone Vx520, Biopago BDV)**: Cada terminal se registra en el sistema con su banco adquirente y número de lote activo.
+- **Trazabilidad por Voucher**: Al cobrar con tarjeta de débito o crédito, el cajero registra el N° de Aprobación/Voucher impreso por el punto y el tipo de tarjeta (TDD / TDC / Biopago).
+- **Cierre de Lote con Cotejo en Vivo**: Al finalizar el turno o jornada, el cajero imprime el comprobante de cierre de lote en el punto físico y transcribe los bolívares y operaciones. El sistema compara automáticamente contra las ventas registradas, alertando si existe faltante o sobrante de vouchers.
+
+### 2.6. Validación Anti-Fraude de Pago Móvil y Cobro Directo C2P
+- **Multicuenta de Destino**: Registro y selección de las cuentas bancarias receptoras del negocio (Banesco, BDV, Bancamiga, etc.).
+- **Ciclo de Verificación**: Estados `CONFIRMADO EN BANCO` vs `PENDIENTE DE VERIFICACIÓN` para evitar fraudes por capturas falsas.
+- **Detector Anti-Duplicados**: Alerta instantánea en rojo si una referencia ya fue ingresada en otra orden del día.
+- **Lector Inteligente de SMS**: Auto-llenado de banco, referencia y monto pegando el texto bancario.
+- **Débito Directo C2P**: Procesamiento de cobro inmediato solicitando al cliente su Banco, Cédula, Teléfono y Clave Dinámica OTP de 8 dígitos.
+
 ---
 
 ## 3. Características Técnicas

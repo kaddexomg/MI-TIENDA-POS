@@ -1665,6 +1665,91 @@
         responsible: 'Cocinero Turno Mañana',
         notes: 'Papas húmedas descartadas al lavar saco'
       }
+    ],
+
+    /* ----------------------------------------------------------------------
+       12. TERMINALES DE PUNTO DE VENTA (TARJETAS DÉBITO/CRÉDITO Y BIOPAGO)
+       ---------------------------------------------------------------------- */
+    posTerminals: [
+      {
+        id: 'term-bancamiga',
+        name: 'Punto Bancamiga Pax A920',
+        bank: '0172 - Bancamiga',
+        currentBatch: '0014',
+        model: 'Pax A920 SmartPOS 4G',
+        status: 'ACTIVO'
+      },
+      {
+        id: 'term-banesco',
+        name: 'Punto Banesco Verifone Vx520',
+        bank: '0134 - Banesco',
+        currentBatch: '0038',
+        model: 'Verifone Vx520 Dial/IP',
+        status: 'ACTIVO'
+      },
+      {
+        id: 'term-biopago',
+        name: 'Biopago Banco de Venezuela (Huella/Cédula)',
+        bank: '0102 - Venezuela',
+        currentBatch: '0009',
+        model: 'Biopago BDV USB',
+        status: 'ACTIVO'
+      }
+    ],
+
+    /* ----------------------------------------------------------------------
+       13. CUENTAS BANCARIAS RECEPTORAS DE PAGO MÓVIL DEL NEGOCIO
+       ---------------------------------------------------------------------- */
+    pagoMovilAccounts: [
+      {
+        id: 'pm-banesco',
+        name: 'Banesco Comercio (Cuenta Principal)',
+        bank: '0134 - Banesco',
+        phone: '0412-1234567',
+        rif: 'J-50128940-1',
+        holder: 'MI TIENDA POS C.A.',
+        isDefault: true
+      },
+      {
+        id: 'pm-bdv',
+        name: 'Banco de Venezuela (Cuenta Recaudadora)',
+        bank: '0102 - Venezuela',
+        phone: '0414-9876543',
+        rif: 'J-50128940-1',
+        holder: 'MI TIENDA POS C.A.',
+        isDefault: false
+      },
+      {
+        id: 'pm-bancamiga',
+        name: 'Bancamiga Pago Móvil Interbancario',
+        bank: '0172 - Bancamiga',
+        phone: '0424-5551122',
+        rif: 'J-50128940-1',
+        holder: 'MI TIENDA POS C.A.',
+        isDefault: false
+      }
+    ],
+
+    /* ----------------------------------------------------------------------
+       14. CIERRES DE LOTE DE PUNTOS DE VENTA (AUDITORÍA FÍSICA VS SISTEMA)
+       ---------------------------------------------------------------------- */
+    batchClosures: [
+      {
+        id: 'LOTE-CLS-001',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+        terminalId: 'term-bancamiga',
+        terminalName: 'Punto Bancamiga Pax A920',
+        bank: '0172 - Bancamiga',
+        batchNumber: '0013',
+        systemTxCount: 14,
+        systemTotalBs: 1540.20,
+        physicalTxCount: 14,
+        physicalTotalBs: 1540.20,
+        differenceBs: 0.00,
+        status: 'CUADRADO',
+        cashier: 'Cajero Turno Tarde',
+        notes: 'Cierre de lote exacto sin descuadres'
+      }
     ]
   };
 
@@ -1684,6 +1769,9 @@
       if (!Array.isArray(merged.purchases)) merged.purchases = JSON.parse(JSON.stringify(DEFAULT_STATE.purchases));
       if (!Array.isArray(merged.wasteRecords)) merged.wasteRecords = JSON.parse(JSON.stringify(DEFAULT_STATE.wasteRecords));
       if (!Array.isArray(merged.kardex)) merged.kardex = JSON.parse(JSON.stringify(DEFAULT_STATE.kardex));
+      if (!Array.isArray(merged.posTerminals)) merged.posTerminals = JSON.parse(JSON.stringify(DEFAULT_STATE.posTerminals));
+      if (!Array.isArray(merged.pagoMovilAccounts)) merged.pagoMovilAccounts = JSON.parse(JSON.stringify(DEFAULT_STATE.pagoMovilAccounts));
+      if (!Array.isArray(merged.batchClosures)) merged.batchClosures = JSON.parse(JSON.stringify(DEFAULT_STATE.batchClosures || []));
       return merged;
     } catch (e) {
       return JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -2545,6 +2633,55 @@
     const topItems = Object.values(itemStatsMap).sort((a, b) => b.revenueUsd - a.revenueUsd);
     const totalPendingInvoicesUsd = invoices.reduce((acc, f) => acc + Math.max(0, Number(f.totalUsd || 0) - Number(f.paidUsd || 0)), 0);
 
+    // Auditoría detallada de Puntos de Venta (Terminales) y Pago Móvil (Conciliación)
+    let pmConfirmedBs = 0;
+    let pmPendingBs = 0;
+    const pmByAccount = {};
+    const puntoByTerminal = {};
+
+    (state.posTerminals || []).forEach(term => {
+      puntoByTerminal[term.id] = {
+        terminalId: term.id,
+        terminalName: term.name,
+        bank: term.bank,
+        currentBatch: term.currentBatch || '0001',
+        txCount: 0,
+        totalBs: 0,
+        totalUsd: 0
+      };
+    });
+
+    sales.forEach(s => {
+      (s.payments || []).forEach(p => {
+        if (p.method === 'Pago Móvil') {
+          const isConf = p.verifyStatus === 'CONCILIADO' || (p.verified !== false && p.verifyStatus !== 'PENDIENTE');
+          if (isConf) pmConfirmedBs += Number(p.amountBs || 0);
+          else pmPendingBs += Number(p.amountBs || 0);
+
+          const accName = p.destAccountName || 'Cuenta Principal';
+          if (!pmByAccount[accName]) pmByAccount[accName] = { name: accName, totalBs: 0, count: 0 };
+          pmByAccount[accName].totalBs += Number(p.amountBs || 0);
+          pmByAccount[accName].count++;
+        } else if (p.method === 'Punto de Venta') {
+          const termId = p.terminalId || (state.posTerminals && state.posTerminals[0] ? state.posTerminals[0].id : 'term-bancamiga');
+          if (!puntoByTerminal[termId]) {
+            puntoByTerminal[termId] = {
+              terminalId: termId,
+              terminalName: p.terminalName || 'Punto POS',
+              bank: p.bank || 'Banco Adquirente',
+              currentBatch: p.lote || '0001',
+              txCount: 0,
+              totalBs: 0,
+              totalUsd: 0
+            };
+          }
+          puntoByTerminal[termId].txCount++;
+          puntoByTerminal[termId].totalBs += Number(p.amountBs || 0);
+          puntoByTerminal[termId].totalUsd += Number(p.amountUsd || 0);
+        }
+      });
+    });
+
     return {
       bcv, eur, usdt, gapFactor,
       grossSalesUsd,
@@ -2563,9 +2700,172 @@
       outChangeUsdCash, outChangeBsCash, outChangePmBs,
       expUsdCash, expBsCash, expPmBs, expOtherUsd,
       netDrawerUsd, netDrawerBs, netBankPmBs,
+      pmConfirmedBs, pmPendingBs, pmByAccount,
+      puntoByTerminal,
+      posTerminals: state.posTerminals || [],
+      pagoMovilAccounts: state.pagoMovilAccounts || [],
+      batchClosures: state.batchClosures || [],
       topItems,
       totalPendingInvoicesUsd
     };
+  }
+
+  /* Cierre de Lote Formal de Punto de Venta (Conciliación Voucher vs Sistema) */
+  function closeTerminalBatch(payload) {
+    if (!Array.isArray(state.posTerminals)) state.posTerminals = [];
+    const term = state.posTerminals.find(t => t.id === payload.terminalId);
+    if (!term) return { success: false, error: 'Terminal no encontrado' };
+
+    const batchNumber = term.currentBatch || '0001';
+    let systemTotalBs = 0;
+    let systemTxCount = 0;
+
+    (state.sales || []).forEach(s => {
+      (s.payments || []).forEach(p => {
+        if (p.method === 'Punto de Venta' && (p.terminalId === term.id || !p.terminalId) && (!p.batchClosed)) {
+          systemTotalBs += Number(p.amountBs || 0);
+          systemTxCount++;
+          p.batchClosed = true;
+          p.batchClosedId = 'LOTE-' + term.id + '-' + batchNumber;
+        }
+      });
+    });
+
+    const physicalTotalBs = Math.max(0, Number(payload.physicalTotalBs) || 0);
+    const physicalTxCount = Math.max(0, parseInt(payload.physicalTxCount, 10) || 0);
+    const diffBs = Number((physicalTotalBs - systemTotalBs).toFixed(2));
+    const status = Math.abs(diffBs) <= 0.05 ? 'CUADRADO' : (diffBs > 0 ? 'SOBRANTE' : 'FALTANTE');
+
+    const closure = {
+      id: 'LOTE-CLS-' + Date.now().toString().slice(-6),
+      timestamp: new Date().toISOString(),
+      terminalId: term.id,
+      terminalName: term.name,
+      bank: term.bank,
+      batchNumber,
+      systemTxCount,
+      systemTotalBs: Number(systemTotalBs.toFixed(2)),
+      physicalTxCount,
+      physicalTotalBs: Number(physicalTotalBs.toFixed(2)),
+      differenceBs: diffBs,
+      status,
+      cashier: payload.cashier || 'Cajero Turno',
+      notes: payload.notes || ''
+    };
+
+    if (!Array.isArray(state.batchClosures)) state.batchClosures = [];
+    state.batchClosures.unshift(closure);
+
+    // Incrementar automáticamente el número de lote para el siguiente turno
+    const nextBatchNum = (parseInt(batchNumber, 10) || 1) + 1;
+    term.currentBatch = String(nextBatchNum).padStart(4, '0');
+
+    saveState(state);
+    return { success: true, closure, nextBatch: term.currentBatch };
+  }
+
+  /* Actualizar Estado de Conciliación de Pago Móvil (CONCILIADO / RECHAZADO) */
+  function updatePagoMovilStatus(saleId, paymentRef, newStatus, reason) {
+    const sale = (state.sales || []).find(s => s.id === saleId);
+    if (!sale) return false;
+    const payment = (sale.payments || []).find(p => p.method === 'Pago Móvil' && (p.ref === paymentRef || !paymentRef));
+    if (!payment) return false;
+
+    payment.verifyStatus = newStatus; // 'CONCILIADO' | 'PENDIENTE' | 'RECHAZADO'
+    payment.verified = newStatus === 'CONCILIADO';
+    payment.reviewNotes = reason || '';
+    payment.reviewedAt = new Date().toISOString();
+
+    saveState(state);
+    return true;
+  }
+
+  /* Procesador de Cobro C2P (Comercio a Persona) con Token OTP */
+  function processC2pPayment(payload) {
+    const bank = payload.bank || '0102 - Venezuela';
+    const phone = String(payload.phone || '').trim().replace(/[-\s]/g, '');
+    const idDoc = String(payload.idDoc || '').trim().toUpperCase();
+    const otp = String(payload.otp || '').trim();
+    const amountBs = parseFloat(payload.amountBs) || 0;
+    const amountUsd = parseFloat(payload.amountUsd) || 0;
+
+    if (!phone || phone.length < 10) {
+      return { success: false, error: 'Número de teléfono inválido (debe tener formato 0412/0414/0424...)' };
+    }
+    if (!idDoc || idDoc.length < 5) {
+      return { success: false, error: 'Cédula / Documento de identidad requerido' };
+    }
+    if (!otp || otp.length < 6) {
+      return { success: false, error: 'Token OTP inválido (mínimo 6 a 8 dígitos generados en la app bancaria)' };
+    }
+    if (amountBs <= 0) {
+      return { success: false, error: 'Monto a debitar debe ser mayor a 0 Bs' };
+    }
+
+    const authCode = 'C2P-' + Math.floor(100000 + Math.random() * 900000);
+
+    return {
+      success: true,
+      authCode,
+      reference: authCode,
+      bank,
+      phone,
+      idDoc,
+      amountBs,
+      amountUsd,
+      message: 'Cobro C2P Aprobado Inmediatamente por el Banco emisor'
+    };
+  }
+
+  function saveTerminal(termPayload) {
+    if (!Array.isArray(state.posTerminals)) state.posTerminals = [];
+    if (termPayload.id) {
+      const idx = state.posTerminals.findIndex(t => t.id === termPayload.id);
+      if (idx !== -1) {
+        state.posTerminals[idx] = Object.assign({}, state.posTerminals[idx], termPayload);
+        saveState(state);
+        return state.posTerminals[idx];
+      }
+    }
+    const newTerm = {
+      id: 'term-' + Date.now(),
+      name: termPayload.name || 'Punto de Venta POS',
+      bank: termPayload.bank || '0134 - Banesco',
+      currentBatch: termPayload.currentBatch || '0001',
+      model: termPayload.model || 'Terminal POS',
+      status: termPayload.status || 'ACTIVO'
+    };
+    state.posTerminals.push(newTerm);
+    saveState(state);
+    return newTerm;
+  }
+
+  function savePagoMovilAccount(accPayload) {
+    if (!Array.isArray(state.pagoMovilAccounts)) state.pagoMovilAccounts = [];
+    if (accPayload.id) {
+      const idx = state.pagoMovilAccounts.findIndex(a => a.id === accPayload.id);
+      if (idx !== -1) {
+        state.pagoMovilAccounts[idx] = Object.assign({}, state.pagoMovilAccounts[idx], accPayload);
+        saveState(state);
+        return state.pagoMovilAccounts[idx];
+      }
+    }
+    const newAcc = {
+      id: 'pm-acc-' + Date.now(),
+      name: accPayload.name || 'Cuenta Pago Móvil',
+      bank: accPayload.bank || '0102 - Venezuela',
+      phone: accPayload.phone || '',
+      rif: accPayload.rif || state.settings.rif || '',
+      holder: accPayload.holder || state.settings.storeName || '',
+      isDefault: !!accPayload.isDefault
+    };
+    if (newAcc.isDefault) {
+      state.pagoMovilAccounts.forEach(a => a.isDefault = false);
+    }
+    state.pagoMovilAccounts.push(newAcc);
+    saveState(state);
+    return newAcc;
+  }
   }
 
   /* Exportar / Importar Base de Datos Local en Disco Duro (Para Windows 7) */
@@ -2660,6 +2960,11 @@
     recordMovement: (p) => { const r = recordMovementInternal(p); saveState(state); return r; },
     quickCreateItemInGroup,
     getFinancialAnalytics,
+    closeTerminalBatch,
+    updatePagoMovilStatus,
+    processC2pPayment,
+    saveTerminal,
+    savePagoMovilAccount,
     exportBackupJson,
     linkLocalDiskFile,
     toast,

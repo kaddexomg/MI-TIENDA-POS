@@ -1018,36 +1018,126 @@
             </div>
             <input type="hidden" id="payMethodSelect" value="Efectivo USD">
 
-            <!-- Datos extra y Validador Inteligente de Pago Móvil Recibido -->
+            <!-- Datos extra y Validador Inteligente de Pago Móvil Recibido y C2P -->
             <div id="pagoMovilExtraFields" style="display:none;background:#eff6ff;border:1.5px solid #93c5fd;padding:9px;border-radius:8px;margin-bottom:8px">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px">
-                <span style="font-size:11px;font-weight:900;color:#1e40af">📱 VALIDACIÓN DE PAGO MÓVIL (ÚLTIMOS DÍGITOS O SMS):</span>
-                <button type="button" class="btn btn-sm btn-p" style="padding:2px 8px;font-size:10.5px" onclick="window.MTPPos.promptPastePagoMovilSms()">
-                  📲 Pegar Notificación / SMS del Banco (Auto-llenar)
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:11px;font-weight:900;color:#1e40af">📱 PAGO MÓVIL:</span>
+                  <div class="tabs" style="display:inline-flex;margin:0;gap:3px">
+                    <button type="button" id="btnPmModeP2p" class="btn btn-sm btn-p" style="padding:2px 7px;font-size:10px" onclick="window.MTPPos.switchPmMode('P2P')">P2P (Cliente Transfiere)</button>
+                    <button type="button" id="btnPmModeC2p" class="btn btn-sm btn-ghost" style="padding:2px 7px;font-size:10px" onclick="window.MTPPos.switchPmMode('C2P')">⚡ C2P (Débito OTP)</button>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:10.5px;color:#1d4ed8;background:#dbeafe;border:1px solid #93c5fd" onclick="window.MTPPos.promptPastePagoMovilSms()">
+                  📲 Pegar Notificación / SMS (Auto-llenar)
                 </button>
               </div>
 
-              <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:7px;align-items:center">
+              <!-- P2P Subcontainer -->
+              <div id="pmP2pContainer">
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1.2fr 1fr;gap:6px;align-items:center">
+                  <div class="form-group">
+                    <label>📥 Cuenta Destino Negocio</label>
+                    <select id="pmDestAccountSelect" class="select" style="padding:4px 6px;font-size:11px">
+                      <!-- Dinámico -->
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>🏦 Banco Emisor</label>
+                    <select id="pmBankSelect" class="select" style="padding:4px 6px;font-size:11px">
+                      <option value="0102 - Venezuela">0102 - Banco de Venezuela</option>
+                      <option value="0134 - Banesco">0134 - Banesco</option>
+                      <option value="0105 - Mercantil">0105 - Mercantil</option>
+                      <option value="0108 - Provincial">0108 - Provincial</option>
+                      <option value="0191 - BNC">0191 - BNC</option>
+                      <option value="0172 - Bancamiga">0172 - Bancamiga</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>📱 Teléfono / Cédula Cliente</label>
+                    <input type="text" id="pmPhoneInput" class="input" style="padding:4px 6px;font-size:11px" placeholder="0412-1234567">
+                  </div>
+                  <div class="form-group">
+                    <label>🛡️ Verificación en Banco</label>
+                    <select id="pmVerifyStatusSelect" class="select" style="padding:4px 6px;font-size:11px;font-weight:800;color:#047857">
+                      <option value="CONCILIADO">✔ CONFIRMADO EN BANCO</option>
+                      <option value="PENDIENTE">⏳ PENDIENTE VERIFICAR</option>
+                    </select>
+                  </div>
+                </div>
+                <div style="margin-top:4px;display:flex;align-items:center;justify-content:space-between">
+                  <div id="pmRefVerifyBadge" class="badge badge-yellow" style="font-size:10px;padding:3px 7px">
+                    ⏳ Ingresa mín. 4 dígitos de referencia abajo
+                  </div>
+                  <span style="font-size:10px;color:#64748b">Si aún no se confirmó en la app bancaria, déjalo en 'PENDIENTE' para conciliarlo en Cierres.</span>
+                </div>
+              </div>
+
+              <!-- C2P Subcontainer (Débito Directo con Clave Dinámica OTP) -->
+              <div id="pmC2pContainer" style="display:none;background:#eff6ff;border:1px dashed #3b82f6;padding:7px;border-radius:6px;margin-top:4px">
+                <div style="font-size:10.5px;color:#1e3a8a;font-weight:800;margin-bottom:5px">
+                  ⚡ COBRO DIRECTO C2P: Solicita al cliente su Clave Dinámica generada en su banco y haz clic en debitar:
+                </div>
+                <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr auto;gap:6px;align-items:end">
+                  <div class="form-group">
+                    <label>Banco del Cliente</label>
+                    <select id="c2pBankSelect" class="select" style="padding:4px 6px;font-size:11px">
+                      <option value="0102 - Venezuela">0102 - BDV</option>
+                      <option value="0134 - Banesco">0134 - Banesco</option>
+                      <option value="0105 - Mercantil">0105 - Mercantil</option>
+                      <option value="0108 - Provincial">0108 - Provincial</option>
+                      <option value="0191 - BNC">0191 - BNC</option>
+                      <option value="0172 - Bancamiga">0172 - Bancamiga</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Cédula (V/E/J)</label>
+                    <input type="text" id="c2pIdDocInput" class="input" style="padding:4px 6px;font-size:11px" placeholder="V-12345678">
+                  </div>
+                  <div class="form-group">
+                    <label>Teléfono Cliente</label>
+                    <input type="text" id="c2pPhoneInput" class="input" style="padding:4px 6px;font-size:11px" placeholder="04121234567">
+                  </div>
+                  <div class="form-group">
+                    <label>Clave Dinámica (OTP)</label>
+                    <input type="password" id="c2pOtpInput" class="input" maxlength="8" style="padding:4px 6px;font-size:11px;font-family:var(--font-mono);font-weight:900" placeholder="8 dígitos">
+                  </div>
+                  <button type="button" class="btn btn-blue btn-sm" style="padding:6px 10px;font-weight:800" onclick="window.MTPPos.executeC2pDirectPayment()">
+                    ⚡ Debitar C2P
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Datos extra y Auditoría de Punto de Venta / Biopago -->
+            <div id="puntoVentaExtraFields" style="display:none;background:#f0fdf4;border:1.5px solid #86efac;padding:9px;border-radius:8px;margin-bottom:8px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+                <span style="font-size:11px;font-weight:900;color:#166534">💳 PUNTO DE VENTA / BIOPAGO (AUDITORÍA DE VOUCHER Y LOTE):</span>
+                <span id="posSelectedTermInfo" class="badge badge-green" style="font-size:10px">Lote Activo: 0001</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1.5fr 0.8fr 1.1fr 1fr;gap:6px;align-items:end">
                 <div class="form-group">
-                  <label>🏦 Banco Emisor</label>
-                  <select id="pmBankSelect" class="select" style="padding:5px">
-                    <option value="0102 - Venezuela">0102 - Banco de Venezuela</option>
-                    <option value="0134 - Banesco">0134 - Banesco</option>
-                    <option value="0105 - Mercantil">0105 - Mercantil</option>
-                    <option value="0108 - Provincial">0108 - Provincial</option>
-                    <option value="0191 - BNC">0191 - BNC</option>
-                    <option value="0172 - Bancamiga">0172 - Bancamiga</option>
+                  <label>Terminal / Punto Físico</label>
+                  <select id="puntoTerminalSelect" class="select" style="padding:4px 6px;font-size:11px" onchange="window.MTPPos.onTerminalSelected(this.value)">
+                    <!-- Dinámico -->
                   </select>
                 </div>
                 <div class="form-group">
-                  <label>📱 Teléfono / Cédula</label>
-                  <input type="text" id="pmPhoneInput" class="input" style="padding:5px" placeholder="0412-1234567">
+                  <label>N° Lote (Batch)</label>
+                  <input type="text" id="puntoLoteInput" class="input" style="padding:4px 6px;font-size:11px;font-family:var(--font-mono);font-weight:800" placeholder="0001">
                 </div>
-                <div>
-                  <label>🛡️ Estado de la Referencia</label>
-                  <div id="pmRefVerifyBadge" class="badge badge-yellow" style="display:block;text-align:center;padding:5px;font-size:10.5px">
-                    ⏳ Ingresa mín. 4 dígitos
-                  </div>
+                <div class="form-group">
+                  <label>N° Aprobación / Voucher</label>
+                  <input type="text" id="puntoVoucherInput" class="input" style="padding:4px 6px;font-size:11px;font-family:var(--font-mono);font-weight:900" placeholder="Ej: 049812"
+                    oninput="if(this.value.trim().length>=3) document.getElementById('payRefInput').value = this.value.trim();">
+                </div>
+                <div class="form-group">
+                  <label>Tipo Tarjeta</label>
+                  <select id="puntoCardTypeSelect" class="select" style="padding:4px 6px;font-size:11px">
+                    <option value="Débito TDD">Débito (TDD)</option>
+                    <option value="Crédito TDC">Crédito (TDC)</option>
+                    <option value="Biopago BDV">Biopago (Huella)</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -1235,6 +1325,98 @@
     });
   }
 
+  function populateCheckoutSelectors() {
+    const termSelect = document.getElementById('puntoTerminalSelect');
+    if (termSelect && !termSelect.children.length) {
+      const terms = MTP.state.posTerminals || [];
+      if (!terms.length) {
+        termSelect.innerHTML = `<option value="term-pax">Bancamiga Pax A920 (0172 - Bancamiga)</option>`;
+      } else {
+        termSelect.innerHTML = terms.map(t => `<option value="${t.id}">${t.name} (${t.bank}) - Lote ${t.currentBatch || '0001'}</option>`).join('');
+      }
+      onTerminalSelected(termSelect.value);
+    }
+
+    const pmAccSelect = document.getElementById('pmDestAccountSelect');
+    if (pmAccSelect && !pmAccSelect.children.length) {
+      const accs = MTP.state.pagoMovilAccounts || [];
+      if (!accs.length) {
+        pmAccSelect.innerHTML = `<option value="acc-1">Banesco Comercio (0414-0000000 / J-50123456-0)</option>`;
+      } else {
+        pmAccSelect.innerHTML = accs.map(a => `<option value="${a.id}">${a.name} (${a.bank}) - ${a.phone}</option>`).join('');
+      }
+    }
+  }
+
+  function onTerminalSelected(termId) {
+    const terms = MTP.state.posTerminals || [];
+    const term = terms.find(t => t.id === termId) || terms[0];
+    const loteInput = document.getElementById('puntoLoteInput');
+    const infoBadge = document.getElementById('posSelectedTermInfo');
+    if (term) {
+      if (loteInput) loteInput.value = term.currentBatch || '0001';
+      if (infoBadge) infoBadge.textContent = `${term.model || 'POS'} | Lote Activo: ${term.currentBatch || '0001'}`;
+    }
+  }
+
+  function switchPmMode(mode) {
+    const p2pCont = document.getElementById('pmP2pContainer');
+    const c2pCont = document.getElementById('pmC2pContainer');
+    const btnP2p = document.getElementById('btnPmModeP2p');
+    const btnC2p = document.getElementById('btnPmModeC2p');
+    if (mode === 'C2P') {
+      if (p2pCont) p2pCont.style.display = 'none';
+      if (c2pCont) c2pCont.style.display = 'block';
+      if (btnP2p) { btnP2p.className = 'btn btn-sm btn-ghost'; }
+      if (btnC2p) { btnC2p.className = 'btn btn-sm btn-p'; }
+      setTimeout(() => document.getElementById('c2pOtpInput')?.focus(), 50);
+    } else {
+      if (p2pCont) p2pCont.style.display = 'block';
+      if (c2pCont) c2pCont.style.display = 'none';
+      if (btnP2p) { btnP2p.className = 'btn btn-sm btn-p'; }
+      if (btnC2p) { btnC2p.className = 'btn btn-sm btn-ghost'; }
+    }
+  }
+
+  function executeC2pDirectPayment() {
+    const bank = document.getElementById('c2pBankSelect')?.value || '0102 - BDV';
+    const idDoc = document.getElementById('c2pIdDocInput')?.value.trim();
+    const phone = document.getElementById('c2pPhoneInput')?.value.trim();
+    const otp = document.getElementById('c2pOtpInput')?.value.trim();
+    const amountUsd = parseFloat(document.getElementById('payAmountUsd')?.value) || 0;
+    const amountBs = parseFloat(document.getElementById('payAmountBs')?.value) || 0;
+
+    const res = MTP.processC2pPayment({ bank, phone, idDoc, otp, amountBs, amountUsd });
+    if (!res.success) {
+      MTP.toast(res.error, 'err');
+      return;
+    }
+
+    const destAccSelect = document.getElementById('pmDestAccountSelect');
+    const destAccountName = destAccSelect ? destAccSelect.options[destAccSelect.selectedIndex]?.text : 'Cuenta Principal';
+    const destAccountId = destAccSelect ? destAccSelect.value : '';
+
+    currentPayments.push({
+      id: 'p-c2p-' + Date.now(),
+      method: 'Pago Móvil',
+      subMethod: 'C2P Débito Directo',
+      amountUsd: Number(amountUsd.toFixed(2)),
+      amountBs: Number(amountBs.toFixed(2)),
+      bank: res.bank,
+      phone: res.phone,
+      idDoc: res.idDoc,
+      ref: res.reference,
+      destAccountId,
+      destAccountName,
+      verifyStatus: 'CONCILIADO',
+      verified: true
+    });
+
+    MTP.toast(`✔ Débito C2P exitoso: ${res.reference} por ${res.amountBs.toFixed(2)} Bs`, 'info');
+    document.getElementById('c2pOtpInput').value = '';
+    renderPaymentsAndChange();
+  }
+
   function selectPayMethod(methodName) {
     const sel = document.getElementById('payMethodSelect');
     if (sel) sel.value = methodName;
@@ -1244,8 +1426,15 @@
 
     const pmFields = document.getElementById('pagoMovilExtraFields');
     if (pmFields) {
-      pmFields.style.display = methodName === 'Pago Móvil' ? 'grid' : 'none';
+      pmFields.style.display = methodName === 'Pago Móvil' ? 'block' : 'none';
     }
+
+    const puntoFields = document.getElementById('puntoVentaExtraFields');
+    if (puntoFields) {
+      puntoFields.style.display = methodName === 'Punto de Venta' ? 'block' : 'none';
+    }
+
+    populateCheckoutSelectors();
 
     const remainingUsd = Math.max(0, getCartTotalUsd() - getPaidTotalUsd());
     const bcv = MTP.state.settings.rateBcv;
@@ -1388,12 +1577,14 @@
     const method = document.getElementById('payMethodSelect').value;
     const amountUsd = parseFloat(document.getElementById('payAmountUsd').value) || 0;
     const amountBs = parseFloat(document.getElementById('payAmountBs').value) || 0;
-    const ref = document.getElementById('payRefInput').value.trim();
+    let ref = document.getElementById('payRefInput').value.trim();
 
     if (amountUsd <= 0) {
       MTP.toast('Ingresa un monto mayor a 0', 'warn');
       return;
     }
+
+    let extraData = {};
 
     if (method === 'Pago Móvil') {
       if (!ref || ref.length < 4) {
@@ -1404,23 +1595,58 @@
         MTP.toast(`¡Alerta! La referencia de Pago Móvil #${ref} ya fue registrada en otro ticket hoy`, 'err');
         return;
       }
+      const destAccSelect = document.getElementById('pmDestAccountSelect');
+      const destAccountName = destAccSelect ? destAccSelect.options[destAccSelect.selectedIndex]?.text : 'Cuenta Principal';
+      const destAccountId = destAccSelect ? destAccSelect.value : '';
+      const verifyStatus = document.getElementById('pmVerifyStatusSelect')?.value || 'CONCILIADO';
+      const bank = document.getElementById('pmBankSelect')?.value || '';
+      const phone = document.getElementById('pmPhoneInput')?.value.trim() || '';
+
+      extraData = {
+        bank,
+        phone,
+        destAccountId,
+        destAccountName,
+        verifyStatus,
+        verified: verifyStatus === 'CONCILIADO'
+      };
+    } else if (method === 'Punto de Venta') {
+      const termSelect = document.getElementById('puntoTerminalSelect');
+      const termId = termSelect ? termSelect.value : '';
+      const termObj = (MTP.state.posTerminals || []).find(t => t.id === termId) || (MTP.state.posTerminals || [])[0];
+      const lote = document.getElementById('puntoLoteInput')?.value.trim() || termObj?.currentBatch || '0001';
+      const voucher = document.getElementById('puntoVoucherInput')?.value.trim() || ref;
+      const cardType = document.getElementById('puntoCardTypeSelect')?.value || 'Débito TDD';
+
+      if (!voucher || voucher.length < 3) {
+        MTP.toast('Ingresa el N° de Aprobación / Voucher impreso por el Punto de Venta', 'warn');
+        return;
+      }
+
+      ref = `Voucher #${voucher} (Lote ${lote})`;
+      extraData = {
+        terminalId: termObj ? termObj.id : 'term-default',
+        terminalName: termObj ? termObj.name : 'Punto POS',
+        bank: termObj ? termObj.bank : 'Banco Adquirente',
+        lote,
+        voucher,
+        cardType,
+        verified: true
+      };
     }
 
-    const bank = document.getElementById('pmBankSelect')?.value || '';
-    const phone = document.getElementById('pmPhoneInput')?.value.trim() || '';
-
-    currentPayments.push({
+    currentPayments.push(Object.assign({
       id: 'p-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
       method,
       amountUsd: Number(amountUsd.toFixed(2)),
       amountBs: Number(amountBs.toFixed(2)),
-      bank: method === 'Pago Móvil' ? bank : '',
-      phone: method === 'Pago Móvil' ? phone : '',
       ref: ref || method,
       verified: true
-    });
+    }, extraData));
 
     document.getElementById('payRefInput').value = '';
+    const vInput = document.getElementById('puntoVoucherInput');
+    if (vInput) vInput.value = '';
     renderPaymentsAndChange();
   }
 
@@ -1479,7 +1705,12 @@
           <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 10px;background:#fff;border:1px solid var(--border);border-radius:7px;margin-bottom:4px;font-size:12px">
             <div>
               <strong>${p.method}</strong>
-              <span class="badge badge-green">✔ ${p.ref}</span>
+              ${p.terminalName ? `<span class="badge badge-purple" style="font-size:10px;margin-left:4px">POS: ${p.terminalName} (Lote ${p.lote || '—'})</span>` : ''}
+              ${p.cardType ? `<span class="badge badge-blue" style="font-size:10px;margin-left:2px">${p.cardType}</span>` : ''}
+              ${p.destAccountName ? `<span class="badge badge-amber" style="font-size:10px;margin-left:4px">Cta: ${p.destAccountName}</span>` : ''}
+              ${p.verifyStatus === 'PENDIENTE' 
+                ? `<span class="badge badge-yellow" style="font-size:10px;margin-left:2px">⏳ PENDIENTE VERIFICAR</span>` 
+                : `<span class="badge badge-green" style="font-size:10px;margin-left:2px">✔ ${p.ref}</span>`}
               ${p.bank ? `<span style="font-size:11px;color:var(--txt-sec)">(${p.bank} ${p.phone || ''})</span>` : ''}
             </div>
             <div style="display:flex;align-items:center;gap:8px">
@@ -1649,26 +1880,60 @@
 
     if (!currentPayments.length) {
       const method = document.getElementById('payMethodSelect').value || 'Efectivo USD';
-      const ref = document.getElementById('payRefInput').value.trim();
-      if (method === 'Pago Móvil' && (!ref || ref.length < 4)) {
-        MTP.toast('Ingresa los últimos dígitos de la referencia del Pago Móvil', 'err');
-        return;
+      let ref = document.getElementById('payRefInput').value.trim();
+      let extraData = {};
+
+      if (method === 'Pago Móvil') {
+        if (!ref || ref.length < 4) {
+          MTP.toast('Ingresa los últimos dígitos de la referencia del Pago Móvil', 'err');
+          return;
+        }
+        if (MTP.isPagoMovilRefUsed(ref)) {
+          MTP.toast(`La referencia de Pago Móvil #${ref} ya fue usada hoy`, 'err');
+          return;
+        }
+        const destAccSelect = document.getElementById('pmDestAccountSelect');
+        extraData = {
+          bank: document.getElementById('pmBankSelect')?.value || '',
+          phone: document.getElementById('pmPhoneInput')?.value.trim() || '',
+          destAccountId: destAccSelect ? destAccSelect.value : '',
+          destAccountName: destAccSelect ? destAccSelect.options[destAccSelect.selectedIndex]?.text : 'Cuenta Principal',
+          verifyStatus: document.getElementById('pmVerifyStatusSelect')?.value || 'CONCILIADO',
+          verified: (document.getElementById('pmVerifyStatusSelect')?.value || 'CONCILIADO') === 'CONCILIADO'
+        };
+      } else if (method === 'Punto de Venta') {
+        const termSelect = document.getElementById('puntoTerminalSelect');
+        const termId = termSelect ? termSelect.value : '';
+        const termObj = (MTP.state.posTerminals || []).find(t => t.id === termId) || (MTP.state.posTerminals || [])[0];
+        const lote = document.getElementById('puntoLoteInput')?.value.trim() || termObj?.currentBatch || '0001';
+        const voucher = document.getElementById('puntoVoucherInput')?.value.trim() || ref;
+        const cardType = document.getElementById('puntoCardTypeSelect')?.value || 'Débito TDD';
+
+        if (!voucher || voucher.length < 3) {
+          MTP.toast('Ingresa el N° de Voucher / Aprobación del Punto de Venta', 'warn');
+          return;
+        }
+        ref = `Voucher #${voucher} (Lote ${lote})`;
+        extraData = {
+          terminalId: termObj ? termObj.id : 'term-default',
+          terminalName: termObj ? termObj.name : 'Punto POS',
+          bank: termObj ? termObj.bank : 'Banco Adquirente',
+          lote,
+          voucher,
+          cardType,
+          verified: true
+        };
       }
-      if (method === 'Pago Móvil' && MTP.isPagoMovilRefUsed(ref)) {
-        MTP.toast(`La referencia de Pago Móvil #${ref} ya fue usada hoy`, 'err');
-        return;
-      }
+
       const enteredUsd = parseFloat(document.getElementById('payAmountUsd').value) || totalUsd;
-      currentPayments.push({
+      currentPayments.push(Object.assign({
         id: 'p-auto',
         method,
         amountUsd: Number(enteredUsd.toFixed(2)),
         amountBs: Number((enteredUsd * bcv).toFixed(2)),
-        bank: method === 'Pago Móvil' ? (document.getElementById('pmBankSelect')?.value || '') : '',
-        phone: method === 'Pago Móvil' ? (document.getElementById('pmPhoneInput')?.value.trim() || '') : '',
         ref: ref || 'Pago directo',
         verified: true
-      });
+      }, extraData));
     }
 
     const paidUsd = getPaidTotalUsd();
@@ -1879,7 +2144,11 @@
     rebalanceChangeDistribution,
     finalizeSale,
     openQuickKitchenTicketPreview,
-    handleCodeOrSearchSubmit
+    handleCodeOrSearchSubmit,
+    onTerminalSelected,
+    switchPmMode,
+    executeC2pDirectPayment,
+    populateCheckoutSelectors
   };
 
   document.addEventListener('DOMContentLoaded', initPOS);

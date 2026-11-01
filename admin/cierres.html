@@ -55,24 +55,43 @@
           </div>
         </div>
 
+        <!-- CONCILIACIÓN DE PUNTOS DE VENTA Y CIERRE DE LOTE -->
+        <div class="card" style="margin-bottom:8px">
+          <div class="card-hd" style="padding:4px 8px;background:#f0fdf4">
+            <div>
+              <h3 style="color:#166534;font-size:12px">Control de Puntos de Venta (POS) y Cierre de Lotes</h3>
+              <span style="font-size:10px;color:#15803d">Conciliación de voucher físico del punto vs ventas registradas en el sistema</span>
+            </div>
+            <button class="btn btn-p btn-sm" onclick="openBatchClosureModal()">📄 Realizar Cierre de Lote</button>
+          </div>
+          <div class="card-bd" style="padding:8px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px" id="posTerminalsStatusGrid"></div>
+          </div>
+        </div>
+
         <!-- CONCILIACIÓN DE PAGOS MÓVILES DEL TURNO -->
         <div class="card" style="margin-bottom:8px">
           <div class="card-hd" style="padding:4px 8px">
-            <h3 style="font-size:12px">Verificación de Pago Móvil Recibidos en el Turno</h3>
+            <div>
+              <h3 style="font-size:12px">Verificación y Conciliación de Pagos Móviles Recibidos</h3>
+              <span style="font-size:10px;color:var(--txt-sec)">Auditoría cuenta por cuenta: confirma abonos bancarios y detecta capturas falsas</span>
+            </div>
             <span class="badge badge-green">Anti-Fraude</span>
           </div>
-          <div class="table-wrap" style="max-height:180px;overflow-y:auto">
+          <div class="table-wrap" style="max-height:200px;overflow-y:auto">
             <table class="data-table">
               <thead style="position:sticky;top:0;z-index:5">
                 <tr>
                   <th>Orden</th>
                   <th>Cliente / Hora</th>
+                  <th>Cta. Destino</th>
                   <th>Banco Origen</th>
                   <th>Teléfono / Cédula</th>
                   <th>Nº Referencia</th>
                   <th>Monto Bs</th>
                   <th>Equiv. USD</th>
-                  <th>Estado</th>
+                  <th>Estado en Banco</th>
+                  <th>Acción</th>
                 </tr>
               </thead>
               <tbody id="pmVerificationTable"></tbody>
@@ -126,6 +145,64 @@
               </thead>
               <tbody id="cierreSalesTable"></tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- MODAL PARA CIERRE DE LOTE DE PUNTO DE VENTA -->
+        <div class="modal" id="batchClosureModal">
+          <div class="modal-box" style="max-width:540px">
+            <div class="modal-hd" style="background:#0f172a;color:#fff;padding:8px 14px;border-radius:12px 12px 0 0">
+              <h3 style="color:#fff;font-size:14px;margin:0">📄 Cierre de Lote de Punto de Venta (Conciliación Voucher)</h3>
+              <button class="btn btn-sm btn-ghost" style="color:#fff" onclick="document.getElementById('batchClosureModal').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-bd" style="padding:12px">
+              <p style="font-size:11px;color:#475569;margin-bottom:8px">
+                Imprime el comprobante de <strong>CIERRE DE LOTE</strong> en el punto físico (Pax, Verifone, Biopago) y transcribe los datos del papel para contrastar con las ventas registradas:
+              </p>
+              <div class="form-group" style="margin-bottom:8px">
+                <label>Terminal / Punto de Venta a Cerrar</label>
+                <select id="closeBatchTermSelect" class="select" onchange="updateBatchModalPreview(this.value)">
+                  <!-- Dinámico -->
+                </select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                <div class="form-group">
+                  <label>N° Lote Impreso en Voucher</label>
+                  <input type="text" id="closeBatchNumInput" class="input" style="font-family:var(--font-mono);font-weight:800">
+                </div>
+                <div class="form-group">
+                  <label>N° Operaciones Impresas</label>
+                  <input type="number" id="closeBatchCountInput" class="input" min="0" oninput="compareBatchClosureLive()">
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <label>Total en Bolívares (Bs) según Voucher Físico</label>
+                <input type="number" step="0.01" id="closeBatchAmountBsInput" class="input" style="font-size:15px;font-weight:900" oninput="compareBatchClosureLive()">
+              </div>
+              <div id="batchCompareBox" style="background:#f8fafc;border:1.5px solid var(--border);border-radius:6px;padding:8px;font-size:11px">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                  <span>Total en Sistema POS:</span>
+                  <strong id="batchSysTotalBs">0,00 Bs</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                  <span>Transacciones en Sistema:</span>
+                  <strong id="batchSysTxCount">0</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                  <span>Diferencia (Voucher − Sistema):</span>
+                  <strong id="batchDiffBs">0,00 Bs</strong>
+                </div>
+                <div id="batchStatusBadge" class="badge badge-green" style="display:block;text-align:center;padding:4px;margin-top:4px">✔ Lote Cuadrado Exacto</div>
+              </div>
+              <div class="form-group" style="margin-top:8px">
+                <label>Observaciones del Cierre</label>
+                <input type="text" id="closeBatchNotesInput" class="input" placeholder="Ej: Cierre de lote turno mañana por cajero">
+              </div>
+            </div>
+            <div class="modal-ft" style="padding:8px 12px">
+              <button class="btn btn-ghost" onclick="document.getElementById('batchClosureModal').classList.remove('open')">Cancelar</button>
+              <button class="btn btn-p" onclick="confirmBatchClosure()">✔ Confirmar y Cerrar Lote</button>
+            </div>
           </div>
         </div>
       </div>
@@ -219,39 +296,88 @@
         </div>
       `;
 
+      // Puntos de Venta (Terminales)
+      const termGrid = document.getElementById('posTerminalsStatusGrid');
+      const terminals = MTP.state.posTerminals || [];
+      if (termGrid) {
+        termGrid.innerHTML = terminals.map(t => {
+          const stats = fin.puntoByTerminal[t.id] || { txCount: 0, totalBs: 0, totalUsd: 0 };
+          return `
+            <div style="background:#fff;border:1.5px solid #bbf7d0;border-radius:8px;padding:8px 10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <strong style="font-size:12px;color:#166534">${t.name}</strong>
+                <span class="badge badge-green" style="font-size:9.5px">Lote: ${t.currentBatch || '0001'}</span>
+              </div>
+              <div style="font-size:10.5px;color:var(--txt-sec);margin-bottom:6px">${t.bank} · ${t.model || 'POS'}</div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+                <div>
+                  <div style="font-size:15px;font-weight:900;color:#0f172a">${MTP.fmtBsRaw(stats.totalBs)}</div>
+                  <div style="font-size:10.5px;color:var(--txt-sec)">${stats.txCount} transacciones (${MTP.fmtUSD(stats.totalUsd)})</div>
+                </div>
+                <button class="btn btn-p btn-sm" style="padding:3px 8px;font-size:10px" onclick="openBatchClosureModal('${t.id}')">
+                  📄 Cerrar Lote
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
       // Pagos Móviles
       const pmRows = [];
       sales.forEach(s => {
         (s.payments || []).forEach(p => {
           if (p.method === 'Pago Móvil') {
             pmRows.push({
+              saleId: s.id,
               orderNumber: s.orderNumber,
               customer: s.customer,
               time: new Date(s.createdAt).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' }),
+              destAccount: p.destAccountName || 'Cuenta Principal',
               bank: p.bank || 'Banco Nacional',
               phone: p.phone || '—',
               ref: p.ref || '—',
               amountBs: Number(p.amountBs || 0),
-              amountUsd: Number(p.amountUsd || 0)
+              amountUsd: Number(p.amountUsd || 0),
+              verifyStatus: p.verifyStatus || 'CONCILIADO'
             });
           }
         });
       });
 
       document.getElementById('pmVerificationTable').innerHTML = pmRows.length
-        ? pmRows.map(r => `
-            <tr>
-              <td><span class="code-pill plu">#${r.orderNumber}</span></td>
-              <td><strong>${r.customer}</strong> <span style="font-size:11px;color:var(--txt-muted)">(${r.time})</span></td>
-              <td>${r.bank}</td>
-              <td>${r.phone}</td>
-              <td><span class="code-pill">#${r.ref}</span></td>
-              <td><strong style="color:var(--primary)">${MTP.fmtBsRaw(r.amountBs)}</strong></td>
-              <td><strong>${MTP.fmtUSD(r.amountUsd)}</strong></td>
-              <td><span class="badge badge-green">✔ Verificado</span></td>
-            </tr>
-          `).join('')
-        : `<tr><td colspan="8" style="text-align:center;color:var(--txt-muted)">No hay pagos móviles registrados en este turno</td></tr>`;
+        ? pmRows.map(r => {
+            let statusBadge = '<span class="badge badge-green">✔ Confirmado en Banco</span>';
+            let actionHtml = '<span style="font-size:10px;color:var(--txt-muted)">Auditado</span>';
+            if (r.verifyStatus === 'PENDIENTE') {
+              statusBadge = '<span class="badge badge-yellow">⏳ PENDIENTE VERIFICAR</span>';
+              actionHtml = `
+                <div style="display:flex;gap:3px">
+                  <button class="btn btn-sm btn-p" style="padding:2px 6px;font-size:10px" onclick="confirmPmStatus('${r.saleId}', '${r.ref}')">✔ Confirmar</button>
+                  <button class="btn btn-sm btn-danger" style="padding:2px 6px;font-size:10px" onclick="rejectPmStatus('${r.saleId}', '${r.ref}')">✕ Falso</button>
+                </div>
+              `;
+            } else if (r.verifyStatus === 'RECHAZADO') {
+              statusBadge = '<span class="badge badge-red">🚨 RECHAZADO / FALSO</span>';
+              actionHtml = `<button class="btn btn-sm btn-ghost" style="padding:2px 6px;font-size:10px" onclick="confirmPmStatus('${r.saleId}', '${r.ref}')">Re-verificar</button>`;
+            }
+
+            return `
+              <tr>
+                <td><span class="code-pill plu">#${r.orderNumber}</span></td>
+                <td><strong>${r.customer}</strong> <span style="font-size:10px;color:var(--txt-muted)">(${r.time})</span></td>
+                <td><span class="badge badge-blue" style="font-size:10px">${r.destAccount}</span></td>
+                <td style="font-size:11px">${r.bank}</td>
+                <td style="font-size:11px">${r.phone}</td>
+                <td><span class="code-pill">#${r.ref}</span></td>
+                <td><strong style="color:var(--primary)">${MTP.fmtBsRaw(r.amountBs)}</strong></td>
+                <td><strong>${MTP.fmtUSD(r.amountUsd)}</strong></td>
+                <td>${statusBadge}</td>
+                <td>${actionHtml}</td>
+              </tr>
+            `;
+          }).join('')
+        : `<tr><td colspan="10" style="text-align:center;color:var(--txt-muted)">No hay pagos móviles registrados en este turno</td></tr>`;
 
       // Gastos del Turno
       document.getElementById('cierreExpensesTable').innerHTML = expenses.length
@@ -298,6 +424,98 @@
           </tr>
         `;
       }).join('');
+    }
+
+    let activeBatchTerminal = null;
+
+    function openBatchClosureModal(termId) {
+      const terms = MTP.state.posTerminals || [];
+      const sel = document.getElementById('closeBatchTermSelect');
+      if (sel) {
+        sel.innerHTML = terms.map(t => `<option value="${t.id}">${t.name} (${t.bank}) - Lote ${t.currentBatch || '0001'}</option>`).join('');
+        if (termId) sel.value = termId;
+      }
+      updateBatchModalPreview(sel ? sel.value : terms[0]?.id);
+      document.getElementById('batchClosureModal').classList.add('open');
+    }
+
+    function updateBatchModalPreview(termId) {
+      const terms = MTP.state.posTerminals || [];
+      activeBatchTerminal = terms.find(t => t.id === termId) || terms[0];
+      if (!activeBatchTerminal) return;
+
+      const fin = MTP.getFinancialAnalytics();
+      const stats = fin.puntoByTerminal[activeBatchTerminal.id] || { txCount: 0, totalBs: 0 };
+
+      document.getElementById('closeBatchNumInput').value = activeBatchTerminal.currentBatch || '0001';
+      document.getElementById('closeBatchCountInput').value = stats.txCount;
+      document.getElementById('closeBatchAmountBsInput').value = stats.totalBs.toFixed(2);
+      document.getElementById('batchSysTotalBs').textContent = MTP.fmtBsRaw(stats.totalBs);
+      document.getElementById('batchSysTxCount').textContent = stats.txCount;
+      compareBatchClosureLive();
+    }
+
+    function compareBatchClosureLive() {
+      if (!activeBatchTerminal) return;
+      const fin = MTP.getFinancialAnalytics();
+      const stats = fin.puntoByTerminal[activeBatchTerminal.id] || { txCount: 0, totalBs: 0 };
+      const physBs = parseFloat(document.getElementById('closeBatchAmountBsInput').value) || 0;
+      const diffBs = physBs - stats.totalBs;
+
+      const diffEl = document.getElementById('batchDiffBs');
+      const badge = document.getElementById('batchStatusBadge');
+      if (diffEl) diffEl.textContent = `${diffBs >= 0 ? '+' : ''}${diffBs.toFixed(2)} Bs`;
+
+      if (badge) {
+        if (Math.abs(diffBs) < 0.05) {
+          badge.className = 'badge badge-green';
+          badge.textContent = '✔ Lote Cuadrado Exacto (0,00 Bs Diferencia)';
+        } else if (diffBs > 0) {
+          badge.className = 'badge badge-blue';
+          badge.textContent = `ℹ Sobrante de Voucher: +${diffBs.toFixed(2)} Bs`;
+        } else {
+          badge.className = 'badge badge-red';
+          badge.textContent = `🚨 Faltante de Voucher: ${diffBs.toFixed(2)} Bs`;
+        }
+      }
+    }
+
+    function confirmBatchClosure() {
+      if (!activeBatchTerminal) return;
+      const voucherTotalBs = parseFloat(document.getElementById('closeBatchAmountBsInput').value) || 0;
+      const voucherTxCount = parseInt(document.getElementById('closeBatchCountInput').value, 10) || 0;
+      const notes = document.getElementById('closeBatchNotesInput').value.trim();
+
+      const res = MTP.closeTerminalBatch({
+        terminalId: activeBatchTerminal.id,
+        voucherTotalBs,
+        voucherTxCount,
+        closedBy: 'Administrador / Turno',
+        notes
+      });
+
+      if (!res.success) {
+        MTP.toast(res.error, 'err');
+        return;
+      }
+
+      document.getElementById('batchClosureModal').classList.remove('open');
+      MTP.toast(`¡Lote #${res.closure.batchNumber} de ${activeBatchTerminal.name} cerrado exitosamente! Próximo lote: ${res.closure.nextBatch}`);
+      renderCierrePage();
+    }
+
+    function confirmPmStatus(saleId, ref) {
+      MTP.updatePagoMovilStatus(saleId, ref, 'CONCILIADO');
+      MTP.toast(`Pago Móvil Ref #${ref} marcado como CONFIRMADO EN BANCO`);
+      renderCierrePage();
+    }
+
+    function rejectPmStatus(saleId, ref) {
+      const reason = prompt('Motivo del rechazo / alerta (ej: Captura falsa o dinero no cayó en cuenta):', 'No acreditado en banco');
+      if (reason === null) return;
+      MTP.updatePagoMovilStatus(saleId, ref, 'RECHAZADO', reason);
+      MTP.toast(`Pago Móvil Ref #${ref} marcado como RECHAZADO`, 'warn');
+      renderCierrePage();
     }
 
     document.addEventListener('DOMContentLoaded', renderCierrePage);

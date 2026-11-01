@@ -109,7 +109,16 @@
               <span class="price-bs">${MTP.fmtBsRaw(s.totalBs)}</span>
             </div>
           </td>
-          <td>${(s.payments || []).map(p => `<span class="badge badge-blue">${p.method}: $${p.amountUsd.toFixed(2)}</span>`).join(' ')}</td>
+          <td>${(s.payments || []).map(p => `
+            <div style="margin-bottom:2px">
+              <span class="badge ${p.method === 'Pago Móvil' ? 'badge-blue' : (p.method === 'Punto de Venta' ? 'badge-green' : 'badge-yellow')}">
+                ${p.method}: ${MTP.fmtUSD(p.amountUsd)} (${p.amountBs?.toFixed(2) || '0.00'} Bs)
+              </span>
+              ${p.terminalName ? `<span class="badge badge-purple" style="font-size:9.5px">${p.terminalName} (Lote ${p.lote || '—'})</span>` : ''}
+              ${p.destAccountName ? `<span class="badge badge-amber" style="font-size:9.5px">${p.destAccountName}</span>` : ''}
+              ${p.ref ? `<span class="code-pill" style="font-size:9.5px">Ref: ${p.ref}</span>` : ''}
+            </div>
+          `).join('')}</td>
           <td>
             <strong>${MTP.fmtUSD(s.changeGiven?.totalChangeUsd || 0)}</strong>
             <div style="font-size:11px;color:var(--txt-sec)">${s.changeGiven?.breakdown || 'Exacto'}</div>
