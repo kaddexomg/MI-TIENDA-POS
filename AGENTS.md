@@ -101,6 +101,8 @@
    - Selección de cuentas bancarias receptoras del negocio (`state.pagoMovilAccounts`), ciclo de confirmación (`CONFIRMADO EN BANCO` vs `PENDIENTE DE VERIFICACIÓN` vs `RECHAZADO`), prevención de capturas falsas con cambio de estado atómico y cobro directo C2P (`processC2pPayment`) con banco, teléfono, cédula y clave dinámica OTP.
 17. **Instalador de Escritorio Windows 7 y Repositorio Oficial GitHub**:
    - Creación de `INSTALADOR-WINDOWS-7.bat`, configuración de carpetas seguras `C:\MI-TIENDA-DATOS\`, manual `INSTALACION-WINDOWS7.md` y sincronización con GitHub `kaddexomg/MI-TIENDA-POS`.
+18. **Módulo de Máquinas Fiscales Homologadas SENIAT (Providencias 0141 y 0071)**:
+   - Formato fiscal oficial en ticket con alícuotas de IVA (Exento `(E)` vs Gravado 16% `(G)`), percepción legal de IGTF 3% en pagos con divisas en efectivo/Zelle, generación de trama fiscal The Factory HKA / Bixolon / Aclas (`FACTURA.TXT`), emisión de Reporte X y Reporte Z diario, y panel de configuración fiscal en `admin/ajustes.html`.
 
 ### 5.2. Lo que se va a realizar (Próximos Pasos Windows 7)
 1. **Persistencia Transaccional con Respaldo en Disco**:

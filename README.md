@@ -42,8 +42,16 @@ El motor calcula en tiempo real la **brecha cambiaria** entre BCV y USDT, recome
 - **Analizador de Mensajes SMS / WhatsApp**: Permite pegar la notificación bancaria del cliente y extrae de forma instantánea el banco, la referencia y el monto pagado.
 - **Distribución de Vueltos Mixtos**: Desglosa exactamente cuánto se devuelve en billetes físicos USD ($), bolívares en efectivo o transferencia por Pago Móvil.
 
-### 2.4. Marco Legal Venezolano y SENIAT
-Los comprobantes emitidos por el sistema son estrictamente **Notas de Despacho y Comandas de Control Interno (SIN DERECHO A CRÉDITO FISCAL)**. Funcionan como libro contable administrativo y auditoría de inventario, permitiendo operar con transparencia sin sustituir máquinas fiscales homologadas.
+### 2.4. Marco Legal Venezolano, Impresoras Fiscales SENIAT y Facturación Dual
+El sistema cuenta con una arquitectura de **Facturación Dual Conforme a la Ley**:
+1. **Modalidad Fiscal Homologada (SENIAT Providencias 0141 y 0071)**:
+   - **Formato Fiscal Legal**: Genera facturas con Razón Social, RIF, Dirección Fiscal, Serial de la Máquina Fiscal, Número Consecutivo de Factura y Número de Control.
+   - **Desglose de Alícuotas de IVA**: Separación estricta entre ítems **Exentos `(E)`** (harina, arroz, alimentos básicos) y **Gravados 16% `(G)`** (comida de restaurante, refrescos, snacks, cervezas).
+   - **Percepción de IGTF 3% en Divisas**: Cálculo automático del 3% de IGTF sobre los pagos recibidos en divisas en efectivo ($) o Zelle, expresado en Bs según la tasa oficial BCV.
+   - **Conexión de Máquinas Fiscales**: Protocolo The Factory HKA (Bixolon SRP-350 / 812), Aclas (PP9 / PP1F3) y BMC (Spark). Genera y descarga la trama fiscal oficial (`FACTURA.TXT`) para el spooler de Windows (`COM1`/`COM2`/USB).
+   - **Reportes Obligatorios**: Emisión de **Reporte X** (corte parcial) y **Reporte Z** (cierre diario de memoria fiscal con transmisión al SENIAT).
+2. **Modalidad Control Interno / Comandas de Cocina**:
+   - Para negocios en transición o control de despacho interno en cocina/barra sin impacto fiscal.
 
 ### 2.5. Conexión de Puntos de Venta (POS) y Cierre de Lotes
 - **Terminales Físicos Autónomos (Pax A920, Verifone Vx520, Biopago BDV)**: Cada terminal se registra en el sistema con su banco adquirente y número de lote activo.

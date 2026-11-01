@@ -179,6 +179,72 @@
           </div>
         </div>
 
+        <!-- CONFIGURACIÓN DE MÁQUINA FISCAL HOMOLOGADA SENIAT -->
+        <div class="card" style="margin-bottom:8px;border:1.5px solid #2563eb">
+          <div class="card-hd" style="padding:4px 8px;background:#eff6ff">
+            <div>
+              <h3 style="color:#1d4ed8;font-size:12px">🖨️ Conexión de Máquina Fiscal Homologada (SENIAT Providencia 0141)</h3>
+              <span style="font-size:10px;color:#1e40af">Control de impresoras fiscales (The Factory HKA, Bixolon, Aclas, BMC), puerto serial COM/USB, IGTF 3% y Reportes X/Z</span>
+            </div>
+            <div style="display:flex;gap:4px">
+              <button class="btn btn-ghost btn-sm" onclick="triggerFiscalReportX()">📋 Reporte X</button>
+              <button class="btn btn-danger btn-sm" onclick="triggerFiscalReportZ()">📑 Reporte Z (Cierre Fiscal)</button>
+            </div>
+          </div>
+          <div class="card-bd" style="padding:8px 10px">
+            <div class="form-grid" style="margin-bottom:8px">
+              <div class="form-group">
+                <label>Marca / Fabricante Homologado</label>
+                <select id="fiscBrandSelect" class="select">
+                  <option value="THE_FACTORY_HKA">The Factory HKA / Bixolon (SRP-350 / SRP-270 / SRP-812)</option>
+                  <option value="ACLAS">Aclas (PP9 / PP1F3 / Bixolon Aclas)</option>
+                  <option value="BMC">BMC (Spark / Bixolon BMC)</option>
+                  <option value="CUSTOM">Custom Kube / Dascom</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Puerto de Comunicación / Conexión</label>
+                <select id="fiscPortSelect" class="select">
+                  <option value="COM1">Puerto Serial COM1</option>
+                  <option value="COM2">Puerto Serial COM2</option>
+                  <option value="COM3">Puerto Serial COM3 (Convertidor USB-Serial)</option>
+                  <option value="COM4">Puerto Serial COM4</option>
+                  <option value="IP">Red Ethernet IP (192.168.1.50)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Serial de la Máquina Fiscal (Impreso en el equipo)</label>
+                <input type="text" id="fiscSerialInput" class="input" style="font-family:var(--font-mono);font-weight:900" placeholder="Ej: Z4A2098124">
+              </div>
+              <div class="form-group">
+                <label>Modo de Emisión de Facturas</label>
+                <select id="fiscModeSelect" class="select" style="font-weight:800">
+                  <option value="DUAL">DUAL (Factura Fiscal Homologada + Comanda de Cocina)</option>
+                  <option value="HOMOLOGADO">SOLO FISCAL (Todo por Impresora Fiscal SENIAT)</option>
+                  <option value="INTERNO">CONTROL INTERNO (Notas de Despacho Sin Valor Fiscal)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Último Reporte Z Fiscal Emitido</label>
+                <input type="number" id="fiscReportZInput" class="input" style="font-family:var(--font-mono);font-weight:800" min="1">
+              </div>
+              <div class="form-group">
+                <label>Próximo N° de Factura Fiscal Consecutiva</label>
+                <input type="number" id="fiscNextInvoiceInput" class="input" style="font-family:var(--font-mono);font-weight:800" min="1">
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <input type="checkbox" id="fiscApplyIgtfCheck" checked>
+                  <strong>Percibir IGTF 3% en Factura Fiscal cuando el cliente pague en divisas en efectivo ($) o Zelle (Ley IGTF Divisas)</strong>
+                </label>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end">
+              <button class="btn btn-blue btn-sm" onclick="saveFiscalConfigForm()">💾 Guardar Configuración Fiscal</button>
+            </div>
+          </div>
+        </div>
+
         <!-- MODAL PUNTO DE VENTA (TERMINAL) -->
         <div class="modal" id="modalPosTerminal">
           <div class="modal-box" style="max-width:480px">
@@ -304,9 +370,41 @@
       document.getElementById('dbInventoryCount').textContent = (MTP.state.inventory || []).length;
       document.getElementById('dbDishesCount').textContent = (MTP.state.dishes || []).length;
 
+      const fc = s.fiscalConfig || {};
+      if (document.getElementById('fiscBrandSelect')) document.getElementById('fiscBrandSelect').value = fc.brand || 'THE_FACTORY_HKA';
+      if (document.getElementById('fiscPortSelect')) document.getElementById('fiscPortSelect').value = fc.port || 'COM1';
+      if (document.getElementById('fiscSerialInput')) document.getElementById('fiscSerialInput').value = fc.serialNumber || 'Z4A2098124';
+      if (document.getElementById('fiscModeSelect')) document.getElementById('fiscModeSelect').value = fc.mode || 'DUAL';
+      if (document.getElementById('fiscReportZInput')) document.getElementById('fiscReportZInput').value = fc.lastReportZ || 142;
+      if (document.getElementById('fiscNextInvoiceInput')) document.getElementById('fiscNextInvoiceInput').value = fc.currentInvoiceNumber || 4892;
+      if (document.getElementById('fiscApplyIgtfCheck')) document.getElementById('fiscApplyIgtfCheck').checked = fc.applyIgtf3 !== false;
+
       renderTerminalsTable();
       renderPmAccountsTable();
     });
+
+    function saveFiscalConfigForm() {
+      const fc = {
+        brand: document.getElementById('fiscBrandSelect').value,
+        port: document.getElementById('fiscPortSelect').value,
+        serialNumber: document.getElementById('fiscSerialInput').value.trim() || 'Z4A2098124',
+        mode: document.getElementById('fiscModeSelect').value,
+        lastReportZ: parseInt(document.getElementById('fiscReportZInput').value, 10) || 142,
+        currentInvoiceNumber: parseInt(document.getElementById('fiscNextInvoiceInput').value, 10) || 4892,
+        applyIgtf3: document.getElementById('fiscApplyIgtfCheck').checked
+      };
+      MTP.saveFiscalConfig(fc);
+    }
+
+    function triggerFiscalReportX() {
+      MTP.emitFiscalReportX();
+    }
+
+    function triggerFiscalReportZ() {
+      if (!confirm('¿Deseas emitir el REPORTE Z de Cierre Fiscal Diario? Esto incrementará el número de Reporte Z y cerrará la memoria fiscal del día.')) return;
+      const res = MTP.emitFiscalReportZ();
+      if (document.getElementById('fiscReportZInput')) document.getElementById('fiscReportZInput').value = res.reportZNumber;
+    }
 
     function renderTerminalsTable() {
       const terms = MTP.state.posTerminals || [];

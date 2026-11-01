@@ -15,6 +15,7 @@
   let changeRateMode = 'BCV'; // 'BCV' | 'EUR' | 'USDT' | 'CUSTOM'
   let customChangeRate = 0;
   let changeRemainderMode = 'PM'; // 'PM' (Pago Móvil Bs) | 'BS_CASH' (Efectivo Bs)
+  let lastRenderedSale = null;
 
   function getActiveChangeRate() {
     const s = MTP.state.settings;
@@ -2060,38 +2061,130 @@
       </div>
     `).join('');
 
+    const bcv = Number(sale.rateBcv || MTP.state.settings.rateBcv);
+    const fiscal = sale.fiscalData || {
+      fiscalInvoiceNumber: String(sale.orderNumber).padStart(8, '0'),
+      controlNumber: '00-' + String(sale.orderNumber).padStart(8, '0'),
+      serialNumber: MTP.state.settings.fiscalConfig?.serialNumber || 'Z4A2098124',
+      reportZ: MTP.state.settings.fiscalConfig?.lastReportZ || 142,
+      customerRif: sale.customerRif || 'V-00000000',
+      taxExemptBs: 0,
+      taxableBaseBs: sale.totalBs,
+      ivaBs: sale.totalBs * 0.16,
+      igtfBs: 0,
+      totalBs: sale.totalBs,
+      totalUsd: sale.totalUsd
+    };
+
+    const fiscalItemsHtml = sale.items.map(i => {
+      const itemBs = (i.qty * i.priceUsd * bcv).toFixed(2);
+      const taxTag = i.taxType === 'E' ? '(E)' : '(G 16%)';
+      return `
+        <div style="display:flex;justify-content:space-between;margin:2px 0;font-size:11px">
+          <span>${i.qty}x ${i.name.slice(0, 22)} <strong>${taxTag}</strong></span>
+          <strong>${itemBs} Bs</strong>
+        </div>
+      `;
+    }).join('');
+
     document.getElementById('printModalContent').innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:14px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px">
+        <!-- TICKET 1: FACTURA FISCAL HOMOLOGADA (FORMATO LEGAL SENIAT) -->
+        <div class="thermal-ticket" style="border:2px solid #0f172a;background:#fff">
+          <div style="text-align:center;border-bottom:1px dashed #000;padding-bottom:5px;margin-bottom:5px">
+            <div style="font-weight:900;font-size:13px">${MTP.state.settings.storeName}</div>
+            <div style="font-size:10.5px;font-weight:bold">RIF: ${MTP.state.settings.rif}</div>
+            <div style="font-size:9.5px;color:#334155">${MTP.state.settings.address} · Tel: ${MTP.state.settings.phone}</div>
+            <div style="font-size:10px;background:#0f172a;color:#fff;padding:2px 4px;margin:3px 0;font-weight:bold">
+              FACTURA FISCAL HOMOLOGADA
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;font-weight:bold">
+              <span>FACTURA: #${fiscal.fiscalInvoiceNumber}</span>
+              <span>CONTROL: ${fiscal.controlNumber}</span>
+            </div>
+            <div style="font-size:10px;text-align:left;margin-top:3px">
+              <div>FECHA: ${dateStr}</div>
+              <div>CLIENTE: <strong>${sale.customer}</strong></div>
+              <div>RIF / CI: <strong>${fiscal.customerRif || 'V-00000000'}</strong></div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:4px">
+            ${fiscalItemsHtml}
+          </div>
+
+          <div style="border-top:1px dashed #000;border-bottom:1px dashed #000;padding:4px 0;margin:5px 0;font-size:10.5px">
+            <div style="display:flex;justify-content:space-between">
+              <span>MONTO EXENTO (E):</span>
+              <span>${Number(fiscal.taxExemptBs || 0).toFixed(2)} Bs</span>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span>BASE IMPONIBLE (G 16%):</span>
+              <span>${Number(fiscal.taxableBaseBs || 0).toFixed(2)} Bs</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-weight:bold">
+              <span>IVA (16.00%):</span>
+              <span>${Number(fiscal.ivaBs || 0).toFixed(2)} Bs</span>
+            </div>
+            ${Number(fiscal.igtfBs || 0) > 0 ? `
+              <div style="display:flex;justify-content:space-between;color:#1e40af;font-weight:bold">
+                <span>PERCEPCIÓN IGTF (3% DIVISAS):</span>
+                <span>${Number(fiscal.igtfBs).toFixed(2)} Bs</span>
+              </div>
+            ` : ''}
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:900;margin-top:3px;border-top:1px solid #000;padding-top:2px">
+              <span>TOTAL A PAGAR:</span>
+              <span>${Number(fiscal.totalBs || sale.totalBs).toFixed(2)} Bs</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:bold;color:#047857">
+              <span>REF. DIVISAS:</span>
+              <span>$${Number(fiscal.totalUsd || sale.totalUsd).toFixed(2)} (BCV: ${bcv.toFixed(2)} Bs/$)</span>
+            </div>
+          </div>
+
+          <div style="text-align:center;font-size:9.5px;margin-top:4px">
+            <div style="font-weight:900;letter-spacing:1px">[ SENIAT ]</div>
+            <div>SERIAL FISCAL: <strong>${fiscal.serialNumber}</strong></div>
+            <div>REPORTE Z N°: <strong>#${fiscal.reportZ}</strong></div>
+            <div style="margin-top:6px;display:flex;gap:4px;justify-content:center">
+              <button class="btn btn-p btn-sm" style="padding:2px 8px;font-size:10px" onclick="window.print()">🖨️ Imprimir Fiscal</button>
+              <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:10px" onclick="MTP.downloadFiscalCommandFile(window.MTPPos.getLastRenderedSale())">📄 Descargar FACTURA.TXT</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TICKET 2: COMANDA DE COCINA / BARRA -->
         <div class="thermal-ticket">
           <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:6px">
             <div style="font-size:10.5px;font-weight:bold">COMANDA DE COCINA / BARRA</div>
-            <div style="font-size:26px;font-weight:900">ORDEN #${sale.orderNumber}</div>
+            <div style="font-size:24px;font-weight:900">ORDEN #${sale.orderNumber}</div>
             <div style="font-size:11.5px">Cliente: <strong>${sale.customer}</strong></div>
           </div>
           ${kitchenHtml}
-          <div style="text-align:center;margin-top:8px;font-size:10.5px;font-weight:bold">*** CONTROL DE DESPACHO ***</div>
+          <div style="text-align:center;margin-top:8px;font-size:10.5px;font-weight:bold">*** CONTROL DE DESPACHO COCINA ***</div>
         </div>
 
+        <!-- TICKET 3: NOTA DE DESPACHO INTERNA -->
         <div class="thermal-ticket">
           <div style="text-align:center;border-bottom:1px dashed #000;padding-bottom:6px;margin-bottom:6px">
             <div style="font-weight:900;font-size:13.5px">${MTP.state.settings.storeName}</div>
-            <div style="font-size:10px;background:#000;color:#fff;padding:2px 4px;margin:3px 0;font-weight:bold">NOTA DE DESPACHO · CONTROL INTERNO (NO FISCAL)</div>
+            <div style="font-size:10px;background:#000;color:#fff;padding:2px 4px;margin:3px 0;font-weight:bold">NOTA DE DESPACHO · CONTROL INTERNO</div>
             <div style="font-size:10.5px">Orden #${sale.orderNumber} · ${dateStr}</div>
-            <div style="font-size:10.5px">Cliente: ${sale.customer} · BCV: ${sale.rateBcv.toFixed(2)} Bs/$</div>
+            <div style="font-size:10.5px">Cliente: ${sale.customer} · BCV: ${bcv.toFixed(2)} Bs/$</div>
           </div>
           ${itemsHtml}
           <div style="border-top:1px dashed #000;border-bottom:1px dashed #000;padding:5px 0;margin:6px 0">
-            <div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:900">
-              <span>TOTAL REF USD:</span>
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900">
+              <span>TOTAL USD:</span>
               <span>${MTP.fmtUSD(sale.totalUsd)}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:900">
-              <span>TOTAL BS (BCV):</span>
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900">
+              <span>TOTAL BS:</span>
               <span>${MTP.fmtBsRaw(sale.totalBs)}</span>
             </div>
           </div>
           <div style="margin-bottom:5px">
-            <div style="font-weight:bold;font-size:11px;margin-bottom:2px">PAGOS VERIFICADOS:</div>
+            <div style="font-weight:bold;font-size:11px;margin-bottom:2px">PAGOS REGISTRADOS:</div>
             ${paymentsHtml}
           </div>
           <div style="background:#f1f5f9;padding:5px;border-radius:4px;font-size:11px">
@@ -2099,12 +2192,13 @@
             <div>Entrega: ${sale.changeGiven.breakdown}</div>
           </div>
           <div style="font-size:9.5px;text-align:center;margin-top:6px;color:#475569">
-            Documento de control interno administrativo. Sin validez de crédito fiscal.
+            Documento administrativo interno.
           </div>
         </div>
       </div>
     `;
 
+    lastRenderedSale = sale;
     modal.classList.add('open');
   }
 
@@ -2148,7 +2242,8 @@
     onTerminalSelected,
     switchPmMode,
     executeC2pDirectPayment,
-    populateCheckoutSelectors
+    populateCheckoutSelectors,
+    getLastRenderedSale: () => lastRenderedSale
   };
 
   document.addEventListener('DOMContentLoaded', initPOS);

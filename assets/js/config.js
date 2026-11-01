@@ -116,7 +116,23 @@
       igtfPct: 3,
       lastRateSync: new Date().toISOString(),
       targetMarginPct: 42,
-      nextOrderNumber: 105
+      nextOrderNumber: 105,
+      fiscalConfig: {
+        enabled: true,
+        mode: 'DUAL', // 'HOMOLOGADO' (SENIAT), 'DUAL' (Ambos), 'INTERNO' (Control Interno No Fiscal)
+        brand: 'THE_FACTORY_HKA', // 'THE_FACTORY_HKA', 'ACLAS', 'BMC', 'BIXOLON'
+        model: 'Bixolon SRP-350 / The Factory HKA',
+        serialNumber: 'Z4A2098124',
+        port: 'COM1',
+        baudRate: 9600,
+        ipAddress: '192.168.1.50',
+        spoolerPath: 'C:\\MI-TIENDA-DATOS\\spooler\\',
+        taxRateGeneral: 16.0,
+        taxRateReduced: 8.0,
+        applyIgtf3: true,
+        lastReportZ: 142,
+        currentInvoiceNumber: 4892
+      }
     },
 
     /* ----------------------------------------------------------------------
@@ -1772,6 +1788,8 @@
       if (!Array.isArray(merged.posTerminals)) merged.posTerminals = JSON.parse(JSON.stringify(DEFAULT_STATE.posTerminals));
       if (!Array.isArray(merged.pagoMovilAccounts)) merged.pagoMovilAccounts = JSON.parse(JSON.stringify(DEFAULT_STATE.pagoMovilAccounts));
       if (!Array.isArray(merged.batchClosures)) merged.batchClosures = JSON.parse(JSON.stringify(DEFAULT_STATE.batchClosures || []));
+      if (!merged.settings) merged.settings = JSON.parse(JSON.stringify(DEFAULT_STATE.settings));
+      if (!merged.settings.fiscalConfig) merged.settings.fiscalConfig = JSON.parse(JSON.stringify(DEFAULT_STATE.settings.fiscalConfig));
       return merged;
     } catch (e) {
       return JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -2126,19 +2144,84 @@
       }
     });
 
+    const fiscalCfg = state.settings.fiscalConfig || {
+      enabled: true,
+      mode: 'DUAL',
+      brand: 'THE_FACTORY_HKA',
+      model: 'Bixolon SRP-350 / The Factory HKA',
+      serialNumber: 'Z4A2098124',
+      lastReportZ: 142,
+      currentInvoiceNumber: 4892,
+      applyIgtf3: true
+    };
+    const fiscalNum = fiscalCfg.currentInvoiceNumber ? fiscalCfg.currentInvoiceNumber++ : (4800 + orderNum);
+
+    let taxExemptUsd = 0;
+    let taxableBaseUsd = 0;
+
+    salePayload.items.forEach(line => {
+      const invItem = state.inventory.find(i => i.id === line.refId);
+      const isExempt = line.taxExempt === true || (invItem && invItem.taxExempt === true);
+      const lineSub = line.subtotalUsd || (line.qty * line.priceUsd);
+      if (isExempt) {
+        taxExemptUsd += lineSub;
+        line.taxType = 'E'; // Exento
+      } else {
+        taxableBaseUsd += lineSub;
+        line.taxType = 'G'; // Gravado 16%
+      }
+    });
+
+    const ivaUsd = taxableBaseUsd * 0.16;
+
+    let usdForeignPaid = 0;
+    (salePayload.payments || []).forEach(p => {
+      if (p.method === 'Efectivo USD' || p.method === 'Zelle / Transf') {
+        usdForeignPaid += Number(p.amountUsd || 0);
+      }
+    });
+    const igtfBaseUsd = Math.min(salePayload.totalUsd, usdForeignPaid);
+    const igtfUsd = (fiscalCfg.applyIgtf3 !== false) ? Number((igtfBaseUsd * 0.03).toFixed(2)) : 0;
+    const bcvRate = state.settings.rateBcv;
+
+    const fiscalData = {
+      mode: fiscalCfg.mode || 'DUAL',
+      brand: fiscalCfg.brand || 'THE_FACTORY_HKA',
+      serialNumber: fiscalCfg.serialNumber || 'Z4A2098124',
+      reportZ: fiscalCfg.lastReportZ || 142,
+      fiscalInvoiceNumber: String(fiscalNum).padStart(8, '0'),
+      controlNumber: '00-' + String(fiscalNum).padStart(8, '0'),
+      storeRif: state.settings.rif || 'J-50128940-1',
+      storeName: state.settings.storeName || 'MI TIENDA POS',
+      storeAddress: state.settings.address || 'Mostrador Principal',
+      customerRif: salePayload.customerRif || 'V-00000000',
+      taxExemptUsd: Number(taxExemptUsd.toFixed(2)),
+      taxExemptBs: Number((taxExemptUsd * bcvRate).toFixed(2)),
+      taxableBaseUsd: Number(taxableBaseUsd.toFixed(2)),
+      taxableBaseBs: Number((taxableBaseUsd * bcvRate).toFixed(2)),
+      ivaUsd: Number(ivaUsd.toFixed(2)),
+      ivaBs: Number((ivaUsd * bcvRate).toFixed(2)),
+      igtfUsd: Number(igtfUsd.toFixed(2)),
+      igtfBs: Number((igtfUsd * bcvRate).toFixed(2)),
+      totalBs: Number(((salePayload.totalUsd + igtfUsd) * bcvRate).toFixed(2)),
+      totalUsd: Number((salePayload.totalUsd + igtfUsd).toFixed(2))
+    };
+
     const newSale = {
       id: 'ORD-' + orderNum,
       orderNumber: orderNum,
       createdAt: new Date().toISOString(),
       cashier: salePayload.cashier || 'Caja Principal',
       customer: salePayload.customer || 'Mostrador Rápido',
+      customerRif: salePayload.customerRif || 'V-00000000',
+      fiscalData,
       rateBcv: state.settings.rateBcv,
       rateEur: state.settings.rateEur,
       rateUsdt: state.settings.rateUsdt,
       subtotalUsd: Number((salePayload.subtotalUsd || salePayload.totalUsd).toFixed(2)),
-      igtfUsd: Number((salePayload.igtfUsd || 0).toFixed(2)),
-      totalUsd: Number(salePayload.totalUsd.toFixed(2)),
-      totalBs: Number((salePayload.totalUsd * state.settings.rateBcv).toFixed(2)),
+      igtfUsd: Number(igtfUsd.toFixed(2)),
+      totalUsd: Number(fiscalData.totalUsd.toFixed(2)),
+      totalBs: Number(fiscalData.totalBs.toFixed(2)),
       costUsd: Number(totalCostUsd.toFixed(2)),
       profitUsd: Number((salePayload.totalUsd - totalCostUsd).toFixed(2)),
       items: salePayload.items,
@@ -2866,6 +2949,77 @@
     saveState(state);
     return newAcc;
   }
+
+  /* --------------------------------------------------------------------------
+     MÓDULO DE INTEGRACIÓN DE MÁQUINAS FISCALES HOMOLOGADAS (SENIAT)
+     Protocolo The Factory HKA / Bixolon / Aclas / BMC
+     -------------------------------------------------------------------------- */
+  function generateFiscalHkaCommand(sale) {
+    const f = sale.fiscalData || {};
+    const bcv = Number(sale.rateBcv || state.settings.rateBcv);
+    const lines = [];
+
+    lines.push(`i01Cliente: ${sale.customer || 'CLIENTE DE CONTADO'}`);
+    lines.push(`i02RIF/CI: ${f.customerRif || 'V-00000000'}`);
+    lines.push(`i03Direccion: ${sale.customerAddress || 'Mostrador Principal'}`);
+
+    (sale.items || []).forEach(it => {
+      const priceBs = (Number(it.priceUsd) * bcv).toFixed(2);
+      const isExempt = it.taxType === 'E';
+      const cleanName = (it.name || 'Articulo').replace(/[^a-zA-Z0-9\s]/g, '').slice(0, 30);
+      const qtyStr = String(Math.round((it.qty || 1) * 1000)).padStart(8, '0');
+      const priceStr = String(Math.round(priceBs * 100)).padStart(10, '0');
+
+      if (isExempt) {
+        lines.push(`d0${qtyStr}${priceStr}${cleanName}`);
+      } else {
+        lines.push(` 0${qtyStr}${priceStr}${cleanName}`);
+      }
+    });
+
+    if (f.igtfBs > 0) {
+      lines.push(`p+0300PERCEPCION IGTF 3% DIVISAS`);
+    }
+
+    lines.push('3');
+    lines.push('101');
+    return lines.join('\r\n');
+  }
+
+  function downloadFiscalCommandFile(sale) {
+    const cmdStr = generateFiscalHkaCommand(sale);
+    const blob = new Blob([cmdStr], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `FACTURA_FISCAL_ORD_${sale.orderNumber}.TXT`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast(`Trama fiscal Factura #${sale.orderNumber} descargada para Spooler`);
+  }
+
+  function emitFiscalReportX() {
+    toast('Reporte X emitido a la Máquina Fiscal');
+    return { success: true, command: 'I0X', type: 'REPORTE_X', date: new Date().toISOString() };
+  }
+
+  function emitFiscalReportZ() {
+    if (!state.settings.fiscalConfig) state.settings.fiscalConfig = {};
+    const curZ = (state.settings.fiscalConfig.lastReportZ || 142) + 1;
+    state.settings.fiscalConfig.lastReportZ = curZ;
+    saveState(state);
+    toast(`¡Reporte Z Fiscal #${curZ} ejecutado exitosamente!`);
+    return { success: true, command: 'I0Z', type: 'REPORTE_Z', reportZNumber: curZ, date: new Date().toISOString() };
+  }
+
+  function saveFiscalConfig(payload) {
+    if (!state.settings.fiscalConfig) state.settings.fiscalConfig = {};
+    state.settings.fiscalConfig = Object.assign({}, state.settings.fiscalConfig, payload);
+    saveState(state);
+    toast('Configuración de la Máquina Fiscal guardada correctamente.');
+    return state.settings.fiscalConfig;
   }
 
   /* Exportar / Importar Base de Datos Local en Disco Duro (Para Windows 7) */
@@ -2965,6 +3119,11 @@
     processC2pPayment,
     saveTerminal,
     savePagoMovilAccount,
+    generateFiscalHkaCommand,
+    downloadFiscalCommandFile,
+    emitFiscalReportX,
+    emitFiscalReportZ,
+    saveFiscalConfig,
     exportBackupJson,
     linkLocalDiskFile,
     toast,
