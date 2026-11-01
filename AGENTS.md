@@ -124,6 +124,13 @@
    - Separación nítida e inequívoca entre Insumos de Cocina (no vendibles al público) y Mercancía de Venta Directa en filtros y tabla.
    - Coherencia legal plena en `cierres.html` como "Notas de Despacho / Control Interno".
 
+21. **Paquete P4: Pantalla de Caja Rápida (Fast Touch POS Engine)**:
+   - Rediseño de arquitectura a 3 columnas fijas (pos-layout-3col) con Zero-Scroll global en resoluciones estándar de Windows 7 (1366x768 y 1024x768).
+   - Columna 1 (Izquierda, ~160px): Lista vertical de las 9 Familias maestras con indicador [1]-[9], franja de color distintiva y conteo de productos.
+   - Columna 2 (Centro): Barra de escáner USB con atajo F1, selector de multiplicador rápido ([1x], [2x], [3x], [5x] o teclear '3*'), chips de 1 solo toque de Más Vendidos, cuadrícula ágil de sabores agrupados por producto y artículos de minimercado sin imágenes pesadas (latencia <10ms) y drawer integrado de modificadores/extras no bloqueante.
+   - Columna 3 (Derecha, ~340px): Ticket de orden activa con botones +, -, notas, totales tabulares nítidos y botón gigante ámbar COBRAR Y ENTREGAR VUELTO (F2).
+   - Flujo de cobro multimoneda, Pago Móvil multicuenta y vuelto mixto ($ + Bs) 100% operativo.
+
 ### 5.2. Lo que se va a realizar (Próximos Pasos Windows 7)
 1. **Persistencia Transaccional con Respaldo en Disco**:
    - Exportación automática a archivo JSON espejo en disco ante cada movimiento para blindaje anti-apagones.
