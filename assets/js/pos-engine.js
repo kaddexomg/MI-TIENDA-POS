@@ -246,21 +246,35 @@
           const qtyInCart = getCartQtyForRef(v.id, true);
           const cleanName = cleanFlavorName(v.name);
           const bsPrice = (v.priceUsd * bcv).toFixed(2);
+          const hasMods = prod.modifierGroupIds && prod.modifierGroupIds.length > 0;
 
           return `
-            <button type="button" class="pos-flavor-btn ${qtyInCart > 0 ? 'in-cart' : ''}"
+            <div class="pos-flavor-card ${qtyInCart > 0 ? 'in-cart' : ''}"
               onclick="window.MTPPos.addVariantQuick('${v.id}')"
               title="${v.name} · #${v.code}">
               <div class="pos-btn-top">
                 <span class="pos-btn-plu">#${v.code}</span>
-                ${qtyInCart > 0 ? `<span class="pos-btn-cart-badge">✓ ${qtyInCart}</span>` : ''}
+                ${qtyInCart > 0 ? `
+                  <div class="pos-btn-stepper" onclick="event.stopPropagation()">
+                    <button type="button" class="pos-step-btn minus" onclick="window.MTPPos.stepVariantQty('${v.id}', -1, event)" title="Restar 1">−</button>
+                    <span class="pos-step-num">${qtyInCart}</span>
+                    <button type="button" class="pos-step-btn plus" onclick="window.MTPPos.stepVariantQty('${v.id}', 1, event)" title="Sumar 1">+</button>
+                  </div>
+                ` : ''}
               </div>
               <div class="pos-btn-name">${cleanName}</div>
               <div class="pos-btn-bottom">
-                <span class="pos-btn-usd">${MTP.fmtUSD(v.priceUsd)}</span>
-                <span class="pos-btn-bs">${bsPrice} Bs</span>
+                <div class="pos-btn-prices">
+                  <span class="pos-btn-usd">${MTP.fmtUSD(v.priceUsd)}</span>
+                  <span class="pos-btn-bs">${bsPrice} Bs</span>
+                </div>
+                ${hasMods && qtyInCart > 0 ? `
+                  <button type="button" class="pos-btn-mod-tag" onclick="event.stopPropagation(); window.MTPPos.openModifiersForRef('${v.id}')" title="Personalizar masa y extras">
+                    ⚙ Extras
+                  </button>
+                ` : ''}
               </div>
-            </button>
+            </div>
           `;
         }).join('');
 
@@ -287,20 +301,28 @@
         const stockClass = isLow ? 'pos-stock-low' : 'pos-stock-ok';
 
         return `
-          <button type="button" class="pos-retail-btn ${qtyInCart > 0 ? 'in-cart' : ''}"
+          <div class="pos-retail-card ${qtyInCart > 0 ? 'in-cart' : ''}"
             onclick="window.MTPPos.addRetailQuick('${item.id}')"
             title="${item.name} · #${item.code}">
             <div class="pos-btn-top">
               <span class="pos-btn-plu">#${item.code}</span>
               <span class="pos-stock-pill ${stockClass}">${Math.round(item.stock || 0)} ${item.unit || 'und'}</span>
-              ${qtyInCart > 0 ? `<span class="pos-btn-cart-badge">✓ ${qtyInCart}</span>` : ''}
+              ${qtyInCart > 0 ? `
+                <div class="pos-btn-stepper" onclick="event.stopPropagation()">
+                  <button type="button" class="pos-step-btn minus" onclick="window.MTPPos.stepRetailQty('${item.id}', -1, event)" title="Restar 1">−</button>
+                  <span class="pos-step-num">${qtyInCart}</span>
+                  <button type="button" class="pos-step-btn plus" onclick="window.MTPPos.stepRetailQty('${item.id}', 1, event)" title="Sumar 1">+</button>
+                </div>
+              ` : ''}
             </div>
             <div class="pos-btn-name">${item.name}</div>
             <div class="pos-btn-bottom">
-              <span class="pos-btn-usd">${MTP.fmtUSD(item.priceUsd)}</span>
-              <span class="pos-btn-bs">${bsPrice} Bs</span>
+              <div class="pos-btn-prices">
+                <span class="pos-btn-usd">${MTP.fmtUSD(item.priceUsd)}</span>
+                <span class="pos-btn-bs">${bsPrice} Bs</span>
+              </div>
             </div>
-          </button>
+          </div>
         `;
       }).join('');
 
@@ -439,6 +461,57 @@
   /* ==========================================================================
      AGREGAR ÍTEMS RÁPIDOS AL TICKET (1 TOQUE = INGRESA DE INMEDIATO)
      ========================================================================== */
+  
+  function stepVariantQty(variantId, delta, ev) {
+    if (ev) ev.stopPropagation();
+    if (delta > 0) {
+      addVariantQuick(variantId, 1);
+    } else {
+      const idx = cart.findLastIndex ? cart.findLastIndex(c => c.refId === variantId && c.isDish) : -1;
+      let targetIdx = idx;
+      if (targetIdx === -1) {
+        for (let i = cart.length - 1; i >= 0; i--) {
+          if (cart[i].refId === variantId && cart[i].isDish) {
+            targetIdx = i;
+            break;
+          }
+        }
+      }
+      if (targetIdx !== -1) {
+        changeCartQty(cart[targetIdx].cartId, -1);
+      }
+    }
+    renderTicket();
+    renderProductsCol();
+  }
+
+  function stepRetailQty(itemId, delta, ev) {
+    if (ev) ev.stopPropagation();
+    if (delta > 0) {
+      addRetailQuick(itemId, 1);
+    } else {
+      let targetIdx = -1;
+      for (let i = cart.length - 1; i >= 0; i--) {
+        if (cart[i].refId === itemId && !cart[i].isDish) {
+          targetIdx = i;
+          break;
+        }
+      }
+      if (targetIdx !== -1) {
+        changeCartQty(cart[targetIdx].cartId, -1);
+      }
+    }
+    renderTicket();
+    renderProductsCol();
+  }
+
+  function openModifiersForRef(refId) {
+    const line = cart.find(c => c.refId === refId);
+    if (line) {
+      openModifiersDrawer(line.cartId);
+    }
+  }
+
   function addVariantQuick(variantId, forcedQty = null) {
     const qty = forcedQty || consumeMultiplier();
     const variant = (MTP.state.variants || []).find(v => v.id === variantId)
@@ -485,10 +558,10 @@
     }
 
     // Si el producto tiene grupos de modificadores (como Arepas), despliega el panel inferior ágil
+    // No abrir de golpe el drawer para evitar sobresaltos en pantalla.
+    // El cajero puede tocar "⚙ Extras" en el botón o en el ticket cuando lo desee.
     const modGroups = MTP.getModifierGroupsForProduct ? MTP.getModifierGroupsForProduct(variant.productId) : [];
-    if (modGroups && modGroups.length > 0) {
-      openModifiersDrawer(targetCartId);
-    } else {
+    if (!modGroups || !modGroups.length) {
       closeModifiersDrawer();
     }
 
@@ -1603,6 +1676,9 @@
 
     // Modificadores integrados
     openModifiersDrawer,
+    stepVariantQty,
+    stepRetailQty,
+    openModifiersForRef,
     toggleModifierOption,
     closeModifiersDrawer,
 

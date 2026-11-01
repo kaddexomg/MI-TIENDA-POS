@@ -278,6 +278,24 @@
   flex-shrink: 0;
 }
 
+
+.aside-ico-box {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.aside-link:hover .aside-ico-box {
+  transform: scale(1.12);
+}
+.aside-link.active .aside-ico-box {
+  box-shadow: 0 0 10px currentColor;
+}
+
 .aside-link:hover {
   background: var(--nav-hover);
   color: #FFFFFF;
@@ -354,12 +372,16 @@ body.aside-collapsed .admin-aside {
   width: var(--aside-collapsed-w);
 }
 
+/* Ocultar textos cuando el menú está colapsado */
 body.aside-collapsed .aside-brand-txt,
 body.aside-collapsed .aside-rates-box,
 body.aside-collapsed .aside-group-btn,
 body.aside-collapsed .aside-link-label,
 body.aside-collapsed .aside-badge,
-body.aside-collapsed .aside-ft-info,
+body.aside-collapsed .aside-ft-details,
+body.aside-collapsed .aside-pin-warn,
+body.aside-collapsed .aside-expense-txt,
+body.aside-collapsed .aside-logout-btn,
 body.aside-collapsed .aside-qbtn span.qtxt {
   display: none !important;
 }
@@ -369,8 +391,24 @@ body.aside-collapsed .aside-brand {
   padding: 6px 3px;
 }
 
+body.aside-collapsed .aside-brand-left {
+  justify-content: center;
+  width: 100%;
+}
+
+/* Mantener el logo visible y centrado */
 body.aside-collapsed .aside-logo {
-  display: none;
+  display: flex !important;
+  margin: 0 auto;
+}
+
+body.aside-collapsed .aside-collapse-btn {
+  display: none !important;
+}
+
+body.aside-collapsed .aside-expense-btn {
+  padding: 5px 0 !important;
+  justify-content: center !important;
 }
 
 body.aside-collapsed .aside-quick-actions {
@@ -380,12 +418,26 @@ body.aside-collapsed .aside-quick-actions {
 
 body.aside-collapsed .aside-link {
   justify-content: center;
-  padding: 7px 3px;
+  padding: 6px 2px;
+}
+
+body.aside-collapsed .aside-link-left {
+  justify-content: center;
 }
 
 body.aside-collapsed .aside-ft {
   justify-content: center;
-  padding: 5px 3px;
+  align-items: center;
+  padding: 6px 3px;
+}
+
+body.aside-collapsed .aside-ft-row {
+  justify-content: center;
+  width: 100%;
+}
+
+body.aside-collapsed .aside-user-wrap {
+  justify-content: center;
 }
 
 body.aside-collapsed .admin-main,

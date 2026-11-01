@@ -1086,3 +1086,159 @@ body.pos-fullscreen-body .admin-content {
   font-size: 12px;
   line-height: 1.38;
 }
+
+
+/* ==========================================================================
+   ESTILOS DINÁMICOS Y STEPPERS INTERACTIVOS DE CANTIDAD EN PRODUCTOS
+   ========================================================================== */
+.pos-flavor-card,
+.pos-retail-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 68px;
+  padding: 6px 8px;
+  background: #ffffff;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  user-select: none;
+  transition: all 0.12s ease;
+  box-sizing: border-box;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.pos-flavor-card:hover,
+.pos-retail-card:hover {
+  border-color: #059669;
+  background: #f8fafc;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.pos-flavor-card.in-cart,
+.pos-retail-card.in-cart {
+  border-color: #059669;
+  background: #f0fdf4;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
+}
+
+/* Stepper Interactivo directo en la tarjeta */
+.pos-btn-stepper {
+  display: inline-flex;
+  align-items: center;
+  background: #059669;
+  border-radius: 6px;
+  padding: 1px 2px;
+  gap: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.pos-step-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: none;
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.1s;
+}
+
+.pos-step-btn:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.pos-step-btn.minus {
+  background: rgba(220, 38, 38, 0.8);
+}
+
+.pos-step-btn.minus:hover {
+  background: #dc2626;
+}
+
+.pos-step-num {
+  font-size: 11.5px;
+  font-weight: 900;
+  color: #ffffff;
+  padding: 0 4px;
+  min-width: 16px;
+  text-align: center;
+  font-family: var(--font-mono, monospace);
+}
+
+/* Tag de Extras/Opciones */
+.pos-btn-mod-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.pos-btn-mod-tag:hover {
+  background: #fde68a;
+  color: #78350f;
+  transform: scale(1.05);
+}
+
+.pos-btn-prices {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Colores Vibrantes en las Familias de la Izquierda */
+.pos-family-nav-btn {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-left: 5px solid var(--fam-color, #64748b);
+  border-radius: 7px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.pos-family-nav-btn:hover {
+  border-color: var(--fam-color, #059669);
+  transform: translateX(2px);
+}
+
+.pos-family-nav-btn.active {
+  background: #ffffff;
+  border-color: var(--fam-color, #059669);
+  border-left-width: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pos-family-nav-btn.active .pos-fam-name {
+  color: var(--fam-color, #059669);
+  font-weight: 900;
+}
+
+.pos-family-nav-btn.active .pos-fam-key {
+  background: var(--fam-color, #059669);
+  color: #ffffff;
+}
+
+/* Drawer de Modificadores refinado sin salto brusco */
+.pos-modifiers-drawer {
+  background: #1e293b;
+  border: 1.5px solid #059669;
+  border-radius: 8px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
+}

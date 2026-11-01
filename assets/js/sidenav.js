@@ -314,24 +314,24 @@
 
     // NAVEGACIÓN COMPLETA Y DIRECTA (1 CLIC A CADA MÓDULO)
     const ADMIN_LINKS = [
-      { href: 'pos.html',        iconKey: 'pos',        label: 'Caja Registradora',  badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? '' : 'kbd' },
-      { href: 'inventario.html', iconKey: 'package',    label: 'Inventario & Kardex', badge: lowStockCount ? `${lowStockCount} bajo` : '' },
-      { href: 'recetas.html',    iconKey: 'kitchen',    label: 'Cocina & Insumos' },
-      { href: 'cierres.html',    iconKey: 'calculator', label: 'Cuadre de Gaveta' },
-      { href: 'productos.html',  iconKey: 'barcode',    label: 'Catálogo & Códigos' },
-      { href: 'precios.html',    iconKey: 'dollar',     label: 'Precios & Tasas' },
-      { href: 'facturas.html',   iconKey: 'fileText',   label: 'Facturación & Historial' },
-      { href: 'index.html',      iconKey: 'chart',      label: 'Dashboard & Finanzas' },
-      { href: 'usuarios.html',   iconKey: 'users',      label: 'Usuarios & Permisos' },
-      { href: 'ajustes.html',    iconKey: 'settings',   label: 'Ajustes & Respaldo' }
+      { href: 'pos.html',        iconKey: 'pos',        label: 'Caja Registradora',       color: '#10B981', badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? '' : 'kbd' },
+      { href: 'inventario.html', iconKey: 'package',    label: 'Inventario & Kardex',     color: '#0284C7', badge: lowStockCount ? `${lowStockCount} bajo` : '' },
+      { href: 'recetas.html',    iconKey: 'kitchen',    label: 'Cocina & Insumos',        color: '#F59E0B' },
+      { href: 'cierres.html',    iconKey: 'calculator', label: 'Cuadre de Gaveta',        color: '#14B8A6' },
+      { href: 'productos.html',  iconKey: 'barcode',    label: 'Catálogo & Códigos',      color: '#8B5CF6' },
+      { href: 'precios.html',    iconKey: 'dollar',     label: 'Precios & Tasas',          color: '#EAB308' },
+      { href: 'facturas.html',   iconKey: 'fileText',   label: 'Facturación & Historial', color: '#6366F1' },
+      { href: 'index.html',      iconKey: 'chart',      label: 'Dashboard & Finanzas',    color: '#EC4899' },
+      { href: 'usuarios.html',   iconKey: 'users',      label: 'Usuarios & Permisos',     color: '#A855F7' },
+      { href: 'ajustes.html',    iconKey: 'settings',   label: 'Ajustes & Respaldo',      color: '#64748B' }
     ];
 
     const currentUser = window.MTPAuth ? window.MTPAuth.getCurrentUser() : null;
     const isSupervisorOrAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'encargado');
 
     const CAJA_LINKS = [
-      { href: 'pos.html',   iconKey: 'pos',      label: 'Caja Mostrador (Facturar)', badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? '' : 'kbd' },
-      { href: 'index.html', iconKey: 'receipt',  label: 'Órdenes y Cuadre Turno' }
+      { href: 'pos.html',   iconKey: 'pos',      label: 'Caja Mostrador (Facturar)', color: '#10B981', badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? '' : 'kbd' },
+      { href: 'index.html', iconKey: 'receipt',  label: 'Órdenes y Cuadre Turno',   color: '#14B8A6' }
     ];
 
     // Solo si el usuario en caja es Encargado o Admin se despliega el acceso directo al panel
@@ -353,10 +353,14 @@
         ? `<span class="aside-badge ${item.badgeClass || ''}">${item.badge}</span>`
         : '';
       const icoHtml = getIco(item.iconKey);
+      const itemColor = item.color || '#10B981';
+
       return `
-        <a href="${item.href}" class="aside-link ${isActive ? 'active' : ''}" title="${item.label}">
+        <a href="${item.href}" class="aside-link ${isActive ? 'active' : ''}" style="${isActive ? `border-left: 3px solid ${itemColor}; background: rgba(255,255,255,0.08);` : ''}" title="${item.label}">
           <span class="aside-link-left">
-            <span class="aside-ico">${icoHtml}</span>
+            <span class="aside-ico-box" style="background:${itemColor}25; color:${itemColor}; border:1.5px solid ${itemColor}60;">
+              ${icoHtml}
+            </span>
             <span class="aside-link-label">${item.label}</span>
           </span>
           ${badgeHtml}
@@ -407,7 +411,7 @@
       <div style="padding:3px 6px">
         <button class="btn btn-sm" style="width:100%;background:#065f46;color:#fff;border:none;font-weight:800;font-size:10.5px;padding:5px 6px;display:flex;align-items:center;justify-content:center;gap:4px"
           onclick="window.MTPSidebar.openExpenseModal()" title="Registrar compra de aliños, papas, carnes o gastos">
-          <span>${plusIco}</span><span class="qtxt">Gasto / Insumos Cocina</span>
+          <span>${plusIco}</span><span class="aside-expense-txt">Gasto / Insumos Cocina</span>
         </button>
       </div>
 
@@ -415,35 +419,33 @@
         ${linksHtml}
       </nav>
 
-      <div class="aside-ft" style="display:flex;flex-direction:column;gap:5px;padding:6px 8px;background:#091622;border-top:1px solid rgba(255,255,255,0.08)">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-          <div style="display:flex;align-items:center;gap:6px;overflow:hidden">
-            <span style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;background:rgba(255,255,255,0.08);color:${roleColor};flex-shrink:0">
+      <div class="aside-ft">
+        <div class="aside-ft-row">
+          <div class="aside-user-wrap">
+            <span class="aside-user-avatar" style="background:${roleColor}25; border:1px solid ${roleColor}60; color:${roleColor};" title="${userName} (${roleLabel})">
               ${userIco}
             </span>
-            <div style="overflow:hidden">
-              <div style="font-size:11px;font-weight:800;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${userName}">
+            <div class="aside-ft-details">
+              <div class="aside-user-name" title="${userName}">
                 ${userName}
               </div>
-              <div style="font-size:9.5px;font-weight:700;color:${roleColor};display:flex;align-items:center;gap:3px">
-                <span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:${roleColor}"></span>
+              <div class="aside-user-role" style="color:${roleColor};">
+                <span class="aside-role-dot" style="background:${roleColor}"></span>
                 ${roleLabel}
               </div>
             </div>
           </div>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPAuth ? window.MTPAuth.logout() : window.location.href='../index.html'"
-            title="Bloquear / Cerrar Sesión"
-            style="padding:2px 5px;height:22px;background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.3);color:#fca5a5;flex-shrink:0">
+          <button type="button" class="btn btn-ghost btn-sm aside-logout-btn" onclick="window.MTPAuth ? window.MTPAuth.logout() : window.location.href='../index.html'"
+            title="Bloquear / Cerrar Sesión">
             ${logoutIco}
           </button>
         </div>
         ${currentUser && currentUser.isDefaultPin ? `
-          <a href="${isCaja ? '#' : 'usuarios.html'}" style="font-size:9px;color:#fbbf24;background:rgba(245,158,11,0.12);padding:2px 4px;border-radius:4px;border:1px solid rgba(245,158,11,0.25);text-align:center;display:block" title="PIN de fábrica activo. Te recomendamos cambiarlo en Usuarios.">
+          <a href="${isCaja ? '#' : 'usuarios.html'}" class="aside-pin-warn" title="PIN de fábrica activo. Te recomendamos cambiarlo en Usuarios.">
             ⚠️ PIN por defecto activo
           </a>
         ` : ''}
-      </div>
-    `;
+      </div>`;
 
     const topRateEl = document.getElementById('topRatePill');
     if (topRateEl) {
