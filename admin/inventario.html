@@ -18,58 +18,88 @@
           <button class="menu-toggle" id="menuToggleBtn">☰</button>
           <div class="topbar-title">
             <h2>Control Total de Inventario, Entradas, Salidas y Kardex</h2>
-            <p>Auditoría inmutable, recepción de facturas a proveedores, control de mermas y separación Cocina vs. Minimercado</p>
+            <p>Auditoría inmutable, recepción de facturas a proveedores y separación estricta Cocina vs. Minimercado</p>
           </div>
         </div>
-        <div class="topbar-right" style="gap:4px">
+        <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
-          <button class="btn btn-sm btn-ghost" onclick="openKardexModal('ALL')" style="border:1px solid var(--border)">Kardex</button>
-          <button class="btn btn-sm" style="background:#0284c7;color:#fff" onclick="openMultiPurchaseModal()">+ Factura</button>
-          <button class="btn btn-sm" style="background:#dc2626;color:#fff" onclick="openWasteModal()">+ Merma</button>
-          <button class="btn btn-sm" style="background:#475569;color:#fff" onclick="openAuditModal()">Conteo Ciego</button>
-          <button class="btn btn-amber btn-sm" onclick="openInvItemModal(null, 'insumo')">+ Insumo Cocina</button>
-          <button class="btn btn-p btn-sm" onclick="openInvItemModal(null, 'venta')">+ Mercancía Venta</button>
+          <button class="btn btn-action btn-sm" onclick="toggleBulkCard(true)">+ Entrada Bulto</button>
         </div>
       </header>
 
       <div class="admin-content">
+        <!-- ESTADÍSTICAS DEL INVENTARIO -->
         <div class="stat-grid" id="invStatsGrid"></div>
 
-        <!-- HERRAMIENTA 1: CALCULADORA DE COMPRA POR BULTO / CAJA / CARTÓN / SACO -> UNIDAD O KILO -->
-        <div class="card" id="bulkCard" style="border:1.5px solid #059669;margin-bottom:6px">
-          <div class="card-hd" style="background:#ecfdf5;padding:4px 8px">
-            <div style="display:flex;align-items:center;gap:6px">
-              <strong style="color:#065f46;font-size:11.5px">Calculadora de Entrada por Bulto / Saco → Unidad o Kg</strong>
-              <span style="font-size:10px;color:#047857">Costo unitario y sugerencia USDT</span>
+        <!-- TOOLBAR PRINCIPAL CON 3 ZONAS: PRINCIPAL, SECUNDARIA Y ACCESOS RÁPIDOS -->
+        <div class="toolbar" style="margin-bottom:12px">
+          <!-- Zona Principal -->
+          <div class="toolbar-primary">
+            <button class="btn btn-action" onclick="toggleBulkCard(true)">
+              <span id="bulkToolbarIcon"></span> + Registrar Entrada Bulto / Saco
+            </button>
+            <button class="btn btn-secondary" onclick="openInvItemModal(null, 'insumo')">
+              <span id="insumoToolbarIcon"></span> + Insumo Cocina
+            </button>
+            <button class="btn btn-secondary" onclick="openInvItemModal(null, 'venta')">
+              <span id="ventaToolbarIcon"></span> + Mercancía Venta Directa
+            </button>
+          </div>
+
+          <!-- Zona Secundaria -->
+          <div class="toolbar-secondary">
+            <button class="btn btn-secondary" onclick="openMultiPurchaseModal()">
+              <span id="truckToolbarIcon"></span> + Factura Proveedor
+            </button>
+            <button class="btn btn-secondary" onclick="openWasteModal()">
+              <span id="wasteToolbarIcon"></span> + Merma
+            </button>
+            <button class="btn btn-secondary" onclick="openAuditModal()">
+              <span id="auditToolbarIcon"></span> Conteo Ciego
+            </button>
+            <button class="btn btn-secondary" onclick="openKardexModal('ALL')">
+              <span id="kardexToolbarIcon"></span> Kardex Global
+            </button>
+          </div>
+        </div>
+
+        <!-- HERRAMIENTA: CALCULADORA DE COMPRA POR BULTO / CAJA / CARTÓN / SACO -> UNIDAD O KILO -->
+        <div class="card" id="bulkCard" data-section="cocina" style="margin-bottom:12px">
+          <div class="card-hd">
+            <div>
+              <h3>
+                <span id="bulkCardIcon"></span> Calculadora de Entrada por Bulto / Saco → Unidad o Kg
+              </h3>
+              <p>Calcula costo unitario, margen comercial y precio sugerido antiperdida en USD y Bs</p>
             </div>
-            <div style="display:flex;gap:4px;align-items:center">
-              <button type="button" class="btn btn-ghost btn-sm" style="font-size:10px;padding:1px 5px" onclick="applyBulkPreset('prod-harina-pan', 1, 20, 21.60)">Harina (20u)</button>
-              <button type="button" class="btn btn-ghost btn-sm" style="font-size:10px;padding:1px 5px" onclick="applyBulkPreset('prod-cerveza-polar', 1, 36, 25.90)">Cerveza (36u)</button>
-              <button type="button" class="btn btn-ghost btn-sm" style="font-size:10px;padding:1px 5px" onclick="applyBulkPreset('ins-papa', 1, 25, 33.75)">Papa (25kg)</button>
-              <button type="button" class="btn btn-ghost btn-sm" style="font-size:10px;padding:1px 5px" onclick="toggleBulkCard()" id="bulkToggleBtn">Ocultar ▲</button>
+            <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkPreset('prod-harina-pan', 1, 20, 21.60)">Harina (20u)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkPreset('prod-cerveza-polar', 1, 36, 25.90)">Cerveza (36u)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkPreset('ins-papa', 1, 25, 33.75)">Papa (25kg)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleBulkCard()" id="bulkToggleBtn">Ocultar ▲</button>
             </div>
           </div>
-          <div class="card-bd" id="bulkCardBody" style="padding:6px 8px">
-            <div style="display:grid;grid-template-columns:1.8fr 0.8fr 0.8fr 0.9fr 0.9fr 1fr auto;gap:6px;align-items:end">
+          <div class="card-bd" id="bulkCardBody">
+            <div style="display:grid;grid-template-columns:1.8fr 0.8fr 0.8fr 0.9fr 0.9fr 1fr auto;gap:8px;align-items:end">
               <div class="form-group">
                 <label>1. Artículo</label>
                 <select id="bulkItemSelect" class="select" onchange="recalcBulkPreview()"></select>
               </div>
               <div class="form-group">
                 <label>2. Bultos</label>
-                <input type="number" step="1" min="1" id="bulkPacksCount" class="input" value="1" style="font-weight:900" oninput="recalcBulkPreview()">
+                <input type="number" step="1" min="1" id="bulkPacksCount" class="input tabular-nums" value="1" style="font-weight:var(--fw-bold)" oninput="recalcBulkPreview()">
               </div>
               <div class="form-group">
                 <label>3. Und/Kg x Bulto</label>
-                <input type="number" step="0.5" min="1" id="bulkUnitsPerPack" class="input" value="20" style="font-weight:900" oninput="recalcBulkPreview()">
+                <input type="number" step="0.5" min="1" id="bulkUnitsPerPack" class="input tabular-nums" value="20" style="font-weight:var(--fw-bold)" oninput="recalcBulkPreview()">
               </div>
               <div class="form-group">
                 <label>4. Costo Bulto ($)</label>
-                <input type="number" step="0.01" min="0" id="bulkPackCostUsd" class="input" value="21.60" style="font-weight:900" oninput="recalcBulkPreview()">
+                <input type="number" step="0.01" min="0" id="bulkPackCostUsd" class="input tabular-nums" value="21.60" style="font-weight:var(--fw-bold)" oninput="recalcBulkPreview()">
               </div>
               <div class="form-group">
                 <label>Nuevo PVP ($)</label>
-                <input type="number" step="0.05" min="0" id="bulkNewSalePrice" class="input" style="font-weight:900;color:var(--primary)">
+                <input type="number" step="0.05" min="0" id="bulkNewSalePrice" class="input tabular-nums money-in" style="font-weight:var(--fw-bold)">
               </div>
               <div class="form-group">
                 <label>¿Registrar Gasto?</label>
@@ -80,36 +110,38 @@
                   <option value="Efectivo Bs">Efectivo Bs</option>
                 </select>
               </div>
-              <button class="btn btn-p" onclick="submitBulkEntry()">📥 Ingresar</button>
+              <button class="btn btn-secondary" onclick="submitBulkEntry()">📥 Ingresar</button>
             </div>
 
-            <div id="bulkCalcSummaryBar" style="margin-top:6px;padding:4px 8px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:11px"></div>
+            <div id="bulkCalcSummaryBar" style="margin-top:8px;padding:6px 10px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px"></div>
           </div>
         </div>
 
-        <!-- PESTAÑAS ESTRUCTURADAS DEL INVENTARIO -->
-        <div class="card" style="margin-bottom:0">
-          <div class="card-hd" style="padding:4px 8px">
-            <div style="display:flex;gap:3px;flex-wrap:wrap" id="invFilterBtns">
-              <button class="btn btn-p btn-sm" onclick="setInvFilter('ALL', this)">Todo</button>
-              <button class="btn btn-ghost btn-sm" onclick="setInvFilter('COCINA', this)">🍲 Cocina (No Venta)</button>
-              <button class="btn btn-ghost btn-sm" onclick="setInvFilter('Víveres', this)">🌽 Víveres</button>
-              <button class="btn btn-ghost btn-sm" onclick="setInvFilter('Chucherías', this)">🧀 Chucherías</button>
-              <button class="btn btn-ghost btn-sm" onclick="setInvFilter('Refrescos & Cervezas', this)">🍻 Bebidas</button>
-              <button class="btn btn-ghost btn-sm" onclick="setInvFilter('Cigarros', this)">🚬 Cigarros</button>
-              <button class="btn btn-ghost btn-sm" onclick="setInvFilter('LOW', this)">🔴 Stock Bajo</button>
+        <!-- TABLA DE INVENTARIO CON FRANJA ABASTO Y FILTROS ESTRUCTURADOS -->
+        <div class="card" data-section="abasto" style="margin-bottom:0">
+          <div class="card-hd">
+            <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center" id="invFilterBtns">
+              <span style="font-size:11px;font-weight:var(--fw-bold);color:var(--txt-2);margin-right:4px">FILTRAR:</span>
+              <button class="btn btn-action btn-sm" onclick="setInvFilter('ALL', this)">Todo</button>
+              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('COCINA', this)">🍲 Cocina (Insumos)</button>
+              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('VENTA', this)">🛒 Venta Directa (Abasto)</button>
+              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('Víveres', this)">Víveres</button>
+              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('Chucherías', this)">Chucherías</button>
+              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('Refrescos & Cervezas', this)">Bebidas</button>
+              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('Cigarros', this)">Cigarros</button>
+              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('LOW', this)">⚠️ Stock Bajo</button>
             </div>
-            <input type="text" id="invSearchInput" class="input" style="max-width:200px;height:24px;font-size:11px" placeholder="🔎 Buscar..." oninput="renderInventoryTable()">
+            <input type="text" id="invSearchInput" class="input" style="max-width:220px;height:26px;font-size:11px" placeholder="Buscar artículo, código..." oninput="renderInventoryTable()">
           </div>
-          <div class="table-wrap" style="max-height:calc(100vh - 210px);overflow-y:auto">
+          <div class="table-wrap" style="max-height:calc(100vh - 220px);overflow-y:auto">
             <table class="data-table">
               <thead style="position:sticky;top:0;z-index:5">
                 <tr>
                   <th style="width:40px">Img</th>
                   <th>Cód / Barras</th>
                   <th>Artículo y Categoría</th>
-                  <th>Destino</th>
-                  <th>Stock</th>
+                  <th>Destino en Negocio</th>
+                  <th>Stock Actual</th>
                   <th>Costo Unit.</th>
                   <th>PVP ($ / Bs)</th>
                   <th>Margen</th>
@@ -124,12 +156,12 @@
     </main>
   </div>
 
-  <!-- MODAL CREAR / EDITAR ARTÍCULO DE INVENTARIO CON SELECCIÓN DE FAMILIA DE CAJA -->
+  <!-- MODAL CREAR / EDITAR ARTÍCULO DE INVENTARIO -->
   <div class="modal-backdrop" id="invItemModal">
     <div class="modal-box" style="max-width:650px">
       <div class="modal-hd">
-        <h3 id="invModalTitle">📦 Registro de Inventario (Cocina o Venta Directa)</h3>
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('invItemModal').classList.remove('open')">✕</button>
+        <h3 id="invModalTitle">Registro de Inventario (Cocina o Venta Directa)</h3>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('invItemModal').classList.remove('open')">✕</button>
       </div>
       <div class="modal-bd">
         <input type="hidden" id="invEditId">
@@ -144,21 +176,21 @@
           <div class="form-group" id="invGroupWrap">
             <label>Familia donde Aparece en Caja POS</label>
             <select id="invEditGroup" class="select">
-              <option value="viveres">🌽 Harina PAN y Víveres Empaquetados</option>
-              <option value="chucherias">🧀 Pepitos, Cheetos y Chucherías</option>
-              <option value="refrescos">🥤 Refrescos y Maltas</option>
-              <option value="cervezas">🍻 Cervezas Bien Frías</option>
-              <option value="cigarros">🚬 Cigarros (Detal y Cajetilla)</option>
+              <option value="viveres">Harina PAN y Víveres Empaquetados</option>
+              <option value="chucherias">Pepitos, Cheetos y Chucherías</option>
+              <option value="refrescos">Refrescos y Maltas</option>
+              <option value="cervezas">Cervezas Bien Frías</option>
+              <option value="cigarros">Cigarros (Detal y Cajetilla)</option>
             </select>
           </div>
           <div class="form-group">
             <label>Categoría Administrativa</label>
             <select id="invEditCategory" class="select">
-              <option value="Víveres">🌽 Víveres (Harina PAN, Espagueti, Arroz)</option>
-              <option value="Chucherías">🧀 Chucherías (Pepito, Doritos, Galletas)</option>
-              <option value="Refrescos & Cervezas">🍻 Refrescos, Malta & Cervezas</option>
-              <option value="Cigarros">🚬 Cigarros</option>
-              <option value="Insumos de Cocina (Materia Prima)">🍲 Insumos de Cocina (Papa, Aliños, Carnes)</option>
+              <option value="Víveres">Víveres (Harina PAN, Espagueti, Arroz)</option>
+              <option value="Chucherías">Chucherías (Pepito, Doritos, Galletas)</option>
+              <option value="Refrescos & Cervezas">Refrescos, Malta & Cervezas</option>
+              <option value="Cigarros">Cigarros</option>
+              <option value="Insumos de Cocina (Materia Prima)">Insumos de Cocina (Papa, Aliños, Carnes)</option>
             </select>
           </div>
           <div class="form-group">
@@ -166,7 +198,7 @@
             <input type="text" id="invEditCode" class="input" placeholder="Ej: 107 o COC-15">
           </div>
           <div class="form-group">
-            <label>🔫 Código de Barras / QR</label>
+            <label>Código de Barras / QR</label>
             <input type="text" id="invEditBarcode" class="input" placeholder="Escanea o genera automático">
           </div>
           <div class="form-group">
@@ -183,29 +215,29 @@
           </div>
           <div class="form-group">
             <label>Stock Actual</label>
-            <input type="number" step="0.01" id="invEditStock" class="input" style="font-weight:900">
+            <input type="number" step="0.01" id="invEditStock" class="input tabular-nums" style="font-weight:var(--fw-bold)">
           </div>
           <div class="form-group">
             <label>Stock Mínimo (Alerta)</label>
-            <input type="number" step="0.5" id="invEditMin" class="input" value="8">
+            <input type="number" step="0.5" id="invEditMin" class="input tabular-nums" value="8">
           </div>
           <div class="form-group">
             <label>Costo Unitario USD ($)</label>
-            <input type="number" step="0.01" id="invEditCost" class="input" style="font-weight:800">
+            <input type="number" step="0.01" id="invEditCost" class="input tabular-nums" style="font-weight:var(--fw-bold)">
           </div>
           <div class="form-group" id="invPriceGroupWrap">
             <label>Precio de Venta en Caja USD ($)</label>
-            <input type="number" step="0.01" id="invEditPrice" class="input" style="font-weight:800;color:var(--primary)">
+            <input type="number" step="0.01" id="invEditPrice" class="input tabular-nums money-in" style="font-weight:var(--fw-bold)">
           </div>
           <div class="form-group" style="grid-column:1/-1">
-            <label>🖼️ Ruta o URL de Imagen (Opcional)</label>
+            <label>Ruta o URL de Imagen (Opcional)</label>
             <input type="text" id="invEditImg" class="input" placeholder="../assets/img/productos/viveres.jpg">
           </div>
         </div>
       </div>
       <div class="modal-ft">
-        <button class="btn btn-ghost" onclick="document.getElementById('invItemModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-p" onclick="saveInvItem()">💾 Guardar en Inventario</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('invItemModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-secondary" onclick="saveInvItem()">Guardar en Inventario</button>
       </div>
     </div>
   </div>
@@ -213,28 +245,28 @@
   <!-- MODAL DE LIBRO MAYOR KARDEX: MOVIMIENTOS HISTÓRICOS Y AUDITORÍA -->
   <div class="modal-backdrop" id="kardexModal">
     <div class="modal-box" style="max-width:960px;width:95%">
-      <div class="modal-hd" style="background:#0f172a;color:#fff;border-radius:12px 12px 0 0;padding:12px 16px">
+      <div class="modal-hd">
         <div>
-          <h3 style="color:#fff;margin:0;font-size:15px">📜 Libro Mayor Kardex · Auditoría Inmutable de Entradas y Salidas</h3>
-          <p style="color:#94a3b8;font-size:11.5px;margin:3px 0 0 0">Historial trazable de compras, ventas de mostrador, mermas, consumo de personal y ajustes</p>
+          <h3>Libro Mayor Kardex · Auditoría Inmutable de Entradas y Salidas</h3>
+          <p>Historial trazable de compras, ventas de mostrador, mermas, consumo de personal y ajustes</p>
         </div>
-        <button class="btn btn-ghost btn-sm" style="color:#fff" onclick="document.getElementById('kardexModal').classList.remove('open')">✕</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('kardexModal').classList.remove('open')">✕</button>
       </div>
       <div class="modal-bd">
         <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <label style="font-size:12px;font-weight:800">Filtrar Artículo:</label>
+            <label style="font-size:12px;font-weight:var(--fw-bold)">Filtrar Artículo:</label>
             <select id="kardexItemFilter" class="select" style="min-width:260px" onchange="renderKardexTable()"></select>
             <select id="kardexActionFilter" class="select" style="min-width:160px" onchange="renderKardexTable()">
-              <option value="ALL">⚡ Todas las acciones</option>
-              <option value="COMPRA">📥 Compras / Entradas</option>
-              <option value="VENTA">📤 Ventas Mostrador</option>
-              <option value="MERMA">🗑️ Mermas / Desperdicio</option>
-              <option value="CONSUMO_PERSONAL">🍲 Consumo de Personal</option>
-              <option value="AJUSTE_AUDITORIA">⚖️ Ajustes de Auditoría</option>
+              <option value="ALL">Todas las acciones</option>
+              <option value="COMPRA">Compras / Entradas</option>
+              <option value="VENTA">Ventas Mostrador</option>
+              <option value="MERMA">Mermas / Desperdicio</option>
+              <option value="CONSUMO_PERSONAL">Consumo de Personal</option>
+              <option value="AJUSTE_AUDITORIA">Ajustes de Auditoría</option>
             </select>
           </div>
-          <div id="kardexQuickSummary" style="font-size:12px;font-weight:700;color:var(--txt-sec)"></div>
+          <div id="kardexQuickSummary" style="font-size:12px;font-weight:var(--fw-semibold);color:var(--txt-2)"></div>
         </div>
         <div class="table-wrap" style="max-height:420px;overflow-y:auto">
           <table class="data-table">
@@ -256,7 +288,7 @@
         </div>
       </div>
       <div class="modal-ft">
-        <button class="btn btn-ghost" onclick="document.getElementById('kardexModal').classList.remove('open')">Cerrar</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('kardexModal').classList.remove('open')">Cerrar</button>
       </div>
     </div>
   </div>
@@ -264,12 +296,12 @@
   <!-- MODAL RECEPCIÓN FORMAL DE MERCANCÍA / FACTURA MULTI-ÍTEM A PROVEEDOR -->
   <div class="modal-backdrop" id="multiPurchaseModal">
     <div class="modal-box" style="max-width:920px;width:95%">
-      <div class="modal-hd" style="background:#0284c7;color:#fff;border-radius:12px 12px 0 0;padding:12px 16px">
+      <div class="modal-hd">
         <div>
-          <h3 style="color:#fff;margin:0;font-size:15px">🚚 Recepción de Mercancía / Factura de Proveedor Multi-Ítem</h3>
-          <p style="color:#e0f2fe;font-size:11.5px;margin:3px 0 0 0">Registra varios productos de una misma factura o nota de entrega y sincroniza la gaveta de caja</p>
+          <h3>Recepción de Mercancía / Factura de Proveedor Multi-Ítem</h3>
+          <p>Registra varios productos de una misma factura y sincroniza la gaveta de caja</p>
         </div>
-        <button class="btn btn-ghost btn-sm" style="color:#fff" onclick="document.getElementById('multiPurchaseModal').classList.remove('open')">✕</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('multiPurchaseModal').classList.remove('open')">✕</button>
       </div>
       <div class="modal-bd">
         <div class="form-grid" style="grid-template-columns:1.8fr 1.2fr 1.2fr 1.2fr;gap:10px;margin-bottom:12px">
@@ -285,11 +317,11 @@
           <div class="form-group">
             <label>Forma de Pago</label>
             <select id="mpPaymentMethod" class="select" onchange="updateMpPaymentNotice()">
-              <option value="Efectivo USD">💵 Efectivo USD (Sale de Gaveta)</option>
-              <option value="Pago Móvil">📱 Pago Móvil (Sale de Banco Negocio)</option>
-              <option value="Efectivo Bs">🇻🇪 Efectivo Bs (Sale de Gaveta)</option>
-              <option value="Crédito / Cuentas por Pagar">⏳ Crédito (Por Pagar)</option>
-              <option value="NONE">🚫 No registrar salida de dinero</option>
+              <option value="Efectivo USD">Efectivo USD (Sale de Gaveta)</option>
+              <option value="Pago Móvil">Pago Móvil (Sale de Banco Negocio)</option>
+              <option value="Efectivo Bs">Efectivo Bs (Sale de Gaveta)</option>
+              <option value="Crédito / Cuentas por Pagar">Crédito (Por Pagar)</option>
+              <option value="NONE">No registrar salida de dinero</option>
             </select>
           </div>
           <div class="form-group">
@@ -298,17 +330,17 @@
           </div>
         </div>
 
-        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px">
+        <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:10px;margin-bottom:10px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <strong style="font-size:13px;color:#0f172a">📦 Renglones de la Factura:</strong>
-            <button type="button" class="btn btn-p btn-sm" onclick="addPurchaseRow()">+ Agregar Producto / Insumo</button>
+            <strong style="font-size:12px;color:var(--txt)">Renglones de la Factura:</strong>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addPurchaseRow()">+ Agregar Renglón</button>
           </div>
           <div class="table-wrap" style="max-height:240px;overflow-y:auto">
             <table class="data-table" style="font-size:12px">
               <thead>
                 <tr>
                   <th style="min-width:200px">Producto / Insumo</th>
-                  <th style="width:90px">Bultos/Cajas</th>
+                  <th style="width:90px">Bultos</th>
                   <th style="width:100px">Und/Kg x Bulto</th>
                   <th style="width:110px">Costo Bulto ($)</th>
                   <th style="width:100px">Costo Unit.</th>
@@ -321,20 +353,20 @@
           </div>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:#ecfdf5;border:1px solid #10b981;border-radius:8px;padding:10px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:var(--money-in-light);border:1px solid var(--money-in);border-radius:var(--radius);padding:10px 14px">
           <div>
-            <div style="font-size:11.5px;color:#065f46" id="mpPaymentNotice">💡 Esta compra descontará dinero físico de la gaveta de caja para que el arqueo cuadre.</div>
+            <div style="font-size:12px;color:var(--money-in);font-weight:var(--fw-semibold)" id="mpPaymentNotice">Esta compra descontará dinero físico de la gaveta de caja para que el arqueo cuadre.</div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:11px;color:#047857">TOTAL DE LA FACTURA:</div>
-            <div style="font-size:20px;font-weight:900;color:#065f46" id="mpTotalUsdDisplay">$0.00 USD</div>
-            <div style="font-size:12px;font-weight:700;color:#047857" id="mpTotalBsDisplay">0.00 Bs</div>
+            <div style="font-size:11px;color:var(--money-in)">TOTAL DE LA FACTURA:</div>
+            <div class="money-in tabular-nums" style="font-size:20px;font-weight:var(--fw-bold)" id="mpTotalUsdDisplay">$0.00 USD</div>
+            <div class="money-bs tabular-nums" style="font-size:12px;font-weight:var(--fw-semibold)" id="mpTotalBsDisplay">0.00 Bs</div>
           </div>
         </div>
       </div>
       <div class="modal-ft">
-        <button class="btn btn-ghost" onclick="document.getElementById('multiPurchaseModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-p" onclick="submitMultiPurchase()">📥 Procesar Factura y Asentar en Kardex</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('multiPurchaseModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-secondary" onclick="submitMultiPurchase()">Procesar Factura y Asentar en Kardex</button>
       </div>
     </div>
   </div>
@@ -342,12 +374,12 @@
   <!-- MODAL DE REGISTRO FORMAL DE MERMAS, VENCIMIENTOS Y AUTOCONSUMO -->
   <div class="modal-backdrop" id="wasteModal">
     <div class="modal-box" style="max-width:550px">
-      <div class="modal-hd" style="background:#dc2626;color:#fff;border-radius:12px 12px 0 0;padding:12px 16px">
+      <div class="modal-hd">
         <div>
-          <h3 style="color:#fff;margin:0;font-size:15px">🗑️ Registro de Merma, Desperdicio o Autoconsumo</h3>
-          <p style="color:#fee2e2;font-size:11.5px;margin:3px 0 0 0">Controla fugas de comida, mercancía vencida o comidas de empleados valorizadas en $</p>
+          <h3>Registro de Merma, Desperdicio o Autoconsumo</h3>
+          <p>Controla fugas de comida, mercancía vencida o consumo de empleados</p>
         </div>
-        <button class="btn btn-ghost btn-sm" style="color:#fff" onclick="document.getElementById('wasteModal').classList.remove('open')">✕</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('wasteModal').classList.remove('open')">✕</button>
       </div>
       <div class="modal-bd">
         <div class="form-grid">
@@ -357,17 +389,17 @@
           </div>
           <div class="form-group">
             <label>Cantidad a Descontar</label>
-            <input type="number" step="0.1" min="0.1" id="wasteQty" class="input" value="1" style="font-weight:900" oninput="updateWastePreview()">
+            <input type="number" step="0.1" min="0.1" id="wasteQty" class="input tabular-nums" value="1" style="font-weight:var(--fw-bold)" oninput="updateWastePreview()">
           </div>
           <div class="form-group">
             <label>Motivo de la Salida</label>
             <select id="wasteReason" class="select" onchange="updateWastePreview()">
-              <option value="Deterioro / Descomposición">🥀 Deterioro / Descomposición (Podrido/Magullado)</option>
-              <option value="Quemado / Error en Cocina">🔥 Quemado / Error en Cocina</option>
-              <option value="Vencido en Mostrador">⌛ Vencido en Mostrador / Anaquel</option>
-              <option value="Rotura / Daño Accidental">💔 Rotura Accidental (Botella/Paquete Roto)</option>
-              <option value="Consumo de Personal (Almuerzo Empleado)">🍲 Consumo de Personal (Almuerzo Empleado)</option>
-              <option value="Otro Motivo">❓ Otro Motivo</option>
+              <option value="Deterioro / Descomposición">Deterioro / Descomposición (Podrido/Magullado)</option>
+              <option value="Quemado / Error en Cocina">Quemado / Error en Cocina</option>
+              <option value="Vencido en Mostrador">Vencido en Mostrador / Anaquel</option>
+              <option value="Rotura / Daño Accidental">Rotura Accidental (Botella/Paquete Roto)</option>
+              <option value="Consumo de Personal (Almuerzo Empleado)">Consumo de Personal (Almuerzo Empleado)</option>
+              <option value="Otro Motivo">Otro Motivo</option>
             </select>
           </div>
           <div class="form-group" style="grid-column:1/-1">
@@ -380,11 +412,11 @@
           </div>
         </div>
 
-        <div id="wasteCostNotice" style="margin-top:10px;padding:10px 14px;background:#fef2f2;border:1px solid #f87171;border-radius:8px;font-size:12.5px;color:#991b1b;font-weight:700"></div>
+        <div id="wasteCostNotice" style="margin-top:10px;padding:10px 14px;background:var(--money-out-light);border:1px solid var(--money-out);border-radius:var(--radius);font-size:12px;color:var(--money-out);font-weight:var(--fw-bold)"></div>
       </div>
       <div class="modal-ft">
-        <button class="btn btn-ghost" onclick="document.getElementById('wasteModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-danger" style="background:#dc2626;color:#fff" onclick="submitWasteRecord()">🗑️ Dar de Baja y Asentar en Kardex</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('wasteModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-danger" onclick="submitWasteRecord()">Dar de Baja y Asentar en Kardex</button>
       </div>
     </div>
   </div>
@@ -392,12 +424,12 @@
   <!-- MODAL DE AUDITORÍA Y CONTEO FÍSICO CIEGO -->
   <div class="modal-backdrop" id="auditModal">
     <div class="modal-box" style="max-width:550px">
-      <div class="modal-hd" style="background:#334155;color:#fff;border-radius:12px 12px 0 0;padding:12px 16px">
+      <div class="modal-hd">
         <div>
-          <h3 style="color:#fff;margin:0;font-size:15px">⚖️ Auditoría de Inventario por Conteo Físico Real</h3>
-          <p style="color:#cbd5e1;font-size:11.5px;margin:3px 0 0 0">Cuadra la existencia física de los anaqueles contra el sistema y asienta la diferencia</p>
+          <h3>Auditoría de Inventario por Conteo Físico Real</h3>
+          <p>Cuadra la existencia física de los anaqueles contra el sistema y asienta la diferencia</p>
         </div>
-        <button class="btn btn-ghost btn-sm" style="color:#fff" onclick="document.getElementById('auditModal').classList.remove('open')">✕</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('auditModal').classList.remove('open')">✕</button>
       </div>
       <div class="modal-bd">
         <div class="form-grid">
@@ -407,11 +439,11 @@
           </div>
           <div class="form-group">
             <label>Stock según Sistema</label>
-            <input type="text" id="auditSystemStock" class="input" readonly style="background:#f1f5f9;font-weight:900">
+            <input type="text" id="auditSystemStock" class="input tabular-nums" readonly style="background:var(--surface-2);font-weight:var(--fw-bold)">
           </div>
           <div class="form-group">
             <label>Conteo Físico Real en Anaquel</label>
-            <input type="number" step="0.5" id="auditRealStock" class="input" style="font-weight:900;color:#0284c7" oninput="updateAuditPreview()">
+            <input type="number" step="0.5" id="auditRealStock" class="input tabular-nums money-bs" style="font-weight:var(--fw-bold)" oninput="updateAuditPreview()">
           </div>
           <div class="form-group" style="grid-column:1/-1">
             <label>Motivo / Observación del Ajuste</label>
@@ -423,11 +455,11 @@
           </div>
         </div>
 
-        <div id="auditDiffNotice" style="margin-top:10px;padding:10px 14px;border-radius:8px;font-size:12.5px;font-weight:700"></div>
+        <div id="auditDiffNotice" style="margin-top:10px;padding:10px 14px;border-radius:var(--radius);font-size:12px;font-weight:var(--fw-bold)"></div>
       </div>
       <div class="modal-ft">
-        <button class="btn btn-ghost" onclick="document.getElementById('auditModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-p" onclick="submitAuditAdjustment()">Aplicar Ajuste y Registrar en Kardex</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('auditModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-secondary" onclick="submitAuditAdjustment()">Aplicar Ajuste y Registrar en Kardex</button>
       </div>
     </div>
   </div>
@@ -442,7 +474,24 @@
   <script>
     let currentFilter = 'ALL';
 
+    function setupIcons() {
+      if (!window.MTPIcons) return;
+      const setIco = (id, name) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = MTPIcons.get(name, { size: 14 });
+      };
+      setIco('bulkToolbarIcon', 'package');
+      setIco('insumoToolbarIcon', 'kitchen');
+      setIco('ventaToolbarIcon', 'store');
+      setIco('truckToolbarIcon', 'truck');
+      setIco('wasteToolbarIcon', 'waste');
+      setIco('auditToolbarIcon', 'scale');
+      setIco('kardexToolbarIcon', 'kardex');
+      setIco('bulkCardIcon', 'calculator');
+    }
+
     function initInvPage() {
+      setupIcons();
       populateBulkSelect();
       renderInvStats();
       renderInventoryTable();
@@ -454,7 +503,7 @@
       if (!sel) return;
       const curVal = sel.value;
       sel.innerHTML = MTP.state.inventory.map(i =>
-        `<option value="${i.id}">${i.emoji || ''} [${i.code}] ${i.name} (Actual: ${i.stock} ${i.unit} · Costo $${i.costUsd.toFixed(2)})</option>`
+        `<option value="${i.id}">[${i.code}] ${i.name} (${i.sellable ? 'Venta' : 'Cocina'} · Stock: ${i.stock} ${i.unit} · Costo $${i.costUsd.toFixed(2)})</option>`
       ).join('');
       if (curVal && MTP.getInsumoById(curVal)) sel.value = curVal;
     }
@@ -496,14 +545,14 @@
       if (bar && item) {
         bar.innerHTML = `
           <div>
-            📥 Entrarán al stock: <strong style="color:#059669;font-size:13.5px">+${totalUnits} ${item.unit}</strong>
-            (Nuevo stock total: <strong>${(item.stock + totalUnits).toFixed(2)} ${item.unit}</strong>)
+            Entrarán al stock: <strong class="money-in tabular-nums">+${totalUnits} ${item.unit}</strong>
+            (Nuevo stock total: <strong class="tabular-nums">${(item.stock + totalUnits).toFixed(2)} ${item.unit}</strong>)
           </div>
           <div>
-            💵 Inversión Total: <strong>${MTP.fmtUSD(totalCost)}</strong> (${(totalCost * bcv).toFixed(2)} Bs)
-            · Costo Unitario Resultante: <strong style="color:#0f172a;background:#fef3c7;padding:2px 6px;border-radius:4px">$${unitCost.toFixed(3)} / ${item.unit}</strong>
+            Inversión: <strong class="tabular-nums">${MTP.fmtUSD(totalCost)}</strong> (${(totalCost * bcv).toFixed(2)} Bs)
+            · Costo Unitario: <strong class="badge badge-yellow tabular-nums">$${unitCost.toFixed(3)} / ${item.unit}</strong>
           </div>
-          ${item.sellable ? `<div>🛡️ Precio Sugerido Antiperdida (Brecha USDT): <strong style="color:#059669">${MTP.fmtUSD(recPrice)}</strong></div>` : `<div>🍲 Insumo exclusivo de cocina (se descuenta en recetas)</div>`}
+          ${item.sellable ? `<div>Precio Sugerido Antiperdida (Brecha USDT): <strong class="money-in tabular-nums">${MTP.fmtUSD(recPrice)}</strong></div>` : `<div>Insumo exclusivo de cocina (se descuenta en recetas)</div>`}
         `;
       }
     }
@@ -534,9 +583,24 @@
 
     function setInvFilter(f, btnEl) {
       currentFilter = f;
-      document.querySelectorAll('#invFilterBtns .btn').forEach(b => b.className = 'btn btn-ghost btn-sm');
-      if (btnEl) btnEl.className = 'btn btn-p btn-sm';
+      document.querySelectorAll('#invFilterBtns .btn').forEach(b => b.className = 'btn btn-secondary btn-sm');
+      if (btnEl) btnEl.className = 'btn btn-action btn-sm';
       renderInventoryTable();
+    }
+
+    function toggleBulkCard(forceOpen = false) {
+      const bd = document.getElementById('bulkCardBody');
+      const btn = document.getElementById('bulkToggleBtn');
+      if (!bd) return;
+      if (forceOpen) {
+        bd.style.display = 'block';
+        if (btn) btn.textContent = 'Ocultar ▲';
+        document.getElementById('bulkCard').scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+      const isHidden = bd.style.display === 'none';
+      bd.style.display = isHidden ? 'block' : 'none';
+      if (btn) btn.textContent = isHidden ? 'Ocultar ▲' : 'Mostrar Calculadora ▼';
     }
 
     function renderInvStats() {
@@ -557,7 +621,7 @@
         <div class="stat-card">
           <div class="stat-ico yellow">${kitchenIco}</div>
           <div>
-            <div class="stat-n">${MTP.fmtUSD(kitchenCapital)}</div>
+            <div class="stat-n tabular-nums" style="color:var(--sec-cocina)">${MTP.fmtUSD(kitchenCapital)}</div>
             <div class="stat-l">Capital en Almacén de Cocina (${kitchenItems.length} insumos)</div>
             <div class="stat-sub">Papa, aliños, carnes, pollo, queso, aceite</div>
           </div>
@@ -565,17 +629,17 @@
         <div class="stat-card">
           <div class="stat-ico green">${pkgIco}</div>
           <div>
-            <div class="stat-n">${MTP.fmtUSD(saleCapital)}</div>
+            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(saleCapital)}</div>
             <div class="stat-l">Costo en Mercancía de Venta (${saleItems.length} productos)</div>
-            <div class="stat-sub">Valor venta: <strong>${MTP.fmtUSD(saleRevenue)}</strong> (+${MTP.fmtUSD(expectedRetailProfit)} ganancia)</div>
+            <div class="stat-sub tabular-nums">Valor venta: <strong>${MTP.fmtUSD(saleRevenue)}</strong> (+${MTP.fmtUSD(expectedRetailProfit)} ganancia)</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-ico ${lowCount ? 'red' : 'blue'}">${alertIco}</div>
           <div>
-            <div class="stat-n">${lowCount} alertas</div>
+            <div class="stat-n tabular-nums ${lowCount ? 'money-out' : ''}">${lowCount} alertas</div>
             <div class="stat-l">Ítems en Punto de Reposición</div>
-            <div class="stat-sub"><a href="#" onclick="setInvFilter('LOW');return false;" style="color:var(--danger);font-weight:800">Ver agotándose →</a></div>
+            <div class="stat-sub"><a href="#" onclick="setInvFilter('LOW');return false;" style="color:var(--money-out);font-weight:var(--fw-bold)">Ver agotándose →</a></div>
           </div>
         </div>
       `;
@@ -589,75 +653,70 @@
       const rows = MTP.state.inventory.filter(i => {
         if (currentFilter === 'LOW' && i.stock > i.minStock) return false;
         if (currentFilter === 'COCINA' && i.sellable) return false;
-        if (currentFilter !== 'ALL' && currentFilter !== 'LOW' && currentFilter !== 'COCINA' && i.category !== currentFilter) return false;
+        if (currentFilter === 'VENTA' && !i.sellable) return false;
+        if (currentFilter !== 'ALL' && currentFilter !== 'LOW' && currentFilter !== 'COCINA' && currentFilter !== 'VENTA' && i.category !== currentFilter) return false;
         if (q && !i.name.toLowerCase().includes(q) && !i.code.toLowerCase().includes(q) && !i.barcode.includes(q)) return false;
         return true;
       });
 
       tbody.innerHTML = rows.map(i => {
         const isLow = i.stock <= i.minStock;
-        const isCostly = i.costUsd > (i.prevCostUsd || i.costUsd);
         const fallbackImg = MTP.getFallbackSvgDataUri(i.name, i.emoji);
         const marginPct = i.sellable && i.priceUsd > 0 ? (((i.priceUsd - i.costUsd) / i.priceUsd) * 100).toFixed(0) : 0;
+        const kardexIco = window.MTPIcons ? MTPIcons.get('kardex', { size: 12 }) : 'K';
+        const auditIco = window.MTPIcons ? MTPIcons.get('scale', { size: 12 }) : 'C';
+        const wasteIco = window.MTPIcons ? MTPIcons.get('waste', { size: 12 }) : 'M';
+        const editIco = window.MTPIcons ? MTPIcons.get('edit', { size: 12 }) : 'E';
 
         return `
           <tr>
-            <td style="width:34px;padding:3px 5px">
+            <td style="width:34px;padding:4px 6px">
               <img src="${i.img || fallbackImg}" alt="${i.name}" onerror="this.onerror=null;this.src='${fallbackImg}'"
-                style="width:28px;height:24px;object-fit:cover;border-radius:4px;border:1px solid var(--border)">
+                style="width:28px;height:24px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--line)">
             </td>
-            <td style="padding:3px 6px">
+            <td style="padding:4px 6px">
               <span class="code-pill">#${i.code}</span>
-              <div style="font-family:var(--font-mono);font-size:9.5px;color:var(--txt-muted)">${i.barcode}</div>
+              <div class="tabular-nums" style="font-family:var(--font-mono);font-size:11px;color:var(--txt-3)">${i.barcode}</div>
             </td>
-            <td style="padding:3px 6px">
-              <div style="font-weight:700;font-size:11.5px">${i.emoji || ''} ${i.name}</div>
-              <div style="font-size:9.5px;color:var(--txt-sec)">${i.category}</div>
+            <td style="padding:4px 6px">
+              <div style="font-weight:var(--fw-bold);font-size:12px">${i.name}</div>
+              <div style="font-size:11px;color:var(--txt-2)">${i.category}</div>
             </td>
-            <td style="padding:3px 6px">
-              ${i.sellable
-                ? `<span class="badge badge-green">🛒 ${i.group || 'Venta'}</span>`
-                : `<span class="badge badge-yellow">🍲 Cocina</span>`}
+            <td style="padding:4px 6px">
+              ${!i.sellable
+                ? `<span class="badge badge-yellow" style="font-weight:var(--fw-semibold)">🍲 Insumo Cocina (No Venta)</span>`
+                : `<span class="badge badge-blue" style="font-weight:var(--fw-semibold)">🛒 Venta Directa (${i.group || 'Abasto'})</span>`}
             </td>
-            <td style="padding:3px 6px">
-              <span class="badge ${isLow ? 'badge-red' : 'badge-green'}" style="font-size:11px">
+            <td style="padding:4px 6px">
+              <span class="badge ${isLow ? 'badge-red' : 'badge-green'} tabular-nums" style="font-size:11px">
                 ${MTP.fmtWeight(i.stock, i.unit)}
               </span>
             </td>
-            <td style="padding:3px 6px;font-weight:700">${MTP.fmtUSD(i.costUsd)}</td>
-            <td style="padding:3px 6px">
+            <td style="padding:4px 6px;font-weight:var(--fw-bold)" class="tabular-nums">${MTP.fmtUSD(i.costUsd)}</td>
+            <td style="padding:4px 6px">
               ${i.sellable
                 ? `<div class="price-dual">
-                     <span class="price-usd">${MTP.fmtUSD(i.priceUsd)}</span>
-                     <span class="price-bs">${(i.priceUsd * bcv).toFixed(2)} Bs</span>
+                     <span class="price-usd tabular-nums money-in">${MTP.fmtUSD(i.priceUsd)}</span>
+                     <span class="price-bs tabular-nums money-bs">${(i.priceUsd * bcv).toFixed(2)} Bs</span>
                    </div>`
-                : `<span style="font-size:10px;color:var(--txt-muted)">Cocina</span>`}
+                : `<span style="font-size:11px;color:var(--txt-3);font-style:italic">No se vende suelto</span>`}
             </td>
-            <td style="padding:3px 6px">
+            <td style="padding:4px 6px">
               ${i.sellable
-                ? `<span class="badge ${marginPct >= 30 ? 'badge-green' : 'badge-yellow'}">${marginPct}%</span>`
+                ? `<span class="badge ${marginPct >= 30 ? 'badge-green' : 'badge-yellow'} tabular-nums">${marginPct}%</span>`
                 : '—'}
             </td>
-            <td style="padding:3px 6px">
-              <div style="display:flex;gap:3px;flex-wrap:wrap">
-                <button class="btn btn-ghost btn-sm" style="padding:1px 5px;font-size:10px" onclick="openKardexModal('${i.id}')" title="Kardex">📜</button>
-                <button class="btn btn-ghost btn-sm" style="color:#0284c7;padding:1px 5px;font-size:10px" onclick="openAuditModal('${i.id}')" title="Conteo">⚖️</button>
-                <button class="btn btn-ghost btn-sm" style="color:#dc2626;padding:1px 5px;font-size:10px" onclick="openWasteModal('${i.id}')" title="Merma">🗑️</button>
-                <button class="btn btn-ghost btn-sm" style="padding:1px 5px;font-size:10px" onclick="openInvItemModal('${i.id}')" title="Editar">✏️</button>
+            <td style="padding:4px 6px">
+              <div style="display:flex;gap:4px;flex-wrap:wrap">
+                <button class="btn btn-secondary btn-sm" onclick="openKardexModal('${i.id}')" title="Ver Kardex">${kardexIco}</button>
+                <button class="btn btn-secondary btn-sm" onclick="openAuditModal('${i.id}')" title="Conteo Ciego">${auditIco}</button>
+                <button class="btn btn-secondary btn-sm" onclick="openWasteModal('${i.id}')" title="Registrar Merma">${wasteIco}</button>
+                <button class="btn btn-secondary btn-sm" onclick="openInvItemModal('${i.id}')" title="Editar">${editIco}</button>
               </div>
             </td>
           </tr>
         `;
       }).join('');
-    }
-
-    function toggleBulkCard() {
-      const bd = document.getElementById('bulkCardBody');
-      const btn = document.getElementById('bulkToggleBtn');
-      if (!bd) return;
-      const isHidden = bd.style.display === 'none';
-      bd.style.display = isHidden ? 'block' : 'none';
-      if (btn) btn.textContent = isHidden ? 'Ocultar ▲' : 'Mostrar Calculadora ▼';
     }
 
     /* ==========================================================================
@@ -695,21 +754,21 @@
 
       const summaryEl = document.getElementById('kardexQuickSummary');
       if (summaryEl) {
-        summaryEl.innerHTML = `Mostrando <strong>${filtered.length}</strong> movimientos · <span style="color:#059669">+${totalIn.toFixed(2)} entradas</span> · <span style="color:#dc2626">-${totalOut.toFixed(2)} salidas</span>`;
+        summaryEl.innerHTML = `Mostrando <strong>${filtered.length}</strong> movimientos · <span class="money-in tabular-nums">+${totalIn.toFixed(2)} entradas</span> · <span class="money-out tabular-nums">-${totalOut.toFixed(2)} salidas</span>`;
       }
 
       if (!filtered.length) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:25px;color:var(--txt-muted)">No hay movimientos registrados para este filtro.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:25px;color:var(--txt-3);font-size:12px">No hay movimientos registrados para este filtro.</td></tr>`;
         return;
       }
 
       const ACTION_BADGES = {
-        'COMPRA': '<span class="badge badge-green">📥 COMPRA</span>',
-        'VENTA': '<span class="badge" style="background:#e0f2fe;color:#0369a1">📤 VENTA</span>',
-        'MERMA': '<span class="badge badge-red">🗑️ MERMA</span>',
-        'CONSUMO_PERSONAL': '<span class="badge" style="background:#f3e8ff;color:#7e22ce">🍲 CONSUMO PERS.</span>',
-        'AJUSTE_AUDITORIA': '<span class="badge badge-yellow">⚖️ AJUSTE AUDITORÍA</span>',
-        'PRODUCCION_COCINA': '<span class="badge" style="background:#ccfbf1;color:#0f766e">🍳 PRODUCCIÓN</span>'
+        'COMPRA': '<span class="badge badge-green">COMPRA</span>',
+        'VENTA': '<span class="badge badge-blue">VENTA</span>',
+        'MERMA': '<span class="badge badge-red">MERMA</span>',
+        'CONSUMO_PERSONAL': '<span class="badge badge-yellow">CONSUMO PERS.</span>',
+        'AJUSTE_AUDITORIA': '<span class="badge badge-yellow">AJUSTE AUDITORÍA</span>',
+        'PRODUCCION_COCINA': '<span class="badge badge-green">PRODUCCIÓN</span>'
       };
 
       tbody.innerHTML = filtered.map(k => {
@@ -722,27 +781,27 @@
 
         return `
           <tr>
-            <td style="font-size:11px;color:var(--txt-sec);white-space:nowrap">${dateStr}</td>
+            <td style="font-size:11px;color:var(--txt-2);white-space:nowrap">${dateStr}</td>
             <td>${badgeHtml}</td>
             <td>
-              <div style="font-weight:800;font-size:12.5px">${k.itemName || '—'}</div>
+              <div style="font-weight:var(--fw-bold);font-size:12px">${k.itemName || '—'}</div>
               <span class="code-pill">#${k.itemCode || '—'}</span>
             </td>
             <td>
-              <strong style="color:${isPos ? '#059669' : '#dc2626'};font-size:13px">${qtyStr}</strong>
+              <strong class="${isPos ? 'money-in' : 'money-out'} tabular-nums" style="font-size:12px">${qtyStr}</strong>
             </td>
             <td>
-              <span style="font-weight:900;background:#f8fafc;padding:3px 6px;border-radius:4px;border:1px solid var(--border)">
+              <span class="tabular-nums" style="font-weight:var(--fw-bold);background:var(--surface-2);padding:2px 6px;border-radius:var(--radius-sm);border:1px solid var(--line)">
                 ${k.nextStock} ${k.unit || 'und'}
               </span>
-              <div style="font-size:10px;color:var(--txt-muted)">Antes: ${k.prevStock}</div>
+              <div style="font-size:11px;color:var(--txt-3)">Antes: ${k.prevStock}</div>
             </td>
-            <td style="font-weight:700;font-size:11.5px">${MTP.fmtUSD(k.costUsd || 0)}</td>
+            <td style="font-weight:var(--fw-semibold);font-size:12px" class="tabular-nums">${MTP.fmtUSD(k.costUsd || 0)}</td>
             <td>
-              <span style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:#0284c7">${k.docRef || '—'}</span>
+              <span class="tabular-nums money-bs" style="font-family:var(--font-mono);font-size:11px;font-weight:var(--fw-bold)">${k.docRef || '—'}</span>
             </td>
-            <td style="font-size:11.5px;color:var(--txt-sec)">${k.responsible || '—'}</td>
-            <td style="font-size:11.5px;max-width:220px;color:var(--txt-main)">${k.notes || (k.supplier ? 'Prov: ' + k.supplier : '—')}</td>
+            <td style="font-size:11px;color:var(--txt-2)">${k.responsible || '—'}</td>
+            <td style="font-size:11px;max-width:220px;color:var(--txt)">${k.notes || (k.supplier ? 'Prov: ' + k.supplier : '—')}</td>
           </tr>
         `;
       }).join('');
@@ -782,27 +841,27 @@
 
       tr.innerHTML = `
         <td>
-          <select class="select mp-item-select" onchange="onMpItemChange('${rowId}')" style="font-size:11.5px;padding:5px">
+          <select class="select mp-item-select" onchange="onMpItemChange('${rowId}')" style="font-size:11px;padding:4px">
             ${optsHtml}
           </select>
         </td>
         <td>
-          <input type="number" step="1" min="1" value="1" class="input mp-packs" style="padding:4px 6px;font-weight:900" oninput="recalcPurchaseTotals()">
+          <input type="number" step="1" min="1" value="1" class="input mp-packs tabular-nums" style="padding:4px 6px;font-weight:var(--fw-bold)" oninput="recalcPurchaseTotals()">
         </td>
         <td>
-          <input type="number" step="0.5" min="1" value="20" class="input mp-units-per-pack" style="padding:4px 6px;font-weight:900" oninput="recalcPurchaseTotals()">
+          <input type="number" step="0.5" min="1" value="20" class="input mp-units-per-pack tabular-nums" style="padding:4px 6px;font-weight:var(--fw-bold)" oninput="recalcPurchaseTotals()">
         </td>
         <td>
-          <input type="number" step="0.01" min="0" value="21.60" class="input mp-pack-cost" style="padding:4px 6px;font-weight:900" oninput="recalcPurchaseTotals()">
+          <input type="number" step="0.01" min="0" value="21.60" class="input mp-pack-cost tabular-nums" style="padding:4px 6px;font-weight:var(--fw-bold)" oninput="recalcPurchaseTotals()">
         </td>
         <td>
-          <span class="mp-unit-cost-preview" style="font-weight:800;color:#0f172a;font-size:12px">$1.08</span>
+          <span class="mp-unit-cost-preview tabular-nums" style="font-weight:var(--fw-bold);font-size:12px">$1.08</span>
         </td>
         <td>
-          <strong class="mp-line-total-preview" style="color:#059669;font-size:13px">$21.60</strong>
+          <strong class="mp-line-total-preview money-in tabular-nums" style="font-size:12px">$21.60</strong>
         </td>
         <td>
-          <button type="button" class="btn btn-ghost btn-sm" style="color:#dc2626;padding:2px 6px" onclick="removePurchaseRow('${rowId}')">✕</button>
+          <button type="button" class="btn btn-secondary btn-sm" style="color:var(--money-out);padding:2px 6px" onclick="removePurchaseRow('${rowId}')">✕</button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -867,17 +926,17 @@
       const el = document.getElementById('mpPaymentNotice');
       if (!el) return;
       if (m === 'Efectivo USD' || m === 'Efectivo Bs') {
-        el.textContent = `💡 Pago de contado (${m}): Se descontará automáticamente de la gaveta de caja para que el arqueo cuadre.`;
-        el.style.color = '#065f46';
+        el.textContent = `Pago de contado (${m}): Se descontará automáticamente de la gaveta de caja para que el arqueo cuadre.`;
+        el.style.color = 'var(--money-in)';
       } else if (m === 'Pago Móvil') {
-        el.textContent = `📱 Pago Móvil: Se registrará el egreso bancario del negocio.`;
-        el.style.color = '#0284c7';
+        el.textContent = `Pago Móvil: Se registrará el egreso bancario del negocio.`;
+        el.style.color = 'var(--info)';
       } else if (m === 'Crédito / Cuentas por Pagar') {
-        el.textContent = `⏳ Crédito Proveedor: La mercancía entra al stock y queda registrada como cuenta pendiente por pagar.`;
-        el.style.color = '#b45309';
+        el.textContent = `Crédito Proveedor: La mercancía entra al stock y queda registrada como cuenta pendiente por pagar.`;
+        el.style.color = 'var(--action)';
       } else {
-        el.textContent = `🚫 Solo entrada de stock sin movimiento de dinero registrado.`;
-        el.style.color = '#64748b';
+        el.textContent = `Solo entrada de stock sin movimiento de dinero registrado.`;
+        el.style.color = 'var(--txt-3)';
       }
     }
 
@@ -955,8 +1014,8 @@
       const remainingStock = Math.max(0, item.stock - qty);
 
       notice.innerHTML = `
-        <div>📉 Pérdida Monetaria Valorizada: <strong>${MTP.fmtUSD(totalLossUsd)}</strong> (${totalLossBs.toFixed(2)} Bs)</div>
-        <div style="font-size:11px;font-weight:normal;color:#7f1d1d;margin-top:2px">
+        <div>Pérdida Monetaria Valorizada: <strong class="tabular-nums">${MTP.fmtUSD(totalLossUsd)}</strong> (${totalLossBs.toFixed(2)} Bs)</div>
+        <div style="font-size:11px;font-weight:normal;color:var(--money-out);margin-top:2px">
           El stock de "${item.name}" bajará de <strong>${item.stock} ${item.unit}</strong> a <strong>${remainingStock.toFixed(2)} ${item.unit}</strong>
         </div>
       `;
@@ -1024,20 +1083,20 @@
       const diffCostUsd = Math.abs(diff) * item.costUsd;
 
       if (diff === 0) {
-        notice.style.background = '#f0fdf4';
-        notice.style.border = '1px solid #86efac';
-        notice.style.color = '#15803d';
-        notice.innerHTML = `✅ Conteo exacto: Físico y Sistema coinciden al 100%.`;
+        notice.style.background = 'var(--money-in-light)';
+        notice.style.border = '1px solid var(--money-in)';
+        notice.style.color = 'var(--money-in)';
+        notice.innerHTML = `Conteo exacto: Físico y Sistema coinciden al 100%.`;
       } else if (diff < 0) {
-        notice.style.background = '#fef2f2';
-        notice.style.border = '1px solid #fca5a5';
-        notice.style.color = '#b91c1c';
-        notice.innerHTML = `⚠️ FALTANTE FÍSICO: Faltan <strong>${Math.abs(diff)} ${item.unit}</strong> en el anaquel (Pérdida de ${MTP.fmtUSD(diffCostUsd)} / ${(diffCostUsd * bcv).toFixed(2)} Bs).`;
+        notice.style.background = 'var(--money-out-light)';
+        notice.style.border = '1px solid var(--money-out)';
+        notice.style.color = 'var(--money-out)';
+        notice.innerHTML = `FALTANTE FÍSICO: Faltan <strong class="tabular-nums">${Math.abs(diff)} ${item.unit}</strong> en el anaquel (Pérdida de ${MTP.fmtUSD(diffCostUsd)} / ${(diffCostUsd * bcv).toFixed(2)} Bs).`;
       } else {
-        notice.style.background = '#eff6ff';
-        notice.style.border = '1px solid #93c5fd';
-        notice.style.color = '#1d4ed8';
-        notice.innerHTML = `ℹ️ SOBRANTE FÍSICO: Hay <strong>+${diff} ${item.unit}</strong> de más en físico que en el sistema (+${MTP.fmtUSD(diffCostUsd)} valor).`;
+        notice.style.background = 'var(--info-light)';
+        notice.style.border = '1px solid var(--info)';
+        notice.style.color = 'var(--info)';
+        notice.innerHTML = `SOBRANTE FÍSICO: Hay <strong class="tabular-nums">+${diff} ${item.unit}</strong> de más en físico que en el sistema (+${MTP.fmtUSD(diffCostUsd)} valor).`;
       }
     }
 

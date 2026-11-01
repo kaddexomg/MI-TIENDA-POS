@@ -114,6 +114,16 @@
    - Panel de administración de usuarios en `admin/usuarios.html` con directorio, cambio de PIN, visor de matriz RBAC y kardex de auditoría de seguridad.
    - Barra lateral `assets/js/sidenav.js` actualizada con identificación de usuario, badge de rol, botón de cierre de sesión y bloqueo de acceso al panel admin para rol cajero.
 
+20. **Paquete P8: Rediseño Visual de Pantallas Administrativas**:
+   - Implementación del sistema visual v5 en `admin/index.html`, `admin/inventario.html`, `admin/cierres.html` y `admin/ajustes.html`.
+   - Franjas de 4px de sección (`data-section="cocina|abasto|dinero|gastos|fiscal"`) en todas las cabeceras de tarjeta para distinción inmediata de contexto comercial.
+   - Jerarquía estricta de botones: exactamente un botón principal `.btn-action` / `.btn-amber` por vista y acciones secundarias en `.btn-secondary` con bordes nítidos.
+   - Eliminación de emojis rotos en la interfaz sustituidos por iconos vectoriales SVG offline (`MTPIcons`).
+   - Erradicación masiva de estilos inline sustituidos por clases semánticas `.money-in`, `.money-out`, `.money-bs`, `.tabular-nums` y `.badge`.
+   - Reorganización de barra de herramientas en `inventario.html` con `.toolbar` estructurada en 3 zonas (Principal, Secundaria y Filtros rápidos).
+   - Separación nítida e inequívoca entre Insumos de Cocina (no vendibles al público) y Mercancía de Venta Directa en filtros y tabla.
+   - Coherencia legal plena en `cierres.html` como "Notas de Despacho / Control Interno".
+
 ### 5.2. Lo que se va a realizar (Próximos Pasos Windows 7)
 1. **Persistencia Transaccional con Respaldo en Disco**:
    - Exportación automática a archivo JSON espejo en disco ante cada movimiento para blindaje anti-apagones.

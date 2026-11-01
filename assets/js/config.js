@@ -6,7 +6,8 @@
    - Imágenes Locales Verificadas de Comida Venezolana y Productos Reales
    ========================================================================== */
 (function () {
-  const STORAGE_KEY = 'mtp_store_v3';
+  const STORAGE_KEY = 'mtp_store_v5';
+  const STORAGE_KEY_V3 = 'mtp_store_v3';
 
   /* Familias Maestras para la Pantalla de Caja (Agrupación Limpia y Rápida) */
   const POS_GROUPS = [
@@ -102,7 +103,1715 @@
     }
   ];
 
+  /* ==========================================================================
+     CATÁLOGO V5: Familias Maestras, Productos Padre, Variantes/Sabores,
+     Grupos de Modificadores/Extras, Insumos de Cocina y Mercancía Venta Directa
+     ========================================================================== */
+  const DEFAULT_FAMILIES = [
+    { id: 'fritos', name: 'Fritos y Desayunos', color: '#E8A317', key: '1', order: 1, icon: 'dish' },
+    { id: 'arepas', name: 'Arepas Venezolanas', color: '#F59E0B', key: '2', order: 2, icon: 'store' },
+    { id: 'almuerzos', name: 'Almuerzos & Platos', color: '#D97706', key: '3', order: 3, icon: 'kitchen' },
+    { id: 'cafeteria', name: 'Cafetería', color: '#8D5B4C', key: '4', order: 4, icon: 'coffee' },
+    { id: 'bebidas', name: 'Bebidas & Refrescos', color: '#2563EB', key: '5', order: 5, icon: 'glass' },
+    { id: 'cervezas', name: 'Cervezas', color: '#D97706', key: '6', order: 6, icon: 'beer' },
+    { id: 'chucherias', name: 'Chucherías', color: '#EC4899', key: '7', order: 7, icon: 'package' },
+    { id: 'cigarros', name: 'Cigarros', color: '#64748B', key: '8', order: 8, icon: 'bolt' },
+    { id: 'viveres', name: 'Víveres', color: '#10B981', key: '9', order: 9, icon: 'cart' }
+  ];
+
+  const DEFAULT_PRODUCTS = [
+    {
+      id: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanadas Venezolanas',
+      subtitle: 'Crujientes de maíz recién fritas',
+      modifierGroupIds: [],
+      order: 1,
+      active: true,
+      img: '../assets/img/productos/empanadas.jpg',
+      emoji: '🥟'
+    },
+    {
+      id: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Pastelitos Andinos y Tequeños',
+      subtitle: 'Pastelitos de hojaldre y tequeños de queso',
+      modifierGroupIds: [],
+      order: 2,
+      active: true,
+      img: '../assets/img/productos/pastelitos.jpg',
+      emoji: '🥐'
+    },
+    {
+      id: 'prod-papas',
+      familyId: 'fritos',
+      name: 'Papas Rellenas Crujientes',
+      subtitle: 'Puré de papa rebosado relleno',
+      modifierGroupIds: [],
+      order: 3,
+      active: true,
+      img: '../assets/img/productos/papa_rellena.jpg',
+      emoji: '🥔'
+    },
+    {
+      id: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepas Tostadas Venezolanas',
+      subtitle: 'Asadas al budare y rellenas generosas',
+      modifierGroupIds: ['mg-masa', 'mg-extras'],
+      order: 1,
+      active: true,
+      img: '../assets/img/productos/empanadas.jpg',
+      emoji: '🫓'
+    },
+    {
+      id: 'prod-almuerzos',
+      familyId: 'almuerzos',
+      name: 'Almuerzos y Platos Fuertes',
+      subtitle: 'Comida casera venezolana completa',
+      modifierGroupIds: ['mg-empaque'],
+      order: 1,
+      active: true,
+      img: '../assets/img/productos/pabellon.jpg',
+      emoji: '🍛'
+    },
+    {
+      id: 'prod-cafe',
+      familyId: 'cafeteria',
+      name: 'Cafetería Recién Colada',
+      subtitle: 'Café venezolano colado al momento',
+      modifierGroupIds: [],
+      order: 1,
+      active: true,
+      img: '../assets/img/productos/cafe.jpg',
+      emoji: '☕'
+    }
+  ];
+
+  const DEFAULT_MODIFIER_GROUPS = [
+    {
+      id: 'mg-masa',
+      name: 'Tipo de Masa',
+      min: 1,
+      max: 1,
+      required: true,
+      options: [
+        { id: 'mod-masa-blanca', name: 'Masa Blanca', priceUsd: 0, recipe: [] },
+        { id: 'mod-masa-amarilla', name: 'Masa Amarilla', priceUsd: 0, recipe: [] }
+      ]
+    },
+    {
+      id: 'mg-extras',
+      name: 'Adicionales',
+      min: 0,
+      max: 4,
+      required: false,
+      options: [
+        {
+          id: 'mod-extra-queso',
+          name: '+ Queso Rallado',
+          priceUsd: 0.40,
+          recipe: [{ insumoId: 'ins-queso-cocina', qty: 0.030, label: '30 g Queso Rallado' }]
+        },
+        {
+          id: 'mod-extra-aguacate',
+          name: '+ Aguacate',
+          priceUsd: 0.50,
+          recipe: [{ insumoId: 'ins-ensalada', qty: 0.050, label: '50 g Aguacate' }]
+        },
+        {
+          id: 'mod-extra-huevo',
+          name: '+ Huevo Frito',
+          priceUsd: 0.40,
+          recipe: [{ insumoId: 'ins-aceite-cocina', qty: 0.010, label: '10 ml Aceite' }]
+        },
+        {
+          id: 'mod-extra-mantequilla',
+          name: '+ Mantequilla',
+          priceUsd: 0.20,
+          recipe: []
+        }
+      ]
+    },
+    {
+      id: 'mg-empaque',
+      name: 'Empaque y Servicio',
+      min: 1,
+      max: 1,
+      required: true,
+      options: [
+        { id: 'mod-empaque-aqui', name: 'Para Comer Aquí', priceUsd: 0, recipe: [] },
+        {
+          id: 'mod-empaque-llevar',
+          name: 'Para Llevar con Envase',
+          priceUsd: 0.30,
+          recipe: [{ insumoId: 'ins-envase', qty: 1, label: '1 Envase Térmico' }]
+        }
+      ]
+    }
+  ];
+
+  const DEFAULT_VARIANTS = [
+    // Empanadas ('prod-empanada')
+    {
+      id: 'var-emp-queso',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Queso',
+      code: '01',
+      barcode: '8800001',
+      priceUsd: 1.10,
+      ivaType: 'E',
+      active: true,
+      order: 1,
+      emoji: '🥟',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-queso-cocina', qty: 0.055, label: '55 g Queso Blanco' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-molida',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Molida',
+      code: '02',
+      barcode: '8800002',
+      priceUsd: 1.20,
+      ivaType: 'E',
+      active: true,
+      order: 2,
+      emoji: '🥟',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-carne-mechada', qty: 0.045, label: '45 g Carne Molida' },
+        { insumoId: 'ins-papa', qty: 0.030, label: '30 g Papa picada' },
+        { insumoId: 'ins-alinos', qty: 0.015, label: '15 g Aliños sofrito' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-mechada',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Mechada',
+      code: '03',
+      barcode: '8800003',
+      priceUsd: 1.30,
+      ivaType: 'E',
+      active: true,
+      order: 3,
+      emoji: '🥟',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.075, label: '75 g Harina Maíz' },
+        { insumoId: 'ins-carne-mechada', qty: 0.055, label: '55 g Carne Mechada' },
+        { insumoId: 'ins-alinos', qty: 0.020, label: '20 g Aliños guiso' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-pollo',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Pollo',
+      code: '04',
+      barcode: '8800004',
+      priceUsd: 1.30,
+      ivaType: 'E',
+      active: true,
+      order: 4,
+      emoji: '🥟',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.060, label: '60 g Pollo Desmechado' },
+        { insumoId: 'ins-papa', qty: 0.020, label: '20 g Papa guiso' },
+        { insumoId: 'ins-alinos', qty: 0.018, label: '18 g Aliños' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-jamon-queso',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Jamón y Queso',
+      code: '05',
+      barcode: '8800005',
+      priceUsd: 1.40,
+      ivaType: 'E',
+      active: true,
+      order: 5,
+      emoji: '🥟',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-jamon-cocina', qty: 0.035, label: '35 g Jamón' },
+        { insumoId: 'ins-queso-cocina', qty: 0.035, label: '35 g Queso' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-cazon',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Cazón',
+      code: '06',
+      barcode: '8800006',
+      priceUsd: 1.50,
+      ivaType: 'E',
+      active: true,
+      order: 6,
+      emoji: '🐟',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-cazon-cocina', qty: 0.060, label: '60 g Cazón guisado' },
+        { insumoId: 'ins-alinos', qty: 0.025, label: '25 g Aliños y Ají dulce' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-pelua',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada Pelúa',
+      code: '07',
+      barcode: '8800007',
+      priceUsd: 1.50,
+      ivaType: 'E',
+      active: true,
+      order: 7,
+      emoji: '🧀',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.075, label: '75 g Harina Maíz' },
+        { insumoId: 'ins-carne-mechada', qty: 0.050, label: '50 g Carne Mechada' },
+        { insumoId: 'ins-queso-cocina', qty: 0.040, label: '40 g Queso Amarillo' },
+        { insumoId: 'ins-alinos', qty: 0.018, label: '18 g Aliños' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.020, label: '20 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-domino',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada Dominó',
+      code: '08',
+      barcode: '8800008',
+      priceUsd: 1.30,
+      ivaType: 'E',
+      active: true,
+      order: 8,
+      emoji: '🥟',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-chicharron-cocina', qty: 0.045, label: '45 g Caraotas refritas' },
+        { insumoId: 'ins-queso-cocina', qty: 0.040, label: '40 g Queso Blanco' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-pabellon',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada Pabellón',
+      code: '09',
+      barcode: '8800009',
+      priceUsd: 1.60,
+      ivaType: 'E',
+      active: true,
+      order: 9,
+      emoji: '🇻🇪',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.075, label: '75 g Harina Maíz' },
+        { insumoId: 'ins-carne-mechada', qty: 0.040, label: '40 g Carne Mechada' },
+        { insumoId: 'ins-chicharron-cocina', qty: 0.030, label: '30 g Caraotas' },
+        { insumoId: 'ins-queso-cocina', qty: 0.025, label: '25 g Queso Blanco' },
+        { insumoId: 'ins-ensalada', qty: 0.020, label: '20 g Tajadas' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.020, label: '20 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-chicharron',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Chicharrón',
+      code: '10',
+      barcode: '8800010',
+      priceUsd: 1.40,
+      ivaType: 'E',
+      active: true,
+      order: 10,
+      emoji: '🍖',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-chicharron-cocina', qty: 0.055, label: '55 g Chicharrón' },
+        { insumoId: 'ins-alinos', qty: 0.015, label: '15 g Aliños' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+
+    // Pastelitos y Tequeños ('prod-pastelito')
+    {
+      id: 'var-past-queso',
+      productId: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Pastelito Queso',
+      code: '11',
+      barcode: '8800011',
+      priceUsd: 1.00,
+      ivaType: 'E',
+      active: true,
+      order: 11,
+      emoji: '🥐',
+      img: '../assets/img/productos/pastelitos.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.060, label: '60 g Harina Trigo' },
+        { insumoId: 'ins-queso-cocina', qty: 0.045, label: '45 g Queso' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.015, label: '15 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-past-carne',
+      productId: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Pastelito Carne',
+      code: '12',
+      barcode: '8800012',
+      priceUsd: 1.20,
+      ivaType: 'E',
+      active: true,
+      order: 12,
+      emoji: '🥐',
+      img: '../assets/img/productos/pastelitos.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.060, label: '60 g Harina Trigo' },
+        { insumoId: 'ins-carne-mechada', qty: 0.040, label: '40 g Carne Molida' },
+        { insumoId: 'ins-papa', qty: 0.025, label: '25 g Papa pastelito' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.015, label: '15 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-past-pollo',
+      productId: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Pastelito Pollo',
+      code: '13',
+      barcode: '8800013',
+      priceUsd: 1.20,
+      ivaType: 'E',
+      active: true,
+      order: 13,
+      emoji: '🥐',
+      img: '../assets/img/productos/pastelitos.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.060, label: '60 g Harina Trigo' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.045, label: '45 g Pollo' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.015, label: '15 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-past-jamon-queso',
+      productId: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Pastelito Jamón y Queso',
+      code: '14',
+      barcode: '8800014',
+      priceUsd: 1.30,
+      ivaType: 'E',
+      active: true,
+      order: 14,
+      emoji: '🥐',
+      img: '../assets/img/productos/pastelitos.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.060, label: '60 g Harina Trigo' },
+        { insumoId: 'ins-jamon-cocina', qty: 0.030, label: '30 g Jamón' },
+        { insumoId: 'ins-queso-cocina', qty: 0.030, label: '30 g Queso' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.015, label: '15 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-tequenos-5',
+      productId: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Ración Tequeños 5 und',
+      code: '15',
+      barcode: '8800015',
+      priceUsd: 2.00,
+      ivaType: 'E',
+      active: true,
+      order: 15,
+      emoji: '🥖',
+      img: '../assets/img/productos/tequenos.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Trigo' },
+        { insumoId: 'ins-queso-cocina', qty: 0.100, label: '100 g Queso Blanco' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.025, label: '25 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-tequenos-10',
+      productId: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Ración Tequeños 10 und',
+      code: '16',
+      barcode: '8800016',
+      priceUsd: 3.50,
+      ivaType: 'E',
+      active: true,
+      order: 16,
+      emoji: '🥖',
+      img: '../assets/img/productos/tequenos.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.220, label: '220 g Harina Trigo' },
+        { insumoId: 'ins-queso-cocina', qty: 0.200, label: '200 g Queso Blanco' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.045, label: '45 ml Aceite' }
+      ]
+    },
+
+    // Papas Rellenas ('prod-papas')
+    {
+      id: 'var-papa-carne-queso',
+      productId: 'prod-papas',
+      familyId: 'fritos',
+      name: 'Papa Rellena Carne y Queso',
+      code: '17',
+      barcode: '8800017',
+      priceUsd: 1.60,
+      ivaType: 'E',
+      active: true,
+      order: 17,
+      emoji: '🥔',
+      img: '../assets/img/productos/papa_rellena.jpg',
+      recipe: [
+        { insumoId: 'ins-papa', qty: 0.160, label: '160 g Puré de Papa' },
+        { insumoId: 'ins-carne-mechada', qty: 0.055, label: '55 g Carne Guisada' },
+        { insumoId: 'ins-queso-cocina', qty: 0.025, label: '25 g Queso' },
+        { insumoId: 'ins-alinos', qty: 0.020, label: '20 g Aliños' },
+        { insumoId: 'ins-harina-cocina', qty: 0.025, label: '25 g Reboso' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.025, label: '25 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-papa-pollo-queso',
+      productId: 'prod-papas',
+      familyId: 'fritos',
+      name: 'Papa Rellena Pollo y Queso',
+      code: '18',
+      barcode: '8800018',
+      priceUsd: 1.60,
+      ivaType: 'E',
+      active: true,
+      order: 18,
+      emoji: '🥔',
+      img: '../assets/img/productos/papa_rellena.jpg',
+      recipe: [
+        { insumoId: 'ins-papa', qty: 0.160, label: '160 g Puré de Papa' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.060, label: '60 g Pollo Guisado' },
+        { insumoId: 'ins-queso-cocina', qty: 0.025, label: '25 g Queso' },
+        { insumoId: 'ins-alinos', qty: 0.020, label: '20 g Aliños' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.025, label: '25 ml Aceite' }
+      ]
+    },
+
+    // Arepas Venezolanas ('prod-arepa')
+    {
+      id: 'var-arepa-reina',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Reina Pepiada',
+      code: '19',
+      barcode: '8800019',
+      priceUsd: 3.00,
+      ivaType: 'E',
+      active: true,
+      order: 19,
+      emoji: '🥑',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.090, label: '90 g Pollo desmechado' },
+        { insumoId: 'ins-ensalada', qty: 0.040, label: '40 g Aguacate/Mayonesa' },
+        { insumoId: 'ins-alinos', qty: 0.015, label: '15 g Aliños' }
+      ]
+    },
+    {
+      id: 'var-arepa-pelua',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Pelúa',
+      code: '20',
+      barcode: '8800020',
+      priceUsd: 2.80,
+      ivaType: 'E',
+      active: true,
+      order: 20,
+      emoji: '🧀',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-carne-mechada', qty: 0.080, label: '80 g Carne Mechada' },
+        { insumoId: 'ins-queso-cocina', qty: 0.040, label: '40 g Queso Amarillo' }
+      ]
+    },
+    {
+      id: 'var-arepa-mechada',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Mechada',
+      code: '21',
+      barcode: '8800021',
+      priceUsd: 2.80,
+      ivaType: 'E',
+      active: true,
+      order: 21,
+      emoji: '🥩',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-carne-mechada', qty: 0.090, label: '90 g Carne Mechada' },
+        { insumoId: 'ins-alinos', qty: 0.020, label: '20 g Aliños' }
+      ]
+    },
+    {
+      id: 'var-arepa-queso',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Queso Llanero',
+      code: '22',
+      barcode: '8800022',
+      priceUsd: 2.00,
+      ivaType: 'E',
+      active: true,
+      order: 22,
+      emoji: '🧀',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-queso-cocina', qty: 0.080, label: '80 g Queso Blanco' }
+      ]
+    },
+    {
+      id: 'var-arepa-jamon-queso',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Jamón y Queso',
+      code: '23',
+      barcode: '8800023',
+      priceUsd: 2.20,
+      ivaType: 'E',
+      active: true,
+      order: 23,
+      emoji: '🥓',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-jamon-cocina', qty: 0.045, label: '45 g Jamón' },
+        { insumoId: 'ins-queso-cocina', qty: 0.045, label: '45 g Queso' }
+      ]
+    },
+    {
+      id: 'var-arepa-domino',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Dominó',
+      code: '24',
+      barcode: '8800024',
+      priceUsd: 2.20,
+      ivaType: 'E',
+      active: true,
+      order: 24,
+      emoji: '🫓',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-chicharron-cocina', qty: 0.060, label: '60 g Caraotas' },
+        { insumoId: 'ins-queso-cocina', qty: 0.040, label: '40 g Queso Blanco' }
+      ]
+    },
+    {
+      id: 'var-arepa-catira',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Catira',
+      code: '25',
+      barcode: '8800025',
+      priceUsd: 2.80,
+      ivaType: 'E',
+      active: true,
+      order: 25,
+      emoji: '🍗',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.080, label: '80 g Pollo' },
+        { insumoId: 'ins-queso-cocina', qty: 0.040, label: '40 g Queso Amarillo' }
+      ]
+    },
+    {
+      id: 'var-arepa-viuda',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Viuda / Sola',
+      code: '26',
+      barcode: '8800026',
+      priceUsd: 1.00,
+      ivaType: 'E',
+      active: true,
+      order: 26,
+      emoji: '🫓',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' }
+      ]
+    },
+
+    // Almuerzos y Platos Fuertes ('prod-almuerzos')
+    {
+      id: 'var-alm-pabellon',
+      productId: 'prod-almuerzos',
+      familyId: 'almuerzos',
+      name: 'Pabellón Criollo',
+      code: '27',
+      barcode: '8800027',
+      priceUsd: 5.00,
+      ivaType: 'E',
+      active: true,
+      order: 27,
+      emoji: '🇻🇪',
+      img: '../assets/img/productos/pabellon.jpg',
+      recipe: [
+        { insumoId: 'ins-carne-mechada', qty: 0.160, label: '160 g Carne Mechada' },
+        { insumoId: 'ins-chicharron-cocina', qty: 0.120, label: '120 g Caraotas Negras' },
+        { insumoId: 'ins-arroz-cocina', qty: 0.140, label: '140 g Arroz Blanco' },
+        { insumoId: 'ins-ensalada', qty: 0.120, label: '120 g Tajadas' },
+        { insumoId: 'ins-queso-cocina', qty: 0.035, label: '35 g Queso Blanco' },
+        { insumoId: 'ins-alinos', qty: 0.045, label: '45 g Sofrito' }
+      ]
+    },
+    {
+      id: 'var-alm-arroz-chino',
+      productId: 'prod-almuerzos',
+      familyId: 'almuerzos',
+      name: 'Arroz Chino Venezolano',
+      code: '28',
+      barcode: '8800028',
+      priceUsd: 4.50,
+      ivaType: 'E',
+      active: true,
+      order: 28,
+      emoji: '🥡',
+      img: '../assets/img/productos/arroz_chino.jpg',
+      recipe: [
+        { insumoId: 'ins-arroz-cocina', qty: 0.170, label: '170 g Arroz Frito' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.220, label: '220 g Pollo Frito' },
+        { insumoId: 'ins-jamon-cocina', qty: 0.040, label: '40 g Jamón' },
+        { insumoId: 'ins-alinos', qty: 0.055, label: '55 g Cebollín/Brotes' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.030, label: '30 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-alm-arroz-pollo',
+      productId: 'prod-almuerzos',
+      familyId: 'almuerzos',
+      name: 'Arroz con Pollo Criollo',
+      code: '29',
+      barcode: '8800029',
+      priceUsd: 4.00,
+      ivaType: 'E',
+      active: true,
+      order: 29,
+      emoji: '🍛',
+      img: '../assets/img/productos/arroz_pollo.jpg',
+      recipe: [
+        { insumoId: 'ins-arroz-cocina', qty: 0.150, label: '150 g Arroz' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.200, label: '200 g Pollo' },
+        { insumoId: 'ins-papa', qty: 0.080, label: '80 g Papa/Verdura' },
+        { insumoId: 'ins-alinos', qty: 0.050, label: '50 g Aliños' },
+        { insumoId: 'ins-ensalada', qty: 0.080, label: '80 g Ensalada' }
+      ]
+    },
+    {
+      id: 'var-alm-pollo-broaster',
+      productId: 'prod-almuerzos',
+      familyId: 'almuerzos',
+      name: 'Pollo Frito Broaster con Arepa',
+      code: '30',
+      barcode: '8800030',
+      priceUsd: 4.50,
+      ivaType: 'E',
+      active: true,
+      order: 30,
+      emoji: '🍗',
+      img: '../assets/img/productos/pollo_frito.jpg',
+      recipe: [
+        { insumoId: 'ins-pollo-cocina', qty: 0.260, label: '260 g Presas de Pollo' },
+        { insumoId: 'ins-harina-cocina', qty: 0.090, label: '90 g Harina arepa/rebozo' },
+        { insumoId: 'ins-papa', qty: 0.140, label: '140 g Papas Fritas' },
+        { insumoId: 'ins-ensalada', qty: 0.100, label: '100 g Ensalada' },
+        { insumoId: 'ins-alinos', qty: 0.025, label: '25 g Salsa/Aliños' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.040, label: '40 ml Aceite' }
+      ]
+    },
+
+    // Cafetería ('prod-cafe')
+    {
+      id: 'var-cafe-guayoyo',
+      productId: 'prod-cafe',
+      familyId: 'cafeteria',
+      name: 'Café Guayoyo / Negro',
+      code: '31',
+      barcode: '8800031',
+      priceUsd: 0.60,
+      ivaType: 'E',
+      active: true,
+      order: 31,
+      emoji: '☕',
+      img: '../assets/img/productos/cafe.jpg',
+      recipe: [
+        { insumoId: 'ins-cafe-cocina', qty: 0.018, label: '18 g Café + Vaso' }
+      ]
+    },
+    {
+      id: 'var-cafe-leche-peq',
+      productId: 'prod-cafe',
+      familyId: 'cafeteria',
+      name: 'Con Leche Pequeño',
+      code: '32',
+      barcode: '8800032',
+      priceUsd: 0.80,
+      ivaType: 'E',
+      active: true,
+      order: 32,
+      emoji: '☕',
+      img: '../assets/img/productos/cafe.jpg',
+      recipe: [
+        { insumoId: 'ins-cafe-cocina', qty: 0.024, label: '24 g Café + Leche' }
+      ]
+    },
+    {
+      id: 'var-cafe-leche-gra',
+      productId: 'prod-cafe',
+      familyId: 'cafeteria',
+      name: 'Con Leche Grande',
+      code: '33',
+      barcode: '8800033',
+      priceUsd: 1.00,
+      ivaType: 'E',
+      active: true,
+      order: 33,
+      emoji: '🥛',
+      img: '../assets/img/productos/cafe.jpg',
+      recipe: [
+        { insumoId: 'ins-cafe-cocina', qty: 0.032, label: '32 g Café + Leche' }
+      ]
+    },
+    {
+      id: 'var-cafe-marron',
+      productId: 'prod-cafe',
+      familyId: 'cafeteria',
+      name: 'Marrón Oscuro',
+      code: '34',
+      barcode: '8800034',
+      priceUsd: 0.80,
+      ivaType: 'E',
+      active: true,
+      order: 34,
+      emoji: '☕',
+      img: '../assets/img/productos/cafe.jpg',
+      recipe: [
+        { insumoId: 'ins-cafe-cocina', qty: 0.024, label: '24 g Café + Leche' }
+      ]
+    }
+  ];
+
+  const DEFAULT_RETAIL_ITEMS = [
+    // Víveres
+    {
+      id: 'prod-harina-pan',
+      familyId: 'viveres',
+      group: 'viveres',
+      code: '101',
+      barcode: '7591001000015',
+      qrCode: 'QR-HARINA-PAN-1KG',
+      name: 'Harina P.A.N. Blanca 1Kg',
+      category: 'Víveres',
+      type: 'venta',
+      sellable: true,
+      taxExempt: true,
+      ivaType: 'E',
+      unit: 'und',
+      stock: 48,
+      minStock: 12,
+      costUsd: 1.08,
+      prevCostUsd: 1.02,
+      priceUsd: 1.55,
+      emoji: '🌽',
+      img: '../assets/img/productos/viveres.jpg'
+    },
+    {
+      id: 'prod-harina-pan-amarilla',
+      familyId: 'viveres',
+      group: 'viveres',
+      code: '102',
+      barcode: '7591001000022',
+      qrCode: 'QR-HARINA-PAN-AMARILLA',
+      name: 'Harina P.A.N. Amarilla 1Kg',
+      category: 'Víveres',
+      type: 'venta',
+      sellable: true,
+      taxExempt: true,
+      ivaType: 'E',
+      unit: 'und',
+      stock: 30,
+      minStock: 10,
+      costUsd: 1.10,
+      prevCostUsd: 1.05,
+      priceUsd: 1.65,
+      emoji: '🌽',
+      img: '../assets/img/productos/viveres.jpg'
+    },
+    {
+      id: 'prod-espagueti',
+      familyId: 'viveres',
+      group: 'viveres',
+      code: '103',
+      barcode: '7591003000033',
+      qrCode: 'QR-ESPAGUETI-1KG',
+      name: 'Espagueti / Pasta Larga Capri 1Kg',
+      category: 'Víveres',
+      type: 'venta',
+      sellable: true,
+      taxExempt: true,
+      ivaType: 'E',
+      unit: 'und',
+      stock: 35,
+      minStock: 10,
+      costUsd: 0.85,
+      prevCostUsd: 0.80,
+      priceUsd: 1.25,
+      emoji: '🍝',
+      img: '../assets/img/productos/espagueti.jpg'
+    },
+    {
+      id: 'prod-arroz-empaque',
+      familyId: 'viveres',
+      group: 'viveres',
+      code: '105',
+      barcode: '7591002000029',
+      qrCode: 'QR-ARROZ-PRIMOR-1KG',
+      name: 'Arroz Blanco Primor 1Kg',
+      category: 'Víveres',
+      type: 'venta',
+      sellable: true,
+      taxExempt: true,
+      ivaType: 'E',
+      unit: 'und',
+      stock: 40,
+      minStock: 10,
+      costUsd: 0.85,
+      prevCostUsd: 0.80,
+      priceUsd: 1.20,
+      emoji: '🌾',
+      img: '../assets/img/productos/viveres.jpg'
+    },
+    {
+      id: 'prod-mavesa',
+      familyId: 'viveres',
+      group: 'viveres',
+      code: '106',
+      barcode: '7591007000079',
+      qrCode: 'QR-MAVESA-500G',
+      name: 'Margarina Mavesa 500g',
+      category: 'Víveres',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 22,
+      minStock: 6,
+      costUsd: 1.25,
+      prevCostUsd: 1.20,
+      priceUsd: 1.80,
+      emoji: '🧈',
+      img: '../assets/img/productos/viveres.jpg'
+    },
+
+    // Bebidas y Refrescos
+    {
+      id: 'prod-frescolita-15l',
+      familyId: 'bebidas',
+      group: 'refrescos',
+      code: '302',
+      barcode: '7593001000211',
+      qrCode: 'QR-FRESCOLITA-15L',
+      name: 'Refresco Frescolita 1.5 Litros',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 24,
+      minStock: 8,
+      costUsd: 1.20,
+      prevCostUsd: 1.15,
+      priceUsd: 1.80,
+      emoji: '🥤',
+      img: '../assets/img/productos/refrescos.jpg'
+    },
+    {
+      id: 'prod-cocacola-15l',
+      familyId: 'bebidas',
+      group: 'refrescos',
+      code: '304',
+      barcode: '7593001000228',
+      qrCode: 'QR-COCACOLA-15L',
+      name: 'Coca-Cola Original 1.5 Litros',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 24,
+      minStock: 8,
+      costUsd: 1.35,
+      prevCostUsd: 1.30,
+      priceUsd: 2.00,
+      emoji: '🥤',
+      img: '../assets/img/productos/refrescos.jpg'
+    },
+    {
+      id: 'prod-malta-lata',
+      familyId: 'bebidas',
+      group: 'refrescos',
+      code: '306',
+      barcode: '7593001000235',
+      qrCode: 'QR-MALTA-POLAR-LATA',
+      name: 'Malta Polar 250ml (Lata / Botellita)',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 36,
+      minStock: 12,
+      costUsd: 0.65,
+      prevCostUsd: 0.60,
+      priceUsd: 1.00,
+      emoji: '🍺',
+      img: '../assets/img/productos/refrescos.jpg'
+    },
+    {
+      id: 'prod-malta-15l',
+      familyId: 'bebidas',
+      group: 'refrescos',
+      code: '307',
+      barcode: '7593001000242',
+      qrCode: 'QR-MALTA-POLAR-15L',
+      name: 'Malta Polar Familiar 1.5 Litros',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 20,
+      minStock: 6,
+      costUsd: 1.45,
+      prevCostUsd: 1.40,
+      priceUsd: 2.20,
+      emoji: '🍺',
+      img: '../assets/img/productos/refrescos.jpg'
+    },
+    {
+      id: 'prod-agua-mineral',
+      familyId: 'bebidas',
+      group: 'refrescos',
+      code: '309',
+      barcode: '7593001000259',
+      qrCode: 'QR-AGUA-MINERAL',
+      name: 'Agua Mineral Nevada 500ml',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      taxExempt: true,
+      ivaType: 'E',
+      unit: 'und',
+      stock: 40,
+      minStock: 12,
+      costUsd: 0.40,
+      prevCostUsd: 0.35,
+      priceUsd: 0.80,
+      emoji: '💧',
+      img: '../assets/img/productos/refrescos.jpg'
+    },
+
+    // Cervezas
+    {
+      id: 'prod-polar-pilsen',
+      familyId: 'cervezas',
+      group: 'cervezas',
+      code: '501',
+      barcode: '7594001000310',
+      qrCode: 'QR-POLAR-PILSEN',
+      name: 'Cerveza Polar Pilsen (Polarcita)',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 48,
+      minStock: 12,
+      costUsd: 0.80,
+      prevCostUsd: 0.75,
+      priceUsd: 1.25,
+      emoji: '🍺',
+      img: '../assets/img/productos/cervezas.jpg'
+    },
+    {
+      id: 'prod-polar-zulia',
+      familyId: 'cervezas',
+      group: 'cervezas',
+      code: '502',
+      barcode: '7594001000327',
+      qrCode: 'QR-POLAR-ZULIA',
+      name: 'Cerveza Zulia Original',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 36,
+      minStock: 10,
+      costUsd: 0.88,
+      prevCostUsd: 0.82,
+      priceUsd: 1.35,
+      emoji: '🍻',
+      img: '../assets/img/productos/cervezas.jpg'
+    },
+    {
+      id: 'prod-solera-verde',
+      familyId: 'cervezas',
+      group: 'cervezas',
+      code: '503',
+      barcode: '7594001000334',
+      qrCode: 'QR-SOLERA-VERDE',
+      name: 'Cerveza Solera Premium (Verde)',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 30,
+      minStock: 8,
+      costUsd: 0.98,
+      prevCostUsd: 0.92,
+      priceUsd: 1.50,
+      emoji: '🍻',
+      img: '../assets/img/productos/cervezas.jpg'
+    },
+    {
+      id: 'prod-sixpack-polar',
+      familyId: 'cervezas',
+      group: 'cervezas',
+      code: '504',
+      barcode: '7594001000341',
+      qrCode: 'QR-SIXPACK-POLAR',
+      name: 'Six-Pack Polar Pilsen (6 Und)',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 15,
+      minStock: 4,
+      costUsd: 4.60,
+      prevCostUsd: 4.30,
+      priceUsd: 7.00,
+      emoji: '🍻',
+      img: '../assets/img/productos/cervezas.jpg'
+    },
+
+    // Chucherías
+    {
+      id: 'prod-pepito',
+      familyId: 'chucherias',
+      group: 'chucherias',
+      code: '201',
+      barcode: '7592001000112',
+      qrCode: 'QR-PEPITO-CLASICO',
+      name: 'Pepito Original Frito-Lay',
+      category: 'Chucherías',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 55,
+      minStock: 15,
+      costUsd: 0.55,
+      prevCostUsd: 0.50,
+      priceUsd: 0.95,
+      emoji: '🧀',
+      img: '../assets/img/productos/pepito.jpg'
+    },
+    {
+      id: 'prod-cheetos',
+      familyId: 'chucherias',
+      group: 'chucherias',
+      code: '203',
+      barcode: '7592001000136',
+      qrCode: 'QR-CHEETOS',
+      name: 'Cheetos Crujientes Queso',
+      category: 'Chucherías',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 42,
+      minStock: 10,
+      costUsd: 0.65,
+      prevCostUsd: 0.60,
+      priceUsd: 1.10,
+      emoji: '🐆',
+      img: '../assets/img/productos/cheetos.jpg'
+    },
+    {
+      id: 'prod-cheese-tris',
+      familyId: 'chucherias',
+      group: 'chucherias',
+      code: '204',
+      barcode: '7592001000143',
+      qrCode: 'QR-CHISKESITOS',
+      name: 'Cheese Tris / Chiskesitos',
+      category: 'Chucherías',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 48,
+      minStock: 12,
+      costUsd: 0.58,
+      prevCostUsd: 0.52,
+      priceUsd: 1.00,
+      emoji: '🧀',
+      img: '../assets/img/productos/pepito.jpg'
+    },
+    {
+      id: 'prod-doritos',
+      familyId: 'chucherias',
+      group: 'chucherias',
+      code: '205',
+      barcode: '7592001000150',
+      qrCode: 'QR-DORITOS',
+      name: 'Doritos Mega Queso Nacho',
+      category: 'Chucherías',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 35,
+      minStock: 10,
+      costUsd: 0.95,
+      prevCostUsd: 0.90,
+      priceUsd: 1.50,
+      emoji: '🔺',
+      img: '../assets/img/productos/pepito.jpg'
+    },
+    {
+      id: 'prod-galletas-savoy',
+      familyId: 'chucherias',
+      group: 'chucherias',
+      code: '207',
+      barcode: '7592001000167',
+      qrCode: 'QR-GALLETAS-SAVOY',
+      name: 'Galletas Samba / Savoy Chocolate',
+      category: 'Chucherías',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 40,
+      minStock: 10,
+      costUsd: 0.50,
+      prevCostUsd: 0.45,
+      priceUsd: 0.90,
+      emoji: '🍫',
+      img: '../assets/img/productos/pepito.jpg'
+    },
+
+    // Cigarros
+    {
+      id: 'prod-cigarro-detal',
+      familyId: 'cigarros',
+      group: 'cigarros',
+      code: '401',
+      barcode: '7595001000419',
+      qrCode: 'QR-CIGARRO-DETAL',
+      name: 'Cigarro Detallado 1 Und (Belmont/Consul)',
+      category: 'Cigarros',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 120,
+      minStock: 30,
+      costUsd: 0.10,
+      prevCostUsd: 0.09,
+      priceUsd: 0.20,
+      emoji: '🚬',
+      img: '../assets/img/productos/cigarros.jpg'
+    },
+    {
+      id: 'prod-cigarro-belmont',
+      familyId: 'cigarros',
+      group: 'cigarros',
+      code: '402',
+      barcode: '7595001000426',
+      qrCode: 'QR-BELMONT-20',
+      name: 'Cajetilla Belmont 20 Cigarros',
+      category: 'Cigarros',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 25,
+      minStock: 6,
+      costUsd: 2.10,
+      prevCostUsd: 2.00,
+      priceUsd: 2.90,
+      emoji: '🚬',
+      img: '../assets/img/productos/cigarros.jpg'
+    },
+    {
+      id: 'prod-cigarro-consul',
+      familyId: 'cigarros',
+      group: 'cigarros',
+      code: '403',
+      barcode: '7595001000433',
+      qrCode: 'QR-CONSUL-20',
+      name: 'Cajetilla Consul 20 Cigarros',
+      category: 'Cigarros',
+      type: 'venta',
+      sellable: true,
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 20,
+      minStock: 5,
+      costUsd: 1.80,
+      prevCostUsd: 1.70,
+      priceUsd: 2.50,
+      emoji: '🚬',
+      img: '../assets/img/productos/cigarros.jpg'
+    }
+  ];
+
+  const DEFAULT_INSUMOS = [
+    {
+      id: 'ins-papa',
+      code: 'COC-01',
+      barcode: '990001',
+      name: 'Papa Cruda para Elaboración de Comida y Papas Rellenas',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 25.000,
+      minStock: 8.000,
+      costUsd: 1.35,
+      prevCostUsd: 1.15,
+      priceUsd: 0,
+      emoji: '🥔',
+      img: '../assets/img/productos/papa_rellena.jpg'
+    },
+    {
+      id: 'ins-alinos',
+      code: 'COC-02',
+      barcode: '990002',
+      name: 'Aliños Frescos (Cebolla, Ajo, Pimentón, Cilantro, Ají Dulce, Cebollín)',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 8.500,
+      minStock: 3.000,
+      costUsd: 2.40,
+      prevCostUsd: 2.00,
+      priceUsd: 0,
+      emoji: '🧅',
+      img: '../assets/img/productos/pabellon.jpg'
+    },
+    {
+      id: 'ins-harina-cocina',
+      code: 'COC-03',
+      barcode: '990003',
+      name: 'Harina de Maíz/Trigo para Amasar en Cocina (Empanadas/Arepas/Pastelitos)',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 22.000,
+      minStock: 6.000,
+      costUsd: 1.05,
+      prevCostUsd: 1.05,
+      priceUsd: 0,
+      emoji: '🌾',
+      img: '../assets/img/productos/viveres.jpg'
+    },
+    {
+      id: 'ins-arroz-cocina',
+      code: 'COC-04',
+      barcode: '990004',
+      name: 'Arroz en Saco para Cocinar (Pabellón / Arroz con Pollo / Arroz Chino)',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 30.000,
+      minStock: 8.000,
+      costUsd: 1.15,
+      prevCostUsd: 1.10,
+      priceUsd: 0,
+      emoji: '🍚',
+      img: '../assets/img/productos/arroz_pollo.jpg'
+    },
+    {
+      id: 'ins-carne-mechada',
+      code: 'COC-05',
+      barcode: '990005',
+      name: 'Carne de Res Cruda para Mechar, Moler y Guisar (Cocina)',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 16.500,
+      minStock: 5.000,
+      costUsd: 6.80,
+      prevCostUsd: 6.30,
+      priceUsd: 0,
+      emoji: '🥩',
+      img: '../assets/img/productos/pabellon.jpg'
+    },
+    {
+      id: 'ins-pollo-cocina',
+      code: 'COC-06',
+      barcode: '990006',
+      name: 'Pollo Crudo para Freír a la Broaster y Desmechar (Cocina)',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 20.000,
+      minStock: 6.000,
+      costUsd: 3.60,
+      prevCostUsd: 3.40,
+      priceUsd: 0,
+      emoji: '🍗',
+      img: '../assets/img/productos/pollo_frito.jpg'
+    },
+    {
+      id: 'ins-queso-cocina',
+      code: 'COC-07',
+      barcode: '990007',
+      name: 'Queso Blanco Llanero y Queso Amarillo para Relleno en Cocina',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 12.400,
+      minStock: 4.000,
+      costUsd: 5.40,
+      prevCostUsd: 4.90,
+      priceUsd: 0,
+      emoji: '🧀',
+      img: '../assets/img/productos/tequenos.jpg'
+    },
+    {
+      id: 'ins-jamon-cocina',
+      code: 'COC-08',
+      barcode: '990008',
+      name: 'Jamón para Relleno de Empanadas, Pastelitos y Arroz Chino',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 6.800,
+      minStock: 2.000,
+      costUsd: 5.90,
+      prevCostUsd: 5.90,
+      priceUsd: 0,
+      emoji: '🥓',
+      img: '../assets/img/productos/pastelitos.jpg'
+    },
+    {
+      id: 'ins-cazon-cocina',
+      code: 'COC-09',
+      barcode: '990009',
+      name: 'Cazón / Pescado para Guiso de Empanadas',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 5.500,
+      minStock: 2.000,
+      costUsd: 5.20,
+      prevCostUsd: 5.00,
+      priceUsd: 0,
+      emoji: '🐟',
+      img: '../assets/img/productos/empanadas.jpg'
+    },
+    {
+      id: 'ins-chicharron-cocina',
+      code: 'COC-10',
+      barcode: '990010',
+      name: 'Chicharrón y Caraotas Negras para Relleno / Pabellón',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 6.800,
+      minStock: 2.000,
+      costUsd: 5.80,
+      prevCostUsd: 5.40,
+      priceUsd: 0,
+      emoji: '🍖',
+      img: '../assets/img/productos/empanadas.jpg'
+    },
+    {
+      id: 'ins-ensalada',
+      code: 'COC-11',
+      barcode: '990011',
+      name: 'Vegetales de Ensalada, Aguacate y Plátanos para Tajadas (Cocina)',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 11.000,
+      minStock: 3.000,
+      costUsd: 1.40,
+      prevCostUsd: 1.40,
+      priceUsd: 0,
+      emoji: '🥗',
+      img: '../assets/img/productos/pabellon.jpg'
+    },
+    {
+      id: 'ins-aceite-cocina',
+      code: 'COC-12',
+      barcode: '990012',
+      name: 'Aceite Vegetal para Freír en Cocina (Litros)',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'L',
+      stock: 18.000,
+      minStock: 5.000,
+      costUsd: 2.15,
+      prevCostUsd: 2.00,
+      priceUsd: 0,
+      emoji: '🫗',
+      img: '../assets/img/productos/empanadas.jpg'
+    },
+    {
+      id: 'ins-cafe-cocina',
+      code: 'COC-13',
+      barcode: '990013',
+      name: 'Café en Grano/Molido y Leche en Polvo (Cafetería)',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 4.500,
+      minStock: 1.500,
+      costUsd: 7.50,
+      prevCostUsd: 7.00,
+      priceUsd: 0,
+      emoji: '☕',
+      img: '../assets/img/productos/cafe.jpg'
+    },
+    {
+      id: 'ins-envase',
+      code: 'COC-14',
+      barcode: '990014',
+      name: 'Envases Térmicos de Almuerzo y Vasos Desechables',
+      category: 'Insumos de Cocina (Materia Prima)',
+      type: 'insumo',
+      sellable: false,
+      unit: 'und',
+      stock: 150,
+      minStock: 40,
+      costUsd: 0.12,
+      prevCostUsd: 0.10,
+      priceUsd: 0,
+      emoji: '🥡',
+      img: '../assets/img/productos/arroz_chino.jpg'
+    }
+  ];
+
+  /* --------------------------------------------------------------------------
+     Función de Migración Automática y Transparente v3 -> v5
+     -------------------------------------------------------------------------- */
+  function migrateV3toV5(oldState) {
+    if (!oldState) return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    if (oldState.version === 5 && Array.isArray(oldState.variants) && oldState.variants.length > 0) {
+      return oldState;
+    }
+
+    const migrated = Object.assign({}, DEFAULT_STATE, oldState);
+    migrated.version = 5;
+
+    // Preservar íntegramente datos operativos y contables
+    migrated.sales = Array.isArray(oldState.sales) ? oldState.sales : JSON.parse(JSON.stringify(DEFAULT_STATE.sales));
+    migrated.expenses = Array.isArray(oldState.expenses) ? oldState.expenses : JSON.parse(JSON.stringify(DEFAULT_STATE.expenses));
+    migrated.kardex = Array.isArray(oldState.kardex) ? oldState.kardex : JSON.parse(JSON.stringify(DEFAULT_STATE.kardex));
+    migrated.purchases = Array.isArray(oldState.purchases) ? oldState.purchases : JSON.parse(JSON.stringify(DEFAULT_STATE.purchases));
+    migrated.invoices = Array.isArray(oldState.invoices) ? oldState.invoices : JSON.parse(JSON.stringify(DEFAULT_STATE.invoices));
+    migrated.suppliers = Array.isArray(oldState.suppliers) ? oldState.suppliers : JSON.parse(JSON.stringify(DEFAULT_STATE.suppliers));
+    migrated.heldOrders = Array.isArray(oldState.heldOrders) ? oldState.heldOrders : [];
+    migrated.kitchenBatches = Array.isArray(oldState.kitchenBatches) ? oldState.kitchenBatches : [];
+    migrated.wasteRecords = Array.isArray(oldState.wasteRecords) ? oldState.wasteRecords : [];
+    migrated.posTerminals = Array.isArray(oldState.posTerminals) ? oldState.posTerminals : JSON.parse(JSON.stringify(DEFAULT_STATE.posTerminals));
+    migrated.pagoMovilAccounts = Array.isArray(oldState.pagoMovilAccounts) ? oldState.pagoMovilAccounts : JSON.parse(JSON.stringify(DEFAULT_STATE.pagoMovilAccounts));
+    migrated.batchClosures = Array.isArray(oldState.batchClosures) ? oldState.batchClosures : [];
+    migrated.settings = Object.assign({}, DEFAULT_STATE.settings, oldState.settings || {});
+
+    migrated.families = JSON.parse(JSON.stringify(DEFAULT_FAMILIES));
+    migrated.products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+    migrated.modifierGroups = JSON.parse(JSON.stringify(DEFAULT_MODIFIER_GROUPS));
+    
+    const variants = JSON.parse(JSON.stringify(DEFAULT_VARIANTS));
+    
+    // Mapeo inteligente de platos v3 a variantes v5
+    if (Array.isArray(oldState.dishes)) {
+      oldState.dishes.forEach(oldDish => {
+        const cleanName = (oldDish.name || '').toLowerCase();
+        let matched = variants.find(v => 
+          (oldDish.code && v.code === oldDish.code) ||
+          (oldDish.barcode && v.barcode === oldDish.barcode) ||
+          (cleanName && v.name.toLowerCase() === cleanName)
+        );
+
+        if (matched) {
+          if (oldDish.priceUsd) matched.priceUsd = oldDish.priceUsd;
+          if (Array.isArray(oldDish.ingredients) && oldDish.ingredients.length) {
+            matched.recipe = oldDish.ingredients;
+          }
+        } else {
+          // Plato personalizado en v3: deducir producto padre
+          let targetProd = 'prod-empanada';
+          let familyId = 'fritos';
+          if (cleanName.includes('empanada')) { targetProd = 'prod-empanada'; familyId = 'fritos'; }
+          else if (cleanName.includes('pastelito') || cleanName.includes('tequeño')) { targetProd = 'prod-pastelito'; familyId = 'fritos'; }
+          else if (cleanName.includes('papa')) { targetProd = 'prod-papas'; familyId = 'fritos'; }
+          else if (cleanName.includes('arepa')) { targetProd = 'prod-arepa'; familyId = 'arepas'; }
+          else if (cleanName.includes('cafe') || cleanName.includes('café')) { targetProd = 'prod-cafe'; familyId = 'cafeteria'; }
+          else if (cleanName.includes('arroz') || cleanName.includes('pabellon') || cleanName.includes('almuerzo') || cleanName.includes('pollo')) {
+            targetProd = 'prod-almuerzos'; familyId = 'almuerzos';
+          }
+
+          variants.push({
+            id: oldDish.id || ('var-' + Date.now()),
+            productId: targetProd,
+            familyId,
+            name: oldDish.name,
+            code: oldDish.code || String(variants.length + 1),
+            barcode: oldDish.barcode || ('880' + String(variants.length + 1).padStart(4, '0')),
+            priceUsd: oldDish.priceUsd || 1.50,
+            ivaType: 'E',
+            recipe: oldDish.ingredients || [],
+            active: true,
+            order: variants.length + 1,
+            img: oldDish.img || '',
+            emoji: oldDish.emoji || '🥟'
+          });
+        }
+      });
+    }
+    migrated.variants = variants;
+
+    // Preservar existencias y costos de inventario
+    const retailItems = JSON.parse(JSON.stringify(DEFAULT_RETAIL_ITEMS));
+    const insumos = JSON.parse(JSON.stringify(DEFAULT_INSUMOS));
+
+    if (Array.isArray(oldState.inventory)) {
+      oldState.inventory.forEach(oldItem => {
+        if (oldItem.type === 'insumo' || oldItem.sellable === false) {
+          const ins = insumos.find(i => i.id === oldItem.id || i.code === oldItem.code);
+          if (ins) {
+            if (typeof oldItem.stock === 'number') ins.stock = oldItem.stock;
+            if (typeof oldItem.costUsd === 'number') ins.costUsd = oldItem.costUsd;
+          } else {
+            insumos.push(Object.assign({}, oldItem, { type: 'insumo', sellable: false }));
+          }
+        } else {
+          const ret = retailItems.find(r => r.id === oldItem.id || r.barcode === oldItem.barcode || r.code === oldItem.code);
+          if (ret) {
+            if (typeof oldItem.stock === 'number') ret.stock = oldItem.stock;
+            if (typeof oldItem.costUsd === 'number') ret.costUsd = oldItem.costUsd;
+            if (typeof oldItem.priceUsd === 'number') ret.priceUsd = oldItem.priceUsd;
+          } else {
+            retailItems.push(Object.assign({}, oldItem, {
+              familyId: oldItem.group || 'viveres',
+              type: 'venta',
+              sellable: true
+            }));
+          }
+        }
+      });
+    }
+
+    migrated.retailItems = retailItems;
+    migrated.insumos = insumos;
+    migrated.inventory = [...insumos, ...retailItems];
+
+    migrated.dishes = variants.map(v => ({
+      id: v.id,
+      code: v.code,
+      barcode: v.barcode,
+      group: v.familyId,
+      name: v.name,
+      category: (migrated.families.find(f => f.id === v.familyId) || {}).name || 'Empanadas & Desayunos',
+      priceUsd: v.priceUsd,
+      emoji: v.emoji || '🥟',
+      img: v.img || '../assets/img/productos/empanadas.jpg',
+      ingredients: v.recipe || [],
+      recipe: v.recipe || [],
+      isDish: true,
+      productId: v.productId
+    }));
+
+    return migrated;
+  }
+
   const DEFAULT_STATE = {
+    version: 5,
+    families: DEFAULT_FAMILIES,
+    products: DEFAULT_PRODUCTS,
+    modifierGroups: DEFAULT_MODIFIER_GROUPS,
+    variants: DEFAULT_VARIANTS,
+    retailItems: DEFAULT_RETAIL_ITEMS,
+    insumos: DEFAULT_INSUMOS,
     settings: {
       storeName: 'MI TIENDA POS · Restaurante & Abasto',
       rif: 'J-50128940-1',
@@ -136,1234 +1845,28 @@
     },
 
     /* ----------------------------------------------------------------------
-       1. INVENTARIO ESTRICTAMENTE SEPARADO:
-          A) type: 'insumo' (sellable: false) -> EXCLUSIVO DE COCINA (Papas, Aliños, Carne, Pollo, Harina cocina, Queso relleno)
-          B) type: 'venta'  (sellable: true)  -> PRODUCTOS DE VENTA AL PÚBLICO (Víveres, Chucherías, Refrescos, Cervezas, Cigarros)
+       1. INVENTARIO ESTRICTAMENTE SEPARADO (Insumos de Cocina vs Minimercado)
        ---------------------------------------------------------------------- */
-    inventory: [
-      // ====================================================================
-      // A) INSUMOS EXCLUSIVOS DE COCINA (sellable: false -> NO SALEN EN CAJA)
-      // ====================================================================
-      {
-        id: 'ins-papa',
-        code: 'COC-01',
-        barcode: '990001',
-        name: 'Papa Cruda para Elaboración de Comida y Papas Rellenas',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'kg',
-        stock: 25.000,
-        minStock: 8.000,
-        costUsd: 1.35,
-        prevCostUsd: 1.15,
-        priceUsd: 0,
-        emoji: '🥔',
-        img: '../assets/img/productos/papa_rellena.jpg'
-      },
-      {
-        id: 'ins-alinos',
-        code: 'COC-02',
-        barcode: '990002',
-        name: 'Aliños Frescos (Cebolla, Ajo, Pimentón, Cilantro, Ají Dulce, Cebollín)',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'kg',
-        stock: 8.500,
-        minStock: 3.000,
-        costUsd: 2.40,
-        prevCostUsd: 2.00,
-        priceUsd: 0,
-        emoji: '🧅',
-        img: '../assets/img/productos/pabellon.jpg'
-      },
-      {
-        id: 'ins-harina-cocina',
-        code: 'COC-03',
-        barcode: '990003',
-        name: 'Harina de Maíz/Trigo para Amasar en Cocina (Empanadas/Arepas/Pastelitos)',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'kg',
-        stock: 22.000,
-        minStock: 6.000,
-        costUsd: 1.05,
-        prevCostUsd: 1.05,
-        priceUsd: 0,
-        emoji: '🌾',
-        img: '../assets/img/productos/viveres.jpg'
-      },
-      {
-        id: 'ins-arroz-cocina',
-        code: 'COC-04',
-        barcode: '990004',
-        name: 'Arroz en Saco para Cocinar (Pabellón / Arroz con Pollo / Arroz Chino)',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'kg',
-        stock: 30.000,
-        minStock: 8.000,
-        costUsd: 1.15,
-        prevCostUsd: 1.10,
-        priceUsd: 0,
-        emoji: '🍚',
-        img: '../assets/img/productos/arroz_pollo.jpg'
-      },
-      {
-        id: 'ins-carne-mechada',
-        code: 'COC-05',
-        barcode: '990005',
-        name: 'Carne de Res Cruda para Mechar, Moler y Guisar (Cocina)',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'kg',
-        stock: 16.500,
-        minStock: 5.000,
-        costUsd: 6.80,
-        prevCostUsd: 6.30,
-        priceUsd: 0,
-        emoji: '🥩',
-        img: '../assets/img/productos/pabellon.jpg'
-      },
-      {
-        id: 'ins-pollo-cocina',
-        code: 'COC-06',
-        barcode: '990006',
-        name: 'Pollo Crudo para Freír a la Broaster y Desmechar (Cocina)',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'kg',
-        stock: 20.000,
-        minStock: 6.000,
-        costUsd: 3.60,
-        prevCostUsd: 3.40,
-        priceUsd: 0,
-        emoji: '🍗',
-        img: '../assets/img/productos/pollo_frito.jpg'
-      },
-      {
-        id: 'ins-queso-cocina',
-        code: 'COC-07',
-        barcode: '990007',
-        name: 'Queso Blanco Llanero y Queso Amarillo para Relleno en Cocina',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'kg',
-        stock: 12.400,
-        minStock: 4.000,
-        costUsd: 5.40,
-        prevCostUsd: 4.90,
-        priceUsd: 0,
-        emoji: '🧀',
-        img: '../assets/img/productos/tequenos.jpg'
-      },
-      {
-        id: 'ins-jamon-cocina',
-        code: 'COC-08',
-        barcode: '990008',
-        name: 'Jamón para Relleno de Empanadas, Pastelitos y Arroz Chino',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'kg',
-        stock: 6.800,
-        minStock: 2.000,
-        costUsd: 5.90,
-        prevCostUsd: 5.90,
-        priceUsd: 0,
-        emoji: '🥓',
-        img: '../assets/img/productos/pastelitos.jpg'
-      },
-      {
-        id: 'ins-cazon-cocina',
-        code: 'COC-09',
-        barcode: '990009',
-        name: 'Cazón / Pescado para Guiso de Empanadas',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'kg',
-        stock: 5.500,
-        minStock: 2.000,
-        costUsd: 5.20,
-        prevCostUsd: 5.00,
-        priceUsd: 0,
-        emoji: '🐟',
-        img: '../assets/img/productos/empanadas.jpg'
-      },
-      {
-        id: 'ins-chicharron-cocina',
-        code: 'COC-10',
-        barcode: '990010',
-        name: 'Chicharrón y Caraotas Negras para Relleno / Pabellón',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'kg',
-        stock: 6.800,
-        minStock: 2.000,
-        costUsd: 5.80,
-        prevCostUsd: 5.40,
-        priceUsd: 0,
-        emoji: '🍖',
-        img: '../assets/img/productos/empanadas.jpg'
-      },
-      {
-        id: 'ins-ensalada',
-        code: 'COC-11',
-        barcode: '990011',
-        name: 'Vegetales de Ensalada y Plátanos para Tajadas (Cocina)',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'kg',
-        stock: 11.000,
-        minStock: 3.000,
-        costUsd: 1.40,
-        prevCostUsd: 1.40,
-        priceUsd: 0,
-        emoji: '🥗',
-        img: '../assets/img/productos/pabellon.jpg'
-      },
-      {
-        id: 'ins-aceite-cocina',
-        code: 'COC-12',
-        barcode: '990012',
-        name: 'Aceite Vegetal para Freír en Cocina (Litros)',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'L',
-        stock: 18.000,
-        minStock: 5.000,
-        costUsd: 2.15,
-        prevCostUsd: 2.00,
-        priceUsd: 0,
-        emoji: '🫗',
-        img: '../assets/img/productos/empanadas.jpg'
-      },
-      {
-        id: 'ins-cafe-cocina',
-        code: 'COC-13',
-        barcode: '990013',
-        name: 'Café Molido + Azúcar + Leche + Vasos (Insumo Cafetería)',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'kg',
-        stock: 4.500,
-        minStock: 1.000,
-        costUsd: 8.50,
-        prevCostUsd: 8.20,
-        priceUsd: 0,
-        emoji: '☕',
-        img: '../assets/img/productos/cafe.jpg'
-      },
-      {
-        id: 'ins-envase',
-        code: 'COC-14',
-        barcode: '990014',
-        name: 'Envases Térmicos, Bolsas y Servilletas de Despacho',
-        category: 'Insumos de Cocina (Materia Prima)',
-        type: 'insumo',
-        sellable: false,
-        unit: 'und',
-        stock: 220,
-        minStock: 50,
-        costUsd: 0.15,
-        prevCostUsd: 0.15,
-        priceUsd: 0,
-        emoji: '🥡',
-        img: '../assets/img/productos/arroz_chino.jpg'
-      },
-
-      // ====================================================================
-      // B) PRODUCTOS DE VENTA AL PÚBLICO (sellable: true)
-      // ====================================================================
-      // --- VÍVERES (group: 'viveres') ---
-      {
-        id: 'prod-harina-pan',
-        code: '101',
-        barcode: '7591001000015',
-        qrCode: 'QR-HARINA-PAN-1KG',
-        group: 'viveres',
-        name: 'Harina P.A.N. Blanca Precocida 1 Kg',
-        category: 'Víveres',
-        type: 'venta',
-        sellable: true,
-        taxExempt: true,
-        unit: 'und',
-        stock: 48,
-        minStock: 12,
-        costUsd: 1.08,
-        prevCostUsd: 1.02,
-        priceUsd: 1.55,
-        emoji: '🌽',
-        img: '../assets/img/productos/viveres.jpg'
-      },
-      {
-        id: 'prod-harina-pan-amarilla',
-        code: '102',
-        barcode: '7591001000022',
-        qrCode: 'QR-HARINA-PAN-AMARILLA',
-        group: 'viveres',
-        name: 'Harina P.A.N. Amarilla 1 Kg',
-        category: 'Víveres',
-        type: 'venta',
-        sellable: true,
-        taxExempt: true,
-        unit: 'und',
-        stock: 30,
-        minStock: 10,
-        costUsd: 1.10,
-        prevCostUsd: 1.05,
-        priceUsd: 1.60,
-        emoji: '🌽',
-        img: '../assets/img/productos/viveres.jpg'
-      },
-      {
-        id: 'prod-espagueti',
-        code: '103',
-        barcode: '7591003000033',
-        qrCode: 'QR-ESPAGUETI-1KG',
-        group: 'viveres',
-        name: 'Espagueti / Pasta Larga Capri 1 Kg',
-        category: 'Víveres',
-        type: 'venta',
-        sellable: true,
-        taxExempt: true,
-        unit: 'und',
-        stock: 35,
-        minStock: 10,
-        costUsd: 1.42,
-        prevCostUsd: 1.30,
-        priceUsd: 2.10,
-        emoji: '🍝',
-        img: '../assets/img/productos/espagueti.jpg'
-      },
-      {
-        id: 'prod-pasta-corta',
-        code: '104',
-        barcode: '7591003000040',
-        qrCode: 'QR-PASTA-CORTA-1KG',
-        group: 'viveres',
-        name: 'Pasta Corta Pluma / Tornillo 1 Kg',
-        category: 'Víveres',
-        type: 'venta',
-        sellable: true,
-        taxExempt: true,
-        unit: 'und',
-        stock: 28,
-        minStock: 8,
-        costUsd: 1.42,
-        prevCostUsd: 1.30,
-        priceUsd: 2.10,
-        emoji: '🍝',
-        img: '../assets/img/productos/espagueti.jpg'
-      },
-      {
-        id: 'prod-arroz-empaque',
-        code: '105',
-        barcode: '7591002000029',
-        qrCode: 'QR-ARROZ-PRIMOR-1KG',
-        group: 'viveres',
-        name: 'Arroz Blanco Primor Empaque 1 Kg',
-        category: 'Víveres',
-        type: 'venta',
-        sellable: true,
-        taxExempt: true,
-        unit: 'und',
-        stock: 40,
-        minStock: 10,
-        costUsd: 1.20,
-        prevCostUsd: 1.15,
-        priceUsd: 1.80,
-        emoji: '🌾',
-        img: '../assets/img/productos/viveres.jpg'
-      },
-      {
-        id: 'prod-mavesa',
-        code: '106',
-        barcode: '7591007000079',
-        qrCode: 'QR-MAVESA-500G',
-        group: 'viveres',
-        name: 'Margarina Mavesa 500g',
-        category: 'Víveres',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 22,
-        minStock: 6,
-        costUsd: 1.85,
-        prevCostUsd: 1.85,
-        priceUsd: 2.80,
-        emoji: '🧈',
-        img: '../assets/img/productos/viveres.jpg'
-      },
-
-      // --- CHUCHERÍAS Y PEPITOS (group: 'chucherias') ---
-      {
-        id: 'prod-pepito-peq',
-        code: '201',
-        barcode: '7592001000112',
-        qrCode: 'QR-PEPITO-CLASICO',
-        group: 'chucherias',
-        name: 'Pepito Original Frito Lay (Paquete Mediano)',
-        category: 'Chucherías',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 55,
-        minStock: 15,
-        costUsd: 0.55,
-        prevCostUsd: 0.50,
-        priceUsd: 0.95,
-        emoji: '🧀',
-        img: '../assets/img/productos/pepito.jpg'
-      },
-      {
-        id: 'prod-pepito-gra',
-        code: '202',
-        barcode: '7592001000129',
-        qrCode: 'QR-PEPITO-GRANDE',
-        group: 'chucherias',
-        name: 'Pepito Familiar Grande 120g',
-        category: 'Chucherías',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 30,
-        minStock: 8,
-        costUsd: 1.35,
-        prevCostUsd: 1.25,
-        priceUsd: 2.10,
-        emoji: '🧀',
-        img: '../assets/img/productos/pepito.jpg'
-      },
-      {
-        id: 'prod-cheetos',
-        code: '203',
-        barcode: '7592001000136',
-        qrCode: 'QR-CHEETOS',
-        group: 'chucherias',
-        name: 'Cheetos Crujientes de Queso',
-        category: 'Chucherías',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 42,
-        minStock: 10,
-        costUsd: 0.65,
-        prevCostUsd: 0.60,
-        priceUsd: 1.15,
-        emoji: '🐆',
-        img: '../assets/img/productos/cheetos.jpg'
-      },
-      {
-        id: 'prod-chiskesitos',
-        code: '204',
-        barcode: '7592001000143',
-        qrCode: 'QR-CHISKESITOS',
-        group: 'chucherias',
-        name: 'Chiskesitos / Cheese Tris Queso',
-        category: 'Chucherías',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 48,
-        minStock: 12,
-        costUsd: 0.55,
-        prevCostUsd: 0.50,
-        priceUsd: 0.95,
-        emoji: '🧀',
-        img: '../assets/img/productos/pepito.jpg'
-      },
-      {
-        id: 'prod-doritos',
-        code: '205',
-        barcode: '7592001000150',
-        qrCode: 'QR-DORITOS',
-        group: 'chucherias',
-        name: 'Doritos Mega Queso Nacho',
-        category: 'Chucherías',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 36,
-        minStock: 10,
-        costUsd: 0.85,
-        prevCostUsd: 0.80,
-        priceUsd: 1.45,
-        emoji: '🔺',
-        img: '../assets/img/productos/pepito.jpg'
-      },
-      {
-        id: 'prod-papitas',
-        code: '206',
-        barcode: '7592001000167',
-        qrCode: 'QR-PAPITAS-RUFFLES',
-        group: 'chucherias',
-        name: 'Papas Fritas Ruffles / Natuchips',
-        category: 'Chucherías',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 32,
-        minStock: 10,
-        costUsd: 0.85,
-        prevCostUsd: 0.85,
-        priceUsd: 1.40,
-        emoji: '🍟',
-        img: '../assets/img/productos/pepito.jpg'
-      },
-      {
-        id: 'prod-galletas',
-        code: '207',
-        barcode: '7592001000174',
-        qrCode: 'QR-GALLETAS-OREO',
-        group: 'chucherias',
-        name: 'Galletas Oreo / Samba / Chocolate Savoy',
-        category: 'Chucherías',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 44,
-        minStock: 12,
-        costUsd: 0.65,
-        prevCostUsd: 0.60,
-        priceUsd: 1.10,
-        emoji: '🍪',
-        img: '../assets/img/productos/pepito.jpg'
-      },
-
-      // --- CIGARROS (group: 'cigarros') ---
-      {
-        id: 'prod-cigarro-und',
-        code: '301',
-        barcode: '7593001000228',
-        qrCode: 'QR-CIGARRO-DETAL',
-        group: 'cigarros',
-        name: 'Cigarro Detallado por Unidad (Belmont / Consul)',
-        category: 'Cigarros',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 160,
-        minStock: 40,
-        costUsd: 0.10,
-        prevCostUsd: 0.10,
-        priceUsd: 0.20,
-        emoji: '🚬',
-        img: '../assets/img/productos/cigarros.jpg'
-      },
-      {
-        id: 'prod-cigarro-belmont',
-        code: '302',
-        barcode: '7593001000211',
-        qrCode: 'QR-CIGARROS-BELMONT',
-        group: 'cigarros',
-        name: 'Cajetilla Belmont 20 Cigarros',
-        category: 'Cigarros',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 28,
-        minStock: 8,
-        costUsd: 1.90,
-        prevCostUsd: 1.75,
-        priceUsd: 2.90,
-        emoji: '🚬',
-        img: '../assets/img/productos/cigarros.jpg'
-      },
-      {
-        id: 'prod-cigarro-consul',
-        code: '303',
-        barcode: '7593001000235',
-        qrCode: 'QR-CIGARROS-CONSUL',
-        group: 'cigarros',
-        name: 'Cajetilla Consul / Universal 20 Cigarros',
-        category: 'Cigarros',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 24,
-        minStock: 6,
-        costUsd: 1.60,
-        prevCostUsd: 1.50,
-        priceUsd: 2.50,
-        emoji: '🚬',
-        img: '../assets/img/productos/cigarros.jpg'
-      },
-
-      // --- REFRESCOS Y MALTAS (group: 'refrescos') ---
-      {
-        id: 'prod-frescolita-peq',
-        code: '401',
-        barcode: '7591005000044',
-        qrCode: 'QR-FRESCOLITA-355',
-        group: 'refrescos',
-        name: 'Frescolita Personal / Lata 355ml',
-        category: 'Refrescos & Cervezas',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 48,
-        minStock: 12,
-        costUsd: 0.65,
-        prevCostUsd: 0.65,
-        priceUsd: 1.10,
-        emoji: '🥤',
-        img: '../assets/img/productos/refrescos.jpg'
-      },
-      {
-        id: 'prod-cocacola-peq',
-        code: '402',
-        barcode: '7591005000045',
-        qrCode: 'QR-COCACOLA-355',
-        group: 'refrescos',
-        name: 'Coca-Cola Personal / Lata 355ml',
-        category: 'Refrescos & Cervezas',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 60,
-        minStock: 15,
-        costUsd: 0.65,
-        prevCostUsd: 0.65,
-        priceUsd: 1.10,
-        emoji: '🥤',
-        img: '../assets/img/productos/refrescos.jpg'
-      },
-      {
-        id: 'prod-pepsi-peq',
-        code: '403',
-        barcode: '7591005000046',
-        qrCode: 'QR-PEPSI-355',
-        group: 'refrescos',
-        name: 'Pepsi / 7Up / Golden Personal 355ml',
-        category: 'Refrescos & Cervezas',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 45,
-        minStock: 12,
-        costUsd: 0.60,
-        prevCostUsd: 0.60,
-        priceUsd: 1.00,
-        emoji: '🥤',
-        img: '../assets/img/productos/refrescos.jpg'
-      },
-      {
-        id: 'prod-chinotto-peq',
-        code: '404',
-        barcode: '7591005000047',
-        qrCode: 'QR-CHINOTTO-355',
-        group: 'refrescos',
-        name: 'Chinotto / Hit Sabores Personal 355ml',
-        category: 'Refrescos & Cervezas',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 40,
-        minStock: 10,
-        costUsd: 0.65,
-        prevCostUsd: 0.65,
-        priceUsd: 1.10,
-        emoji: '🍋',
-        img: '../assets/img/productos/refrescos.jpg'
-      },
-      {
-        id: 'prod-malta',
-        code: '405',
-        barcode: '7591005000068',
-        qrCode: 'QR-MALTA-355ML',
-        group: 'refrescos',
-        name: 'Malta Polar Bien Fría 355ml',
-        category: 'Refrescos & Cervezas',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 54,
-        minStock: 12,
-        costUsd: 0.68,
-        prevCostUsd: 0.68,
-        priceUsd: 1.15,
-        emoji: '🍺',
-        img: '../assets/img/productos/refrescos.jpg'
-      },
-      {
-        id: 'prod-refresco-15',
-        code: '406',
-        barcode: '7591005000051',
-        qrCode: 'QR-REFRESCO-15L',
-        group: 'refrescos',
-        name: 'Refresco Familiar 1.5L (Coca-Cola / Frescolita / Pepsi)',
-        category: 'Refrescos & Cervezas',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 30,
-        minStock: 8,
-        costUsd: 1.45,
-        prevCostUsd: 1.35,
-        priceUsd: 2.25,
-        emoji: '🍾',
-        img: '../assets/img/productos/refrescos.jpg'
-      },
-      {
-        id: 'prod-refresco-2l',
-        code: '407',
-        barcode: '7591005000058',
-        qrCode: 'QR-REFRESCO-2L',
-        group: 'refrescos',
-        name: 'Refresco Jumbo 2 Litros (Coca-Cola / Frescolita / Chinotto)',
-        category: 'Refrescos & Cervezas',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 24,
-        minStock: 6,
-        costUsd: 1.75,
-        prevCostUsd: 1.65,
-        priceUsd: 2.70,
-        emoji: '🍾',
-        img: '../assets/img/productos/refrescos.jpg'
-      },
-
-      // --- CERVEZAS (group: 'cervezas') ---
-      {
-        id: 'prod-cerveza-polar',
-        code: '501',
-        barcode: '7594001000310',
-        qrCode: 'QR-CERVEZA-POLAR',
-        group: 'cervezas',
-        name: 'Cerveza Polar Pilsen (Botella / Lata Bien Fría)',
-        category: 'Refrescos & Cervezas',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 96,
-        minStock: 24,
-        costUsd: 0.72,
-        prevCostUsd: 0.68,
-        priceUsd: 1.25,
-        emoji: '🍻',
-        img: '../assets/img/productos/cervezas.jpg'
-      },
-      {
-        id: 'prod-cerveza-zulia',
-        code: '502',
-        barcode: '7594001000318',
-        qrCode: 'QR-CERVEZA-ZULIA',
-        group: 'cervezas',
-        name: 'Cerveza Zulia Bien Fría (Unidad)',
-        category: 'Refrescos & Cervezas',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 72,
-        minStock: 18,
-        costUsd: 0.75,
-        prevCostUsd: 0.70,
-        priceUsd: 1.30,
-        emoji: '🍺',
-        img: '../assets/img/productos/cervezas.jpg'
-      },
-      {
-        id: 'prod-cerveza-solera',
-        code: '503',
-        barcode: '7594001000327',
-        qrCode: 'QR-CERVEZA-SOLERA',
-        group: 'cervezas',
-        name: 'Cerveza Solera Verde / Azul (Unidad)',
-        category: 'Refrescos & Cervezas',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 72,
-        minStock: 18,
-        costUsd: 0.85,
-        prevCostUsd: 0.80,
-        priceUsd: 1.45,
-        emoji: '🍺',
-        img: '../assets/img/productos/cervezas.jpg'
-      },
-      {
-        id: 'prod-cerveza-sixpack',
-        code: '504',
-        barcode: '7594001000334',
-        qrCode: 'QR-SIXPACK-POLAR',
-        group: 'cervezas',
-        name: 'Six-Pack (6 Cervezas Polar / Zulia)',
-        category: 'Refrescos & Cervezas',
-        type: 'venta',
-        sellable: true,
-        taxExempt: false,
-        unit: 'und',
-        stock: 16,
-        minStock: 4,
-        costUsd: 4.20,
-        prevCostUsd: 4.00,
-        priceUsd: 7.00,
-        emoji: '🍻',
-        img: '../assets/img/productos/cervezas.jpg'
-      }
-    ],
+    inventory: [...DEFAULT_INSUMOS, ...DEFAULT_RETAIL_ITEMS],
 
     /* ----------------------------------------------------------------------
-       2. PLATOS DE COMIDA PREPARADA (Con Imágenes Reales Locales + Escandallo)
+       2. PLATOS / VARIANTES (Sincronizado con variants v5)
        ---------------------------------------------------------------------- */
-    dishes: [
-      // === FAMILIA 1: EMPANADAS VENEZOLANAS (group: 'empanadas') ===
-      {
-        id: 'dish-emp-queso',
-        code: '01',
-        barcode: '8800001',
-        group: 'empanadas',
-        name: 'Empanada de Queso Llanero',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.10,
-        emoji: '🥟',
-        img: '../assets/img/productos/empanadas.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
-          { insumoId: 'ins-queso-cocina',  qty: 0.055, label: '55 g Queso Blanco' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-emp-molida',
-        code: '02',
-        barcode: '8800002',
-        group: 'empanadas',
-        name: 'Empanada de Carne Molida con Papa y Aliños',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.20,
-        emoji: '🥟',
-        img: '../assets/img/productos/empanadas.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
-          { insumoId: 'ins-carne-mechada', qty: 0.045, label: '45 g Carne Molida' },
-          { insumoId: 'ins-papa',          qty: 0.030, label: '30 g Papa picada' },
-          { insumoId: 'ins-alinos',        qty: 0.015, label: '15 g Aliños sofrito' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-emp-mechada',
-        code: '03',
-        barcode: '8800003',
-        group: 'empanadas',
-        name: 'Empanada de Carne Mechada Criolla',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.30,
-        emoji: '🥟',
-        img: '../assets/img/productos/empanadas.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina', qty: 0.075, label: '75 g Harina Maíz' },
-          { insumoId: 'ins-carne-mechada', qty: 0.055, label: '55 g Carne Mechada' },
-          { insumoId: 'ins-alinos',        qty: 0.020, label: '20 g Aliños guiso' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-emp-pollo',
-        code: '04',
-        barcode: '8800004',
-        group: 'empanadas',
-        name: 'Empanada de Pollo Guisado',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.25,
-        emoji: '🥟',
-        img: '../assets/img/productos/empanadas.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
-          { insumoId: 'ins-pollo-cocina',  qty: 0.060, label: '60 g Pollo Desmechado' },
-          { insumoId: 'ins-papa',          qty: 0.020, label: '20 g Papa guiso' },
-          { insumoId: 'ins-alinos',        qty: 0.018, label: '18 g Aliños' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-emp-jamon-queso',
-        code: '05',
-        barcode: '8800005',
-        group: 'empanadas',
-        name: 'Empanada de Jamón con Queso',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.25,
-        emoji: '🥟',
-        img: '../assets/img/productos/empanadas.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
-          { insumoId: 'ins-jamon-cocina',  qty: 0.035, label: '35 g Jamón' },
-          { insumoId: 'ins-queso-cocina',  qty: 0.035, label: '35 g Queso' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-emp-cazon',
-        code: '06',
-        barcode: '8800006',
-        group: 'empanadas',
-        name: 'Empanada de Cazón Margariteño',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.35,
-        emoji: '🐟',
-        img: '../assets/img/productos/empanadas.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
-          { insumoId: 'ins-cazon-cocina',  qty: 0.060, label: '60 g Cazón guisado' },
-          { insumoId: 'ins-alinos',        qty: 0.025, label: '25 g Aliños y Ají dulce' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-emp-pelua',
-        code: '07',
-        barcode: '8800007',
-        group: 'empanadas',
-        name: 'Empanada Pelúa (Carne Mechada + Queso Amarillo)',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.50,
-        emoji: '🧀',
-        img: '../assets/img/productos/empanadas.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina', qty: 0.075, label: '75 g Harina Maíz' },
-          { insumoId: 'ins-carne-mechada', qty: 0.050, label: '50 g Carne Mechada' },
-          { insumoId: 'ins-queso-cocina',  qty: 0.040, label: '40 g Queso Amarillo' },
-          { insumoId: 'ins-alinos',        qty: 0.018, label: '18 g Aliños' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.020, label: '20 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-emp-chicharron',
-        code: '08',
-        barcode: '8800008',
-        group: 'empanadas',
-        name: 'Empanada de Chicharrón Crujiente',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.40,
-        emoji: '🍖',
-        img: '../assets/img/productos/empanadas.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina',     qty: 0.070, label: '70 g Harina Maíz' },
-          { insumoId: 'ins-chicharron-cocina', qty: 0.055, label: '55 g Chicharrón' },
-          { insumoId: 'ins-alinos',            qty: 0.015, label: '15 g Aliños' },
-          { insumoId: 'ins-aceite-cocina',     qty: 0.018, label: '18 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-emp-domino',
-        code: '09',
-        barcode: '8800009',
-        group: 'empanadas',
-        name: 'Empanada Dominó (Caraotas Negras con Queso Blanco)',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.25,
-        emoji: '🥟',
-        img: '../assets/img/productos/empanadas.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina',     qty: 0.070, label: '70 g Harina Maíz' },
-          { insumoId: 'ins-chicharron-cocina', qty: 0.045, label: '45 g Caraotas refritas' },
-          { insumoId: 'ins-queso-cocina',      qty: 0.040, label: '40 g Queso Blanco' },
-          { insumoId: 'ins-aceite-cocina',     qty: 0.018, label: '18 ml Aceite' }
-        ]
-      },
-
-      // === FAMILIA 2: PASTELITOS Y TEQUEÑOS (group: 'pastelitos') ===
-      {
-        id: 'dish-past-queso',
-        code: '10',
-        barcode: '8800010',
-        group: 'pastelitos',
-        name: 'Pastelito Andino de Queso',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.00,
-        emoji: '🥐',
-        img: '../assets/img/productos/pastelitos.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina', qty: 0.060, label: '60 g Harina Trigo' },
-          { insumoId: 'ins-queso-cocina',  qty: 0.045, label: '45 g Queso' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.015, label: '15 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-past-carne',
-        code: '11',
-        barcode: '8800011',
-        group: 'pastelitos',
-        name: 'Pastelito Andino de Carne con Arroz/Papa',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.15,
-        emoji: '🥐',
-        img: '../assets/img/productos/pastelitos.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina', qty: 0.060, label: '60 g Harina Trigo' },
-          { insumoId: 'ins-carne-mechada', qty: 0.040, label: '40 g Carne Molida' },
-          { insumoId: 'ins-papa',          qty: 0.025, label: '25 g Papa pastelito' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.015, label: '15 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-past-pollo',
-        code: '12',
-        barcode: '8800012',
-        group: 'pastelitos',
-        name: 'Pastelito de Pollo Guisado',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.15,
-        emoji: '🥐',
-        img: '../assets/img/productos/pastelitos.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina', qty: 0.060, label: '60 g Harina Trigo' },
-          { insumoId: 'ins-pollo-cocina',  qty: 0.045, label: '45 g Pollo' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.015, label: '15 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-past-pizza',
-        code: '13',
-        barcode: '8800013',
-        group: 'pastelitos',
-        name: 'Pastelito de Jamón y Queso (Pizza)',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.15,
-        emoji: '🥐',
-        img: '../assets/img/productos/pastelitos.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina', qty: 0.060, label: '60 g Harina Trigo' },
-          { insumoId: 'ins-jamon-cocina',  qty: 0.030, label: '30 g Jamón' },
-          { insumoId: 'ins-queso-cocina',  qty: 0.030, label: '30 g Queso' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.015, label: '15 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-tequenos',
-        code: '14',
-        barcode: '8800014',
-        group: 'pastelitos',
-        name: 'Tequeños Venezolanos de Queso (Ración 5 und)',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 2.00,
-        emoji: '🥖',
-        img: '../assets/img/productos/tequenos.jpg',
-        ingredients: [
-          { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Trigo' },
-          { insumoId: 'ins-queso-cocina',  qty: 0.100, label: '100 g Queso Blanco' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.025, label: '25 ml Aceite' }
-        ]
-      },
-
-      // === FAMILIA 3: PAPAS RELLENAS (group: 'papas') ===
-      {
-        id: 'dish-papa-rellena',
-        code: '15',
-        barcode: '8800015',
-        group: 'papas',
-        name: 'Papa Rellena Especial con Carne y Queso',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.60,
-        emoji: '🥔',
-        img: '../assets/img/productos/papa_rellena.jpg',
-        ingredients: [
-          { insumoId: 'ins-papa',          qty: 0.160, label: '160 g Puré de Papa' },
-          { insumoId: 'ins-carne-mechada', qty: 0.055, label: '55 g Carne Guisada' },
-          { insumoId: 'ins-queso-cocina',  qty: 0.025, label: '25 g Queso' },
-          { insumoId: 'ins-alinos',        qty: 0.020, label: '20 g Aliños' },
-          { insumoId: 'ins-harina-cocina', qty: 0.025, label: '25 g Reboso' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.025, label: '25 ml Aceite' }
-        ]
-      },
-      {
-        id: 'dish-papa-pollo',
-        code: '16',
-        barcode: '8800016',
-        group: 'papas',
-        name: 'Papa Rellena de Pollo Guisado y Queso',
-        category: 'Empanadas & Desayunos',
-        priceUsd: 1.60,
-        emoji: '🥔',
-        img: '../assets/img/productos/papa_rellena.jpg',
-        ingredients: [
-          { insumoId: 'ins-papa',          qty: 0.160, label: '160 g Puré de Papa' },
-          { insumoId: 'ins-pollo-cocina',  qty: 0.060, label: '60 g Pollo Guisado' },
-          { insumoId: 'ins-queso-cocina',  qty: 0.025, label: '25 g Queso' },
-          { insumoId: 'ins-alinos',        qty: 0.020, label: '20 g Aliños' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.025, label: '25 ml Aceite' }
-        ]
-      },
-
-      // === FAMILIA 4: ALMUERZOS Y PLATOS FUERTES (group: 'almuerzos') ===
-      {
-        id: 'dish-pabellon',
-        code: '17',
-        barcode: '8800017',
-        group: 'almuerzos',
-        name: 'Pabellón Criollo Venezolano (Carne Mechada, Caraotas, Arroz y Tajadas)',
-        category: 'Almuerzos & Platos',
-        priceUsd: 5.00,
-        emoji: '🇻🇪',
-        img: '../assets/img/productos/pabellon.jpg',
-        ingredients: [
-          { insumoId: 'ins-carne-mechada',     qty: 0.160, label: '160 g Carne Mechada' },
-          { insumoId: 'ins-chicharron-cocina', qty: 0.120, label: '120 g Caraotas Negras' },
-          { insumoId: 'ins-arroz-cocina',      qty: 0.140, label: '140 g Arroz Blanco' },
-          { insumoId: 'ins-ensalada',          qty: 0.120, label: '120 g Tajadas de Plátano' },
-          { insumoId: 'ins-queso-cocina',      qty: 0.035, label: '35 g Queso Blanco' },
-          { insumoId: 'ins-alinos',            qty: 0.045, label: '45 g Sofrito Criollo' },
-          { insumoId: 'ins-envase',            qty: 1,     label: '1 Envase Almuerzo' }
-        ]
-      },
-      {
-        id: 'dish-arroz-chino',
-        code: '18',
-        barcode: '8800018',
-        group: 'almuerzos',
-        name: 'Arroz Chino Venezolano con Pollo Frito y Tajadas/Lumpias',
-        category: 'Almuerzos & Platos',
-        priceUsd: 5.00,
-        emoji: '🥡',
-        img: '../assets/img/productos/arroz_chino.jpg',
-        ingredients: [
-          { insumoId: 'ins-arroz-cocina',  qty: 0.170, label: '170 g Arroz Frito Venezolano' },
-          { insumoId: 'ins-pollo-cocina',  qty: 0.220, label: '220 g Pollo Frito Crujiente' },
-          { insumoId: 'ins-jamon-cocina',  qty: 0.040, label: '40 g Jamón picado' },
-          { insumoId: 'ins-alinos',        qty: 0.055, label: '55 g Cebollín y Brotes' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.030, label: '30 ml Aceite' },
-          { insumoId: 'ins-envase',        qty: 1,     label: '1 Envase Grande' }
-        ]
-      },
-      {
-        id: 'dish-arroz-pollo',
-        code: '19',
-        barcode: '8800019',
-        group: 'almuerzos',
-        name: 'Plato de Arroz con Pollo + Ensalada y Tajadas',
-        category: 'Almuerzos & Platos',
-        priceUsd: 4.00,
-        emoji: '🍛',
-        img: '../assets/img/productos/arroz_pollo.jpg',
-        ingredients: [
-          { insumoId: 'ins-arroz-cocina',  qty: 0.150, label: '150 g Arroz' },
-          { insumoId: 'ins-pollo-cocina',  qty: 0.200, label: '200 g Pollo Desmechado' },
-          { insumoId: 'ins-papa',          qty: 0.080, label: '80 g Papa/Verdura' },
-          { insumoId: 'ins-alinos',        qty: 0.050, label: '50 g Aliños y Pimentón' },
-          { insumoId: 'ins-ensalada',      qty: 0.080, label: '80 g Ensalada' },
-          { insumoId: 'ins-envase',        qty: 1,     label: '1 Envase Térmico' }
-        ]
-      },
-      {
-        id: 'dish-pollo-frito-arepa',
-        code: '20',
-        barcode: '8800020',
-        group: 'almuerzos',
-        name: 'Pollo Frito Crujiente a la Broaster con Arepa, Papa y Ensalada',
-        category: 'Almuerzos & Platos',
-        priceUsd: 4.50,
-        emoji: '🍗',
-        img: '../assets/img/productos/pollo_frito.jpg',
-        ingredients: [
-          { insumoId: 'ins-pollo-cocina',  qty: 0.260, label: '260 g Presas de Pollo Frito' },
-          { insumoId: 'ins-harina-cocina', qty: 0.090, label: '90 g Harina (Arepitas y Empanizado)' },
-          { insumoId: 'ins-papa',          qty: 0.140, label: '140 g Papas Fritas' },
-          { insumoId: 'ins-ensalada',      qty: 0.100, label: '100 g Ensalada Rayada' },
-          { insumoId: 'ins-alinos',        qty: 0.025, label: '25 g Salsa de Ajo/Aliños' },
-          { insumoId: 'ins-aceite-cocina', qty: 0.040, label: '40 ml Aceite fritura' },
-          { insumoId: 'ins-envase',        qty: 1,     label: '1 Envase Térmico' }
-        ]
-      },
-      {
-        id: 'dish-alm-carne',
-        code: '21',
-        barcode: '8800021',
-        group: 'almuerzos',
-        name: 'Almuerzo Criollo de Carne Guisada con Papa y Arroz',
-        category: 'Almuerzos & Platos',
-        priceUsd: 4.50,
-        emoji: '🍲',
-        img: '../assets/img/productos/pabellon.jpg',
-        ingredients: [
-          { insumoId: 'ins-carne-mechada', qty: 0.180, label: '180 g Carne Guisada' },
-          { insumoId: 'ins-arroz-cocina',  qty: 0.130, label: '130 g Arroz Blanco' },
-          { insumoId: 'ins-papa',          qty: 0.150, label: '150 g Papa en guiso' },
-          { insumoId: 'ins-alinos',        qty: 0.045, label: '45 g Aliños sofrito' },
-          { insumoId: 'ins-ensalada',      qty: 0.080, label: '80 g Ensalada' },
-          { insumoId: 'ins-envase',        qty: 1,     label: '1 Envase Térmico' }
-        ]
-      },
-
-      // === FAMILIA 5: CAFETERÍA (group: 'cafe') ===
-      {
-        id: 'dish-cafe-negro',
-        code: '22',
-        barcode: '8800022',
-        group: 'cafe',
-        name: 'Café Negro / Guayoyo Recién Colado',
-        category: 'Cafetería',
-        priceUsd: 0.60,
-        emoji: '☕',
-        img: '../assets/img/productos/cafe.jpg',
-        ingredients: [
-          { insumoId: 'ins-cafe-cocina', qty: 0.018, label: '18 g Café + Azúcar + Vaso' }
-        ]
-      },
-      {
-        id: 'dish-cafe-leche-peq',
-        code: '23',
-        barcode: '8800023',
-        group: 'cafe',
-        name: 'Café con Leche Pequeño / Marrón',
-        category: 'Cafetería',
-        priceUsd: 0.80,
-        emoji: '☕',
-        img: '../assets/img/productos/cafe.jpg',
-        ingredients: [
-          { insumoId: 'ins-cafe-cocina', qty: 0.024, label: '24 g Café + Leche + Vaso' }
-        ]
-      },
-      {
-        id: 'dish-cafe-leche',
-        code: '24',
-        barcode: '8800024',
-        group: 'cafe',
-        name: 'Café con Leche Cremoso Grande',
-        category: 'Cafetería',
-        priceUsd: 1.00,
-        emoji: '🥛',
-        img: '../assets/img/productos/cafe.jpg',
-        ingredients: [
-          { insumoId: 'ins-cafe-cocina', qty: 0.032, label: '32 g Café + Leche + Azúcar + Vaso' }
-        ]
-      }
-    ],
+    dishes: DEFAULT_VARIANTS.map(v => ({
+      id: v.id,
+      code: v.code,
+      barcode: v.barcode,
+      group: v.familyId,
+      name: v.name,
+      category: (DEFAULT_FAMILIES.find(f => f.id === v.familyId) || {}).name || 'Comida',
+      priceUsd: v.priceUsd,
+      emoji: v.emoji || '🥟',
+      img: v.img || '../assets/img/productos/empanadas.jpg',
+      ingredients: v.recipe || [],
+      recipe: v.recipe || [],
+      isDish: true,
+      productId: v.productId
+    })),
 
     /* ----------------------------------------------------------------------
        3. FACTURAS DE PROVEEDORES Y CUENTAS POR PAGAR
@@ -1771,27 +2274,23 @@
 
   function loadState() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_STATE));
-        return JSON.parse(JSON.stringify(DEFAULT_STATE));
+      const rawV5 = localStorage.getItem(STORAGE_KEY);
+      if (rawV5) {
+        const parsed = JSON.parse(rawV5);
+        return migrateV3toV5(parsed);
       }
-      const parsed = JSON.parse(raw);
-      const merged = Object.assign({}, DEFAULT_STATE, parsed);
-      if (!Array.isArray(merged.expenses)) merged.expenses = JSON.parse(JSON.stringify(DEFAULT_STATE.expenses));
-      if (!Array.isArray(merged.heldOrders)) merged.heldOrders = JSON.parse(JSON.stringify(DEFAULT_STATE.heldOrders));
-      if (!Array.isArray(merged.kitchenBatches)) merged.kitchenBatches = JSON.parse(JSON.stringify(DEFAULT_STATE.kitchenBatches));
-      if (!Array.isArray(merged.suppliers)) merged.suppliers = JSON.parse(JSON.stringify(DEFAULT_STATE.suppliers));
-      if (!Array.isArray(merged.purchases)) merged.purchases = JSON.parse(JSON.stringify(DEFAULT_STATE.purchases));
-      if (!Array.isArray(merged.wasteRecords)) merged.wasteRecords = JSON.parse(JSON.stringify(DEFAULT_STATE.wasteRecords));
-      if (!Array.isArray(merged.kardex)) merged.kardex = JSON.parse(JSON.stringify(DEFAULT_STATE.kardex));
-      if (!Array.isArray(merged.posTerminals)) merged.posTerminals = JSON.parse(JSON.stringify(DEFAULT_STATE.posTerminals));
-      if (!Array.isArray(merged.pagoMovilAccounts)) merged.pagoMovilAccounts = JSON.parse(JSON.stringify(DEFAULT_STATE.pagoMovilAccounts));
-      if (!Array.isArray(merged.batchClosures)) merged.batchClosures = JSON.parse(JSON.stringify(DEFAULT_STATE.batchClosures || []));
-      if (!merged.settings) merged.settings = JSON.parse(JSON.stringify(DEFAULT_STATE.settings));
-      if (!merged.settings.fiscalConfig) merged.settings.fiscalConfig = JSON.parse(JSON.stringify(DEFAULT_STATE.settings.fiscalConfig));
-      return merged;
+      const rawV3 = localStorage.getItem(STORAGE_KEY_V3);
+      if (rawV3) {
+        const parsedV3 = JSON.parse(rawV3);
+        const migrated = migrateV3toV5(parsedV3);
+        saveState(migrated);
+        return migrated;
+      }
+      const fresh = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      saveState(fresh);
+      return fresh;
     } catch (e) {
+      console.error('Error cargando base de datos:', e);
       return JSON.parse(JSON.stringify(DEFAULT_STATE));
     }
   }
@@ -1800,8 +2299,30 @@
 
   function saveState(newState) {
     try {
+      // Sincronizar espejo de dishes e inventory
+      if (Array.isArray(newState.variants)) {
+        newState.dishes = newState.variants.map(v => ({
+          id: v.id,
+          code: v.code,
+          barcode: v.barcode,
+          group: v.familyId,
+          name: v.name,
+          category: (newState.families && newState.families.find(f => f.id === v.familyId)) ? newState.families.find(f => f.id === v.familyId).name : 'Comida',
+          priceUsd: v.priceUsd,
+          emoji: v.emoji || '🥟',
+          img: v.img || '../assets/img/productos/empanadas.jpg',
+          ingredients: v.recipe || [],
+          recipe: v.recipe || [],
+          isDish: true,
+          productId: v.productId
+        }));
+      }
+      if (Array.isArray(newState.insumos) && Array.isArray(newState.retailItems)) {
+        newState.inventory = [...newState.insumos, ...newState.retailItems];
+      }
       const jsonStr = JSON.stringify(newState);
       localStorage.setItem(STORAGE_KEY, jsonStr);
+      localStorage.setItem(STORAGE_KEY_V3, jsonStr); // Respaldo retrocompatible v3
       // Espejo en IndexedDB para blindaje adicional en Windows 7
       try {
         if (window.indexedDB) {
@@ -1888,9 +2409,11 @@
   }
 
   function calcDishCost(dish) {
-    if (!dish || !Array.isArray(dish.ingredients)) return 0;
+    if (!dish) return 0;
+    const items = Array.isArray(dish.recipe) ? dish.recipe : (Array.isArray(dish.ingredients) ? dish.ingredients : []);
+    if (!items.length) return 0;
     let totalCost = 0;
-    dish.ingredients.forEach(ing => {
+    items.forEach(ing => {
       const ins = getInsumoById(ing.insumoId);
       if (ins) {
         totalCost += (Number(ins.costUsd) || 0) * (Number(ing.qty) || 0);
@@ -1900,9 +2423,11 @@
   }
 
   function calcDishMaxPortions(dish) {
-    if (!dish || !Array.isArray(dish.ingredients) || !dish.ingredients.length) return 999;
+    if (!dish) return 999;
+    const items = Array.isArray(dish.recipe) ? dish.recipe : (Array.isArray(dish.ingredients) ? dish.ingredients : []);
+    if (!items.length) return 999;
     let minPortions = Infinity;
-    dish.ingredients.forEach(ing => {
+    items.forEach(ing => {
       const ins = getInsumoById(ing.insumoId);
       if (ins && ing.qty > 0) {
         const possible = Math.floor((Number(ins.stock) || 0) / Number(ing.qty));
@@ -1935,28 +2460,74 @@
     const q = String(query || '').trim().toUpperCase();
     if (!q) return null;
 
-    const dish = state.dishes.find(d =>
-      String(d.code).toUpperCase() === q ||
-      String(d.barcode).toUpperCase() === q ||
-      ('0' + String(d.code).toUpperCase()) === q
-    );
-    if (dish) return { kind: 'dish', item: dish };
+    // 1. Variantes de Catálogo v5
+    if (Array.isArray(state.variants)) {
+      const variant = state.variants.find(v =>
+        String(v.code).toUpperCase() === q ||
+        String(v.barcode).toUpperCase() === q ||
+        ('0' + String(v.code).toUpperCase()) === q
+      );
+      if (variant) {
+        const prod = (state.products || []).find(p => p.id === variant.productId);
+        return { kind: 'variant', item: variant, product: prod, isDish: true };
+      }
+    }
 
-    const inv = state.inventory.find(i => {
-      if (!includeKitchenInsumos && !i.sellable) return false;
-      return (
+    // 2. Platos (espejo o legado)
+    if (Array.isArray(state.dishes)) {
+      const dish = state.dishes.find(d =>
+        String(d.code).toUpperCase() === q ||
+        String(d.barcode).toUpperCase() === q ||
+        ('0' + String(d.code).toUpperCase()) === q
+      );
+      if (dish) return { kind: 'dish', item: dish };
+    }
+
+    // 3. Retail Items & Inventario
+    if (Array.isArray(state.retailItems)) {
+      const ret = state.retailItems.find(i =>
         String(i.code).toUpperCase() === q ||
         String(i.barcode).toUpperCase() === q ||
         String(i.qrCode || '').toUpperCase() === q
       );
-    });
-    if (inv) return { kind: 'inventory', item: inv };
+      if (ret) return { kind: 'inventory', item: ret };
+    }
+
+    if (Array.isArray(state.inventory)) {
+      const inv = state.inventory.find(i => {
+        if (!includeKitchenInsumos && !i.sellable) return false;
+        return (
+          String(i.code).toUpperCase() === q ||
+          String(i.barcode).toUpperCase() === q ||
+          String(i.qrCode || '').toUpperCase() === q
+        );
+      });
+      if (inv) return { kind: 'inventory', item: inv };
+    }
 
     return null;
   }
 
   function getItemsForGroup(groupId) {
-    const dishes = state.dishes.filter(d => d.group === groupId).map(d => ({
+    const GROUP_MAP = {
+      empanadas: 'fritos',
+      pastelitos: 'fritos',
+      papas: 'fritos',
+      almuerzos: 'almuerzos',
+      cafe: 'cafeteria',
+      bebidas: 'bebidas',
+      refrescos: 'bebidas',
+      cervezas: 'cervezas',
+      chucherias: 'chucherias',
+      cigarros: 'cigarros',
+      viveres: 'viveres',
+      arepas: 'arepas',
+      fritos: 'fritos',
+      cafeteria: 'cafeteria'
+    };
+    const targetFamily = GROUP_MAP[groupId] || groupId;
+
+    const dishes = (state.dishes || []).filter(d => d.group === targetFamily || d.group === groupId).map(d => ({
       kind: 'dish',
       id: d.id,
       code: d.code,
@@ -1971,7 +2542,8 @@
       unit: 'plato',
       raw: d
     }));
-    const prods = state.inventory.filter(i => i.sellable === true && i.group === groupId).map(i => ({
+
+    const prods = (state.inventory || []).filter(i => i.sellable === true && (i.group === targetFamily || i.group === groupId || i.familyId === targetFamily)).map(i => ({
       kind: 'inventory',
       id: i.id,
       code: i.code,
@@ -1979,7 +2551,7 @@
       qrCode: i.qrCode,
       name: i.name,
       category: i.category,
-      group: i.group,
+      group: i.group || i.familyId,
       priceUsd: i.priceUsd,
       emoji: i.emoji,
       img: i.img,
@@ -1987,7 +2559,8 @@
       unit: i.unit,
       raw: i
     }));
-    return dishes.concat(prods);
+
+    return [...dishes, ...prods];
   }
 
   function findUsedPagoMovilRef(refStr) {
@@ -2098,12 +2671,14 @@
     let totalCostUsd = 0;
 
     salePayload.items.forEach(line => {
-      if (line.isDish) {
-        const dish = state.dishes.find(d => d.id === line.refId);
+      if (line.isDish || line.isVariant) {
+        const dish = (state.variants && state.variants.find(v => v.id === line.refId || v.id === line.variantId))
+                  || (state.dishes && state.dishes.find(d => d.id === line.refId));
         if (dish) {
           const unitCost = calcDishCost(dish);
           totalCostUsd += unitCost * line.qty;
-          dish.ingredients.forEach(ing => {
+          const ingredients = dish.recipe || dish.ingredients || [];
+          ingredients.forEach(ing => {
             const ins = getInsumoById(ing.insumoId);
             if (ins) {
               const prev = Number(ins.stock || 0);
@@ -2121,6 +2696,33 @@
                 notes: `Consumo receta: ${line.qty}x ${dish.name}`
               });
             }
+          });
+        }
+
+        // Descontar insumos de recetas de Modificadores / Extras
+        const mods = line.selectedModifiers || line.modifiers || [];
+        if (Array.isArray(mods)) {
+          mods.forEach(mod => {
+            const modRecipe = mod.recipe || [];
+            modRecipe.forEach(ing => {
+              const ins = getInsumoById(ing.insumoId);
+              if (ins) {
+                const prev = Number(ins.stock || 0);
+                const deduct = Number((ing.qty * line.qty).toFixed(4));
+                ins.stock = Math.max(0, Number((prev - deduct).toFixed(4)));
+                recordMovementInternal({
+                  itemId: ins.id,
+                  action: 'VENTA',
+                  qty: -deduct,
+                  costUsd: ins.costUsd,
+                  prevStock: prev,
+                  nextStock: ins.stock,
+                  docRef: 'ORD-' + orderNum,
+                  responsible: salePayload.cashier || 'Caja Principal',
+                  notes: `Consumo extra receta: ${line.qty}x ${mod.name}`
+                });
+              }
+            });
           });
         }
       } else {
@@ -3081,9 +3683,119 @@
     location.reload();
   }
 
+
+  /* ==========================================================================
+     HELPERS DEL CATÁLOGO V5 (Familia -> Producto -> Variante -> Extras)
+     ========================================================================== */
+  function getProductsByFamily(familyId) {
+    if (!state.products || !Array.isArray(state.products)) return [];
+    return state.products
+      .filter(p => p.familyId === familyId && p.active !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
+  function getVariantsForProduct(productId) {
+    if (!state.variants || !Array.isArray(state.variants)) return [];
+    return state.variants
+      .filter(v => v.productId === productId && v.active !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
+  function getModifierGroupsForProduct(productId) {
+    const prod = (state.products || []).find(p => p.id === productId);
+    if (!prod || !Array.isArray(prod.modifierGroupIds)) return [];
+    if (!state.modifierGroups || !Array.isArray(state.modifierGroups)) return [];
+    return prod.modifierGroupIds
+      .map(mgId => state.modifierGroups.find(g => g.id === mgId))
+      .filter(Boolean);
+  }
+
+  function getDirectRetailItems(familyId) {
+    const list = [];
+    if (Array.isArray(state.retailItems)) {
+      state.retailItems
+        .filter(i => (i.familyId === familyId || i.group === familyId) && i.sellable !== false)
+        .forEach(i => list.push(i));
+    }
+    if (Array.isArray(state.inventory)) {
+      state.inventory
+        .filter(i => i.sellable && (i.familyId === familyId || i.group === familyId))
+        .forEach(i => {
+          if (!list.some(x => x.id === i.id)) list.push(i);
+        });
+    }
+    return list;
+  }
+
+  function saveProduct(product) {
+    if (!product || !product.name) return false;
+    if (!Array.isArray(state.products)) state.products = [];
+    if (!product.id) product.id = 'prod-' + Date.now();
+    const idx = state.products.findIndex(p => p.id === product.id);
+    if (idx >= 0) {
+      state.products[idx] = Object.assign({}, state.products[idx], product);
+    } else {
+      state.products.push(product);
+    }
+    saveState(state);
+    return product;
+  }
+
+  function saveVariant(variant) {
+    if (!variant || !variant.name) return false;
+    if (!Array.isArray(state.variants)) state.variants = [];
+    if (!variant.id) variant.id = 'var-' + Date.now();
+    if (!variant.recipe && variant.ingredients) variant.recipe = variant.ingredients;
+    if (!variant.ingredients && variant.recipe) variant.ingredients = variant.recipe;
+    const idx = state.variants.findIndex(v => v.id === variant.id);
+    if (idx >= 0) {
+      state.variants[idx] = Object.assign({}, state.variants[idx], variant);
+    } else {
+      state.variants.push(variant);
+    }
+    saveState(state);
+    return variant;
+  }
+
+  function deleteVariant(variantId) {
+    if (!Array.isArray(state.variants)) return false;
+    state.variants = state.variants.filter(v => v.id !== variantId);
+    saveState(state);
+    return true;
+  }
+
+  function saveModifierGroup(group) {
+    if (!group || !group.name) return false;
+    if (!Array.isArray(state.modifierGroups)) state.modifierGroups = [];
+    if (!group.id) group.id = 'mg-' + Date.now();
+    const idx = state.modifierGroups.findIndex(g => g.id === group.id);
+    if (idx >= 0) {
+      state.modifierGroups[idx] = Object.assign({}, state.modifierGroups[idx], group);
+    } else {
+      state.modifierGroups.push(group);
+    }
+    saveState(state);
+    return group;
+  }
+
   window.MTP = {
     state,
     POS_GROUPS,
+    DEFAULT_FAMILIES,
+    DEFAULT_PRODUCTS,
+    DEFAULT_MODIFIER_GROUPS,
+    DEFAULT_VARIANTS,
+    DEFAULT_RETAIL_ITEMS,
+    DEFAULT_INSUMOS,
+    getProductsByFamily,
+    getVariantsForProduct,
+    getModifierGroupsForProduct,
+    getDirectRetailItems,
+    saveProduct,
+    saveVariant,
+    deleteVariant,
+    saveModifierGroup,
+    migrateV3toV5,
     getItemsForGroup,
     save: () => saveState(state),
     getFallbackSvgDataUri,

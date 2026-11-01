@@ -18,127 +18,67 @@
           <button class="menu-toggle" id="menuToggleBtn">☰</button>
           <div class="topbar-title">
             <h2>Configuración del Sistema y Base de Datos Local</h2>
-            <p>Control del negocio, datos en disco duro de la PC, respaldo sin internet y modo aplicación para Windows 7</p>
+            <p>Control del negocio, datos en disco duro, respaldo sin internet y modo aplicación para Windows 7</p>
           </div>
         </div>
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
+          <button class="btn btn-action btn-sm" onclick="saveSettingsForm()">
+            <span id="saveTopIcon"></span> Guardar Cambios
+          </button>
         </div>
       </header>
 
       <div class="admin-content">
         <!-- BASE DE DATOS LOCAL EN DISCO DURO (PARA WINDOWS 7) -->
-        <div class="card" style="border:1.5px solid #059669;margin-bottom:8px">
-          <div class="card-hd" style="background:#ecfdf5;padding:4px 8px">
+        <div class="card" data-section="dinero" style="margin-bottom:12px">
+          <div class="card-hd">
             <div>
-              <h3 style="color:#065f46;font-size:12px">Base de Datos Local en Disco Duro (100% Offline)</h3>
-              <span style="font-size:10px;color:#047857">Tus ventas, gastos, kardex e inventario viven en el disco duro de esta PC</span>
+              <h3>
+                <span id="dbCardIcon"></span> Base de Datos Local en Disco Duro (100% Offline)
+              </h3>
+              <p>Tus ventas, gastos, kardex e inventario viven en el disco duro de esta PC</p>
             </div>
             <span class="badge badge-green">Local Seguro</span>
           </div>
-          <div class="card-bd" style="padding:6px 10px">
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin-bottom:8px;background:#f8fafc;padding:6px 10px;border-radius:6px;border:1px solid var(--border)">
+          <div class="card-bd">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;background:var(--surface-2);padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--line)">
               <div>
-                <span style="font-size:9.5px;color:var(--txt-sec);font-weight:700">ÓRDENES COBRADAS</span>
-                <div style="font-size:15px;font-weight:900" id="dbSalesCount">0</div>
+                <span style="font-size:11px;color:var(--txt-2);font-weight:var(--fw-semibold)">ÓRDENES COBRADAS</span>
+                <div class="tabular-nums" style="font-size:16px;font-weight:var(--fw-bold)" id="dbSalesCount">0</div>
               </div>
               <div>
-                <span style="font-size:9.5px;color:var(--txt-sec);font-weight:700">GASTOS OPERATIVOS</span>
-                <div style="font-size:15px;font-weight:900" id="dbExpensesCount">0</div>
+                <span style="font-size:11px;color:var(--txt-2);font-weight:var(--fw-semibold)">GASTOS OPERATIVOS</span>
+                <div class="tabular-nums" style="font-size:16px;font-weight:var(--fw-bold)" id="dbExpensesCount">0</div>
               </div>
               <div>
-                <span style="font-size:9.5px;color:var(--txt-sec);font-weight:700">ARTÍCULOS INVENTARIO</span>
-                <div style="font-size:15px;font-weight:900" id="dbInventoryCount">0</div>
+                <span style="font-size:11px;color:var(--txt-2);font-weight:var(--fw-semibold)">ARTÍCULOS INVENTARIO</span>
+                <div class="tabular-nums" style="font-size:16px;font-weight:var(--fw-bold)" id="dbInventoryCount">0</div>
               </div>
               <div>
-                <span style="font-size:9.5px;color:var(--txt-sec);font-weight:700">PLATOS Y RECETAS</span>
-                <div style="font-size:15px;font-weight:900" id="dbDishesCount">0</div>
+                <span style="font-size:11px;color:var(--txt-2);font-weight:var(--fw-semibold)">PLATOS Y RECETAS</span>
+                <div class="tabular-nums" style="font-size:16px;font-weight:var(--fw-bold)" id="dbDishesCount">0</div>
               </div>
             </div>
 
             <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-              <button class="btn btn-p btn-sm" onclick="MTP.exportBackupJson()">Descargar Respaldo JSON</button>
-              <button class="btn btn-blue btn-sm" onclick="document.getElementById('importBackupFileInput').click()">Restaurar Respaldo JSON</button>
+              <button class="btn btn-secondary btn-sm" onclick="MTP.exportBackupJson()">Descargar Respaldo JSON</button>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importBackupFileInput').click()">Restaurar Respaldo JSON</button>
               <input type="file" id="importBackupFileInput" accept=".json" style="display:none" onchange="handleImportBackup(this)">
-              <button class="btn btn-ghost btn-sm" onclick="MTP.linkLocalDiskFile()">Vincular Archivo Físico en Disco</button>
+              <button class="btn btn-secondary btn-sm" onclick="MTP.linkLocalDiskFile()">Vincular Archivo Físico en Disco</button>
             </div>
           </div>
         </div>
 
-        <!-- CÓMO CREAR EL ACCESO DIRECTO EN ESCRITORIO WINDOWS 7 -->
-        <div class="card" style="margin-bottom:8px;background:#f8fafc">
-          <div class="card-hd" style="padding:4px 8px">
-            <h3 style="font-size:12px">🖥️ Acceso Directo de Escritorio Windows 7 (Modo Ventana Nativa)</h3>
-          </div>
-          <div class="card-bd" style="padding:6px 10px;font-size:11px;line-height:1.4">
-            <p>Para que el cajero lo use como un <strong>sistema de facturación de escritorio a pantalla completa</strong> (sin barras de navegador ni distracciones):</p>
-            <ol style="padding-left:18px;margin-top:4px">
-              <li>Haz clic derecho en el Escritorio de Windows 7 → <strong>Nuevo → Acceso directo</strong>.</li>
-              <li>En la ruta del elemento, escribe:
-                <br><code style="background:#0f172a;color:#34d399;padding:3px 6px;border-radius:4px;font-family:var(--font-mono);font-size:11.5px;display:inline-block;margin:3px 0">"C:\Program Files\Google\Chrome\Application\chrome.exe" --app="file:///C:/Users/PC/Desktop/MI-TIENDA-POS/caja/pos.html"</code>
-              </li>
-              <li>Nómbralo <strong>MI TIENDA POS (Caja de Cobranzas)</strong> y dale Guardar.</li>
-              <li>¡Listo! Al darle doble clic, se abre al instante en 1 segundo con consumo mínimo de memoria RAM.</li>
-            </ol>
-          </div>
-        </div>
-
-        <!-- GESTIÓN DE TERMINALES / PUNTOS DE VENTA (POS) -->
-        <div class="card" style="margin-bottom:8px">
-          <div class="card-hd" style="padding:4px 8px;background:#f0fdf4">
-            <div>
-              <h3 style="color:#166534;font-size:12px">💳 Puntos de Venta (POS) y Terminales de Tarjeta</h3>
-              <span style="font-size:10px;color:#15803d">Dispositivos físicos (Pax, Verifone, Biopago) habilitados para cobrar y auditar por lote</span>
-            </div>
-            <button class="btn btn-p btn-sm" onclick="openTerminalModal()">+ Agregar Punto de Venta</button>
-          </div>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Nombre del Punto</th>
-                  <th>Banco Adquirente</th>
-                  <th>Modelo</th>
-                  <th>Lote Activo</th>
-                  <th>Estado</th>
-                  <th>Acción</th>
-                </tr>
-              </thead>
-              <tbody id="terminalsTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- GESTIÓN DE CUENTAS BANCARIAS DESTINO PARA PAGO MÓVIL -->
-        <div class="card" style="margin-bottom:8px">
-          <div class="card-hd" style="padding:4px 8px;background:#eff6ff">
-            <div>
-              <h3 style="color:#1e40af;font-size:12px">📱 Cuentas Bancarias de Destino para Pago Móvil</h3>
-              <span style="font-size:10px;color:#1d4ed8">Cuentas receptoras del negocio donde los clientes transfieren el dinero</span>
-            </div>
-            <button class="btn btn-blue btn-sm" onclick="openPagoMovilAccountModal()">+ Agregar Cuenta Bancaria</button>
-          </div>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Identificador de Cuenta</th>
-                  <th>Banco Receptor</th>
-                  <th>Teléfono Asociado</th>
-                  <th>RIF / Titular</th>
-                  <th>Estado</th>
-                  <th>Acción</th>
-                </tr>
-              </thead>
-              <tbody id="pagoMovilAccountsTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- DATOS DEL NEGOCIO Y CABECERA DE TICKETS -->
-        <div class="card">
+        <!-- DATOS DEL NEGOCIO Y CABECERA DE NOTAS DE DESPACHO -->
+        <div class="card" data-section="cocina" style="margin-bottom:12px">
           <div class="card-hd">
-            <h3>🏪 Datos del Negocio y Cabecera de Notas de Despacho</h3>
+            <div>
+              <h3>
+                <span id="storeCardIcon"></span> Datos del Negocio y Cabecera de Notas de Despacho
+              </h3>
+              <p>Información impresa en tickets, razón comercial y leyenda de control interno</p>
+            </div>
           </div>
           <div class="card-bd">
             <div class="form-grid" style="margin-bottom:14px">
@@ -160,39 +100,99 @@
               </div>
               <div class="form-group">
                 <label>Margen de Ganancia Objetivo (%)</label>
-                <input type="number" id="cfgMargin" class="input" min="10" max="85">
+                <input type="number" id="cfgMargin" class="input tabular-nums" min="10" max="85">
               </div>
               <div class="form-group">
                 <label>Próximo Número de Orden / Ticket</label>
-                <input type="number" id="cfgNextOrder" class="input">
+                <input type="number" id="cfgNextOrder" class="input tabular-nums">
               </div>
               <div class="form-group" style="grid-column:1/-1">
-                <label>Leyenda Legal en el Ticket (Deslinde SENIAT)</label>
+                <label>Leyenda Legal en el Ticket (Control Interno)</label>
                 <input type="text" id="cfgLegalNotice" class="input">
               </div>
             </div>
 
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <button class="btn btn-p" onclick="saveSettingsForm()">💾 Guardar Configuración</button>
-              <button class="btn btn-danger btn-sm" onclick="if(confirm('¿Restablecer datos iniciales de fábrica?')) MTP.resetDemoData()">🔄 Restablecer Datos Iniciales</button>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <button class="btn btn-action" onclick="saveSettingsForm()">
+                <span id="saveFormIcon"></span> Guardar Configuración General
+              </button>
+              <button class="btn btn-secondary btn-sm" style="color:var(--money-out)" onclick="if(confirm('¿Restablecer datos iniciales de fábrica?')) MTP.resetDemoData()">Restablecer Datos Iniciales</button>
             </div>
           </div>
         </div>
 
-        <!-- CONFIGURACIÓN DE MÁQUINA FISCAL HOMOLOGADA SENIAT -->
-        <div class="card" style="margin-bottom:8px;border:1.5px solid #2563eb">
-          <div class="card-hd" style="padding:4px 8px;background:#eff6ff">
+        <!-- GESTIÓN DE TERMINALES / PUNTOS DE VENTA (POS) -->
+        <div class="card" data-section="dinero" style="margin-bottom:12px">
+          <div class="card-hd">
             <div>
-              <h3 style="color:#1d4ed8;font-size:12px">🖨️ Conexión de Máquina Fiscal Homologada (SENIAT Providencia 0141)</h3>
-              <span style="font-size:10px;color:#1e40af">Control de impresoras fiscales (The Factory HKA, Bixolon, Aclas, BMC), puerto serial COM/USB, IGTF 3% y Reportes X/Z</span>
+              <h3>
+                <span id="termCardIcon"></span> Puntos de Venta (POS) y Terminales de Tarjeta
+              </h3>
+              <p>Dispositivos físicos (Pax, Verifone, Biopago) habilitados para cobrar y auditar por lote</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="openTerminalModal()">+ Agregar Punto de Venta</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nombre del Punto</th>
+                  <th>Banco Adquirente</th>
+                  <th>Modelo</th>
+                  <th>Lote Activo</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="terminalsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- GESTIÓN DE CUENTAS BANCARIAS DESTINO PARA PAGO MÓVIL -->
+        <div class="card" data-section="abasto" style="margin-bottom:12px">
+          <div class="card-hd">
+            <div>
+              <h3>
+                <span id="pmCardIcon"></span> Cuentas Bancarias de Destino para Pago Móvil
+              </h3>
+              <p>Cuentas receptoras del negocio donde los clientes transfieren el dinero</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="openPagoMovilAccountModal()">+ Agregar Cuenta Bancaria</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Identificador de Cuenta</th>
+                  <th>Banco Receptor</th>
+                  <th>Teléfono Asociado</th>
+                  <th>RIF / Titular</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="pagoMovilAccountsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- CONFIGURACIÓN DE MÁQUINA FISCAL HOMOLOGADA SENIAT -->
+        <div class="card" data-section="fiscal" style="margin-bottom:12px">
+          <div class="card-hd">
+            <div>
+              <h3>
+                <span id="fiscCardIcon"></span> Conexión de Máquina Fiscal Homologada (SENIAT)
+              </h3>
+              <p>Control de impresoras fiscales (The Factory HKA, Bixolon, Aclas, BMC), puerto serial COM/USB, IGTF 3% y Reportes X/Z</p>
             </div>
             <div style="display:flex;gap:4px">
-              <button class="btn btn-ghost btn-sm" onclick="triggerFiscalReportX()">📋 Reporte X</button>
-              <button class="btn btn-danger btn-sm" onclick="triggerFiscalReportZ()">📑 Reporte Z (Cierre Fiscal)</button>
+              <button class="btn btn-secondary btn-sm" onclick="triggerFiscalReportX()">Reporte X</button>
+              <button class="btn btn-secondary btn-sm" onclick="triggerFiscalReportZ()">Reporte Z (Cierre Fiscal)</button>
             </div>
           </div>
-          <div class="card-bd" style="padding:8px 10px">
-            <div class="form-grid" style="margin-bottom:8px">
+          <div class="card-bd">
+            <div class="form-grid" style="margin-bottom:12px">
               <div class="form-group">
                 <label>Marca / Fabricante Homologado</label>
                 <select id="fiscBrandSelect" class="select">
@@ -214,11 +214,11 @@
               </div>
               <div class="form-group">
                 <label>Serial de la Máquina Fiscal (Impreso en el equipo)</label>
-                <input type="text" id="fiscSerialInput" class="input" style="font-family:var(--font-mono);font-weight:900" placeholder="Ej: Z4A2098124">
+                <input type="text" id="fiscSerialInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)" placeholder="Ej: Z4A2098124">
               </div>
               <div class="form-group">
                 <label>Modo de Emisión de Facturas</label>
-                <select id="fiscModeSelect" class="select" style="font-weight:800">
+                <select id="fiscModeSelect" class="select" style="font-weight:var(--fw-bold)">
                   <option value="DUAL">DUAL (Factura Fiscal Homologada + Comanda de Cocina)</option>
                   <option value="HOMOLOGADO">SOLO FISCAL (Todo por Impresora Fiscal SENIAT)</option>
                   <option value="INTERNO">CONTROL INTERNO (Notas de Despacho Sin Valor Fiscal)</option>
@@ -226,11 +226,11 @@
               </div>
               <div class="form-group">
                 <label>Último Reporte Z Fiscal Emitido</label>
-                <input type="number" id="fiscReportZInput" class="input" style="font-family:var(--font-mono);font-weight:800" min="1">
+                <input type="number" id="fiscReportZInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)" min="1">
               </div>
               <div class="form-group">
                 <label>Próximo N° de Factura Fiscal Consecutiva</label>
-                <input type="number" id="fiscNextInvoiceInput" class="input" style="font-family:var(--font-mono);font-weight:800" min="1">
+                <input type="number" id="fiscNextInvoiceInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)" min="1">
               </div>
               <div class="form-group" style="grid-column:1/-1">
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
@@ -240,19 +240,42 @@
               </div>
             </div>
             <div style="display:flex;justify-content:flex-end">
-              <button class="btn btn-blue btn-sm" onclick="saveFiscalConfigForm()">💾 Guardar Configuración Fiscal</button>
+              <button class="btn btn-secondary btn-sm" onclick="saveFiscalConfigForm()">Guardar Configuración Fiscal</button>
             </div>
+          </div>
+        </div>
+
+        <!-- ACCESO DIRECTO EN ESCRITORIO WINDOWS 7 -->
+        <div class="card" data-section="fiscal" style="margin-bottom:0">
+          <div class="card-hd">
+            <div>
+              <h3>
+                <span id="screenCardIcon"></span> Acceso Directo de Escritorio Windows 7 (Modo Ventana Nativa)
+              </h3>
+              <p>Configuración para ejecutar Chrome en modo quiosco/app sin consumo excesivo de RAM</p>
+            </div>
+          </div>
+          <div class="card-bd" style="font-size:12px;line-height:1.5">
+            <p>Para que el cajero lo use como un <strong>sistema de facturación de escritorio a pantalla completa</strong> (sin barras de navegador ni distracciones):</p>
+            <ol style="padding-left:18px;margin-top:6px">
+              <li>Haz clic derecho en el Escritorio de Windows 7 → <strong>Nuevo → Acceso directo</strong>.</li>
+              <li>En la ruta del elemento, escribe:
+                <br><code style="background:var(--nav-bg);color:#34D399;padding:4px 8px;border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:11px;display:inline-block;margin:4px 0">"C:\Program Files\Google\Chrome\Application\chrome.exe" --app="file:///C:/Users/PC/Desktop/MI-TIENDA-POS/caja/pos.html"</code>
+              </li>
+              <li>Nómbralo <strong>MI TIENDA POS (Caja de Cobranzas)</strong> y dale Guardar.</li>
+              <li>¡Listo! Al darle doble clic, se abre al instante en 1 segundo con consumo mínimo de memoria RAM.</li>
+            </ol>
           </div>
         </div>
 
         <!-- MODAL PUNTO DE VENTA (TERMINAL) -->
         <div class="modal" id="modalPosTerminal">
           <div class="modal-box" style="max-width:480px">
-            <div class="modal-hd" style="background:#0f172a;color:#fff;padding:8px 14px;border-radius:12px 12px 0 0">
-              <h3 id="modalTermTitle" style="color:#fff;font-size:14px;margin:0">💳 Registrar Punto de Venta (POS)</h3>
-              <button class="btn btn-sm btn-ghost" style="color:#fff" onclick="document.getElementById('modalPosTerminal').classList.remove('open')">✕</button>
+            <div class="modal-hd">
+              <h3 id="modalTermTitle" style="margin:0">Registrar Punto de Venta (POS)</h3>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modalPosTerminal').classList.remove('open')">✕</button>
             </div>
-            <div class="modal-bd" style="padding:12px">
+            <div class="modal-bd">
               <input type="hidden" id="termEditId">
               <div class="form-group" style="margin-bottom:8px">
                 <label>Nombre Identificador del Punto</label>
@@ -276,7 +299,7 @@
                 </div>
                 <div class="form-group">
                   <label>N° Lote Actual (Batch)</label>
-                  <input type="text" id="termBatchInput" class="input" style="font-family:var(--font-mono);font-weight:800" placeholder="0001">
+                  <input type="text" id="termBatchInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)" placeholder="0001">
                 </div>
               </div>
               <div class="form-group">
@@ -287,9 +310,9 @@
                 </select>
               </div>
             </div>
-            <div class="modal-ft" style="padding:8px 12px">
-              <button class="btn btn-ghost" onclick="document.getElementById('modalPosTerminal').classList.remove('open')">Cancelar</button>
-              <button class="btn btn-p" onclick="saveTerminalModal()">💾 Guardar Punto POS</button>
+            <div class="modal-ft">
+              <button class="btn btn-secondary" onclick="document.getElementById('modalPosTerminal').classList.remove('open')">Cancelar</button>
+              <button class="btn btn-secondary" onclick="saveTerminalModal()">Guardar Punto POS</button>
             </div>
           </div>
         </div>
@@ -297,11 +320,11 @@
         <!-- MODAL CUENTA DESTINO PAGO MÓVIL -->
         <div class="modal" id="modalPmAccount">
           <div class="modal-box" style="max-width:480px">
-            <div class="modal-hd" style="background:#0f172a;color:#fff;padding:8px 14px;border-radius:12px 12px 0 0">
-              <h3 id="modalPmTitle" style="color:#fff;font-size:14px;margin:0">📱 Registrar Cuenta Pago Móvil Destino</h3>
-              <button class="btn btn-sm btn-ghost" style="color:#fff" onclick="document.getElementById('modalPmAccount').classList.remove('open')">✕</button>
+            <div class="modal-hd">
+              <h3 id="modalPmTitle" style="margin:0">Registrar Cuenta Pago Móvil Destino</h3>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modalPmAccount').classList.remove('open')">✕</button>
             </div>
-            <div class="modal-bd" style="padding:12px">
+            <div class="modal-bd">
               <input type="hidden" id="pmAccEditId">
               <div class="form-group" style="margin-bottom:8px">
                 <label>Nombre de la Cuenta (Para mostrar en Caja)</label>
@@ -321,11 +344,11 @@
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
                 <div class="form-group">
                   <label>Teléfono Asociado</label>
-                  <input type="text" id="pmAccPhoneInput" class="input" placeholder="0414-1234567">
+                  <input type="text" id="pmAccPhoneInput" class="input tabular-nums" placeholder="0414-1234567">
                 </div>
                 <div class="form-group">
                   <label>RIF / Cédula Titular</label>
-                  <input type="text" id="pmAccRifInput" class="input" placeholder="J-50123456-0">
+                  <input type="text" id="pmAccRifInput" class="input tabular-nums" placeholder="J-50123456-0">
                 </div>
               </div>
               <div class="form-group" style="margin-bottom:8px">
@@ -340,9 +363,9 @@
                 </select>
               </div>
             </div>
-            <div class="modal-ft" style="padding:8px 12px">
-              <button class="btn btn-ghost" onclick="document.getElementById('modalPmAccount').classList.remove('open')">Cancelar</button>
-              <button class="btn btn-blue" onclick="savePagoMovilAccountModal()">💾 Guardar Cuenta</button>
+            <div class="modal-ft">
+              <button class="btn btn-secondary" onclick="document.getElementById('modalPmAccount').classList.remove('open')">Cancelar</button>
+              <button class="btn btn-secondary" onclick="savePagoMovilAccountModal()">Guardar Cuenta</button>
             </div>
           </div>
         </div>
@@ -357,7 +380,24 @@
   <script src="../assets/js/auth.js"></script>
   <script src="../assets/js/sidenav.js"></script>
   <script>
+    function setupIcons() {
+      if (!window.MTPIcons) return;
+      const setIco = (id, name) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = MTPIcons.get(name, { size: 14 });
+      };
+      setIco('saveTopIcon', 'check');
+      setIco('dbCardIcon', 'database');
+      setIco('storeCardIcon', 'store');
+      setIco('saveFormIcon', 'check');
+      setIco('termCardIcon', 'bank');
+      setIco('pmCardIcon', 'phone');
+      setIco('fiscCardIcon', 'printer');
+      setIco('screenCardIcon', 'settings');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+      setupIcons();
       const s = MTP.state.settings;
       document.getElementById('cfgStoreName').value = s.storeName || '';
       document.getElementById('cfgRif').value = s.rif || '';
@@ -396,6 +436,7 @@
         applyIgtf3: document.getElementById('fiscApplyIgtfCheck').checked
       };
       MTP.saveFiscalConfig(fc);
+      MTP.toast('Configuración fiscal guardada con éxito.');
     }
 
     function triggerFiscalReportX() {
@@ -420,7 +461,7 @@
           <td><span class="code-pill">${t.currentBatch || '0001'}</span></td>
           <td><span class="badge ${t.status === 'ACTIVO' ? 'badge-green' : 'badge-red'}">${t.status}</span></td>
           <td>
-            <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:10.5px" onclick="openTerminalModal('${t.id}')">✏️ Editar</button>
+            <button class="btn btn-secondary btn-sm" onclick="openTerminalModal('${t.id}')">Editar</button>
           </td>
         </tr>
       `).join('');
@@ -434,11 +475,11 @@
         <tr>
           <td><strong>${a.name}</strong></td>
           <td>${a.bank}</td>
-          <td><span class="code-pill">${a.phone}</span></td>
-          <td>${a.rif} · <span style="font-size:11px;color:var(--txt-sec)">${a.holder || '—'}</span></td>
+          <td><span class="code-pill tabular-nums">${a.phone}</span></td>
+          <td>${a.rif} · <span style="font-size:11px;color:var(--txt-2)">${a.holder || '—'}</span></td>
           <td><span class="badge ${a.status === 'ACTIVO' ? 'badge-green' : 'badge-red'}">${a.status}</span></td>
           <td>
-            <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:10.5px" onclick="openPagoMovilAccountModal('${a.id}')">✏️ Editar</button>
+            <button class="btn btn-secondary btn-sm" onclick="openPagoMovilAccountModal('${a.id}')">Editar</button>
           </td>
         </tr>
       `).join('');
@@ -456,7 +497,7 @@
           document.getElementById('termModelInput').value = t.model || '';
           document.getElementById('termBatchInput').value = t.currentBatch || '0001';
           document.getElementById('termStatusSelect').value = t.status || 'ACTIVO';
-          if (title) title.textContent = '✏️ Editar Punto de Venta (POS)';
+          if (title) title.textContent = 'Editar Punto de Venta (POS)';
         }
       } else {
         document.getElementById('termEditId').value = '';
@@ -464,7 +505,7 @@
         document.getElementById('termModelInput').value = '';
         document.getElementById('termBatchInput').value = '0001';
         document.getElementById('termStatusSelect').value = 'ACTIVO';
-        if (title) title.textContent = '💳 Registrar Nuevo Punto de Venta (POS)';
+        if (title) title.textContent = 'Registrar Nuevo Punto de Venta (POS)';
       }
       modal.classList.add('open');
     }
@@ -501,7 +542,7 @@
           document.getElementById('pmAccRifInput').value = a.rif;
           document.getElementById('pmAccHolderInput').value = a.holder || '';
           document.getElementById('pmAccStatusSelect').value = a.status || 'ACTIVO';
-          if (title) title.textContent = '✏️ Editar Cuenta Pago Móvil';
+          if (title) title.textContent = 'Editar Cuenta Pago Móvil';
         }
       } else {
         document.getElementById('pmAccEditId').value = '';
@@ -510,7 +551,7 @@
         document.getElementById('pmAccRifInput').value = '';
         document.getElementById('pmAccHolderInput').value = '';
         document.getElementById('pmAccStatusSelect').value = 'ACTIVO';
-        if (title) title.textContent = '📱 Registrar Nueva Cuenta Pago Móvil';
+        if (title) title.textContent = 'Registrar Nueva Cuenta Pago Móvil';
       }
       modal.classList.add('open');
     }

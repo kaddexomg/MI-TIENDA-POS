@@ -23,62 +23,72 @@
         </div>
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
-          <button class="btn btn-danger btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Registrar Gasto (F6)</button>
-          <button class="btn btn-p btn-sm" onclick="window.print()">Imprimir Acta de Cierre</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Registrar Gasto (F6)</button>
+          <button class="btn btn-action btn-sm" onclick="window.print()">
+            <span id="printTopIcon"></span> Imprimir Acta de Cierre
+          </button>
         </div>
       </header>
 
       <div class="admin-content">
-        <!-- MARCO LEGAL / DESLINDE SENIAT -->
-        <div style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:6px 10px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-left:3px solid #10b981;font-size:10.5px">
+        <!-- MARCO LEGAL / NOTAS DE DESPACHO / CONTROL INTERNO -->
+        <div style="background:var(--nav-bg);color:#F8FAFC;border-radius:var(--radius);padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-left:4px solid var(--sec-fiscal);font-size:12px">
           <div>
-            <strong style="color:#34d399">CONTROL INTERNO (NO FISCAL):</strong>
-            Comprobantes emitidos como <em>Órdenes de Despacho</em>. Audita ventas, vueltos entregados, gastos de caja chica y efectivo físico en gaveta.
+            <strong style="color:var(--action)">NOTAS DE DESPACHO / CONTROL INTERNO:</strong>
+            Comprobantes emitidos exclusivamente para auditoría interna del turno (ventas, vueltos entregados, gastos de caja chica y arqueo de gaveta). Sin derecho a crédito fiscal SENIAT.
           </div>
-          <span class="badge badge-green" style="font-size:9.5px">Auditado</span>
+          <span class="badge badge-green" style="font-size:11px">Control Interno</span>
         </div>
 
         <!-- TOTALES DEL TURNO -->
-        <div class="stat-grid" id="cierreTotalsGrid" style="margin-bottom:6px"></div>
+        <div class="stat-grid" id="cierreTotalsGrid" style="margin-bottom:12px"></div>
 
         <!-- ARQUEO NETO DE GAVETA FÍSICA Y BANCOS -->
-        <div class="card" style="border:1.5px solid #059669;margin-bottom:8px">
-          <div class="card-hd" style="background:#ecfdf5;padding:4px 8px">
+        <div class="card" data-section="dinero" style="margin-bottom:12px">
+          <div class="card-hd">
             <div>
-              <h3 style="color:#065f46;font-size:12px">Arqueo Neto Exacto: Efectivo en Gaveta y Pago Móvil</h3>
-              <span style="font-size:10px;color:#047857">Fórmula: [Cobrado] − [Vueltos entregados] − [Gastos de caja pagados]</span>
+              <h3>
+                <span id="drawerTitleIcon"></span> Arqueo Neto Exacto: Efectivo en Gaveta y Pago Móvil
+              </h3>
+              <p>Fórmula: [Cobrado] − [Vueltos entregados] − [Gastos de caja chica pagados]</p>
             </div>
             <span class="badge badge-green">Dinero en Mano</span>
           </div>
-          <div class="card-bd" style="padding:6px 8px">
+          <div class="card-bd">
             <div class="stat-grid" id="netDrawerGrid" style="margin-bottom:0"></div>
           </div>
         </div>
 
         <!-- CONCILIACIÓN DE PUNTOS DE VENTA Y CIERRE DE LOTE -->
-        <div class="card" style="margin-bottom:8px">
-          <div class="card-hd" style="padding:4px 8px;background:#f0fdf4">
+        <div class="card" data-section="dinero" style="margin-bottom:12px">
+          <div class="card-hd">
             <div>
-              <h3 style="color:#166534;font-size:12px">Control de Puntos de Venta (POS) y Cierre de Lotes</h3>
-              <span style="font-size:10px;color:#15803d">Conciliación de voucher físico del punto vs ventas registradas en el sistema</span>
+              <h3>
+                <span id="posTitleIcon"></span> Control de Puntos de Venta (POS) y Cierre de Lotes
+              </h3>
+              <p>Conciliación de voucher físico del punto vs ventas registradas en el sistema</p>
             </div>
-            <button class="btn btn-p btn-sm" onclick="openBatchClosureModal()">📄 Realizar Cierre de Lote</button>
+            <button class="btn btn-secondary btn-sm" onclick="openBatchClosureModal()">
+              <span id="batchBtnIcon"></span> Realizar Cierre de Lote
+            </button>
           </div>
-          <div class="card-bd" style="padding:8px">
+          <div class="card-bd">
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px" id="posTerminalsStatusGrid"></div>
           </div>
         </div>
 
         <!-- CONCILIACIÓN DE PAGOS MÓVILES DEL TURNO -->
-        <div class="card" style="margin-bottom:8px">
-          <div class="card-hd" style="padding:4px 8px">
+        <div class="card" data-section="abasto" style="margin-bottom:12px">
+          <div class="card-hd">
             <div>
-              <h3 style="font-size:12px">Verificación y Conciliación de Pagos Móviles Recibidos</h3>
-              <span style="font-size:10px;color:var(--txt-sec)">Auditoría cuenta por cuenta: confirma abonos bancarios y detecta capturas falsas</span>
+              <h3>
+                <span id="pmTitleIcon"></span> Verificación y Conciliación de Pagos Móviles Recibidos
+              </h3>
+              <p>Auditoría cuenta por cuenta: confirma abonos bancarios y detecta capturas falsas</p>
             </div>
-            <span class="badge badge-green">Anti-Fraude</span>
+            <span class="badge badge-blue">Anti-Fraude</span>
           </div>
-          <div class="table-wrap" style="max-height:200px;overflow-y:auto">
+          <div class="table-wrap" style="max-height:220px;overflow-y:auto">
             <table class="data-table">
               <thead style="position:sticky;top:0;z-index:5">
                 <tr>
@@ -100,14 +110,16 @@
         </div>
 
         <!-- GASTOS OPERATIVOS DEL TURNO RESTADOS DE CAJA -->
-        <div class="card" style="margin-bottom:8px">
-          <div class="card-hd" style="background:#fef2f2;padding:4px 8px">
+        <div class="card" data-section="gastos" style="margin-bottom:12px">
+          <div class="card-hd">
             <div>
-              <h3 style="color:#991b1b;font-size:12px">Gastos de Caja Chica Descontados del Turno</h3>
+              <h3>
+                <span id="expensesTitleIcon"></span> Gastos de Caja Chica Descontados del Turno
+              </h3>
             </div>
-            <button class="btn btn-danger btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Registrar Gasto (F6)</button>
+            <button class="btn btn-secondary btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Registrar Gasto (F6)</button>
           </div>
-          <div class="table-wrap" style="max-height:160px;overflow-y:auto">
+          <div class="table-wrap" style="max-height:180px;overflow-y:auto">
             <table class="data-table">
               <thead style="position:sticky;top:0;z-index:5">
                 <tr>
@@ -126,9 +138,13 @@
         </div>
 
         <!-- HISTORIAL COMPLETO DE VENTAS Y VUELTOS DEL TURNO -->
-        <div class="card">
+        <div class="card" data-section="fiscal" style="margin-bottom:0">
           <div class="card-hd">
-            <h3>Libro de Órdenes de Despacho y Desglose de Vueltos</h3>
+            <div>
+              <h3>
+                <span id="salesTitleIcon"></span> Libro de Comprobantes Emitidos (Notas de Despacho / Control Interno) y Desglose de Vueltos
+              </h3>
+            </div>
           </div>
           <div class="table-wrap">
             <table class="data-table">
@@ -151,46 +167,44 @@
         <!-- MODAL PARA CIERRE DE LOTE DE PUNTO DE VENTA -->
         <div class="modal" id="batchClosureModal">
           <div class="modal-box" style="max-width:540px">
-            <div class="modal-hd" style="background:#0f172a;color:#fff;padding:8px 14px;border-radius:12px 12px 0 0">
-              <h3 style="color:#fff;font-size:14px;margin:0">📄 Cierre de Lote de Punto de Venta (Conciliación Voucher)</h3>
-              <button class="btn btn-sm btn-ghost" style="color:#fff" onclick="document.getElementById('batchClosureModal').classList.remove('open')">✕</button>
+            <div class="modal-hd">
+              <h3 style="margin:0">Cierre de Lote de Punto de Venta (Conciliación Voucher)</h3>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('batchClosureModal').classList.remove('open')">✕</button>
             </div>
-            <div class="modal-bd" style="padding:12px">
-              <p style="font-size:11px;color:#475569;margin-bottom:8px">
+            <div class="modal-bd">
+              <p style="font-size:12px;color:var(--txt-2);margin-bottom:8px">
                 Imprime el comprobante de <strong>CIERRE DE LOTE</strong> en el punto físico (Pax, Verifone, Biopago) y transcribe los datos del papel para contrastar con las ventas registradas:
               </p>
               <div class="form-group" style="margin-bottom:8px">
                 <label>Terminal / Punto de Venta a Cerrar</label>
-                <select id="closeBatchTermSelect" class="select" onchange="updateBatchModalPreview(this.value)">
-                  <!-- Dinámico -->
-                </select>
+                <select id="closeBatchTermSelect" class="select" onchange="updateBatchModalPreview(this.value)"></select>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
                 <div class="form-group">
                   <label>N° Lote Impreso en Voucher</label>
-                  <input type="text" id="closeBatchNumInput" class="input" style="font-family:var(--font-mono);font-weight:800">
+                  <input type="text" id="closeBatchNumInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)">
                 </div>
                 <div class="form-group">
                   <label>N° Operaciones Impresas</label>
-                  <input type="number" id="closeBatchCountInput" class="input" min="0" oninput="compareBatchClosureLive()">
+                  <input type="number" id="closeBatchCountInput" class="input tabular-nums" min="0" oninput="compareBatchClosureLive()">
                 </div>
               </div>
               <div class="form-group" style="margin-bottom:8px">
                 <label>Total en Bolívares (Bs) según Voucher Físico</label>
-                <input type="number" step="0.01" id="closeBatchAmountBsInput" class="input" style="font-size:15px;font-weight:900" oninput="compareBatchClosureLive()">
+                <input type="number" step="0.01" id="closeBatchAmountBsInput" class="input tabular-nums money-bs" style="font-size:15px;font-weight:var(--fw-bold)" oninput="compareBatchClosureLive()">
               </div>
-              <div id="batchCompareBox" style="background:#f8fafc;border:1.5px solid var(--border);border-radius:6px;padding:8px;font-size:11px">
+              <div id="batchCompareBox" style="background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px;font-size:12px">
                 <div style="display:flex;justify-content:space-between;margin-bottom:4px">
                   <span>Total en Sistema POS:</span>
-                  <strong id="batchSysTotalBs">0,00 Bs</strong>
+                  <strong id="batchSysTotalBs" class="tabular-nums">0,00 Bs</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:4px">
                   <span>Transacciones en Sistema:</span>
-                  <strong id="batchSysTxCount">0</strong>
+                  <strong id="batchSysTxCount" class="tabular-nums">0</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:4px">
                   <span>Diferencia (Voucher − Sistema):</span>
-                  <strong id="batchDiffBs">0,00 Bs</strong>
+                  <strong id="batchDiffBs" class="tabular-nums">0,00 Bs</strong>
                 </div>
                 <div id="batchStatusBadge" class="badge badge-green" style="display:block;text-align:center;padding:4px;margin-top:4px">✔ Lote Cuadrado Exacto</div>
               </div>
@@ -199,9 +213,9 @@
                 <input type="text" id="closeBatchNotesInput" class="input" placeholder="Ej: Cierre de lote turno mañana por cajero">
               </div>
             </div>
-            <div class="modal-ft" style="padding:8px 12px">
-              <button class="btn btn-ghost" onclick="document.getElementById('batchClosureModal').classList.remove('open')">Cancelar</button>
-              <button class="btn btn-p" onclick="confirmBatchClosure()">✔ Confirmar y Cerrar Lote</button>
+            <div class="modal-ft">
+              <button class="btn btn-secondary" onclick="document.getElementById('batchClosureModal').classList.remove('open')">Cancelar</button>
+              <button class="btn btn-secondary" onclick="confirmBatchClosure()">Confirmar y Cerrar Lote</button>
             </div>
           </div>
         </div>
@@ -216,7 +230,23 @@
   <script src="../assets/js/auth.js"></script>
   <script src="../assets/js/sidenav.js"></script>
   <script>
+    function setupIcons() {
+      if (!window.MTPIcons) return;
+      const setIco = (id, name) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = MTPIcons.get(name, { size: 14 });
+      };
+      setIco('printTopIcon', 'printer');
+      setIco('drawerTitleIcon', 'cash');
+      setIco('posTitleIcon', 'bank');
+      setIco('batchBtnIcon', 'fileText');
+      setIco('pmTitleIcon', 'phone');
+      setIco('expensesTitleIcon', 'outflow');
+      setIco('salesTitleIcon', 'receipt');
+    }
+
     function renderCierrePage() {
+      setupIcons();
       const fin = MTP.getFinancialAnalytics();
       const sales = MTP.state.sales || [];
       const expenses = MTP.state.expenses || [];
@@ -233,67 +263,67 @@
         <div class="stat-card">
           <div class="stat-ico green">${cashIco}</div>
           <div>
-            <div class="stat-n">${MTP.fmtUSD(fin.grossSalesUsd)}</div>
+            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(fin.grossSalesUsd)}</div>
             <div class="stat-l">Ventas Brutas (${sales.length} órdenes)</div>
-            <div class="stat-sub">${MTP.fmtBsRaw(fin.grossSalesUsd * bcv)}</div>
+            <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(fin.grossSalesUsd * bcv)}</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-ico yellow">${refreshIco}</div>
           <div>
-            <div class="stat-n">${MTP.fmtUSD(totVueltosUsd)}</div>
+            <div class="stat-n tabular-nums" style="color:var(--sec-cocina)">${MTP.fmtUSD(totVueltosUsd)}</div>
             <div class="stat-l">Total Vueltos Entregados</div>
-            <div class="stat-sub">$${fin.outChangeUsdCash.toFixed(2)} Efec + ${fin.outChangePmBs.toFixed(2)} Bs PM</div>
+            <div class="stat-sub tabular-nums">$${fin.outChangeUsdCash.toFixed(2)} Efec + ${fin.outChangePmBs.toFixed(2)} Bs PM</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-ico red">${wasteIco}</div>
           <div>
-            <div class="stat-n">${MTP.fmtUSD(fin.totalExpensesUsd)}</div>
+            <div class="stat-n tabular-nums money-out">-${MTP.fmtUSD(fin.totalExpensesUsd)}</div>
             <div class="stat-l">Gastos Operativos Pagados</div>
-            <div class="stat-sub">${expenses.length} salidas de caja</div>
+            <div class="stat-sub tabular-nums">${expenses.length} salidas de caja</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-ico blue">${chartIco}</div>
           <div>
-            <div class="stat-n" style="color:#1d4ed8">+${MTP.fmtUSD(fin.netOperatingProfitUsd)}</div>
+            <div class="stat-n tabular-nums money-bs">+${MTP.fmtUSD(fin.netOperatingProfitUsd)}</div>
             <div class="stat-l">Ganancia Neta Limpia</div>
-            <div class="stat-sub">+${MTP.fmtBsRaw(fin.netOperatingProfitUsd * bcv)}</div>
+            <div class="stat-sub tabular-nums">+${MTP.fmtBsRaw(fin.netOperatingProfitUsd * bcv)}</div>
           </div>
         </div>
       `;
 
       document.getElementById('netDrawerGrid').innerHTML = `
-        <div class="stat-card" style="background:#f0fdf4;border-color:#bbf7d0">
+        <div class="stat-card" style="border-left:3px solid var(--money-in)">
           <div>
-            <div class="stat-l" style="color:#065f46">EFECTIVO USD FÍSICO EN GAVETA</div>
-            <div class="stat-n" style="color:#065f46">${MTP.fmtUSD(fin.netDrawerUsd)}</div>
-            <div class="stat-sub">Entró: $${fin.inUsdCash.toFixed(2)} − Vueltos: $${fin.outChangeUsdCash.toFixed(2)} − Gastos: $${fin.expUsdCash.toFixed(2)}</div>
+            <div class="stat-l" style="color:var(--money-in)">EFECTIVO USD FÍSICO EN GAVETA</div>
+            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(fin.netDrawerUsd)}</div>
+            <div class="stat-sub tabular-nums">Entró: $${fin.inUsdCash.toFixed(2)} − Vueltos: $${fin.outChangeUsdCash.toFixed(2)} − Gastos: $${fin.expUsdCash.toFixed(2)}</div>
           </div>
         </div>
 
-        <div class="stat-card" style="background:#eff6ff;border-color:#bfdbfe">
+        <div class="stat-card" style="border-left:3px solid var(--info)">
           <div>
-            <div class="stat-l" style="color:#1e40af">SALDO NETO PAGO MÓVIL (BS)</div>
-            <div class="stat-n" style="color:#1e40af">${MTP.fmtBsRaw(fin.netBankPmBs)}</div>
-            <div class="stat-sub">Entró: ${fin.inPmBs.toFixed(2)} Bs − Vuelto PM: ${fin.outChangePmBs.toFixed(2)} Bs − Gastos PM: ${fin.expPmBs.toFixed(2)} Bs</div>
+            <div class="stat-l" style="color:var(--info)">SALDO NETO PAGO MÓVIL (BS)</div>
+            <div class="stat-n tabular-nums money-bs">${MTP.fmtBsRaw(fin.netBankPmBs)}</div>
+            <div class="stat-sub tabular-nums">Entró: ${fin.inPmBs.toFixed(2)} Bs − Vuelto PM: ${fin.outChangePmBs.toFixed(2)} Bs − Gastos PM: ${fin.expPmBs.toFixed(2)} Bs</div>
           </div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card" style="border-left:3px solid var(--purple)">
           <div>
             <div class="stat-l">CIERRE LOTE PUNTO / BIOPAGO</div>
-            <div class="stat-n">${MTP.fmtBsRaw(fin.inPuntoBs)}</div>
-            <div class="stat-sub">Equivalente: ${MTP.fmtUSD(bcv > 0 ? fin.inPuntoBs / bcv : 0)}</div>
+            <div class="stat-n tabular-nums">${MTP.fmtBsRaw(fin.inPuntoBs)}</div>
+            <div class="stat-sub tabular-nums">Equivalente: ${MTP.fmtUSD(bcv > 0 ? fin.inPuntoBs / bcv : 0)}</div>
           </div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card" style="border-left:3px solid var(--action)">
           <div>
             <div class="stat-l">EFECTIVO BS FÍSICO EN GAVETA</div>
-            <div class="stat-n">${MTP.fmtBsRaw(fin.netDrawerBs)}</div>
-            <div class="stat-sub">Zelle/USDT: ${MTP.fmtUSD(fin.inZelleUsd)}</div>
+            <div class="stat-n tabular-nums">${MTP.fmtBsRaw(fin.netDrawerBs)}</div>
+            <div class="stat-sub tabular-nums">Zelle/USDT: ${MTP.fmtUSD(fin.inZelleUsd)}</div>
           </div>
         </div>
       `;
@@ -305,19 +335,19 @@
         termGrid.innerHTML = terminals.map(t => {
           const stats = fin.puntoByTerminal[t.id] || { txCount: 0, totalBs: 0, totalUsd: 0 };
           return `
-            <div style="background:#fff;border:1.5px solid #bbf7d0;border-radius:8px;padding:8px 10px">
+            <div class="kpi" style="display:block;border-left:3px solid var(--money-in)">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-                <strong style="font-size:12px;color:#166534">${t.name}</strong>
-                <span class="badge badge-green" style="font-size:9.5px">Lote: ${t.currentBatch || '0001'}</span>
+                <strong style="font-size:12px;color:var(--txt)">${t.name}</strong>
+                <span class="badge badge-green tabular-nums" style="font-size:11px">Lote: ${t.currentBatch || '0001'}</span>
               </div>
-              <div style="font-size:10.5px;color:var(--txt-sec);margin-bottom:6px">${t.bank} · ${t.model || 'POS'}</div>
+              <div style="font-size:11px;color:var(--txt-2);margin-bottom:6px">${t.bank} · ${t.model || 'POS'}</div>
               <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
                 <div>
-                  <div style="font-size:15px;font-weight:900;color:#0f172a">${MTP.fmtBsRaw(stats.totalBs)}</div>
-                  <div style="font-size:10.5px;color:var(--txt-sec)">${stats.txCount} transacciones (${MTP.fmtUSD(stats.totalUsd)})</div>
+                  <div class="money-bs tabular-nums" style="font-size:15px;font-weight:var(--fw-bold)">${MTP.fmtBsRaw(stats.totalBs)}</div>
+                  <div class="tabular-nums" style="font-size:11px;color:var(--txt-3)">${stats.txCount} transacciones (${MTP.fmtUSD(stats.totalUsd)})</div>
                 </div>
-                <button class="btn btn-p btn-sm" style="padding:3px 8px;font-size:10px" onclick="openBatchClosureModal('${t.id}')">
-                  📄 Cerrar Lote
+                <button class="btn btn-secondary btn-sm" onclick="openBatchClosureModal('${t.id}')">
+                  Cerrar Lote
                 </button>
               </div>
             </div>
@@ -350,36 +380,36 @@
       document.getElementById('pmVerificationTable').innerHTML = pmRows.length
         ? pmRows.map(r => {
             let statusBadge = '<span class="badge badge-green">✔ Confirmado en Banco</span>';
-            let actionHtml = '<span style="font-size:10px;color:var(--txt-muted)">Auditado</span>';
+            let actionHtml = '<span style="font-size:11px;color:var(--txt-3)">Auditado</span>';
             if (r.verifyStatus === 'PENDIENTE') {
-              statusBadge = '<span class="badge badge-yellow">⏳ PENDIENTE VERIFICAR</span>';
+              statusBadge = '<span class="badge badge-yellow">⏳ Pendiente Verificar</span>';
               actionHtml = `
-                <div style="display:flex;gap:3px">
-                  <button class="btn btn-sm btn-p" style="padding:2px 6px;font-size:10px" onclick="confirmPmStatus('${r.saleId}', '${r.ref}')">✔ Confirmar</button>
-                  <button class="btn btn-sm btn-danger" style="padding:2px 6px;font-size:10px" onclick="rejectPmStatus('${r.saleId}', '${r.ref}')">✕ Falso</button>
+                <div style="display:flex;gap:4px">
+                  <button class="btn btn-sm btn-secondary" onclick="confirmPmStatus('${r.saleId}', '${r.ref}')">✔ Confirmar</button>
+                  <button class="btn btn-sm btn-secondary" style="color:var(--money-out)" onclick="rejectPmStatus('${r.saleId}', '${r.ref}')">✕ Falso</button>
                 </div>
               `;
             } else if (r.verifyStatus === 'RECHAZADO') {
-              statusBadge = '<span class="badge badge-red">🚨 RECHAZADO / FALSO</span>';
-              actionHtml = `<button class="btn btn-sm btn-ghost" style="padding:2px 6px;font-size:10px" onclick="confirmPmStatus('${r.saleId}', '${r.ref}')">Re-verificar</button>`;
+              statusBadge = '<span class="badge badge-red">🚨 Rechazado / Falso</span>';
+              actionHtml = `<button class="btn btn-sm btn-secondary" onclick="confirmPmStatus('${r.saleId}', '${r.ref}')">Re-verificar</button>`;
             }
 
             return `
               <tr>
                 <td><span class="code-pill plu">#${r.orderNumber}</span></td>
-                <td><strong>${r.customer}</strong> <span style="font-size:10px;color:var(--txt-muted)">(${r.time})</span></td>
-                <td><span class="badge badge-blue" style="font-size:10px">${r.destAccount}</span></td>
+                <td><strong>${r.customer}</strong> <span style="font-size:11px;color:var(--txt-3)">(${r.time})</span></td>
+                <td><span class="badge badge-blue" style="font-size:11px">${r.destAccount}</span></td>
                 <td style="font-size:11px">${r.bank}</td>
                 <td style="font-size:11px">${r.phone}</td>
                 <td><span class="code-pill">#${r.ref}</span></td>
-                <td><strong style="color:var(--primary)">${MTP.fmtBsRaw(r.amountBs)}</strong></td>
-                <td><strong>${MTP.fmtUSD(r.amountUsd)}</strong></td>
+                <td><strong class="money-bs tabular-nums">${MTP.fmtBsRaw(r.amountBs)}</strong></td>
+                <td><strong class="tabular-nums">${MTP.fmtUSD(r.amountUsd)}</strong></td>
                 <td>${statusBadge}</td>
                 <td>${actionHtml}</td>
               </tr>
             `;
           }).join('')
-        : `<tr><td colspan="10" style="text-align:center;color:var(--txt-muted)">No hay pagos móviles registrados en este turno</td></tr>`;
+        : `<tr><td colspan="10" style="text-align:center;color:var(--txt-3);padding:14px;font-size:12px">No hay pagos móviles registrados en este turno</td></tr>`;
 
       // Gastos del Turno
       document.getElementById('cierreExpensesTable').innerHTML = expenses.length
@@ -387,14 +417,14 @@
             <tr>
               <td>${new Date(e.createdAt).toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'})}</td>
               <td><span class="badge badge-yellow">${e.category}</span></td>
-              <td style="font-weight:700">${e.description}</td>
+              <td style="font-weight:var(--fw-semibold)">${e.description}</td>
               <td><span class="badge badge-green">${e.paymentSource}</span></td>
-              <td><strong style="color:var(--danger)">-${MTP.fmtUSD(e.amountUsd)}</strong></td>
-              <td><strong style="color:var(--danger)">-${MTP.fmtBsRaw(e.amountBs)}</strong></td>
-              <td style="font-size:11.5px;color:var(--txt-sec)">${e.responsible}</td>
+              <td><strong class="money-out tabular-nums">-${MTP.fmtUSD(e.amountUsd)}</strong></td>
+              <td><strong class="money-out tabular-nums">-${MTP.fmtBsRaw(e.amountBs)}</strong></td>
+              <td style="font-size:11px;color:var(--txt-2)">${e.responsible}</td>
             </tr>
           `).join('')
-        : `<tr><td colspan="7" style="text-align:center;color:var(--txt-muted)">Sin gastos registrados</td></tr>`;
+        : `<tr><td colspan="7" style="text-align:center;color:var(--txt-3);padding:14px;font-size:12px">Sin gastos registrados</td></tr>`;
 
       // Ventas
       document.getElementById('cierreSalesTable').innerHTML = sales.map(s => {
@@ -404,25 +434,25 @@
             <td><span class="code-pill plu">#${s.orderNumber}</span></td>
             <td>
               <strong>${s.customer}</strong>
-              <div style="font-size:11px;color:var(--txt-muted)">${timeStr} · ${s.cashier}</div>
+              <div style="font-size:11px;color:var(--txt-3)">${timeStr} · ${s.cashier}</div>
             </td>
             <td style="font-size:12px">
               ${s.items.map(i => `<div>• <strong>${i.qty}x</strong> ${i.name} (${MTP.fmtUSD(i.subtotalUsd || i.qty * i.priceUsd)})</div>`).join('')}
             </td>
             <td>
               <div class="price-dual">
-                <span class="price-usd">${MTP.fmtUSD(s.totalUsd)}</span>
-                <span class="price-bs">${MTP.fmtBsRaw(s.totalBs)}</span>
+                <span class="price-usd tabular-nums">${MTP.fmtUSD(s.totalUsd)}</span>
+                <span class="price-bs tabular-nums">${MTP.fmtBsRaw(s.totalBs)}</span>
               </div>
             </td>
-            <td style="font-size:11.5px">
+            <td style="font-size:11px">
               ${(s.payments || []).map(p => `<div><strong>${p.method}:</strong> ${MTP.fmtUSD(p.amountUsd)} (Ref: ${p.ref || '—'})</div>`).join('')}
             </td>
-            <td style="font-size:11.5px">
-              <strong>Total: ${MTP.fmtUSD(s.changeGiven?.totalChangeUsd || 0)}</strong>
-              <div style="color:var(--txt-sec);font-size:11px">${s.changeGiven?.breakdown || 'Exacto'}</div>
+            <td style="font-size:11px">
+              <strong class="tabular-nums">Total: ${MTP.fmtUSD(s.changeGiven?.totalChangeUsd || 0)}</strong>
+              <div style="color:var(--txt-2);font-size:11px">${s.changeGiven?.breakdown || 'Exacto'}</div>
             </td>
-            <td><span class="badge badge-green">+${MTP.fmtUSD(s.profitUsd)}</span></td>
+            <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(s.profitUsd)}</span></td>
           </tr>
         `;
       }).join('');
@@ -474,10 +504,10 @@
           badge.textContent = '✔ Lote Cuadrado Exacto (0,00 Bs Diferencia)';
         } else if (diffBs > 0) {
           badge.className = 'badge badge-blue';
-          badge.textContent = `ℹ Sobrante de Voucher: +${diffBs.toFixed(2)} Bs`;
+          badge.textContent = `Sobrante de Voucher: +${diffBs.toFixed(2)} Bs`;
         } else {
           badge.className = 'badge badge-red';
-          badge.textContent = `🚨 Faltante de Voucher: ${diffBs.toFixed(2)} Bs`;
+          badge.textContent = `Faltante de Voucher: ${diffBs.toFixed(2)} Bs`;
         }
       }
     }

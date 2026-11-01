@@ -3,10 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lector de Código de Barras y Cámara · Carga de Productos | MI TIENDA POS</title>
+  <title>Catálogo V5 · Familia → Producto → Variantes & Escáner | MI TIENDA POS</title>
   <link rel="stylesheet" href="../assets/css/variables.css">
   <link rel="stylesheet" href="../assets/css/components.css">
   <link rel="stylesheet" href="../assets/css/layout.css">
+  <style>
+    .cat-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .cat-tab-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--txt);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .cat-tab-btn:hover {
+      background: var(--surface-2);
+      border-color: var(--line-strong);
+    }
+    .cat-tab-btn.active {
+      background: var(--nav-bg);
+      color: #ffffff;
+      border-color: var(--nav-bg);
+    }
+    .product-box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .product-box-hd {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--line);
+    }
+    .product-box-hd .prod-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .product-box-hd .prod-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+      background: #e2e8f0;
+    }
+    .variant-row:hover {
+      background: #f8fafc;
+    }
+    .badge-mod {
+      display: inline-block;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      background: #e0e7ff;
+      color: #3730a3;
+      border-radius: 4px;
+      margin-right: 4px;
+    }
+    .badge-cat-pill {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 12px;
+      letter-spacing: 0.5px;
+    }
+    .recipe-chip {
+      display: inline-block;
+      font-size: 10px;
+      background: #f1f5f9;
+      color: #334155;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin: 1px 2px;
+      border: 1px solid #e2e8f0;
+    }
+    .view-toggle-wrap {
+      display: flex;
+      gap: 4px;
+      background: var(--surface-2);
+      padding: 3px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+    }
+    .view-toggle-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: var(--txt-2);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .view-toggle-btn.active {
+      background: var(--surface);
+      color: var(--txt);
+      box-shadow: var(--shadow-sm);
+    }
+  </style>
 </head>
 <body>
   <div class="admin-wrap">
@@ -17,143 +134,291 @@
         <div class="topbar-left">
           <button class="menu-toggle" id="menuToggleBtn">☰</button>
           <div class="topbar-title">
-            <h2>Lector de Código de Barras (Cámara / USB) y Catálogo</h2>
-            <p>Escanea el código de barras real del empaque para cargar mercancía al inventario o registrar nuevos productos</p>
+            <h2>Catálogo Maestro v5 & Recepción de Mercancía</h2>
+            <p>Estructura jerárquica: Familia → Producto → Sabor/Variante → Extras y Lector de Códigos</p>
           </div>
         </div>
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
-          <button class="btn btn-p btn-sm" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">Abrir Cámara Escáner</button>
-          <a href="pos.html" class="btn btn-amber btn-sm">Ir a Caja POS</a>
+          <div class="view-toggle-wrap">
+            <button class="view-toggle-btn active" id="btnViewHierarchy" onclick="switchMainView('hierarchy')">Catálogo v5</button>
+            <button class="view-toggle-btn" id="btnViewScanner" onclick="switchMainView('scanner')">Lector de Códigos</button>
+          </div>
+          <button class="btn btn-sm btn-ghost" onclick="openNewProductModal()">+ Producto Padre</button>
+          <button class="btn btn-sm btn-p" onclick="openNewVariantModal()">+ Nueva Variante</button>
+          <button class="btn btn-sm btn-amber" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">Cámara</button>
+          <a href="pos.html" class="btn btn-sm btn-ghost">Ir a Caja</a>
         </div>
       </header>
 
       <div class="admin-content">
-        <div class="grid-2" style="margin-bottom:8px">
-          <!-- Panel Izquierdo: Escáner en Vivo / Pistola Lectora USB -->
-          <div class="card" style="margin-bottom:0">
-            <div class="card-hd">
-              <div>
-                <h3>Escáner Activo para Recepción de Mercancía</h3>
-                <p>Dispara con lector USB o cámara para identificar empaques</p>
-              </div>
-              <span class="badge badge-green">ACTIVO</span>
-            </div>
-            <div class="card-bd" style="padding:6px 10px">
-              <div style="background:#0f172a;padding:8px 10px;border-radius:6px;color:#fff;margin-bottom:8px">
-                <label style="font-size:10px;font-weight:800;color:#34d399;text-transform:uppercase;display:block;margin-bottom:3px">
-                  Código de Barras EAN-13 / UPC / Código Interno:
-                </label>
-                <div style="display:flex;gap:6px">
-                  <input type="text" id="liveBarcodeInput" class="input"
-                    placeholder="Dispara el lector aquí o escribe..."
-                    style="font-family:var(--font-mono);font-size:13px;font-weight:900;background:#1e293b;color:#fff;border-color:#334155;height:30px">
-                  <button class="btn btn-p btn-sm" onclick="handleScannedCode(document.getElementById('liveBarcodeInput').value)">Buscar</button>
-                  <button class="btn btn-amber btn-sm" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">Cámara</button>
-                </div>
-              </div>
+        <!-- VISTA A: JERARQUÍA DEL CATÁLOGO V5 -->
+        <div id="hierarchyViewContainer">
+          <!-- Barra de Familias -->
+          <div class="cat-tabs" id="familyTabsContainer"></div>
 
-              <div id="scanResultBox" style="padding:8px 10px;border-radius:6px;border:1.5px dashed var(--border);background:#f8fafc;text-align:center;color:var(--txt-sec)">
-                <div style="margin-bottom:2px">${window.MTPIcons ? MTPIcons.get('barcode', { size: 22 }) : ''}</div>
-                <strong style="font-size:11.5px">Escanea un producto (Harina, Pepito, Refresco, Cerveza)</strong>
-                <p style="font-size:10.5px;margin-top:2px">Si existe sumas unidades. Si es nuevo se completa el formulario.</p>
-              </div>
+          <!-- Barra de Búsqueda y Filtros Rápidos -->
+          <div class="toolbar" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+            <div class="toolbar-primary" style="display:flex;gap:8px;align-items:center;flex:1;max-width:480px">
+              <input type="text" id="catSearchInput" class="input" style="height:32px"
+                placeholder="Buscar producto, sabor, código PLU o código de barras..." oninput="renderHierarchyView()">
+            </div>
+            <div class="toolbar-secondary" style="display:flex;gap:8px;align-items:center">
+              <span id="catStatsLabel" style="font-size:11.5px;color:var(--txt-2);font-weight:600">Cargando catálogo...</span>
+              <button class="btn btn-ghost btn-sm" onclick="openModifierGroupsModal()">Configurar Grupos de Extras</button>
             </div>
           </div>
 
-          <!-- Panel Derecho: Vincular o Crear Producto con Código de Barras -->
-          <div class="card" style="margin-bottom:0">
-            <div class="card-hd">
-              <div>
-                <h3 id="formCardTitle">Registrar / Actualizar con Código de Barras</h3>
-                <p>Asigna el código de barras a tu inventario</p>
-              </div>
-            </div>
-            <div class="card-bd" style="padding:6px 10px">
-              <form id="barcodeProductForm" onsubmit="saveBarcodeProduct(event)">
-                <input type="hidden" id="bpId">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>Código de Barras (EAN)</label>
-                    <input type="text" id="bpBarcode" class="input" required placeholder="Ej: 7591001000015" style="font-family:var(--font-mono);font-weight:800">
-                  </div>
-                  <div class="form-group">
-                    <label>Código Corto</label>
-                    <input type="text" id="bpCode" class="input" required placeholder="Ej: 107">
-                  </div>
-                  <div class="form-group">
-                    <label>Familia en Caja</label>
-                    <select id="bpGroup" class="select">
-                      <option value="viveres">🌽 Víveres</option>
-                      <option value="chucherias">🧀 Chucherías</option>
-                      <option value="refrescos">🥤 Refrescos</option>
-                      <option value="cervezas">🍻 Cervezas</option>
-                      <option value="cigarros">🚬 Cigarros</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="form-row" style="margin-top:4px">
-                  <div class="form-group" style="grid-column:span 2">
-                    <label>Nombre del Producto</label>
-                    <input type="text" id="bpName" class="input" required placeholder="Ej: Pepito Queso / Frescolita 1.5L">
-                  </div>
-                  <div class="form-group">
-                    <label>Stock Actual (Und)</label>
-                    <input type="number" step="1" id="bpStock" class="input" required value="24">
-                  </div>
-                </div>
-
-                <div class="form-row" style="margin-top:4px">
-                  <div class="form-group">
-                    <label>Costo USD ($)</label>
-                    <input type="number" step="0.01" id="bpCost" class="input" required value="0.80">
-                  </div>
-                  <div class="form-group">
-                    <label>PVP USD ($)</label>
-                    <input type="number" step="0.01" id="bpPrice" class="input" required value="1.35">
-                  </div>
-                  <div class="form-group" style="display:flex;align-items:flex-end">
-                    <button type="submit" class="btn btn-p" style="width:100%;height:28px">💾 Guardar</button>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
+          <!-- Contenedor Principal de Familias y Productos -->
+          <div id="hierarchyCatalogList"></div>
         </div>
 
-        <!-- Tabla de Productos con Código de Barras Registrado -->
-        <div class="card">
-          <div class="card-hd">
-            <div>
-              <h3>📋 Productos con Código de Barras Vinculado en Inventario</h3>
-              <p>Todos estos artículos se pueden escanear directamente en la Caja POS o con la cámara</p>
+        <!-- VISTA B: ESCÁNER / PISTOLA LECTORA USB (Para Minimercado y Recepción Rápida) -->
+        <div id="scannerViewContainer" style="display:none">
+          <div class="grid-2" style="margin-bottom:12px">
+            <!-- Escáner Activo -->
+            <div class="card" data-section="abasto">
+              <div class="card-hd">
+                <div>
+                  <h3 style="font-size:13px">Escáner Activo de Recepción y Venta</h3>
+                  <p style="font-size:11px">Dispara con lector USB o cámara web sobre cualquier empaque</p>
+                </div>
+                <span class="badge badge-green">LECTOR ACTIVO</span>
+              </div>
+              <div class="card-bd" style="padding:10px">
+                <div style="background:#0f172a;padding:10px;border-radius:6px;color:#fff;margin-bottom:10px">
+                  <label style="font-size:11px;font-weight:800;color:#34d399;text-transform:uppercase;display:block;margin-bottom:4px">
+                    Código de Barras EAN-13 / UPC / Código Corto:
+                  </label>
+                  <div style="display:flex;gap:6px">
+                    <input type="text" id="liveBarcodeInput" class="input"
+                      placeholder="Dispara el lector aquí o escribe..."
+                      style="font-family:var(--font-mono);font-size:13px;font-weight:900;background:#1e293b;color:#fff;border-color:#334155;height:32px">
+                    <button class="btn btn-p btn-sm" onclick="handleScannedCode(document.getElementById('liveBarcodeInput').value)">Buscar</button>
+                    <button class="btn btn-amber btn-sm" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">Cámara</button>
+                  </div>
+                </div>
+
+                <div id="scanResultBox" style="padding:12px;border-radius:6px;border:1.5px dashed var(--line-strong);background:var(--surface-2);text-align:center;color:var(--txt-2)">
+                  <strong style="font-size:12px;display:block">Escanea mercancía (Harina P.A.N., Pepito, Refresco, Cerveza, Cigarros)</strong>
+                  <p style="font-size:11px;margin-top:2px">Si existe sumas unidades rápidamente al stock. Si es nuevo se completa el formulario a la derecha.</p>
+                </div>
+              </div>
             </div>
-            <input type="text" id="filterBarcodesInput" class="input" style="max-width:260px" placeholder="🔎 Filtrar por nombre o código..." oninput="renderRegisteredBarcodes()">
+
+            <!-- Formulario de Mercancía / Producto de Minimercado -->
+            <div class="card" data-section="abasto">
+              <div class="card-hd">
+                <div>
+                  <h3 id="formCardTitle" style="font-size:13px">Registrar / Editar con Código de Barras</h3>
+                  <p style="font-size:11px">Vincular empaque al catálogo y fijar margen</p>
+                </div>
+              </div>
+              <div class="card-bd" style="padding:10px">
+                <form id="barcodeProductForm" onsubmit="saveBarcodeProduct(event)">
+                  <input type="hidden" id="bpId">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Código de Barras (EAN)</label>
+                      <input type="text" id="bpBarcode" class="input" required placeholder="Ej: 7591001000015" style="font-family:var(--font-mono);font-weight:800">
+                    </div>
+                    <div class="form-group">
+                      <label>Código Corto</label>
+                      <input type="text" id="bpCode" class="input" required placeholder="Ej: 107">
+                    </div>
+                    <div class="form-group">
+                      <label>Familia</label>
+                      <select id="bpGroup" class="select">
+                        <option value="viveres">Víveres</option>
+                        <option value="chucherias">Chucherías</option>
+                        <option value="bebidas">Bebidas & Refrescos</option>
+                        <option value="cervezas">Cervezas</option>
+                        <option value="cigarros">Cigarros</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-row" style="margin-top:6px">
+                    <div class="form-group" style="grid-column:span 2">
+                      <label>Nombre del Producto</label>
+                      <input type="text" id="bpName" class="input" required placeholder="Ej: Pepito Original 120g / Frescolita 1.5L">
+                    </div>
+                    <div class="form-group">
+                      <label>Stock Actual (Und)</label>
+                      <input type="number" step="1" id="bpStock" class="input" required value="24">
+                    </div>
+                  </div>
+
+                  <div class="form-row" style="margin-top:6px">
+                    <div class="form-group">
+                      <label>Costo USD ($)</label>
+                      <input type="number" step="0.01" id="bpCost" class="input" required value="0.80" oninput="updateCalculatedPvpPreview()">
+                    </div>
+                    <div class="form-group">
+                      <label>PVP USD ($)</label>
+                      <input type="number" step="0.01" id="bpPrice" class="input" required value="1.35">
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:flex-end">
+                      <button type="submit" class="btn btn-p" style="width:100%;height:30px">Guardar Producto</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
-          <div class="card-bd" style="padding:0">
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Foto</th>
-                    <th>Código Corto</th>
-                    <th>Código de Barras (EAN)</th>
-                    <th>Producto</th>
-                    <th>Familia POS</th>
-                    <th>Stock</th>
-                    <th>Costo USD</th>
-                    <th>Precio Venta</th>
-                    <th>Acción Rápida</th>
-                  </tr>
-                </thead>
-                <tbody id="registeredBarcodesBody"></tbody>
-              </table>
+
+          <!-- Tabla de Artículos de Minimercado con Código de Barras -->
+          <div class="card" data-section="abasto">
+            <div class="card-hd">
+              <div>
+                <h3 style="font-size:13px">Mercancía con Código de Barras Registrado</h3>
+                <p style="font-size:11px">Artículos que se escanean directamente en mostrador o con pistola USB</p>
+              </div>
+              <input type="text" id="filterBarcodesInput" class="input" style="max-width:240px;height:30px" placeholder="Filtrar por nombre o EAN..." oninput="renderRegisteredBarcodes()">
+            </div>
+            <div class="card-bd" style="padding:0">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Foto</th>
+                      <th>Código</th>
+                      <th>Código EAN</th>
+                      <th>Producto</th>
+                      <th>Familia</th>
+                      <th>Stock</th>
+                      <th>Costo USD</th>
+                      <th>PVP USD / Bs</th>
+                      <th>Acción Rápida</th>
+                    </tr>
+                  </thead>
+                  <tbody id="registeredBarcodesBody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- MODAL: CREAR / EDITAR PRODUCTO PADRE -->
+  <div class="modal-backdrop" id="productModal">
+    <div class="modal-box" style="max-width:520px">
+      <div class="modal-hd">
+        <h3 id="productModalTitle" style="font-size:13px">Producto Padre</h3>
+        <button class="btn btn-ghost btn-sm" onclick="closeProductModal()">✕</button>
+      </div>
+      <div class="modal-bd">
+        <input type="hidden" id="pModalId">
+        <div class="form-grid" style="margin-bottom:10px">
+          <div class="form-group">
+            <label>Familia</label>
+            <select id="pModalFamily" class="select"></select>
+          </div>
+          <div class="form-group">
+            <label>Orden de Aparición</label>
+            <input type="number" id="pModalOrder" class="input" value="1">
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <label>Nombre del Producto Padre</label>
+            <input type="text" id="pModalName" class="input" required placeholder="Ej: Empanadas Venezolanas">
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <label>Subtítulo o Descripción</label>
+            <input type="text" id="pModalSubtitle" class="input" placeholder="Ej: Crujientes de maíz recién fritas">
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <label>Grupos de Modificadores / Extras Asignados:</label>
+            <div id="pModalModifiersCheckboxes" style="display:flex;flex-wrap:wrap;gap:8px;padding:8px;background:var(--surface-2);border-radius:6px;border:1px solid var(--line)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-ghost" onclick="closeProductModal()">Cancelar</button>
+        <button class="btn btn-p" onclick="saveProductModal()">Guardar Producto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CREAR / EDITAR VARIANTE O SABOR -->
+  <div class="modal-backdrop" id="variantModal">
+    <div class="modal-box" style="max-width:640px">
+      <div class="modal-hd">
+        <h3 id="variantModalTitle" style="font-size:13px">Configurar Sabor / Variante</h3>
+        <button class="btn btn-ghost btn-sm" onclick="closeVariantModal()">✕</button>
+      </div>
+      <div class="modal-bd">
+        <input type="hidden" id="vModalId">
+        <div class="form-grid" style="margin-bottom:10px">
+          <div class="form-group">
+            <label>Producto Padre</label>
+            <select id="vModalProduct" class="select" onchange="onVariantProductChange()"></select>
+          </div>
+          <div class="form-group">
+            <label>Código PLU Rápido (#)</label>
+            <input type="text" id="vModalCode" class="input" required placeholder="Ej: 01">
+          </div>
+          <div class="form-group">
+            <label>Código de Barras EAN / Código Interno</label>
+            <input type="text" id="vModalBarcode" class="input" placeholder="Ej: 8800001" style="font-family:var(--font-mono)">
+          </div>
+          <div class="form-group">
+            <label>Tipo de IVA</label>
+            <select id="vModalIva" class="select">
+              <option value="E">Exento (Comida Básica / Alimentos)</option>
+              <option value="G">Gravado 16% (IVA General)</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <label>Nombre del Sabor / Variante</label>
+            <input type="text" id="vModalName" class="input" required placeholder="Ej: Carne Mechada Criolla">
+          </div>
+          <div class="form-group">
+            <label>Precio Venta USD ($)</label>
+            <input type="number" step="0.05" id="vModalPrice" class="input" style="font-weight:800;color:var(--money-in)" required value="1.30">
+          </div>
+          <div class="form-group">
+            <label>Costo Estimado Insumos</label>
+            <div id="vModalCostLabel" style="font-size:13px;font-weight:800;color:var(--txt);padding:7px 0">$0.00</div>
+          </div>
+        </div>
+
+        <!-- Receta de la Variante -->
+        <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:11.5px;font-weight:800;text-transform:uppercase;color:var(--txt-2)">
+              Escandallo de Insumos de Cocina (Gramos que descuenta al vender):
+            </span>
+            <button class="btn btn-ghost btn-sm" onclick="addRecipeRowInVariantModal()">+ Añadir Insumo</button>
+          </div>
+          <div id="vModalRecipeList"></div>
+        </div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-ghost" onclick="closeVariantModal()">Cancelar</button>
+        <button class="btn btn-p" onclick="saveVariantModal()">Guardar Sabor / Variante</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GRUPOS DE MODIFICADORES Y EXTRAS -->
+  <div class="modal-backdrop" id="modifierGroupsModal">
+    <div class="modal-box" style="max-width:600px">
+      <div class="modal-hd">
+        <h3 style="font-size:13px">Grupos de Extras y Modificadores</h3>
+        <button class="btn btn-ghost btn-sm" onclick="closeModifierGroupsModal()">✕</button>
+      </div>
+      <div class="modal-bd">
+        <p style="font-size:11px;color:var(--txt-2);margin-bottom:10px">
+          Configura opciones opcionales u obligatorias (ej. Tipo de masa para arepas, salsa, contornos, empaque para llevar).
+        </p>
+        <div id="modifierGroupsListContainer"></div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-ghost" onclick="closeModifierGroupsModal()">Cerrar</button>
+      </div>
+    </div>
   </div>
 
   <script src="../assets/js/icons.js"></script>
@@ -164,22 +429,530 @@
   <script src="../assets/js/barcode-engine.js"></script>
   <script src="../assets/js/sidenav.js"></script>
   <script>
-    const GROUP_IMG_MAP = {
-      viveres: '../assets/img/productos/viveres.jpg',
-      chucherias: '../assets/img/productos/pepito.jpg',
-      refrescos: '../assets/img/productos/refrescos.jpg',
-      cervezas: '../assets/img/productos/cervezas.jpg',
-      cigarros: '../assets/img/productos/cigarros.jpg'
-    };
+    let activeFamilyFilter = 'all';
+    let currentMainView = 'hierarchy';
+    let variantModalRecipe = [];
 
-    const GROUP_CAT_MAP = {
-      viveres: 'Víveres',
-      chucherias: 'Chucherías',
-      refrescos: 'Refrescos & Cervezas',
-      cervezas: 'Refrescos & Cervezas',
-      cigarros: 'Cigarros'
-    };
+    function switchMainView(mode) {
+      currentMainView = mode;
+      document.getElementById('hierarchyViewContainer').style.display = mode === 'hierarchy' ? 'block' : 'none';
+      document.getElementById('scannerViewContainer').style.display = mode === 'scanner' ? 'block' : 'none';
+      document.getElementById('btnViewHierarchy').classList.toggle('active', mode === 'hierarchy');
+      document.getElementById('btnViewScanner').classList.toggle('active', mode === 'scanner');
+      if (mode === 'scanner') {
+        renderRegisteredBarcodes();
+        setTimeout(() => document.getElementById('liveBarcodeInput')?.focus(), 150);
+      } else {
+        renderHierarchyView();
+      }
+    }
 
+    function renderFamilyTabs() {
+      const container = document.getElementById('familyTabsContainer');
+      const families = MTP.state.families || [];
+      let html = `
+        <button class="cat-tab-btn ${activeFamilyFilter === 'all' ? 'active' : ''}" onclick="selectFamilyTab('all')">
+          ${window.MTPIcons ? MTPIcons.get('store', { size: 14 }) : ''}
+          Todas las Familias
+        </button>
+      `;
+      families.forEach(f => {
+        const isActive = activeFamilyFilter === f.id;
+        const ico = window.MTPIcons ? MTPIcons.get(f.icon || 'dish', { size: 14 }) : '';
+        html += `
+          <button class="cat-tab-btn ${isActive ? 'active' : ''}" onclick="selectFamilyTab('${f.id}')">
+            ${ico}
+            ${f.name}
+          </button>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function selectFamilyTab(famId) {
+      activeFamilyFilter = famId;
+      renderFamilyTabs();
+      renderHierarchyView();
+    }
+
+    function renderHierarchyView() {
+      const container = document.getElementById('hierarchyCatalogList');
+      const q = (document.getElementById('catSearchInput')?.value || '').toLowerCase().trim();
+      const bcv = Number(MTP.state.settings.rateBcv) || 1;
+      const families = MTP.state.families || [];
+
+      let totalProductsCount = 0;
+      let totalVariantsCount = 0;
+      let totalRetailCount = 0;
+
+      const filteredFamilies = activeFamilyFilter === 'all' 
+        ? families 
+        : families.filter(f => f.id === activeFamilyFilter);
+
+      let html = '';
+
+      filteredFamilies.forEach(fam => {
+        const isGastronomy = ['fritos', 'arepas', 'almuerzos', 'cafeteria'].includes(fam.id);
+        const products = MTP.getProductsByFamily(fam.id);
+        const retailItems = MTP.getDirectRetailItems(fam.id);
+
+        // Si hay búsqueda por texto, filtrar
+        let matchedProducts = products;
+        let matchedRetail = retailItems;
+        if (q) {
+          matchedProducts = products.filter(p => {
+            const vars = MTP.getVariantsForProduct(p.id);
+            const matchesProd = p.name.toLowerCase().includes(q);
+            const matchesVar = vars.some(v => v.name.toLowerCase().includes(q) || String(v.code).includes(q) || String(v.barcode).includes(q));
+            return matchesProd || matchesVar;
+          });
+          matchedRetail = retailItems.filter(r => r.name.toLowerCase().includes(q) || String(r.barcode).toLowerCase().includes(q) || String(r.code).toLowerCase().includes(q));
+        }
+
+        if (!matchedProducts.length && !matchedRetail.length && q) {
+          return; // omitir familia vacía si hay búsqueda activa
+        }
+
+        const sectionAttr = isGastronomy ? 'cocina' : 'abasto';
+        const famIco = window.MTPIcons ? MTPIcons.get(fam.icon || 'dish', { size: 16 }) : '';
+
+        html += `
+          <div class="card" data-section="${sectionAttr}" style="margin-bottom:14px">
+            <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center">
+              <div style="display:flex;align-items:center;gap:8px">
+                ${famIco}
+                <h3 style="font-size:13px;font-weight:800;color:var(--txt)">${fam.name}</h3>
+                <span class="badge badge-cat-pill" style="background:${fam.color}22;color:${fam.color};border:1px solid ${fam.color}44">
+                  ${isGastronomy ? 'Comida de Cocina' : 'Venta Directa / Minimercado'}
+                </span>
+              </div>
+              <div style="display:flex;gap:6px">
+                ${isGastronomy ? `
+                  <button class="btn btn-ghost btn-sm" onclick="openNewProductModal('${fam.id}')">+ Producto en ${fam.name}</button>
+                ` : `
+                  <button class="btn btn-ghost btn-sm" onclick="switchMainView('scanner')">+ Cargar Mercancía</button>
+                `}
+              </div>
+            </div>
+            <div class="card-bd" style="padding:10px">
+        `;
+
+        // Renderizar Productos Padres si tiene
+        if (matchedProducts.length > 0) {
+          matchedProducts.forEach(prod => {
+            totalProductsCount++;
+            const variants = MTP.getVariantsForProduct(prod.id);
+            const modGroups = MTP.getModifierGroupsForProduct(prod.id);
+            const fallbackImg = MTP.getFallbackSvgDataUri(prod.name, prod.emoji);
+
+            html += `
+              <div class="product-box">
+                <div class="product-box-hd">
+                  <div class="prod-info">
+                    <img src="${prod.img || fallbackImg}" class="prod-thumb" alt="${prod.name}" onerror="this.onerror=null;this.src='${fallbackImg}'">
+                    <div>
+                      <div style="display:flex;align-items:center;gap:6px">
+                        <strong style="font-size:13px;color:var(--txt)">${prod.name}</strong>
+                        <span class="badge badge-blue" style="font-size:10px">${variants.length} sabores/variantes</span>
+                      </div>
+                      <div style="font-size:11px;color:var(--txt-2);margin-top:2px">
+                        ${prod.subtitle || ''}
+                        ${modGroups.map(mg => `<span class="badge-mod">${mg.name}</span>`).join('')}
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn btn-p btn-sm" onclick="openNewVariantModal('${prod.id}')">+ Añadir Sabor</button>
+                    <button class="btn btn-ghost btn-sm" onclick="openEditProductModal('${prod.id}')">Editar</button>
+                  </div>
+                </div>
+
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style="width:50px">PLU</th>
+                        <th style="width:110px">Código EAN</th>
+                        <th>Sabor / Variante</th>
+                        <th>Escandallo (Insumos que descuenta)</th>
+                        <th>Costo Receta</th>
+                        <th>PVP ($ / Bs)</th>
+                        <th>Margen</th>
+                        <th style="text-align:right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            if (!variants.length) {
+              html += `<tr><td colspan="8" style="text-align:center;padding:12px;color:var(--txt-muted)">Sin sabores registrados. Pulsa "+ Añadir Sabor" para crear variantes.</td></tr>`;
+            } else {
+              variants.forEach(v => {
+                totalVariantsCount++;
+                const cost = MTP.calcDishCost(v);
+                const price = v.priceUsd || 0;
+                const profit = price - cost;
+                const marginPct = price > 0 ? (((profit) / price) * 100).toFixed(0) : 0;
+                const bsAmount = (price * bcv).toFixed(2);
+                const recipeChips = (v.recipe || []).map(r => `<span class="recipe-chip">${r.label || (r.qty * 1000 + 'g')}</span>`).join('');
+
+                html += `
+                  <tr class="variant-row">
+                    <td><span class="code-pill">#${v.code}</span></td>
+                    <td style="font-family:var(--font-mono);font-size:11px;font-weight:700">${v.barcode || '—'}</td>
+                    <td>
+                      <strong style="font-size:12px">${v.name}</strong>
+                      <span style="font-size:10px;color:var(--txt-3);display:block">${v.ivaType === 'G' ? 'IVA 16%' : 'Exento'}</span>
+                    </td>
+                    <td style="font-size:11px">${recipeChips || '<span style="color:var(--txt-muted)">Sin receta asignada</span>'}</td>
+                    <td><span class="money-out" style="font-weight:700">${MTP.fmtUSD(cost)}</span></td>
+                    <td>
+                      <strong style="color:var(--money-in)">${MTP.fmtUSD(price)}</strong>
+                      <span style="font-size:10.5px;color:var(--info);display:block">${bsAmount} Bs</span>
+                    </td>
+                    <td>
+                      <span class="badge ${marginPct >= 35 ? 'badge-green' : 'badge-yellow'}" style="font-size:10px">
+                        ${marginPct}%
+                      </span>
+                    </td>
+                    <td style="text-align:right">
+                      <button class="btn btn-ghost btn-sm" onclick="openEditVariantModal('${v.id}')">Editar</button>
+                      <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="confirmDeleteVariant('${v.id}', '${v.name}')">✕</button>
+                    </td>
+                  </tr>
+                `;
+              });
+            }
+
+            html += `
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        // Renderizar Artículos de Venta Directa / Minimercado si tiene
+        if (matchedRetail.length > 0) {
+          html += `
+            <div class="table-wrap" style="border:1px solid var(--line);border-radius:6px;overflow:hidden">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:40px">Foto</th>
+                    <th style="width:60px">Código</th>
+                    <th style="width:120px">Código de Barras (EAN)</th>
+                    <th>Producto Minimercado</th>
+                    <th>Stock Actual</th>
+                    <th>Costo USD</th>
+                    <th>PVP USD / Bs</th>
+                    <th>Margen</th>
+                    <th style="text-align:right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+          matchedRetail.forEach(it => {
+            totalRetailCount++;
+            const cost = Number(it.costUsd) || 0;
+            const price = Number(it.priceUsd) || 0;
+            const profit = price - cost;
+            const marginPct = price > 0 ? (((profit) / price) * 100).toFixed(0) : 0;
+            const bsAmount = (price * bcv).toFixed(2);
+
+            html += `
+              <tr class="variant-row">
+                <td><img src="${it.img || '../assets/img/productos/viveres.jpg'}" style="width:34px;height:34px;border-radius:4px;object-fit:cover;border:1px solid var(--line)"></td>
+                <td><span class="code-pill">#${it.code}</span></td>
+                <td style="font-family:var(--font-mono);font-size:11.5px;font-weight:700">${it.barcode || '—'}</td>
+                <td>
+                  <strong style="font-size:12px">${it.name}</strong>
+                  <span style="font-size:10px;color:var(--txt-3);display:block">${it.category || fam.name}</span>
+                </td>
+                <td>
+                  <strong>${it.stock} ${it.unit || 'und'}</strong>
+                  <div style="display:flex;gap:3px;margin-top:2px">
+                    <button class="btn btn-p btn-sm" style="padding:1px 5px;font-size:10px" onclick="quickAddStock('${it.id}', 1)">+1</button>
+                    <button class="btn btn-p btn-sm" style="padding:1px 5px;font-size:10px" onclick="quickAddStock('${it.id}', 12)">+12</button>
+                  </div>
+                </td>
+                <td>${MTP.fmtUSD(cost)}</td>
+                <td>
+                  <strong style="color:var(--money-in)">${MTP.fmtUSD(price)}</strong>
+                  <span style="font-size:10.5px;color:var(--info);display:block">${bsAmount} Bs</span>
+                </td>
+                <td><span class="badge ${marginPct >= 30 ? 'badge-green' : 'badge-yellow'}" style="font-size:10px">${marginPct}%</span></td>
+                <td style="text-align:right">
+                  <button class="btn btn-ghost btn-sm" onclick="loadProductIntoForm('${it.id}');switchMainView('scanner')">Editar</button>
+                </td>
+              </tr>
+            `;
+          });
+          html += `
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+
+        html += `
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      document.getElementById('catStatsLabel').textContent = 
+        `${totalProductsCount} productos · ${totalVariantsCount} sabores/variantes · ${totalRetailCount} artículos minimercado`;
+    }
+
+    /* ==========================================================================
+       GESTIÓN DE PRODUCTOS PADRES
+       ========================================================================== */
+    function openNewProductModal(defaultFamId) {
+      document.getElementById('productModalTitle').textContent = 'Nuevo Producto Padre';
+      document.getElementById('pModalId').value = '';
+      document.getElementById('pModalName').value = '';
+      document.getElementById('pModalSubtitle').value = '';
+      document.getElementById('pModalOrder').value = '1';
+
+      const famSelect = document.getElementById('pModalFamily');
+      famSelect.innerHTML = (MTP.state.families || []).map(f => `<option value="${f.id}" ${f.id === defaultFamId ? 'selected' : ''}>${f.name}</option>`).join('');
+
+      renderModifierCheckboxes([]);
+      document.getElementById('productModal').classList.add('open');
+    }
+
+    function openEditProductModal(prodId) {
+      const prod = (MTP.state.products || []).find(p => p.id === prodId);
+      if (!prod) return;
+      document.getElementById('productModalTitle').textContent = `✏️ Editando: ${prod.name}`;
+      document.getElementById('pModalId').value = prod.id;
+      document.getElementById('pModalName').value = prod.name;
+      document.getElementById('pModalSubtitle').value = prod.subtitle || '';
+      document.getElementById('pModalOrder').value = prod.order || 1;
+
+      const famSelect = document.getElementById('pModalFamily');
+      famSelect.innerHTML = (MTP.state.families || []).map(f => `<option value="${f.id}" ${f.id === prod.familyId ? 'selected' : ''}>${f.name}</option>`).join('');
+
+      renderModifierCheckboxes(prod.modifierGroupIds || []);
+      document.getElementById('productModal').classList.add('open');
+    }
+
+    function renderModifierCheckboxes(selectedIds) {
+      const box = document.getElementById('pModalModifiersCheckboxes');
+      const groups = MTP.state.modifierGroups || [];
+      if (!groups.length) {
+        box.innerHTML = `<span style="font-size:11px;color:var(--txt-muted)">Sin grupos de modificadores configurados</span>`;
+        return;
+      }
+      box.innerHTML = groups.map(g => `
+        <label style="font-size:11.5px;display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" value="${g.id}" ${selectedIds.includes(g.id) ? 'checked' : ''} class="mod-group-check">
+          <strong>${g.name}</strong> (${g.options.length} opciones)
+        </label>
+      `).join('');
+    }
+
+    function closeProductModal() {
+      document.getElementById('productModal').classList.remove('open');
+    }
+
+    function saveProductModal() {
+      const id = document.getElementById('pModalId').value;
+      const familyId = document.getElementById('pModalFamily').value;
+      const name = document.getElementById('pModalName').value.trim();
+      const subtitle = document.getElementById('pModalSubtitle').value.trim();
+      const order = parseInt(document.getElementById('pModalOrder').value) || 1;
+
+      if (!name) {
+        MTP.toast('Escribe el nombre del producto', 'warn');
+        return;
+      }
+
+      const modGroupIds = [];
+      document.querySelectorAll('.mod-group-check:checked').forEach(c => modGroupIds.push(c.value));
+
+      MTP.saveProduct({
+        id: id || undefined,
+        familyId,
+        name,
+        subtitle,
+        order,
+        modifierGroupIds: modGroupIds,
+        active: true
+      });
+
+      closeProductModal();
+      renderHierarchyView();
+      MTP.toast(`Producto "${name}" guardado exitosamente`);
+    }
+
+    /* ==========================================================================
+       GESTIÓN DE VARIANTES / SABORES
+       ========================================================================== */
+    function openNewVariantModal(defaultProdId) {
+      document.getElementById('variantModalTitle').textContent = 'Nuevo Sabor / Variante';
+      document.getElementById('vModalId').value = '';
+      document.getElementById('vModalName').value = '';
+      document.getElementById('vModalCode').value = String((MTP.state.variants || []).length + 1).padStart(2, '0');
+      document.getElementById('vModalBarcode').value = '8800' + String((MTP.state.variants || []).length + 1).padStart(3, '0');
+      document.getElementById('vModalIva').value = 'E';
+      document.getElementById('vModalPrice').value = '1.30';
+
+      const prodSelect = document.getElementById('vModalProduct');
+      prodSelect.innerHTML = (MTP.state.products || []).map(p => `<option value="${p.id}" ${p.id === defaultProdId ? 'selected' : ''}>${p.name} (${p.familyId})</option>`).join('');
+
+      variantModalRecipe = [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina' },
+        { insumoId: 'ins-queso-cocina', qty: 0.050, label: '50 g Queso' }
+      ];
+
+      renderVariantRecipeList();
+      recalcVariantModalCost();
+      document.getElementById('variantModal').classList.add('open');
+    }
+
+    function openEditVariantModal(variantId) {
+      const v = (MTP.state.variants || []).find(x => x.id === variantId);
+      if (!v) return;
+      document.getElementById('variantModalTitle').textContent = `✏️ Editando Sabor: ${v.name}`;
+      document.getElementById('vModalId').value = v.id;
+      document.getElementById('vModalName').value = v.name;
+      document.getElementById('vModalCode').value = v.code || '';
+      document.getElementById('vModalBarcode').value = v.barcode || '';
+      document.getElementById('vModalIva').value = v.ivaType || 'E';
+      document.getElementById('vModalPrice').value = v.priceUsd || 0;
+
+      const prodSelect = document.getElementById('vModalProduct');
+      prodSelect.innerHTML = (MTP.state.products || []).map(p => `<option value="${p.id}" ${p.id === v.productId ? 'selected' : ''}>${p.name}</option>`).join('');
+
+      variantModalRecipe = JSON.parse(JSON.stringify(v.recipe || v.ingredients || []));
+      renderVariantRecipeList();
+      recalcVariantModalCost();
+      document.getElementById('variantModal').classList.add('open');
+    }
+
+    function onVariantProductChange() {
+      // hook para cambios de producto si es necesario
+    }
+
+    function renderVariantRecipeList() {
+      const box = document.getElementById('vModalRecipeList');
+      const kitchenItems = (MTP.state.insumos || MTP.state.inventory.filter(i => !i.sellable));
+
+      if (!variantModalRecipe.length) {
+        box.innerHTML = `<div style="text-align:center;padding:8px;font-size:11px;color:var(--txt-muted)">Sin insumos asignados a este sabor.</div>`;
+        return;
+      }
+
+      box.innerHTML = variantModalRecipe.map((ing, idx) => `
+        <div style="display:grid;grid-template-columns:2.5fr 1fr 2fr auto;gap:6px;align-items:center;margin-bottom:6px">
+          <select class="select" onchange="variantModalRecipe[${idx}].insumoId=this.value;recalcVariantModalCost()" style="padding:4px;font-size:11px">
+            ${kitchenItems.map(k => `<option value="${k.id}" ${k.id === ing.insumoId ? 'selected' : ''}>${k.name} (${k.unit})</option>`).join('')}
+          </select>
+          <input type="number" step="0.005" class="input" value="${ing.qty}" placeholder="Kg/L/Und"
+            style="padding:4px;font-size:11px;font-weight:700"
+            oninput="variantModalRecipe[${idx}].qty=parseFloat(this.value)||0;recalcVariantModalCost()">
+          <input type="text" class="input" value="${ing.label || ''}" placeholder="Etiqueta ej: 75g Harina"
+            style="padding:4px;font-size:11px"
+            oninput="variantModalRecipe[${idx}].label=this.value">
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger);padding:2px 6px" onclick="variantModalRecipe.splice(${idx},1);renderVariantRecipeList();recalcVariantModalCost()">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function addRecipeRowInVariantModal() {
+      variantModalRecipe.push({ insumoId: 'ins-carne-mechada', qty: 0.050, label: '50 g Carne' });
+      renderVariantRecipeList();
+      recalcVariantModalCost();
+    }
+
+    function recalcVariantModalCost() {
+      let cost = 0;
+      variantModalRecipe.forEach(ing => {
+        const ins = MTP.getInsumoById(ing.insumoId);
+        if (ins) cost += (Number(ins.costUsd) || 0) * (Number(ing.qty) || 0);
+      });
+      document.getElementById('vModalCostLabel').textContent = `${MTP.fmtUSD(cost)} USD`;
+    }
+
+    function closeVariantModal() {
+      document.getElementById('variantModal').classList.remove('open');
+    }
+
+    function saveVariantModal() {
+      const id = document.getElementById('vModalId').value;
+      const productId = document.getElementById('vModalProduct').value;
+      const prod = (MTP.state.products || []).find(p => p.id === productId);
+      const familyId = prod ? prod.familyId : 'fritos';
+
+      const name = document.getElementById('vModalName').value.trim();
+      const code = document.getElementById('vModalCode').value.trim();
+      const barcode = document.getElementById('vModalBarcode').value.trim();
+      const ivaType = document.getElementById('vModalIva').value;
+      const priceUsd = parseFloat(document.getElementById('vModalPrice').value) || 0;
+
+      if (!name) {
+        MTP.toast('Escribe el nombre del sabor/variante', 'warn');
+        return;
+      }
+
+      MTP.saveVariant({
+        id: id || undefined,
+        productId,
+        familyId,
+        name,
+        code,
+        barcode,
+        ivaType,
+        priceUsd,
+        recipe: variantModalRecipe,
+        active: true,
+        order: (MTP.state.variants || []).length + 1
+      });
+
+      closeVariantModal();
+      renderHierarchyView();
+      MTP.toast(`Sabor "${name}" guardado exitosamente`);
+    }
+
+    function confirmDeleteVariant(variantId, name) {
+      if (confirm(`¿Eliminar la variante "${name}" del catálogo?`)) {
+        MTP.deleteVariant(variantId);
+        renderHierarchyView();
+        MTP.toast(`Variante "${name}" eliminada`);
+      }
+    }
+
+    /* ==========================================================================
+       GESTIÓN DE GRUPOS DE MODIFICADORES
+       ========================================================================== */
+    function openModifierGroupsModal() {
+      const container = document.getElementById('modifierGroupsListContainer');
+      const groups = MTP.state.modifierGroups || [];
+      container.innerHTML = groups.map(g => `
+        <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <strong style="font-size:12.5px">${g.name}</strong>
+            <span class="badge badge-blue" style="font-size:10px">Mín: ${g.min} / Máx: ${g.max}</span>
+          </div>
+          <div style="font-size:11px;color:var(--txt-2)">
+            ${g.options.map(o => `<span class="badge-mod">${o.name} (${MTP.fmtUSD(o.priceUsd)})</span>`).join('')}
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('modifierGroupsModal').classList.add('open');
+    }
+
+    function closeModifierGroupsModal() {
+      document.getElementById('modifierGroupsModal').classList.remove('open');
+    }
+
+    /* ==========================================================================
+       LÓGICA DEL ESCÁNER DE CÓDIGOS DE BARRA Y RECEPCIÓN RÁPIDA
+       ========================================================================== */
     function handleScannedCode(rawCode) {
       const code = String(rawCode || '').trim();
       if (!code) return;
@@ -188,41 +961,41 @@
       const found = MTP.findByCodeOrBarcode(code, true);
       const box = document.getElementById('scanResultBox');
 
-      if (found && found.kind === 'inventory') {
+      if (found && (found.kind === 'inventory' || found.kind === 'variant')) {
         const it = found.item;
         box.innerHTML = `
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left">
             <div style="display:flex;align-items:center;gap:10px">
-              <img src="${it.img}" style="width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid #cbd5e1">
+              <img src="${it.img || '../assets/img/productos/viveres.jpg'}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid var(--line)">
               <div>
-                <span class="badge badge-green">✔ CÓDIGO REGISTRADO (${it.barcode})</span>
-                <div style="font-size:15px;font-weight:900;color:#0f172a;margin-top:2px">${it.name}</div>
-                <div style="font-size:12px;color:#475569">Stock actual: <strong>${it.stock} ${it.unit}</strong> · Venta: <strong>${MTP.fmtUSD(it.priceUsd)}</strong></div>
+                <span class="badge badge-green">CÓDIGO IDENTIFICADO (${it.barcode || it.code})</span>
+                <div style="font-size:14px;font-weight:800;color:var(--txt);margin-top:2px">${it.name}</div>
+                <div style="font-size:11.5px;color:var(--txt-2)">Stock actual: <strong>${it.stock || 0} ${it.unit || 'und'}</strong> · PVP: <strong>${MTP.fmtUSD(it.priceUsd)}</strong></div>
               </div>
             </div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
               <button class="btn btn-p btn-sm" onclick="quickAddStock('${it.id}', 1)">+1 Und</button>
-              <button class="btn btn-p btn-sm" onclick="quickAddStock('${it.id}', 12)">+12 (Docena)</button>
-              <button class="btn btn-amber btn-sm" onclick="quickAddStock('${it.id}', 24)">+24 (Bulto/Caja)</button>
+              <button class="btn btn-p btn-sm" onclick="quickAddStock('${it.id}', 12)">+12 Docena</button>
+              <button class="btn btn-amber btn-sm" onclick="quickAddStock('${it.id}', 24)">+24 Bulto</button>
               <button class="btn btn-ghost btn-sm" onclick="loadProductIntoForm('${it.id}')">Editar</button>
             </div>
           </div>
         `;
         loadProductIntoForm(it.id);
-        MTP.toast(`Producto detectado: ${it.name}`);
+        MTP.toast(`Identificado: ${it.name}`);
       } else {
         box.innerHTML = `
           <div style="text-align:left;display:flex;align-items:center;justify-content:space-between">
             <div>
-              <span class="badge badge-yellow">CÓDIGO DE BARRAS NUEVO: ${code}</span>
-              <div style="font-weight:800;color:#0f172a;margin-top:4px">Este empaque aún no está en el inventario.</div>
-              <div style="font-size:12px;color:#475569">Completa el nombre y precio a la derecha para guardarlo.</div>
+              <span class="badge badge-yellow">CÓDIGO NUEVO DETECTADO: ${code}</span>
+              <div style="font-weight:800;color:var(--txt);margin-top:2px">Este empaque no está registrado aún.</div>
+              <div style="font-size:11px;color:var(--txt-2)">Completa nombre, costo y precio a la derecha para guardarlo.</div>
             </div>
           </div>
         `;
         document.getElementById('bpId').value = '';
         document.getElementById('bpBarcode').value = code;
-        document.getElementById('bpCode').value = String(100 + MTP.state.inventory.length);
+        document.getElementById('bpCode').value = String(100 + (MTP.state.inventory || []).length);
         document.getElementById('bpName').value = '';
         document.getElementById('bpName').focus();
       }
@@ -231,11 +1004,13 @@
     function quickAddStock(invId, qty) {
       const it = MTP.getInsumoById(invId);
       if (!it) return;
-      it.stock = Number((Number(it.stock) + qty).toFixed(2));
+      const prev = Number(it.stock) || 0;
+      it.stock = Number((prev + qty).toFixed(2));
       MTP.save();
       handleScannedCode(it.barcode || it.code);
       renderRegisteredBarcodes();
-      MTP.toast(`Se sumaron +${qty} ${it.unit} a "${it.name}" (Stock: ${it.stock})`);
+      renderHierarchyView();
+      MTP.toast(`Sumadas +${qty} ${it.unit || 'und'} a "${it.name}" (Nuevo Stock: ${it.stock})`);
     }
 
     function loadProductIntoForm(invId) {
@@ -245,11 +1020,15 @@
       document.getElementById('bpId').value = it.id;
       document.getElementById('bpBarcode').value = it.barcode || '';
       document.getElementById('bpCode').value = it.code || '';
-      document.getElementById('bpGroup').value = it.group || 'viveres';
+      document.getElementById('bpGroup').value = it.familyId || it.group || 'viveres';
       document.getElementById('bpName').value = it.name || '';
       document.getElementById('bpStock').value = it.stock || 0;
       document.getElementById('bpCost').value = it.costUsd || 0;
       document.getElementById('bpPrice').value = it.priceUsd || 0;
+    }
+
+    function updateCalculatedPvpPreview() {
+      // cálculo dinámico opcional si se cambia el costo
     }
 
     function saveBarcodeProduct(e) {
@@ -268,22 +1047,23 @@
         if (existing) {
           existing.barcode = barcode;
           existing.code = code;
+          existing.familyId = group;
           existing.group = group;
-          existing.category = GROUP_CAT_MAP[group] || 'Víveres';
           existing.name = name;
           existing.stock = stock;
           existing.costUsd = costUsd;
           existing.priceUsd = priceUsd;
         }
       } else {
-        MTP.state.inventory.push({
+        const newItem = {
           id: 'prod-' + Date.now(),
           code,
           barcode,
           qrCode: 'QR-' + code,
+          familyId: group,
           group,
           name,
-          category: GROUP_CAT_MAP[group] || 'Víveres',
+          category: (MTP.state.families && MTP.state.families.find(f => f.id === group))?.name || 'Víveres',
           type: 'venta',
           sellable: true,
           unit: 'und',
@@ -293,34 +1073,39 @@
           prevCostUsd: costUsd,
           priceUsd,
           emoji: '📦',
-          img: GROUP_IMG_MAP[group] || '../assets/img/productos/viveres.jpg'
-        });
+          img: '../assets/img/productos/viveres.jpg'
+        };
+        if (!Array.isArray(MTP.state.retailItems)) MTP.state.retailItems = [];
+        MTP.state.retailItems.push(newItem);
+        if (!Array.isArray(MTP.state.inventory)) MTP.state.inventory = [];
+        MTP.state.inventory.push(newItem);
       }
 
       MTP.save();
       renderRegisteredBarcodes();
-      MTP.toast(`Producto "${name}" guardado con código de barras ${barcode}`);
+      renderHierarchyView();
+      MTP.toast(`Mercancía "${name}" guardada con código ${barcode}`);
     }
 
     function renderRegisteredBarcodes() {
       const tbody = document.getElementById('registeredBarcodesBody');
       const q = (document.getElementById('filterBarcodesInput')?.value || '').toLowerCase();
-      const bcv = MTP.state.settings.rateBcv;
+      const bcv = Number(MTP.state.settings.rateBcv) || 1;
 
-      const items = MTP.state.inventory.filter(i => i.sellable && (
+      const items = (MTP.state.inventory || []).filter(i => i.sellable && (
         !q || i.name.toLowerCase().includes(q) || String(i.barcode).toLowerCase().includes(q) || String(i.code).toLowerCase().includes(q)
       ));
 
       tbody.innerHTML = items.map(it => `
         <tr>
-          <td><img src="${it.img}" style="width:38px;height:38px;border-radius:6px;object-fit:cover"></td>
+          <td><img src="${it.img || '../assets/img/productos/viveres.jpg'}" style="width:34px;height:34px;border-radius:4px;object-fit:cover"></td>
           <td><span class="code-pill">#${it.code}</span></td>
-          <td style="font-family:var(--font-mono);font-weight:800">${it.barcode}</td>
+          <td style="font-family:var(--font-mono);font-weight:700">${it.barcode || '—'}</td>
           <td><strong>${it.name}</strong></td>
-          <td><span class="badge badge-blue">${it.group || it.category}</span></td>
+          <td><span class="badge badge-blue">${it.familyId || it.group || it.category}</span></td>
           <td><strong>${it.stock} ${it.unit}</strong></td>
           <td>${MTP.fmtUSD(it.costUsd)}</td>
-          <td><strong>${MTP.fmtUSD(it.priceUsd)}</strong> <span style="font-size:11px;color:var(--primary)">(${(it.priceUsd * bcv).toFixed(2)} Bs)</span></td>
+          <td><strong>${MTP.fmtUSD(it.priceUsd)}</strong> <span style="font-size:10.5px;color:var(--info)">(${(it.priceUsd * bcv).toFixed(2)} Bs)</span></td>
           <td>
             <button class="btn btn-p btn-sm" onclick="quickAddStock('${it.id}', 6)">+6</button>
             <button class="btn btn-ghost btn-sm" onclick="loadProductIntoForm('${it.id}')">Editar</button>
@@ -330,7 +1115,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      renderRegisteredBarcodes();
+      renderFamilyTabs();
+      renderHierarchyView();
+
       const inp = document.getElementById('liveBarcodeInput');
       if (inp) {
         inp.addEventListener('keydown', e => {
@@ -343,6 +1130,11 @@
       if (window.MTPBarcode) {
         window.MTPBarcode.onBarcodeScan(handleScannedCode);
       }
+    });
+
+    window.addEventListener('mtp:state-updated', () => {
+      renderHierarchyView();
+      if (currentMainView === 'scanner') renderRegisteredBarcodes();
     });
   </script>
 </body>
