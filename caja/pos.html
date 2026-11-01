@@ -31,34 +31,65 @@
       </header>
 
       <div class="admin-content">
-        <div id="posReplaceBanner" style="display:none;align-items:center;justify-content:space-between;background:#fef3c7;border:1.5px solid #f59e0b;color:#92400e;padding:6px 12px;border-radius:8px;margin-bottom:8px;font-size:12.5px;font-weight:700"></div>
+        <!-- Banner de Modo Reemplazo (⇄ Reemplazar) -->
+        <div id="posReplaceBanner" style="display:none;align-items:center;justify-content:space-between;background:#fef3c7;border:1.5px solid #f59e0b;color:#92400e;padding:6px 12px;border-radius:8px;margin-bottom:6px;font-size:12.5px;font-weight:700"></div>
 
-        <div class="pos-layout">
-          <div class="pos-left-col">
-            <div class="scanner-bar">
-              <div class="scanner-input-wrap">
+        <!-- DISTRIBUCIÓN A 3 COLUMNAS FIJAS (ZERO-SCROLL GLOBAL 1366x768 / 1024x768) -->
+        <div class="pos-layout-3col">
+          <!-- COLUMNA 1: FAMILIAS MAESTRAS (Izquierda, ~160px) -->
+          <aside class="pos-col-families" id="posColFamilies" aria-label="Familias de Productos">
+            <!-- Renderizado dinámico de las 9 Familias maestras con indicador [1]-[9] -->
+          </aside>
+
+          <!-- COLUMNA 2: CENTRO FLEXIBLE (Toolbar + Multiplicador + Más Vendidos + Cuadrícula de Sabores) -->
+          <section class="pos-col-main" aria-label="Catálogo Rápido">
+            <!-- Barra superior: Escáner / Buscador + Multiplicador [1x][2x][3x][5x] + Cámara + Estado F1 -->
+            <div class="pos-main-toolbar">
+              <div class="pos-scanner-wrap">
                 <span class="scanner-icon" id="cajaScanIco"></span>
-                <input type="text" id="posScannerInput" class="scanner-input"
-                  placeholder="Escanea Código de Barras o escribe código (#01-#24, 101 Harina PAN, 201 Pepito) + Enter..." autocomplete="off">
+                <input type="text" id="posScannerInput" class="pos-scanner-input"
+                  placeholder="Escanear o buscar (#01-#34, 101, '3*' multiplicador)... (F1)" autocomplete="off">
               </div>
-              <button type="button" class="btn btn-sm" style="background:#10b981;color:#fff;border:none;font-weight:800;padding:6px 10px"
-                onclick="window.MTPBarcode && window.MTPBarcode.openCameraScannerModal()">
-                Escanear Cámara
+
+              <!-- Selector de Multiplicador Rápido [1x], [2x], [3x], [5x] -->
+              <div class="pos-multiplier-group" id="posMultiplierGroup" title="Multiplicador para el siguiente ítem">
+                <button type="button" class="pos-mult-btn active" data-mult="1" onclick="window.MTPPos.setMultiplier(1)">1x</button>
+                <button type="button" class="pos-mult-btn" data-mult="2" onclick="window.MTPPos.setMultiplier(2)">2x</button>
+                <button type="button" class="pos-mult-btn" data-mult="3" onclick="window.MTPPos.setMultiplier(3)">3x</button>
+                <button type="button" class="pos-mult-btn" data-mult="5" onclick="window.MTPPos.setMultiplier(5)">5x</button>
+              </div>
+
+              <button type="button" class="btn btn-camera-scan"
+                onclick="window.MTPBarcode && window.MTPBarcode.openCameraScannerModal()" title="Escanear con Cámara">
+                Cámara
               </button>
-              <div class="scanner-status">
+
+              <div class="pos-scanner-status" title="Presiona F1 para buscar o escanear">
                 <span class="pulse-dot"></span>
-                <span>LISTO (F1)</span>
+                <span>F1</span>
               </div>
             </div>
 
-            <div class="pos-cats" id="posCategoryTabs"></div>
-
-            <div class="pos-grid-scroll">
-              <div class="pos-grid" id="posItemsGrid"></div>
+            <!-- Barra de Más Vendidos (Chips de 1 solo toque para los ítems más pedidos) -->
+            <div class="pos-bestsellers-bar" id="posBestsellersBar">
+              <!-- Renderizado dinámico de los más pedidos -->
             </div>
-          </div>
 
-          <div class="pos-ticket-panel">
+            <!-- Cuadrícula de Productos y Sabores (Scroll interno vertical) -->
+            <div class="pos-products-scroll" id="posProductsScroll">
+              <div class="pos-products-container" id="posProductsContainer">
+                <!-- Se renderizan los grupos de comida con sus sabores directos o la mercancía directa -->
+              </div>
+            </div>
+
+            <!-- Panel / Drawer integrado de Modificadores (rápido y no intrusivo) -->
+            <div class="pos-modifiers-drawer" id="posModifiersDrawer" style="display:none">
+              <!-- Opciones de masa, extras, empaque para el ítem seleccionado -->
+            </div>
+          </section>
+
+          <!-- COLUMNA 3: TICKET DE ORDEN ACTIVA (Derecha, ~340px) -->
+          <aside class="pos-col-ticket pos-ticket-panel" aria-label="Ticket de Venta">
             <div class="ticket-hd">
               <h3>Orden Activa en Caja</h3>
               <span class="badge badge-green" id="posTicketCount">0 ítems</span>
@@ -66,8 +97,11 @@
 
             <div class="ticket-customer-bar">
               <input type="text" id="posCustomerInput" class="input" placeholder="Cliente / Mesa / Para Llevar" style="padding:5px 9px;font-size:12px">
-              <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.clearCart()">Vaciar</button>
+              <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.clearCart()" title="Vaciar todo el ticket">Vaciar</button>
             </div>
+
+            <!-- Barra de Cuentas en Espera (F3) -->
+            <div class="held-orders-bar" id="heldOrdersBar" style="display:none"></div>
 
             <div class="ticket-items" id="posTicketItems"></div>
 
@@ -86,12 +120,12 @@
 
             <div class="ticket-actions">
               <button class="btn-cobrar-big" onclick="window.MTPPos.openCheckoutModal()">
-                <span>💵 COBRAR Y ENTREGAR VUELTO (F2)</span>
+                <span>COBRAR Y ENTREGAR VUELTO (F2)</span>
               </button>
-              <button class="btn btn-amber btn-sm" onclick="window.MTPPos.holdCurrentCart()">⏸ Mesa / Espera (F3)</button>
-              <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.openQuickKitchenTicketPreview()">🍳 Comanda Cocina (F4)</button>
+              <button class="btn btn-amber btn-sm" onclick="window.MTPPos.holdCurrentCart()" title="Poner en espera / Cambiar cuenta (F3)">⏸ Mesa / Espera (F3)</button>
+              <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.openQuickKitchenTicketPreview()" title="Ver o imprimir comanda (F4)">🍳 Comanda Cocina (F4)</button>
             </div>
-          </div>
+          </aside>
         </div>
       </div>
     </main>

@@ -1,430 +1,727 @@
 /* ==========================================================================
-   MI-TIENDA-POS — POS de Alta Velocidad para Windows 7 (Teclado + Ratón)
-   - Cero efectos pesados de GPU, lectura ultraclara, atajos [1]-[9], F1-F6
+   MI-TIENDA-POS — Pantalla de Caja Rápida v5 (Fast Touch POS Engine)
+   - Arquitectura 3 Columnas Fijas (Zero-Scroll global a 1366x768 y 1024x768)
+   - Col 1: Familias maestras (~160px) con atajo [1]-[9]
+   - Col 2: Toolbar + Multiplicador + Más Vendidos + Cuadrícula de Sabores y Productos
+   - Col 3: Ticket Activo (~340px) + Botón Gigante Ámbar (F2)
+   - Cero imágenes pesadas en botones de venta para ultra-rendimiento Windows 7
    ========================================================================== */
 
 body.pos-fullscreen-body {
   overflow: hidden;
   height: 100vh;
   width: 100vw;
+  margin: 0;
+  padding: 0;
+  background: var(--bg, #f4f6f8);
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
 }
+
 body.pos-fullscreen-body .admin-main {
   height: 100vh;
   flex: 1;
   min-width: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
+
+body.pos-fullscreen-body .admin-topbar {
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  padding: 0 10px;
+  flex-shrink: 0;
+}
+
 body.pos-fullscreen-body .admin-content {
-  padding: 6px 10px;
-  height: calc(100vh - 48px);
+  padding: 5px 8px;
+  height: calc(100vh - 42px);
   width: 100%;
   max-width: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
-/* Barra Superior de Atajos de Teclado y Cuentas en Espera */
-.pos-shortcuts-strip {
+/* ==========================================================================
+   DISTRIBUCIÓN A 3 COLUMNAS FIJAS (ZERO-SCROLL GLOBAL)
+   ========================================================================== */
+.pos-layout-3col {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) 340px;
+  gap: 6px;
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Compatibilidad con clase anterior */
+.pos-layout {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) 340px;
+  gap: 6px;
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1120px) {
+  .pos-layout-3col,
+  .pos-layout {
+    grid-template-columns: 135px minmax(0, 1fr) 315px;
+    gap: 5px;
+  }
+}
+
+/* ==========================================================================
+   COLUMNA 1: FAMILIAS MAESTRAS (Izquierda, ~160px)
+   ========================================================================== */
+.pos-col-families {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #ffffff;
+  border: 1.5px solid var(--border, #cbd5e1);
+  border-radius: 8px;
+  padding: 5px 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.pos-family-nav-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 7px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-left: 4px solid var(--fam-color, #64748b);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  user-select: none;
+  transition: all 0.1s ease-in-out;
+  position: relative;
+}
+
+.pos-family-nav-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.pos-family-nav-btn.active {
+  background: #ecfdf5;
+  border-color: #059669;
+  border-left-width: 5px;
+  border-left-color: var(--fam-color, #059669);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.pos-fam-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  background: #0f172a;
-  color: #e2e8f0;
-  padding: 4px 10px;
-  border-radius: 7px;
-  margin-bottom: 6px;
-  font-size: 11px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
+  gap: 3px;
 }
-.pos-sc-items {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.pos-sc-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #cbd5e1;
-  font-weight: 600;
-  cursor: pointer;
-}
-.pos-sc-item:hover {
-  color: #fff;
-}
-.pos-sc-kbd {
-  background: #334155;
-  color: #fbbf24;
-  font-family: var(--font-mono);
-  font-weight: 900;
+
+.pos-fam-key {
+  font-family: var(--font-mono, monospace);
   font-size: 10px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  border: 1px solid #475569;
+  font-weight: 900;
+  background: #0f172a;
+  color: #fbbf24;
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1;
 }
 
-/* Grid Principal: minmax(0, 1fr) + Ticket Derecho */
-.pos-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 9px;
-  height: 100%;
-  width: 100%;
-  max-width: 100%;
-  min-height: 0;
+.pos-family-nav-btn.active .pos-fam-key {
+  background: #059669;
+  color: #ffffff;
 }
 
+.pos-fam-count {
+  font-size: 9px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.pos-family-nav-btn.active .pos-fam-count {
+  color: #065f46;
+}
+
+.pos-fam-name {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.pos-family-nav-btn.active .pos-fam-name {
+  color: #065f46;
+  font-weight: 900;
+}
+
+/* ==========================================================================
+   COLUMNA 2: CENTRO FLEXIBLE
+   ========================================================================== */
+.pos-col-main,
 .pos-left-col {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
+  gap: 5px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
-/* Barra de Escáner y Búsqueda Instantánea */
+/* Barra Superior: Escáner + Multiplicador + Cámara + Estado */
+.pos-main-toolbar,
 .scanner-bar {
   background: #111827;
   border-radius: 8px;
-  padding: 6px 8px;
-  margin-bottom: 6px;
+  padding: 4px 8px;
   display: flex;
   align-items: center;
   gap: 6px;
   border: 1.5px solid #10b981;
   flex-shrink: 0;
   min-width: 0;
+  box-sizing: border-box;
 }
+
+.pos-scanner-wrap,
 .scanner-input-wrap {
-  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
+  position: relative;
 }
+
 .scanner-icon {
   position: absolute;
-  left: 9px;
+  left: 8px;
   font-size: 13px;
   pointer-events: none;
+  color: #94a3b8;
 }
+
+.pos-scanner-input,
 .scanner-input {
   width: 100%;
-  padding: 6px 10px 6px 30px;
-  border-radius: 6px;
-  border: 1.5px solid #334155;
-  background: #fff;
+  padding: 5px 8px 5px 28px;
+  border-radius: 5px;
+  border: 1.5px solid #374151;
+  background: #ffffff;
   color: #0f172a;
   font-size: 12.5px;
   font-weight: 700;
+  box-sizing: border-box;
 }
+
+.pos-scanner-input:focus,
 .scanner-input:focus {
   outline: none;
   border-color: #10b981;
 }
 
-/* Pestañas de Categorías con Número de Teclado */
-.pos-cats {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  margin-bottom: 6px;
+/* Selector de Multiplicador Rápido [1x], [2x], [3x], [5x] */
+.pos-multiplier-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #1f2937;
+  padding: 2px;
+  border-radius: 5px;
   flex-shrink: 0;
 }
-.pos-cat-btn {
-  padding: 4px 8px;
-  border-radius: 6px;
-  background: #fff;
-  border: 1.5px solid var(--border);
-  font-weight: 800;
-  font-size: 11.2px;
-  color: var(--txt-sec);
+
+.pos-mult-btn {
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #cbd5e1;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 900;
   cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.pos-mult-btn:hover {
+  background: #374151;
+  color: #ffffff;
+}
+
+.pos-mult-btn.active {
+  background: #f59e0b;
+  color: #0f172a;
+  font-weight: 900;
+  border-color: #d97706;
+}
+
+.btn-camera-scan {
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  font-weight: 800;
+  padding: 5px 8px;
+  font-size: 11px;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-camera-scan:hover {
+  background: #047857;
+}
+
+.pos-scanner-status,
+.scanner-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #10b981;
+  font-family: var(--font-mono, monospace);
+  font-size: 10.5px;
+  font-weight: 900;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+  display: inline-block;
+}
+
+/* Barra de Más Vendidos (Chips de 1 Toque) */
+.pos-bestsellers-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #ffffff;
+  border: 1.5px solid var(--border, #cbd5e1);
+  border-radius: 7px;
+  padding: 3px 6px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.pos-bs-label {
+  font-size: 10px;
+  font-weight: 900;
+  color: #b45309;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-right: 2px;
+  text-transform: uppercase;
+}
+
+.pos-chip-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-}
-.pos-cat-btn:hover {
-  border-color: var(--primary);
-  color: var(--txt);
-}
-.pos-cat-btn.active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
-}
-.cat-kbd-num {
-  background: rgba(15, 23, 42, 0.12);
-  padding: 0 4px;
-  border-radius: 3px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-}
-.pos-cat-btn.active .cat-kbd-num {
-  background: rgba(255, 255, 255, 0.25);
-  color: #fff;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #f8fafc;
+  border: 1px solid var(--border, #cbd5e1);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--txt, #0f172a);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  transition: all 0.1s;
 }
 
-/* Grid de Tarjetas Maestras Agrupadas */
+.pos-chip-btn:hover {
+  background: #ecfdf5;
+  border-color: #059669;
+  color: #065f46;
+}
+
+.pos-chip-btn:active {
+  transform: scale(0.96);
+}
+
+.pos-chip-price {
+  font-family: var(--font-mono, monospace);
+  font-weight: 900;
+  color: #059669;
+  font-size: 10px;
+}
+
+/* Cuadrícula de Productos y Sabores (Scroll interno vertical) */
+.pos-products-scroll,
 .pos-grid-scroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 3px;
-  min-height: 0;
-}
-.pos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-  gap: 8px;
-  padding-bottom: 10px;
-}
-
-.pos-group-card,
-.pos-item-card {
-  background: #fff;
-  border: 1.5px solid var(--border);
-  border-radius: 9px;
-  overflow: hidden;
-  cursor: pointer;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  user-select: none;
-}
-.pos-group-card:hover,
-.pos-item-card:hover {
-  border-color: var(--primary);
-  background: #f8fafc;
+  box-sizing: border-box;
 }
 
-.pos-card-img-wrap {
-  position: relative;
-  width: 100%;
-  height: 78px;
-  background: #0f172a;
-  overflow: hidden;
-}
-.pos-card-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.pos-card-badges {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  right: 4px;
+.pos-products-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 6px;
+}
+
+.pos-product-section {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
 }
-.pos-group-count {
-  background: rgba(15, 23, 42, 0.88);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 5px;
-}
-.pos-kbd-tag {
-  background: #fbbf24;
-  color: #0f172a;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 900;
-  padding: 1px 6px;
+
+.pos-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 3px 8px;
+  background: #f1f5f9;
+  border-left: 4px solid var(--primary, #059669);
   border-radius: 4px;
 }
-.pos-card-body {
-  padding: 7px 9px;
+
+.pos-section-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.pos-section-subtitle {
+  font-size: 10.5px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Grilla de Sabores táctiles grandes */
+.pos-flavors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 5px;
+}
+
+@media (max-width: 1120px) {
+  .pos-flavors-grid {
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    gap: 4px;
+  }
+}
+
+/* Botón táctil de sabor (SIN IMÁGENES PESADAS = ULTRA RÁPIDO) */
+.pos-flavor-btn {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  flex: 1;
-  gap: 4px;
-}
-.pos-item-name {
-  font-weight: 800;
-  font-size: 12.2px;
-  color: var(--txt);
-  line-height: 1.2;
-}
-.pos-item-ft {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 4px;
-  border-top: 1px dashed #e2e8f0;
-}
-.pos-item-usd {
-  font-size: 13px;
-  font-weight: 900;
-  color: var(--txt);
-  font-family: var(--font-mono);
-}
-.pos-item-bs {
-  font-size: 10.5px;
-  font-weight: 800;
-  color: var(--primary);
+  min-height: 64px;
+  padding: 5px 7px;
+  background: #ffffff;
+  border: 1.5px solid var(--border, #cbd5e1);
+  border-radius: 7px;
+  cursor: pointer;
+  text-align: left;
+  user-select: none;
+  transition: border-color 0.1s, background 0.1s, transform 0.05s;
+  box-sizing: border-box;
+  position: relative;
 }
 
-/* ==========================================================================
-   MODAL DE SELECCIÓN RÁPIDA DE VARIEDADES (BOTONERA TÁCTIL Y TECLADO [1]-[9])
-   ========================================================================== */
-.variant-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
-  gap: 8px;
+.pos-flavor-btn:hover {
+  border-color: var(--primary, #059669);
+  background: #f8fafc;
 }
-.variant-row-card {
-  background: #fff;
-  border: 1.5px solid var(--border);
-  border-radius: 9px;
-  padding: 8px 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+
+.pos-flavor-btn:active {
+  transform: scale(0.97);
 }
-.variant-row-card:hover {
-  border-color: var(--primary);
-}
-.variant-row-card.in-cart {
+
+.pos-flavor-btn.in-cart {
   border-color: #059669;
   background: #f0fdf4;
+  box-shadow: 0 0 0 1px #059669;
 }
-.variant-kbd-badge {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: #0f172a;
-  color: #fbbf24;
-  font-family: var(--font-mono);
-  font-weight: 900;
-  font-size: 13px;
+
+.pos-btn-top {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-.variant-item-img {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  max-width: 40px;
-  border-radius: 7px;
-  object-fit: cover;
-  border: 1px solid #cbd5e1;
-  background: #0f172a;
-  cursor: pointer;
-}
-.variant-item-info {
-  flex: 1;
-  min-width: 0;
-  cursor: pointer;
-}
-.variant-item-name {
-  font-size: 12.2px;
-  font-weight: 800;
-  color: var(--txt);
-  line-height: 1.2;
+  justify-content: space-between;
+  gap: 4px;
   margin-bottom: 2px;
 }
-.variant-item-prices {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.variant-item-prices .usd {
-  font-size: 13px;
-  font-weight: 900;
-  color: #0f172a;
-  font-family: var(--font-mono);
-}
-.variant-item-prices .bs {
-  font-size: 11px;
+
+.pos-btn-plu {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
   font-weight: 800;
-  color: var(--primary);
+  color: #1e293b;
+  background: #e2e8f0;
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1;
 }
-.variant-quick-btns {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
-}
-.vq-btn {
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  color: #0f172a;
+
+.pos-btn-cart-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
   font-weight: 900;
-  font-size: 11.5px;
+  color: #ffffff;
+  background: #059669;
+  padding: 1px 6px;
+  border-radius: 99px;
+  box-shadow: 0 1px 2px rgba(5, 150, 105, 0.3);
+  line-height: 1.1;
+}
+
+.pos-btn-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+  margin: 2px 0 4px 0;
+  word-break: break-word;
+}
+
+.pos-btn-bottom {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 3px;
+}
+
+.pos-btn-usd {
+  font-family: var(--font-mono, monospace);
+  font-size: 12.5px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.pos-btn-bs {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  color: #059669;
+}
+
+/* Botón de producto de minimercado / venta directa */
+.pos-retail-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 64px;
   padding: 5px 7px;
-  border-radius: 6px;
+  background: #ffffff;
+  border: 1.5px solid var(--border, #cbd5e1);
+  border-radius: 7px;
   cursor: pointer;
-  font-family: var(--font-mono);
+  text-align: left;
+  user-select: none;
+  transition: border-color 0.1s, background 0.1s, transform 0.05s;
+  box-sizing: border-box;
+  position: relative;
 }
-.vq-btn:hover {
-  background: #059669;
-  color: #fff;
+
+.pos-retail-btn:hover {
+  border-color: #2563eb;
+  background: #f8fafc;
+}
+
+.pos-retail-btn:active {
+  transform: scale(0.97);
+}
+
+.pos-retail-btn.in-cart {
   border-color: #059669;
+  background: #f0fdf4;
+  box-shadow: 0 0 0 1px #059669;
 }
-.vq-btn.plus1 {
-  background: #059669;
-  color: #fff;
-  border-color: #059669;
-  padding: 5px 9px;
+
+.pos-stock-pill {
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1;
 }
-.vq-btn.minus {
+
+.pos-stock-ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.pos-stock-low {
   background: #fee2e2;
   color: #991b1b;
-  border-color: #fca5a5;
+}
+
+/* Panel / Drawer Integrado de Modificadores (No Bloqueante) */
+.pos-modifiers-drawer {
+  background: #0f172a;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 7px 10px;
+  border: 1.5px solid #334155;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+  animation: posSlideUp 0.15s ease-out;
+  box-sizing: border-box;
+}
+
+@keyframes posSlideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pos-mod-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pos-mod-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fbbf24;
+}
+
+.pos-mod-close-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pos-mod-close-btn:hover {
+  background: #059669;
+  border-color: #10b981;
+}
+
+.pos-mod-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pos-mod-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pos-mod-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #94a3b8;
+  margin-right: 2px;
+}
+
+.mod-opt-btn {
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid #475569;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.mod-opt-btn:hover {
+  background: #334155;
+}
+
+.mod-opt-btn.active {
+  background: #059669;
+  border-color: #10b981;
+  color: #ffffff;
+  font-weight: 900;
 }
 
 /* ==========================================================================
-   PANEL DERECHO: TICKET ACTIVO + CUENTAS EN ESPERA (F3)
+   COLUMNA 3: TICKET DE ORDEN ACTIVA (Derecha, ~340px)
    ========================================================================== */
+.pos-col-ticket,
 .pos-ticket-panel {
-  background: #fff;
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  width: 380px;
-  min-width: 380px;
-  max-width: 380px;
-  min-height: 0;
+  background: #ffffff;
+  border: 1.5px solid var(--border, #cbd5e1);
+  border-radius: 8px;
   overflow: hidden;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .ticket-hd {
-  padding: 7px 10px;
+  padding: 6px 10px;
   background: #0f172a;
-  color: #fff;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
   flex-shrink: 0;
 }
+
 .ticket-hd h3 {
-  font-size: 12.8px;
+  font-size: 12.5px;
   font-weight: 800;
   display: flex;
   align-items: center;
   gap: 5px;
+  margin: 0;
 }
 
-/* Barra de Cuentas en Espera / Multicuenta */
+/* Barra de Cuentas en Espera / Multicuenta (F3) */
 .held-orders-bar {
   padding: 4px 8px;
   background: #eff6ff;
@@ -435,8 +732,9 @@ body.pos-fullscreen-body .admin-content {
   overflow-x: auto;
   flex-shrink: 0;
 }
+
 .held-pill {
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #93c5fd;
   color: #1e40af;
   font-size: 10.5px;
@@ -449,6 +747,7 @@ body.pos-fullscreen-body .admin-content {
   align-items: center;
   gap: 4px;
 }
+
 .held-pill:hover {
   background: #dbeafe;
 }
@@ -456,7 +755,7 @@ body.pos-fullscreen-body .admin-content {
 .ticket-customer-bar {
   padding: 5px 8px;
   background: #f8faf9;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border, #cbd5e1);
   display: flex;
   gap: 4px;
   flex-shrink: 0;
@@ -465,25 +764,29 @@ body.pos-fullscreen-body .admin-content {
 .ticket-items {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 8px;
+  padding: 4px 6px;
   min-height: 0;
+  box-sizing: border-box;
 }
+
 .ticket-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 5px;
   padding: 5px 3px;
   border-bottom: 1px solid #eef2f6;
 }
+
 .ticket-row-info {
   flex: 1;
   min-width: 0;
 }
+
 .ticket-row-title {
   font-weight: 800;
   font-size: 11.8px;
-  color: var(--txt);
+  color: var(--txt, #0f172a);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -491,30 +794,44 @@ body.pos-fullscreen-body .admin-content {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .ticket-row-sub {
   font-size: 10.5px;
-  color: var(--txt-sec);
+  color: var(--txt-sec, #64748b);
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 4px;
   margin-top: 2px;
+  flex-wrap: wrap;
 }
+
+.ticket-row-mods {
+  font-size: 9.8px;
+  color: #1e40af;
+  background: #dbeafe;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
 .ticket-mini-btn {
   padding: 1px 5px;
   font-size: 9.8px;
   font-weight: 700;
   border-radius: 4px;
-  border: 1px solid var(--border);
-  background: #fff;
+  border: 1px solid var(--border, #cbd5e1);
+  background: #ffffff;
   cursor: pointer;
-  color: var(--txt-sec);
+  color: var(--txt-sec, #64748b);
 }
+
 .ticket-mini-btn:hover {
-  background: var(--primary-light);
-  border-color: var(--primary);
+  background: var(--primary-light, #ecfdf5);
+  border-color: var(--primary, #059669);
   color: #065f46;
 }
+
 .ticket-row-note {
   font-size: 10px;
   color: #b45309;
@@ -524,29 +841,33 @@ body.pos-fullscreen-body .admin-content {
   display: inline-block;
   margin-top: 2px;
 }
+
 .ticket-qty-ctrl {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   flex-shrink: 0;
 }
+
 .qty-btn {
   width: 22px;
   height: 22px;
   border-radius: 5px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border, #cbd5e1);
   background: #f8fafc;
   font-weight: 800;
   font-size: 12px;
   cursor: pointer;
 }
+
 .qty-btn:hover {
-  background: var(--primary-light);
-  border-color: var(--primary);
+  background: var(--primary-light, #ecfdf5);
+  border-color: var(--primary, #059669);
 }
+
 .ticket-row-tot {
   text-align: right;
-  min-width: 64px;
+  min-width: 60px;
   flex-shrink: 0;
 }
 
@@ -557,30 +878,35 @@ body.pos-fullscreen-body .admin-content {
   border-bottom: 1px solid #bbf7d0;
   flex-shrink: 0;
 }
+
 .tot-main-grid {
   display: grid;
   grid-template-columns: 1fr 1.15fr;
   gap: 6px;
 }
+
 .tot-box {
-  background: #fff;
+  background: #ffffff;
   padding: 4px 8px;
   border-radius: 6px;
   border: 1px solid #bbf7d0;
 }
+
 .tot-box span {
   display: block;
   font-size: 9.5px;
   font-weight: 800;
   text-transform: uppercase;
-  color: var(--txt-sec);
+  color: var(--txt-sec, #64748b);
 }
+
 .tot-box strong {
   font-size: 16px;
   font-weight: 900;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, monospace);
   color: #0f172a;
 }
+
 .tot-box.bs strong {
   color: #059669;
 }
@@ -588,32 +914,42 @@ body.pos-fullscreen-body .admin-content {
 .ticket-actions {
   padding: 6px 8px;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 5px;
-  background: #fff;
+  background: #ffffff;
   flex-shrink: 0;
 }
+
+/* Botón principal gigante en ámbar: COBRAR Y ENTREGAR VUELTO (F2) */
 .btn-cobrar-big {
   grid-column: 1 / -1;
-  padding: 9px;
-  font-size: 13px;
+  padding: 10px;
+  font-size: 13.5px;
   font-weight: 900;
   border-radius: 7px;
-  background: #059669;
-  color: #fff;
-  border: none;
+  background: linear-gradient(180deg, #f59e0b, #d97706);
+  color: #0f172a;
+  border: 1.5px solid #b45309;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.25);
+  transition: background 0.1s, transform 0.05s;
 }
+
 .btn-cobrar-big:hover {
-  background: #047857;
+  background: linear-gradient(180deg, #fbbf24, #d97706);
+}
+
+.btn-cobrar-big:active {
+  transform: scale(0.99);
 }
 
 /* ==========================================================================
-   SISTEMA VENEZOLANO DE COBRO Y VUELTO (BILLETES $, PAGO MÓVIL Y TASAS)
+   MODAL DE COBRO VENEZOLANO Y CALCULADORA DE VUELTOS (100% OPERATIVO)
    ========================================================================== */
 .pay-methods-grid {
   display: grid;
@@ -621,11 +957,12 @@ body.pos-fullscreen-body .admin-content {
   gap: 5px;
   margin-bottom: 8px;
 }
+
 .pay-method-btn {
   padding: 6px 4px;
   border-radius: 7px;
-  border: 1.5px solid var(--border);
-  background: #fff;
+  border: 1.5px solid var(--border, #cbd5e1);
+  background: #ffffff;
   font-weight: 800;
   font-size: 11px;
   cursor: pointer;
@@ -634,21 +971,23 @@ body.pos-fullscreen-body .admin-content {
   align-items: center;
   gap: 2px;
 }
+
 .pay-method-btn:hover,
 .pay-method-btn.active {
-  border-color: var(--primary);
+  border-color: var(--primary, #059669);
   background: #ecfdf5;
   color: #065f46;
 }
 
 .vuelto-panel {
   background: #0f172a;
-  color: #fff;
+  color: #ffffff;
   border-radius: 10px;
   padding: 10px 12px;
   margin-top: 8px;
   border: 1.5px solid #334155;
 }
+
 .vuelto-rate-bar {
   display: flex;
   align-items: center;
@@ -660,6 +999,7 @@ body.pos-fullscreen-body .admin-content {
   border-radius: 7px;
   margin-bottom: 8px;
 }
+
 .vuelto-rate-chip {
   background: #0f172a;
   color: #cbd5e1;
@@ -670,6 +1010,7 @@ body.pos-fullscreen-body .admin-content {
   font-weight: 800;
   cursor: pointer;
 }
+
 .vuelto-rate-chip.active {
   background: #fbbf24;
   color: #0f172a;
@@ -682,24 +1023,28 @@ body.pos-fullscreen-body .admin-content {
   gap: 8px;
   margin-top: 4px;
 }
+
 .vuelto-card {
   background: #1e293b;
   padding: 6px 10px;
   border-radius: 7px;
   border: 1px solid #334155;
 }
+
 .vuelto-card span {
   font-size: 10px;
   color: #94a3b8;
   font-weight: 700;
   display: block;
 }
+
 .vuelto-card strong {
   font-size: 17px;
   font-weight: 900;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, monospace);
   color: #34d399;
 }
+
 .vuelto-card.faltante strong {
   color: #f87171;
 }
@@ -711,54 +1056,33 @@ body.pos-fullscreen-body .admin-content {
   flex-wrap: wrap;
   margin: 7px 0;
 }
+
 .vuelto-bill-btn {
   background: #1e293b;
   border: 1px solid #475569;
   color: #34d399;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, monospace);
   font-size: 11px;
   font-weight: 900;
   padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
 }
+
 .vuelto-bill-btn:hover {
   background: #059669;
-  color: #fff;
+  color: #ffffff;
   border-color: #059669;
 }
 
 .thermal-ticket {
-  font-family: var(--font-mono);
-  background: #fff;
-  color: #000;
+  font-family: var(--font-mono, monospace);
+  background: #ffffff;
+  color: #000000;
   border: 1px dashed #94a3b8;
   padding: 14px;
   max-width: 315px;
   margin: 0 auto;
   font-size: 12px;
   line-height: 1.38;
-}
-
-@media (max-width: 960px) {
-  body.pos-fullscreen-body {
-    overflow: auto;
-    height: auto;
-  }
-  body.pos-fullscreen-body .admin-main,
-  body.pos-fullscreen-body .admin-content {
-    height: auto;
-    width: 100%;
-    max-width: 100%;
-    overflow: visible;
-  }
-  .pos-layout {
-    grid-template-columns: 1fr;
-    height: auto;
-  }
-  .pos-ticket-panel {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-  }
 }
