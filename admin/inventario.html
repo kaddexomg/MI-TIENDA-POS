@@ -17,8 +17,8 @@
         <div class="topbar-left">
           <button class="menu-toggle" id="menuToggleBtn">☰</button>
           <div class="topbar-title">
-            <h2>Control Total de Inventario, Entradas, Salidas y Kardex</h2>
-            <p>Auditoría inmutable, recepción de facturas a proveedores y separación estricta Cocina vs. Minimercado</p>
+            <h2>Lo que hay en la tienda (Ingredientes y Mercancía)</h2>
+            <p>Controla lo que tienes para cocinar y lo que está a la venta en el mostrador</p>
           </div>
         </div>
         <div class="topbar-right">
@@ -31,6 +31,20 @@
         <!-- ESTADÍSTICAS DEL INVENTARIO -->
         <div class="stat-grid" id="invStatsGrid"></div>
 
+        <!-- EXPLICACIÓN CLARA Y PANEL EN VIVO: COMIDA PREPARADA AL DÍA VS MERCANCÍA EMPAQUETADA -->
+        <div class="card" data-section="cocina" style="margin-bottom:12px;border:1.5px solid #f59e0b">
+          <div class="card-hd" style="background:#fffbeb">
+            <div>
+              <h3 style="color:#92400e">🥟 ¿Cómo entra la Comida Preparada (Empanadas, Arepas, Almuerzos) vs. la Mercancía?</h3>
+              <p style="color:#78350f;font-size:13px">
+                <strong>Las empanadas, arepas y almuerzos se preparan a diario</strong> (no se cargan como "30 empanadas guardadas en almacén"). Lo que tienes aquí en inventario son los <strong>Ingredientes de Cocina en Kilos/Litros</strong> (harina de amasar, carne, pollo, queso, papas, aceite). Cada vez que vendes comida en Caja, el sistema cuenta cuántas preparaste hoy y descuenta automáticamente los gramos usados.
+              </p>
+            </div>
+            <a href="recetas.html" class="btn btn-secondary btn-sm">Ver Recetas y Salida a Cocina →</a>
+          </div>
+          <div class="card-bd" id="dailyKitchenPrepSummary" style="background:#ffffff;padding:10px 12px"></div>
+        </div>
+
         <!-- TOOLBAR PRINCIPAL CON 3 ZONAS: PRINCIPAL, SECUNDARIA Y ACCESOS RÁPIDOS -->
         <div class="toolbar" style="margin-bottom:12px">
           <!-- Zona Principal -->
@@ -39,26 +53,26 @@
               <span id="bulkToolbarIcon"></span> + Registrar Entrada Bulto / Saco
             </button>
             <button class="btn btn-secondary" onclick="openInvItemModal(null, 'insumo')">
-              <span id="insumoToolbarIcon"></span> + Insumo Cocina
+              <span id="insumoToolbarIcon"></span> + Ingrediente de cocina
             </button>
             <button class="btn btn-secondary" onclick="openInvItemModal(null, 'venta')">
-              <span id="ventaToolbarIcon"></span> + Mercancía Venta Directa
+              <span id="ventaToolbarIcon"></span> + Producto para vender
             </button>
           </div>
 
           <!-- Zona Secundaria -->
           <div class="toolbar-secondary">
             <button class="btn btn-secondary" onclick="openMultiPurchaseModal()">
-              <span id="truckToolbarIcon"></span> + Factura Proveedor
+              <span id="truckToolbarIcon"></span> + Llegó mercancía
             </button>
             <button class="btn btn-secondary" onclick="openWasteModal()">
-              <span id="wasteToolbarIcon"></span> + Merma
+              <span id="wasteToolbarIcon"></span> + Se dañó o se perdió
             </button>
             <button class="btn btn-secondary" onclick="openAuditModal()">
-              <span id="auditToolbarIcon"></span> Conteo Ciego
+              <span id="auditToolbarIcon"></span> Contar lo que hay
             </button>
             <button class="btn btn-secondary" onclick="openKardexModal('ALL')">
-              <span id="kardexToolbarIcon"></span> Kardex Global
+              <span id="kardexToolbarIcon"></span> Historial de entradas y salidas
             </button>
           </div>
         </div>
@@ -123,8 +137,8 @@
             <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center" id="invFilterBtns">
               <span style="font-size:11px;font-weight:var(--fw-bold);color:var(--txt-2);margin-right:4px">FILTRAR:</span>
               <button class="btn btn-action btn-sm" onclick="setInvFilter('ALL', this)">Todo</button>
-              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('COCINA', this)">🍲 Cocina (Insumos)</button>
-              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('VENTA', this)">🛒 Venta Directa (Abasto)</button>
+              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('COCINA', this)">🍲 Ingredientes de cocina</button>
+              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('VENTA', this)">🛒 Mercancía para vender</button>
               <button class="btn btn-secondary btn-sm" onclick="setInvFilter('Víveres', this)">Víveres</button>
               <button class="btn btn-secondary btn-sm" onclick="setInvFilter('Chucherías', this)">Chucherías</button>
               <button class="btn btn-secondary btn-sm" onclick="setInvFilter('Refrescos & Cervezas', this)">Bebidas</button>
@@ -170,7 +184,7 @@
             <label>Destino en el Negocio</label>
             <select id="invEditType" class="select" onchange="toggleInvTypeFields()">
               <option value="venta">🛒 Producto para Vender al Público (Sale en Caja)</option>
-              <option value="insumo">🍲 Insumo Exclusivo de Cocina (Materia Prima Recetas)</option>
+              <option value="insumo">🍲 Ingrediente de Cocina (Para preparar platos)</option>
             </select>
           </div>
           <div class="form-group" id="invGroupWrap">
@@ -190,7 +204,7 @@
               <option value="Chucherías">Chucherías (Pepito, Doritos, Galletas)</option>
               <option value="Refrescos & Cervezas">Refrescos, Malta & Cervezas</option>
               <option value="Cigarros">Cigarros</option>
-              <option value="Insumos de Cocina (Materia Prima)">Insumos de Cocina (Papa, Aliños, Carnes)</option>
+              <option value="Ingredientes de Cocina">Ingredientes de Cocina (Papa, Aliños, Carnes)</option>
             </select>
           </div>
           <div class="form-group">
@@ -247,7 +261,7 @@
     <div class="modal-box" style="max-width:960px;width:95%">
       <div class="modal-hd">
         <div>
-          <h3>Libro Mayor Kardex · Auditoría Inmutable de Entradas y Salidas</h3>
+          <h3>Historial de Entradas y Salidas de la Tienda</h3>
           <p>Historial trazable de compras, ventas de mostrador, mermas, consumo de personal y ajustes</p>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('kardexModal').classList.remove('open')">✕</button>
@@ -261,9 +275,9 @@
               <option value="ALL">Todas las acciones</option>
               <option value="COMPRA">Compras / Entradas</option>
               <option value="VENTA">Ventas Mostrador</option>
-              <option value="MERMA">Mermas / Desperdicio</option>
-              <option value="CONSUMO_PERSONAL">Consumo de Personal</option>
-              <option value="AJUSTE_AUDITORIA">Ajustes de Auditoría</option>
+              <option value="MERMA">Se dañó o se perdió</option>
+              <option value="CONSUMO_PERSONAL">Comida del personal</option>
+              <option value="AJUSTE_AUDITORIA">Ajustes por conteo</option>
             </select>
           </div>
           <div id="kardexQuickSummary" style="font-size:12px;font-weight:var(--fw-semibold);color:var(--txt-2)"></div>
@@ -298,7 +312,7 @@
     <div class="modal-box" style="max-width:920px;width:95%">
       <div class="modal-hd">
         <div>
-          <h3>Recepción de Mercancía / Factura de Proveedor Multi-Ítem</h3>
+          <h3>Llegó Mercancía (Factura de Proveedor)</h3>
           <p>Registra varios productos de una misma factura y sincroniza la gaveta de caja</p>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('multiPurchaseModal').classList.remove('open')">✕</button>
@@ -366,7 +380,7 @@
       </div>
       <div class="modal-ft">
         <button class="btn btn-secondary" onclick="document.getElementById('multiPurchaseModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-secondary" onclick="submitMultiPurchase()">Procesar Factura y Asentar en Kardex</button>
+        <button class="btn btn-secondary" onclick="submitMultiPurchase()">Guardar Factura y Sumar a la Tienda</button>
       </div>
     </div>
   </div>
@@ -376,7 +390,7 @@
     <div class="modal-box" style="max-width:550px">
       <div class="modal-hd">
         <div>
-          <h3>Registro de Merma, Desperdicio o Autoconsumo</h3>
+          <h3>Anotar lo que se dañó, se perdió o comió el personal</h3>
           <p>Controla fugas de comida, mercancía vencida o consumo de empleados</p>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('wasteModal').classList.remove('open')">✕</button>
@@ -416,7 +430,7 @@
       </div>
       <div class="modal-ft">
         <button class="btn btn-secondary" onclick="document.getElementById('wasteModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-danger" onclick="submitWasteRecord()">Dar de Baja y Asentar en Kardex</button>
+        <button class="btn btn-danger" onclick="submitWasteRecord()">Descontar de la Tienda</button>
       </div>
     </div>
   </div>
@@ -426,7 +440,7 @@
     <div class="modal-box" style="max-width:550px">
       <div class="modal-hd">
         <div>
-          <h3>Auditoría de Inventario por Conteo Físico Real</h3>
+          <h3>Contar lo que hay en los estantes</h3>
           <p>Cuadra la existencia física de los anaqueles contra el sistema y asienta la diferencia</p>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('auditModal').classList.remove('open')">✕</button>
@@ -459,12 +473,13 @@
       </div>
       <div class="modal-ft">
         <button class="btn btn-secondary" onclick="document.getElementById('auditModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-secondary" onclick="submitAuditAdjustment()">Aplicar Ajuste y Registrar en Kardex</button>
+        <button class="btn btn-secondary" onclick="submitAuditAdjustment()">Guardar Conteo Real</button>
       </div>
     </div>
   </div>
 
   <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/tax.js"></script>
   <script src="../assets/js/config.js"></script>
   <script src="../assets/js/rates.js"></script>
   <script src="../assets/js/permissions.js"></script>
@@ -494,6 +509,7 @@
       setupIcons();
       populateBulkSelect();
       renderInvStats();
+      renderDailyKitchenPrep();
       renderInventoryTable();
       recalcBulkPreview();
     }
@@ -552,7 +568,7 @@
             Inversión: <strong class="tabular-nums">${MTP.fmtUSD(totalCost)}</strong> (${(totalCost * bcv).toFixed(2)} Bs)
             · Costo Unitario: <strong class="badge badge-yellow tabular-nums">$${unitCost.toFixed(3)} / ${item.unit}</strong>
           </div>
-          ${item.sellable ? `<div>Precio Sugerido Antiperdida (Brecha USDT): <strong class="money-in tabular-nums">${MTP.fmtUSD(recPrice)}</strong></div>` : `<div>Insumo exclusivo de cocina (se descuenta en recetas)</div>`}
+          ${item.sellable ? `<div>Precio Sugerido para no perder al reponer: <strong class="money-in tabular-nums">${MTP.fmtUSD(recPrice)}</strong></div>` : `<div>Insumo exclusivo de cocina (se descuenta en recetas)</div>`}
         `;
       }
     }
@@ -603,6 +619,36 @@
       if (btn) btn.textContent = isHidden ? 'Ocultar ▲' : 'Mostrar Calculadora ▼';
     }
 
+    function renderDailyKitchenPrep() {
+      const box = document.getElementById('dailyKitchenPrepSummary');
+      if (!box || !MTP.getPeriodAnalytics) return;
+      const today = MTP.getPeriodAnalytics('TODAY');
+      const famHtml = (today.kitchenByFamily || []).map(f => `
+        <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span style="font-weight:700;font-size:13px;color:#0f172a">${f.name}</span>
+          <span class="badge badge-yellow tabular-nums" style="font-size:12.5px">${f.qty} preparados hoy (${MTP.fmtUSD(f.salesUsd)})</span>
+        </div>
+      `).join('');
+
+      const ingUsedHtml = (today.kitchenIngredientsUsed || []).length
+        ? today.kitchenIngredientsUsed.map(ing => `
+            <span class="badge badge-green tabular-nums" style="font-size:12px;padding:3px 8px">
+              ${ing.name}: <strong>-${MTP.fmtWeight(ing.qtyUsed, ing.unit)}</strong> usados hoy (Quedan: ${MTP.fmtWeight(ing.remainingStock, ing.unit)})
+            </span>
+          `).join(' ')
+        : '<span style="color:#64748b;font-size:13px">Aún no se han vendido platos preparados en el turno de hoy.</span>';
+
+      box.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-bottom:8px">
+          ${famHtml}
+        </div>
+        <div style="padding-top:6px;border-top:1px dashed #cbd5e1;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <strong style="font-size:12.5px;color:#0f172a">🍲 Ingredientes descontados hoy por comida preparada (${today.kitchenPreparedQty} platos):</strong>
+          ${ingUsedHtml}
+        </div>
+      `;
+    }
+
     function renderInvStats() {
       const inv = MTP.state.inventory;
       const kitchenItems = inv.filter(i => !i.sellable);
@@ -622,7 +668,7 @@
           <div class="stat-ico yellow">${kitchenIco}</div>
           <div>
             <div class="stat-n tabular-nums" style="color:var(--sec-cocina)">${MTP.fmtUSD(kitchenCapital)}</div>
-            <div class="stat-l">Capital en Almacén de Cocina (${kitchenItems.length} insumos)</div>
+            <div class="stat-l">Valor en Ingredientes de Cocina (${kitchenItems.length} insumos)</div>
             <div class="stat-sub">Papa, aliños, carnes, pollo, queso, aceite</div>
           </div>
         </div>
@@ -684,7 +730,7 @@
             </td>
             <td style="padding:4px 6px">
               ${!i.sellable
-                ? `<span class="badge badge-yellow" style="font-weight:var(--fw-semibold)">🍲 Insumo Cocina (No Venta)</span>`
+                ? `<span class="badge badge-yellow" style="font-weight:var(--fw-semibold)">🍲 Ingrediente de Cocina (No se vende suelto)</span>`
                 : `<span class="badge badge-blue" style="font-weight:var(--fw-semibold)">🛒 Venta Directa (${i.group || 'Abasto'})</span>`}
             </td>
             <td style="padding:4px 6px">
@@ -708,9 +754,9 @@
             </td>
             <td style="padding:4px 6px">
               <div style="display:flex;gap:4px;flex-wrap:wrap">
-                <button class="btn btn-secondary btn-sm" onclick="openKardexModal('${i.id}')" title="Ver Kardex">${kardexIco}</button>
-                <button class="btn btn-secondary btn-sm" onclick="openAuditModal('${i.id}')" title="Conteo Ciego">${auditIco}</button>
-                <button class="btn btn-secondary btn-sm" onclick="openWasteModal('${i.id}')" title="Registrar Merma">${wasteIco}</button>
+                <button class="btn btn-secondary btn-sm" onclick="openKardexModal('${i.id}')" title="Ver historial de entradas y salidas">${kardexIco}</button>
+                <button class="btn btn-secondary btn-sm" onclick="openAuditModal('${i.id}')" title="Contar lo que hay">${auditIco}</button>
+                <button class="btn btn-secondary btn-sm" onclick="openWasteModal('${i.id}')" title="Anotar que se dañó o se perdió">${wasteIco}</button>
                 <button class="btn btn-secondary btn-sm" onclick="openInvItemModal('${i.id}')" title="Editar">${editIco}</button>
               </div>
             </td>
@@ -1132,7 +1178,7 @@
       if (t === 'insumo') {
         priceWrap.style.display = 'none';
         grpWrap.style.display = 'none';
-        document.getElementById('invEditCategory').value = 'Insumos de Cocina (Materia Prima)';
+        document.getElementById('invEditCategory').value = 'Ingredientes de Cocina';
         document.getElementById('invEditUnit').value = 'kg';
       } else {
         priceWrap.style.display = 'block';
@@ -1145,7 +1191,7 @@
       document.getElementById('invEditId').value = item ? item.id : '';
       document.getElementById('invEditType').value = item ? (item.sellable ? 'venta' : 'insumo') : defaultType;
       document.getElementById('invEditGroup').value = item && item.group ? item.group : 'viveres';
-      document.getElementById('invEditCategory').value = item ? item.category : (defaultType === 'insumo' ? 'Insumos de Cocina (Materia Prima)' : 'Víveres');
+      document.getElementById('invEditCategory').value = item ? item.category : (defaultType === 'insumo' ? 'Ingredientes de Cocina' : 'Víveres');
       document.getElementById('invEditCode').value = item ? item.code : (defaultType === 'insumo' ? 'COC-' + (MTP.state.inventory.length + 1) : String(MTP.state.inventory.length + 200));
       document.getElementById('invEditBarcode').value = item ? item.barcode : ('759' + Math.floor(1000000000 + Math.random() * 8999999999));
       document.getElementById('invEditName').value = item ? item.name : '';

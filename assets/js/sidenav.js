@@ -34,7 +34,7 @@
         <div class="modal-hd" style="background:#065f46;color:#fff;border-radius:12px 12px 0 0;padding:8px 12px">
           <div>
             <h3 style="color:#fff;margin:0;font-size:13.5px;display:flex;align-items:center;gap:6px">
-              ${window.MTPIcons ? window.MTPIcons.get('kitchen', { size: 16 }) : ''} Registrar Compra de Insumos / Gastos de Caja
+              ${window.MTPIcons ? window.MTPIcons.get('kitchen', { size: 16 }) : ''} Registrar Compra de Ingredientes o Gasto
             </h3>
             <p style="color:#a7f3d0;font-size:10.5px;margin:2px 0 0 0">Compras de aliños, papas o carnes suman los kilos a cocina y descuentan de la gaveta</p>
           </div>
@@ -43,7 +43,7 @@
         <div class="modal-bd">
           <!-- Botonera de Insumos y Gastos Reales del Día a Día -->
           <div style="margin-bottom:8px">
-            <span style="font-size:10.5px;font-weight:800;color:var(--txt-sec);display:block;margin-bottom:4px">Insumos Frecuentes de Cocina y Gastos del Día:</span>
+            <span style="font-size:10.5px;font-weight:800;color:var(--txt-sec);display:block;margin-bottom:4px">Compras frecuentes de cocina y gastos del día:</span>
             <div style="display:flex;gap:4px;flex-wrap:wrap">
               <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-alinos', 5, 12.00, 'Compra 5kg aliños frescos para guisos')">Aliños (5 kg · $12)</button>
               <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-papa', 25, 33.75, 'Saco de papa 25kg para empanadas/comida')">Saco Papa (25 kg)</button>
@@ -61,7 +61,7 @@
             <div class="form-group" style="grid-column:1/-1">
               <label>1. ¿Qué se está comprando o pagando?</label>
               <select id="gExpItemSelect" class="select" onchange="window.MTPSidebar.onItemSelectChange()">
-                <optgroup label="Insumos que Entran al Almacén de Cocina (Suman Kilos/Litros)">
+                <optgroup label="Ingredientes que entran a la cocina (suman kilos o litros)">
                   <option value="ins-alinos">Aliños Frescos (Cebolla, Ajo, Pimentón, Ají Dulce, Cilantro)</option>
                   <option value="ins-papa">Papa Cruda para Comida y Papas Rellenas</option>
                   <option value="ins-carne-mechada">Carne de Res Cruda (Mechar / Moler / Guisar)</option>
@@ -73,7 +73,7 @@
                   <option value="ins-ensalada">Plátanos para Tajadas y Vegetales</option>
                   <option value="ins-envase">Envases Térmicos y Servilletas</option>
                 </optgroup>
-                <optgroup label="Gastos Operativos y Servicios (Solo Salida de Dinero)">
+                <optgroup label="Gastos y servicios del día (solo salida de dinero)">
                   <option value="SERV_GAS">Recarga Bombona de Gas / Agua Potable</option>
                   <option value="SERV_HIELO">Bolsas de Hielo para Cavas y Bolsas Plásticas</option>
                   <option value="SERV_FLETE">Flete / Carrera de Motorizado para Compras</option>
@@ -121,7 +121,7 @@
         </div>
         <div class="modal-ft">
           <button class="btn btn-ghost" onclick="window.MTPSidebar.closeExpenseModal()">Cancelar</button>
-          <button class="btn btn-p" onclick="window.MTPSidebar.submitQuickExpense()">📥 Guardar Compra / Gasto y Actualizar Gaveta</button>
+          <button class="btn btn-p" onclick="window.MTPSidebar.submitQuickExpense()">📥 Guardar Compra o Gasto</button>
         </div>
       </div>
     `;
@@ -312,40 +312,42 @@
       return '';
     }
 
-    // NAVEGACIÓN COMPLETA Y DIRECTA (1 CLIC A CADA MÓDULO)
-    const ADMIN_LINKS = [
-      { href: 'pos.html',        iconKey: 'pos',        label: 'Caja Registradora',       color: '#10B981', badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? '' : 'kbd' },
-      { href: 'inventario.html', iconKey: 'package',    label: 'Inventario & Kardex',     color: '#0284C7', badge: lowStockCount ? `${lowStockCount} bajo` : '' },
-      { href: 'recetas.html',    iconKey: 'kitchen',    label: 'Cocina & Insumos',        color: '#F59E0B' },
-      { href: 'cierres.html',    iconKey: 'calculator', label: 'Cuadre de Gaveta',        color: '#14B8A6' },
-      { href: 'productos.html',  iconKey: 'barcode',    label: 'Catálogo & Códigos',      color: '#8B5CF6' },
-      { href: 'precios.html',    iconKey: 'dollar',     label: 'Precios & Tasas',          color: '#EAB308' },
-      { href: 'facturas.html',   iconKey: 'fileText',   label: 'Facturación & Historial', color: '#6366F1' },
-      { href: 'index.html',      iconKey: 'chart',      label: 'Dashboard & Finanzas',    color: '#EC4899' },
-      { href: 'usuarios.html',   iconKey: 'users',      label: 'Usuarios & Permisos',     color: '#A855F7' },
-      { href: 'ajustes.html',    iconKey: 'settings',   label: 'Ajustes & Respaldo',      color: '#64748B' }
+    // 5 OPCIONES PRINCIPALES CLARAS PARA EL DUEÑO
+    const ADMIN_MAIN_LINKS = [
+      { href: 'pos.html',        iconKey: 'pos',        label: 'Vender',                  color: '#10B981', badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? '' : 'kbd' },
+      { href: 'inventario.html', iconKey: 'package',    label: 'Lo que hay en la tienda', color: '#0284C7', badge: lowStockCount ? `${lowStockCount} bajo` : '' },
+      { href: 'facturas.html',   iconKey: 'fileText',   label: 'Compras y gastos',        color: '#F59E0B' },
+      { href: 'cierres.html',    iconKey: 'calculator', label: 'Cuadre del día',          color: '#14B8A6' },
+      { href: 'precios.html',    iconKey: 'dollar',     label: 'Precios y tasa del dólar', color: '#EAB308' }
+    ];
+
+    // OPCIONES AVANZADAS BAJO "MÁS OPCIONES" (Encargado / Administrador)
+    const ADMIN_MORE_LINKS = [
+      { href: 'productos.html',  iconKey: 'barcode',    label: 'Platos y productos',      color: '#8B5CF6' },
+      { href: 'recetas.html',    iconKey: 'kitchen',    label: 'Recetas de cocina',       color: '#F97316' },
+      { href: 'index.html',      iconKey: 'chart',      label: 'Resumen del negocio',     color: '#EC4899' },
+      { href: 'usuarios.html',   iconKey: 'users',      label: 'Usuarios y claves',       color: '#A855F7' },
+      { href: 'ajustes.html',    iconKey: 'settings',   label: 'Ajustes y respaldos',     color: '#64748B' }
     ];
 
     const currentUser = window.MTPAuth ? window.MTPAuth.getCurrentUser() : null;
-    const isSupervisorOrAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'encargado');
+    const isSupervisorOrAdmin = !currentUser || currentUser.role === 'admin' || currentUser.role === 'encargado';
 
     const CAJA_LINKS = [
-      { href: 'pos.html',   iconKey: 'pos',      label: 'Caja Mostrador (Facturar)', color: '#10B981', badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? '' : 'kbd' },
-      { href: 'index.html', iconKey: 'receipt',  label: 'Órdenes y Cuadre Turno',   color: '#14B8A6' }
+      { href: 'pos.html',   iconKey: 'pos',      label: 'Vender en Caja',           color: '#10B981', badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? '' : 'kbd' },
+      { href: 'index.html', iconKey: 'receipt',  label: 'Ventas y Cuadre del Turno', color: '#14B8A6' }
     ];
 
-    // Solo si el usuario en caja es Encargado o Admin se despliega el acceso directo al panel
     if (isSupervisorOrAdmin) {
-      CAJA_LINKS.push({ href: '../admin/index.html', iconKey: 'settings', label: 'Ir a Panel Admin' });
+      CAJA_LINKS.push({ href: '../admin/index.html', iconKey: 'settings', label: 'Ir a Administración', color: '#60A5FA' });
     }
 
-    const links = isCaja ? CAJA_LINKS : ADMIN_LINKS;
     const bcv = Number(MTP.state.settings.rateBcv || 42.85).toFixed(2);
     const eur = Number(MTP.state.settings.rateEur || 46.60).toFixed(2);
     const usdt = Number(MTP.state.settings.rateUsdt || 51.40).toFixed(2);
     const gap = (((usdt / bcv) - 1) * 100).toFixed(1);
 
-    const linksHtml = links.map(item => {
+    function renderLinkItem(item) {
       const targetFile = item.href.split('/').pop().toLowerCase();
       const isCross = item.href.startsWith('..');
       const isActive = !isCross && targetFile === currentFile;
@@ -366,7 +368,30 @@
           ${badgeHtml}
         </a>
       `;
-    }).join('');
+    }
+
+    const isOnMorePage = !isCaja && ADMIN_MORE_LINKS.some(m => m.href.toLowerCase() === currentFile);
+    const moreOpenSaved = localStorage.getItem('mtp_sidebar_more_open') === '1';
+    const showMoreOpen = isOnMorePage || moreOpenSaved || isCollapsed;
+
+    let linksHtml = '';
+    if (isCaja) {
+      linksHtml = CAJA_LINKS.map(renderLinkItem).join('');
+    } else {
+      linksHtml = ADMIN_MAIN_LINKS.map(renderLinkItem).join('');
+      if (isSupervisorOrAdmin) {
+        linksHtml += `
+          <button type="button" class="aside-group-btn" onclick="window.MTPSidebar.toggleMoreOptions()"
+            style="width:100%;margin-top:6px;padding:6px 8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#94a3b8;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+            <span>⚙️ Más opciones</span>
+            <span>${showMoreOpen ? '▾' : '▸'}</span>
+          </button>
+          <div id="asideMoreLinksWrap" style="display:${showMoreOpen ? 'flex' : 'none'};flex-direction:column;gap:2px;margin-top:3px">
+            ${ADMIN_MORE_LINKS.map(renderLinkItem).join('')}
+          </div>
+        `;
+      }
+    }
 
     const boltIco = window.MTPIcons ? window.MTPIcons.get('bolt', { size: 15, color: '#fbbf24' }) : '';
     const plusIco = window.MTPIcons ? window.MTPIcons.get('plus', { size: 13, color: '#fff' }) : '+';
@@ -411,7 +436,7 @@
       <div style="padding:3px 6px">
         <button class="btn btn-sm" style="width:100%;background:#065f46;color:#fff;border:none;font-weight:800;font-size:10.5px;padding:5px 6px;display:flex;align-items:center;justify-content:center;gap:4px"
           onclick="window.MTPSidebar.openExpenseModal()" title="Registrar compra de aliños, papas, carnes o gastos">
-          <span>${plusIco}</span><span class="aside-expense-txt">Gasto / Insumos Cocina</span>
+          <span>${plusIco}</span><span class="aside-expense-txt">Registrar compra o gasto</span>
         </button>
       </div>
 

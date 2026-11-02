@@ -3,10 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cuadre de Caja Venezolano, Conciliación Pago Móvil y Vueltos | MI TIENDA POS</title>
+  <title>Cuadre del Día, Cierre Mensual y Cierre Anual | MI TIENDA POS</title>
   <link rel="stylesheet" href="../assets/css/variables.css">
   <link rel="stylesheet" href="../assets/css/components.css">
   <link rel="stylesheet" href="../assets/css/layout.css">
+  <style>
+    .cierre-period-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      background: var(--surface);
+      padding: 8px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+    }
+    .cierre-tab-btn {
+      flex: 1;
+      min-width: 210px;
+      padding: 10px 14px;
+      border-radius: 7px;
+      border: 1.5px solid var(--line);
+      background: var(--surface-2);
+      color: var(--txt);
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.12s ease;
+    }
+    .cierre-tab-btn:hover {
+      border-color: var(--nav-bg);
+      background: #ffffff;
+    }
+    .cierre-tab-btn.active {
+      background: var(--nav-bg);
+      color: #ffffff;
+      border-color: var(--nav-bg);
+      box-shadow: var(--shadow-sm);
+    }
+    .cierre-tab-pane {
+      display: none;
+    }
+    .cierre-tab-pane.active {
+      display: block;
+    }
+  </style>
 </head>
 <body>
   <div class="admin-wrap">
@@ -17,164 +62,389 @@
         <div class="topbar-left">
           <button class="menu-toggle" id="menuToggleBtn">☰</button>
           <div class="topbar-title">
-            <h2>Cuadre de Caja (Control Interno Venezolano · Sin Descuadres)</h2>
-            <p>Arqueo neto de gaveta USD/Bs, pagos móviles recibidos, gastos pagados y distribución de vueltos</p>
+            <h2>Cuadre del Día · Cierre Diario, Mensual y Anual</h2>
+            <p>Control de efectivo, Pago Móvil, IVA 16%, comida preparada a diario vs. mercancía empaquetada</p>
           </div>
         </div>
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
-          <button class="btn btn-secondary btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Registrar Gasto (F6)</button>
-          <button class="btn btn-action btn-sm" onclick="window.print()">
-            <span id="printTopIcon"></span> Imprimir Acta de Cierre
-          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Compras / Gastos (F6)</button>
+          <button class="btn btn-action btn-sm" onclick="openDailyClosureModal()">🔒 Cerrar el Día</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimir</button>
         </div>
       </header>
 
       <div class="admin-content">
-        <!-- MARCO LEGAL / NOTAS DE DESPACHO / CONTROL INTERNO -->
-        <div style="background:var(--nav-bg);color:#F8FAFC;border-radius:var(--radius);padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-left:4px solid var(--sec-fiscal);font-size:12px">
-          <div>
-            <strong style="color:var(--action)">NOTAS DE DESPACHO / CONTROL INTERNO:</strong>
-            Comprobantes emitidos exclusivamente para auditoría interna del turno (ventas, vueltos entregados, gastos de caja chica y arqueo de gaveta). Sin derecho a crédito fiscal SENIAT.
-          </div>
-          <span class="badge badge-green" style="font-size:11px">Control Interno</span>
+        <!-- PESTAÑAS DE PERÍODO: DIARIO, MENSUAL Y ANUAL -->
+        <div class="cierre-period-tabs">
+          <button class="cierre-tab-btn active" id="tabBtnDiario" onclick="switchCierreTab('DIARIO')">
+            📅 1. Cierre Diario (Hoy / Por Día)
+          </button>
+          <button class="cierre-tab-btn" id="tabBtnMensual" onclick="switchCierreTab('MENSUAL')">
+            📆 2. Cierre Mensual (Mes por Mes)
+          </button>
+          <button class="cierre-tab-btn" id="tabBtnAnual" onclick="switchCierreTab('ANUAL')">
+            📊 3. Cierre Anual (Año Completo)
+          </button>
         </div>
 
-        <!-- TOTALES DEL TURNO -->
-        <div class="stat-grid" id="cierreTotalsGrid" style="margin-bottom:12px"></div>
-
-        <!-- ARQUEO NETO DE GAVETA FÍSICA Y BANCOS -->
-        <div class="card" data-section="dinero" style="margin-bottom:12px">
-          <div class="card-hd">
-            <div>
-              <h3>
-                <span id="drawerTitleIcon"></span> Arqueo Neto Exacto: Efectivo en Gaveta y Pago Móvil
-              </h3>
-              <p>Fórmula: [Cobrado] − [Vueltos entregados] − [Gastos de caja chica pagados]</p>
-            </div>
-            <span class="badge badge-green">Dinero en Mano</span>
-          </div>
-          <div class="card-bd">
-            <div class="stat-grid" id="netDrawerGrid" style="margin-bottom:0"></div>
-          </div>
-        </div>
-
-        <!-- CONCILIACIÓN DE PUNTOS DE VENTA Y CIERRE DE LOTE -->
-        <div class="card" data-section="dinero" style="margin-bottom:12px">
-          <div class="card-hd">
-            <div>
-              <h3>
-                <span id="posTitleIcon"></span> Control de Puntos de Venta (POS) y Cierre de Lotes
-              </h3>
-              <p>Conciliación de voucher físico del punto vs ventas registradas en el sistema</p>
-            </div>
-            <button class="btn btn-secondary btn-sm" onclick="openBatchClosureModal()">
-              <span id="batchBtnIcon"></span> Realizar Cierre de Lote
-            </button>
-          </div>
-          <div class="card-bd">
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px" id="posTerminalsStatusGrid"></div>
-          </div>
-        </div>
-
-        <!-- CONCILIACIÓN DE PAGOS MÓVILES DEL TURNO -->
-        <div class="card" data-section="abasto" style="margin-bottom:12px">
-          <div class="card-hd">
-            <div>
-              <h3>
-                <span id="pmTitleIcon"></span> Verificación y Conciliación de Pagos Móviles Recibidos
-              </h3>
-              <p>Auditoría cuenta por cuenta: confirma abonos bancarios y detecta capturas falsas</p>
-            </div>
-            <span class="badge badge-blue">Anti-Fraude</span>
-          </div>
-          <div class="table-wrap" style="max-height:220px;overflow-y:auto">
-            <table class="data-table">
-              <thead style="position:sticky;top:0;z-index:5">
-                <tr>
-                  <th>Orden</th>
-                  <th>Cliente / Hora</th>
-                  <th>Cta. Destino</th>
-                  <th>Banco Origen</th>
-                  <th>Teléfono / Cédula</th>
-                  <th>Nº Referencia</th>
-                  <th>Monto Bs</th>
-                  <th>Equiv. USD</th>
-                  <th>Estado en Banco</th>
-                  <th>Acción</th>
-                </tr>
-              </thead>
-              <tbody id="pmVerificationTable"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- GASTOS OPERATIVOS DEL TURNO RESTADOS DE CAJA -->
-        <div class="card" data-section="gastos" style="margin-bottom:12px">
-          <div class="card-hd">
-            <div>
-              <h3>
-                <span id="expensesTitleIcon"></span> Gastos de Caja Chica Descontados del Turno
-              </h3>
-            </div>
-            <button class="btn btn-secondary btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Registrar Gasto (F6)</button>
-          </div>
-          <div class="table-wrap" style="max-height:180px;overflow-y:auto">
-            <table class="data-table">
-              <thead style="position:sticky;top:0;z-index:5">
-                <tr>
-                  <th>Hora</th>
-                  <th>Categoría</th>
-                  <th>Concepto</th>
-                  <th>Forma de Pago</th>
-                  <th>Monto USD</th>
-                  <th>Equiv. Bs</th>
-                  <th>Responsable</th>
-                </tr>
-              </thead>
-              <tbody id="cierreExpensesTable"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- HISTORIAL COMPLETO DE VENTAS Y VUELTOS DEL TURNO -->
-        <div class="card" data-section="fiscal" style="margin-bottom:0">
-          <div class="card-hd">
-            <div>
-              <h3>
-                <span id="salesTitleIcon"></span> Libro de Comprobantes Emitidos (Notas de Despacho / Control Interno) y Desglose de Vueltos
-              </h3>
+        <!-- ==================================================================
+             PESTAÑA 1: CIERRE DIARIO (HOY / FECHA SELECCIONADA)
+             ================================================================== -->
+        <div class="cierre-tab-pane active" id="paneDiario">
+          <div class="card" style="margin-bottom:12px;background:#0f2a3d;color:#fff;border:none">
+            <div class="card-bd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <label style="font-weight:800;font-size:14px;color:#fbbf24">📅 Ver Día:</label>
+                <input type="date" id="dailyDateInput" class="input" style="width:170px;background:#fff;color:#0f172a;font-weight:800" onchange="renderCierrePage()">
+                <button class="btn btn-secondary btn-sm" onclick="setTodayFilter()">Ir a Hoy</button>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <button class="btn btn-action" onclick="openDailyClosureModal()">
+                  🔒 Ejecutar Cierre Diario y Guardar Acta
+                </button>
+              </div>
             </div>
           </div>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Nº Orden</th>
-                  <th>Cliente / Hora</th>
-                  <th>Detalle Vendido</th>
-                  <th>Total ($ / Bs)</th>
-                  <th>Pagos Recibidos</th>
-                  <th>Cómo se Entregó el Vuelto</th>
-                  <th>Ganancia Neta</th>
-                </tr>
-              </thead>
-              <tbody id="cierreSalesTable"></tbody>
-            </table>
+
+          <!-- TOTALES DEL DÍA -->
+          <div class="stat-grid" id="cierreTotalsGrid" style="margin-bottom:12px"></div>
+
+          <!-- DESGLOSE DE COMIDA PREPARADA A DIARIO VS MERCANCÍA EMPAQUETADA -->
+          <div class="card" data-section="cocina" style="margin-bottom:12px">
+            <div class="card-hd">
+              <div>
+                <h3>🥟 Comida Preparada en el Día (Cocina) vs. 🛒 Mercancía Empaquetada (Tienda)</h3>
+                <p>Las empanadas, arepas y almuerzos se preparan a diario y descuentan gramos de cocina; los víveres y bebidas descuentan unidades del estante</p>
+              </div>
+              <span class="badge badge-yellow" id="dailyKitchenVsRetailBadge">Producción Diaria</span>
+            </div>
+            <div class="card-bd" id="dailyKitchenVsRetailBox"></div>
+          </div>
+
+          <!-- DINERO REAL EN MANO: EFECTIVO EN GAVETA Y PAGO MÓVIL -->
+          <div class="card" data-section="dinero" style="margin-bottom:12px">
+            <div class="card-hd">
+              <div>
+                <h3><span id="drawerTitleIcon"></span> Dinero Real en Mano: Efectivo en Gaveta, Pago Móvil y Punto</h3>
+                <p>Fórmula: [Cobrado] − [Vueltos entregados] − [Compras y gastos pagados de caja]</p>
+              </div>
+              <span class="badge badge-green">Dinero en Mano</span>
+            </div>
+            <div class="card-bd">
+              <div class="stat-grid" id="netDrawerGrid" style="margin-bottom:0"></div>
+            </div>
+          </div>
+
+          <!-- HISTORIAL DE ACTAS DE CIERRE DIARIO GUARDADAS -->
+          <div class="card" data-section="fiscal" style="margin-bottom:12px">
+            <div class="card-hd">
+              <div>
+                <h3>📚 Historial de Cierres Diarios Guardados</h3>
+                <p>Registro de cada día cerrado con efectivo esperado vs. contado, IVA 16%, platos preparados y ganancia neta</p>
+              </div>
+            </div>
+            <div class="table-wrap" style="max-height:220px;overflow-y:auto">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Fecha / Acta</th>
+                    <th>Órdenes</th>
+                    <th>Comida Preparada</th>
+                    <th>Mercancía</th>
+                    <th>Subtotal + IVA 16%</th>
+                    <th>Total Vendido</th>
+                    <th>Gastos</th>
+                    <th>Efectivo Gaveta ($)</th>
+                    <th>Ganancia Limpia</th>
+                  </tr>
+                </thead>
+                <tbody id="savedDailyClosuresBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CONTROL DE PUNTOS DE VENTA Y CIERRE DEL PUNTO -->
+          <div class="card" data-section="dinero" style="margin-bottom:12px">
+            <div class="card-hd">
+              <div>
+                <h3><span id="posTitleIcon"></span> Control de Puntos de Venta y Cierre del Punto</h3>
+                <p>Compara el papelito del punto de venta con lo cobrado en el sistema</p>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="openBatchClosureModal()">
+                <span id="batchBtnIcon"></span> Hacer Cierre del Punto de Venta
+              </button>
+            </div>
+            <div class="card-bd">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px" id="posTerminalsStatusGrid"></div>
+            </div>
+          </div>
+
+          <!-- VERIFICACIÓN DE PAGOS MÓVILES -->
+          <div class="card" data-section="abasto" style="margin-bottom:12px">
+            <div class="card-hd">
+              <div>
+                <h3><span id="pmTitleIcon"></span> Verificación de Pagos Móviles Recibidos</h3>
+                <p>Revisa cada referencia bancaria recibida en el día</p>
+              </div>
+              <span class="badge badge-blue">Anti-Fraude</span>
+            </div>
+            <div class="table-wrap" style="max-height:220px;overflow-y:auto">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Orden</th>
+                    <th>Cliente / Hora</th>
+                    <th>Cta. Destino</th>
+                    <th>Banco Origen</th>
+                    <th>Teléfono</th>
+                    <th>Nº Referencia</th>
+                    <th>Monto Bs</th>
+                    <th>Equiv. USD</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="pmVerificationTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- GASTOS Y COMPRAS DEL DÍA -->
+          <div class="card" data-section="gastos" style="margin-bottom:12px">
+            <div class="card-hd">
+              <div>
+                <h3><span id="expensesTitleIcon"></span> Compras y Gastos Pagados en el Día</h3>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Anotar Compra o Gasto (F6)</button>
+            </div>
+            <div class="table-wrap" style="max-height:180px;overflow-y:auto">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Hora</th>
+                    <th>Categoría</th>
+                    <th>Concepto</th>
+                    <th>De dónde salió</th>
+                    <th>Monto USD</th>
+                    <th>Equiv. Bs</th>
+                    <th>Responsable</th>
+                  </tr>
+                </thead>
+                <tbody id="cierreExpensesTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- VENTAS Y VUELTOS DEL DÍA -->
+          <div class="card" data-section="fiscal" style="margin-bottom:0">
+            <div class="card-hd">
+              <div>
+                <h3><span id="salesTitleIcon"></span> Ventas del Día, Desglose de IVA 16% y Vueltos Entregados</h3>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nº Orden</th>
+                    <th>Cliente / Hora</th>
+                    <th>Detalle Vendido</th>
+                    <th>Subtotal / IVA 16%</th>
+                    <th>Total ($ / Bs)</th>
+                    <th>Pagos Recibidos</th>
+                    <th>Vuelto Entregado</th>
+                    <th>Ganancia</th>
+                  </tr>
+                </thead>
+                <tbody id="cierreSalesTable"></tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        <!-- MODAL PARA CIERRE DE LOTE DE PUNTO DE VENTA -->
-        <div class="modal" id="batchClosureModal">
+        <!-- ==================================================================
+             PESTAÑA 2: CIERRE MENSUAL (RESUMEN Y ACTA POR MES)
+             ================================================================== -->
+        <div class="cierre-tab-pane" id="paneMensual">
+          <div class="card" style="margin-bottom:12px;background:#0f2a3d;color:#fff;border:none">
+            <div class="card-bd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <label style="font-weight:800;font-size:14px;color:#fbbf24">📆 Seleccionar Mes:</label>
+                <input type="month" id="monthlyMonthInput" class="input" style="width:180px;background:#fff;color:#0f172a;font-weight:800" onchange="renderMonthlyPane()">
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <button class="btn btn-action" onclick="saveMonthlyClosureAction()">
+                  🔒 Guardar Acta de Cierre Mensual
+                </button>
+                <button class="btn btn-secondary" onclick="window.print()">
+                  🖨️ Imprimir Resumen Mensual
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-grid" id="monthlyStatsGrid" style="margin-bottom:12px"></div>
+
+          <div class="card" data-section="cocina" style="margin-bottom:12px">
+            <div class="card-hd">
+              <div>
+                <h3>🥟 Producción de Cocina en el Mes vs. 🛒 Mercancía Vendida en el Mes</h3>
+                <p>Consolidado mensual de platos preparados al día e ingredientes consumidos frente a víveres y bebidas</p>
+              </div>
+            </div>
+            <div class="card-bd" id="monthlyKitchenVsRetailBox"></div>
+          </div>
+
+          <div class="card" data-section="dinero" style="margin-bottom:12px">
+            <div class="card-hd">
+              <div>
+                <h3>📅 Desglose Día por Día del Mes Seleccionado</h3>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Órdenes</th>
+                    <th>Platos Preparados (Cocina)</th>
+                    <th>Mercancía Vendida</th>
+                    <th>Base Sin IVA</th>
+                    <th>IVA 16%</th>
+                    <th>Total Cobrado ($)</th>
+                    <th>Gastos / Compras ($)</th>
+                    <th>Ganancia Neta ($)</th>
+                  </tr>
+                </thead>
+                <tbody id="monthlyDaysTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card" data-section="fiscal">
+            <div class="card-hd">
+              <div>
+                <h3>📚 Cierres Mensuales Guardados</h3>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Mes / Acta</th>
+                    <th>Días Trabajados</th>
+                    <th>Órdenes</th>
+                    <th>Platos Preparados</th>
+                    <th>Mercancía</th>
+                    <th>IVA 16%</th>
+                    <th>Total Ventas ($)</th>
+                    <th>Total Gastos ($)</th>
+                    <th>Ganancia Neta ($)</th>
+                  </tr>
+                </thead>
+                <tbody id="savedMonthlyClosuresBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================================================================
+             PESTAÑA 3: CIERRE ANUAL (BALANCE DE LOS 12 MESES DEL AÑO)
+             ================================================================== -->
+        <div class="cierre-tab-pane" id="paneAnual">
+          <div class="card" style="margin-bottom:12px;background:#0f2a3d;color:#fff;border:none">
+            <div class="card-bd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <label style="font-weight:800;font-size:14px;color:#fbbf24">📊 Seleccionar Año:</label>
+                <select id="annualYearSelect" class="select" style="width:140px;background:#fff;color:#0f172a;font-weight:800" onchange="renderAnnualPane()">
+                  <option value="2026">2026</option>
+                  <option value="2025">2025</option>
+                  <option value="2027">2027</option>
+                </select>
+              </div>
+              <button class="btn btn-action" onclick="window.print()">
+                🖨️ Imprimir Balance Anual Completo
+              </button>
+            </div>
+          </div>
+
+          <div class="stat-grid" id="annualStatsGrid" style="margin-bottom:12px"></div>
+
+          <div class="card" data-section="dinero">
+            <div class="card-hd">
+              <div>
+                <h3>📊 Resumen Mes por Mes del Año (Enero a Diciembre)</h3>
+                <p>Evolución anual de ventas brutas, IVA 16%, platos preparados en cocina, mercancía vendida, gastos y ganancia limpia</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Mes</th>
+                    <th>Órdenes</th>
+                    <th>Platos Preparados (Cocina)</th>
+                    <th>Mercancía Vendida</th>
+                    <th>Base Sin IVA ($)</th>
+                    <th>IVA 16% ($)</th>
+                    <th>Ventas Totales ($)</th>
+                    <th>Compras y Gastos ($)</th>
+                    <th>Ganancia Neta ($)</th>
+                  </tr>
+                </thead>
+                <tbody id="annualMonthsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL PARA GUARDAR ACTA DE CIERRE DIARIO -->
+        <div class="modal-backdrop" id="dailyClosureModal">
+          <div class="modal-box" style="max-width:560px">
+            <div class="modal-hd">
+              <h3>🔒 Cerrar el Día y Guardar Acta Diaria</h3>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('dailyClosureModal').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-bd">
+              <p style="font-size:13px;color:var(--txt-2);margin-bottom:10px">
+                Cuenta los billetes que tienes en la gaveta y confirma el cierre del día. Quedará guardado en el historial diario y en el acumulado mensual y anual.
+              </p>
+              <div id="dailyModalSummaryBox" style="background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:10px;margin-bottom:10px;font-size:13px"></div>
+              <div class="form-grid" style="margin-bottom:8px">
+                <div class="form-group">
+                  <label>Efectivo USD ($) Contado en Gaveta</label>
+                  <input type="number" step="0.01" id="dcCountedUsd" class="input tabular-nums money-in" style="font-weight:800;font-size:15px">
+                </div>
+                <div class="form-group">
+                  <label>Efectivo Bs Contado en Gaveta</label>
+                  <input type="number" step="0.01" id="dcCountedBs" class="input tabular-nums money-bs" style="font-weight:800;font-size:15px">
+                </div>
+                <div class="form-group">
+                  <label>Responsable del Cierre</label>
+                  <input type="text" id="dcResponsible" class="input" value="Dueño / Administrador">
+                </div>
+                <div class="form-group">
+                  <label>Nota u Observación del Día</label>
+                  <input type="text" id="dcNotes" class="input" placeholder="Ej: Todo cuadró sin novedad">
+                </div>
+              </div>
+            </div>
+            <div class="modal-ft">
+              <button class="btn btn-secondary" onclick="document.getElementById('dailyClosureModal').classList.remove('open')">Cancelar</button>
+              <button class="btn btn-action" onclick="confirmDailyClosureAction()">✔ Confirmar y Guardar Cierre Diario</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL PARA CIERRE DEL PUNTO DE VENTA -->
+        <div class="modal-backdrop" id="batchClosureModal">
           <div class="modal-box" style="max-width:540px">
             <div class="modal-hd">
-              <h3 style="margin:0">Cierre de Lote de Punto de Venta (Conciliación Voucher)</h3>
+              <h3 style="margin:0">Cierre del Punto de Venta (Comparar con el papelito del punto)</h3>
               <button class="btn btn-secondary btn-sm" onclick="document.getElementById('batchClosureModal').classList.remove('open')">✕</button>
             </div>
             <div class="modal-bd">
-              <p style="font-size:12px;color:var(--txt-2);margin-bottom:8px">
-                Imprime el comprobante de <strong>CIERRE DE LOTE</strong> en el punto físico (Pax, Verifone, Biopago) y transcribe los datos del papel para contrastar con las ventas registradas:
-              </p>
               <div class="form-group" style="margin-bottom:8px">
                 <label>Terminal / Punto de Venta a Cerrar</label>
                 <select id="closeBatchTermSelect" class="select" onchange="updateBatchModalPreview(this.value)"></select>
@@ -182,7 +452,7 @@
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
                 <div class="form-group">
                   <label>N° Lote Impreso en Voucher</label>
-                  <input type="text" id="closeBatchNumInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)">
+                  <input type="text" id="closeBatchNumInput" class="input tabular-nums">
                 </div>
                 <div class="form-group">
                   <label>N° Operaciones Impresas</label>
@@ -190,7 +460,7 @@
                 </div>
               </div>
               <div class="form-group" style="margin-bottom:8px">
-                <label>Total en Bolívares (Bs) según Voucher Físico</label>
+                <label>Total en Bolívares (Bs) según Papelito del Punto</label>
                 <input type="number" step="0.01" id="closeBatchAmountBsInput" class="input tabular-nums money-bs" style="font-size:15px;font-weight:var(--fw-bold)" oninput="compareBatchClosureLive()">
               </div>
               <div id="batchCompareBox" style="background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px;font-size:12px">
@@ -203,19 +473,19 @@
                   <strong id="batchSysTxCount" class="tabular-nums">0</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-                  <span>Diferencia (Voucher − Sistema):</span>
+                  <span>Diferencia:</span>
                   <strong id="batchDiffBs" class="tabular-nums">0,00 Bs</strong>
                 </div>
-                <div id="batchStatusBadge" class="badge badge-green" style="display:block;text-align:center;padding:4px;margin-top:4px">✔ Lote Cuadrado Exacto</div>
+                <div id="batchStatusBadge" class="badge badge-green" style="display:block;text-align:center;padding:4px;margin-top:4px">✔ Cuadrado Exacto</div>
               </div>
               <div class="form-group" style="margin-top:8px">
-                <label>Observaciones del Cierre</label>
-                <input type="text" id="closeBatchNotesInput" class="input" placeholder="Ej: Cierre de lote turno mañana por cajero">
+                <label>Observaciones</label>
+                <input type="text" id="closeBatchNotesInput" class="input" placeholder="Ej: Cierre de punto turno tarde">
               </div>
             </div>
             <div class="modal-ft">
               <button class="btn btn-secondary" onclick="document.getElementById('batchClosureModal').classList.remove('open')">Cancelar</button>
-              <button class="btn btn-secondary" onclick="confirmBatchClosure()">Confirmar y Cerrar Lote</button>
+              <button class="btn btn-action" onclick="confirmBatchClosure()">Confirmar Cierre de Punto</button>
             </div>
           </div>
         </div>
@@ -224,140 +494,221 @@
   </div>
 
   <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/tax.js"></script>
   <script src="../assets/js/config.js"></script>
   <script src="../assets/js/rates.js"></script>
   <script src="../assets/js/permissions.js"></script>
   <script src="../assets/js/auth.js"></script>
   <script src="../assets/js/sidenav.js"></script>
   <script>
-    function setupIcons() {
-      if (!window.MTPIcons) return;
-      const setIco = (id, name) => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = MTPIcons.get(name, { size: 14 });
-      };
-      setIco('printTopIcon', 'printer');
-      setIco('drawerTitleIcon', 'cash');
-      setIco('posTitleIcon', 'bank');
-      setIco('batchBtnIcon', 'fileText');
-      setIco('pmTitleIcon', 'phone');
-      setIco('expensesTitleIcon', 'outflow');
-      setIco('salesTitleIcon', 'receipt');
+    let currentCierreTab = 'DIARIO';
+
+    function switchCierreTab(tab) {
+      currentCierreTab = tab;
+      document.getElementById('tabBtnDiario').classList.toggle('active', tab === 'DIARIO');
+      document.getElementById('tabBtnMensual').classList.toggle('active', tab === 'MENSUAL');
+      document.getElementById('tabBtnAnual').classList.toggle('active', tab === 'ANUAL');
+
+      document.getElementById('paneDiario').classList.toggle('active', tab === 'DIARIO');
+      document.getElementById('paneMensual').classList.toggle('active', tab === 'MENSUAL');
+      document.getElementById('paneAnual').classList.toggle('active', tab === 'ANUAL');
+
+      if (tab === 'DIARIO') renderCierrePage();
+      else if (tab === 'MENSUAL') renderMonthlyPane();
+      else if (tab === 'ANUAL') renderAnnualPane();
+    }
+
+    function setTodayFilter() {
+      const inp = document.getElementById('dailyDateInput');
+      if (inp) inp.value = new Date().toISOString().slice(0, 10);
+      renderCierrePage();
+    }
+
+    function renderKitchenVsRetailCard(containerId, stats) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+
+      const famHtml = (stats.kitchenByFamily || []).map(f => `
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:700;color:#92400e">${f.name}</span>
+          <strong class="tabular-nums" style="color:#78350f">${f.qty} platos (${MTP.fmtUSD(f.salesUsd)})</strong>
+        </div>
+      `).join('');
+
+      const ingHtml = (stats.kitchenIngredientsUsed || []).length
+        ? stats.kitchenIngredientsUsed.map(i => `
+            <span class="badge badge-yellow tabular-nums" style="font-size:12px;padding:3px 8px">
+              ${i.name}: <strong>-${MTP.fmtWeight(i.qtyUsed, i.unit)}</strong> (${MTP.fmtUSD(i.costUsd)})
+            </span>
+          `).join(' ')
+        : '<span style="color:#64748b;font-size:12.5px">Sin consumo de ingredientes registrado en este período.</span>';
+
+      el.innerHTML = `
+        <div class="grid-2" style="margin-bottom:10px">
+          <div style="background:#f8fafc;border:1px solid var(--line);border-left:4px solid #f59e0b;border-radius:6px;padding:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <strong style="font-size:14px;color:#0f172a">🥟 1. Comida Preparada al Día (Cocina)</strong>
+              <span class="badge badge-yellow tabular-nums">${stats.kitchenPreparedQty} platos preparados</span>
+            </div>
+            <div style="font-size:13px;color:var(--txt-2);margin-bottom:8px">
+              Ventas Cocina (sin IVA): <strong>${MTP.fmtUSD(stats.kitchenSalesUsd)}</strong> ·
+              Costo Ingredientes Usados: <strong class="money-out">-${MTP.fmtUSD(stats.kitchenCostUsd)}</strong> ·
+              Ganancia Cocina: <strong class="money-in">+${MTP.fmtUSD(stats.kitchenProfitUsd)}</strong>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              ${famHtml}
+            </div>
+          </div>
+
+          <div style="background:#f8fafc;border:1px solid var(--line);border-left:4px solid #2563eb;border-radius:6px;padding:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <strong style="font-size:14px;color:#0f172a">🛒 2. Mercancía Empaquetada (Víveres, Bebidas, Snacks)</strong>
+              <span class="badge badge-blue tabular-nums">${stats.retailSoldQty} unidades vendidas</span>
+            </div>
+            <div style="font-size:13px;color:var(--txt-2);margin-bottom:8px">
+              Ventas Mostrador (sin IVA): <strong>${MTP.fmtUSD(stats.retailSalesUsd)}</strong> ·
+              Costo Mercancía: <strong class="money-out">-${MTP.fmtUSD(stats.retailCostUsd)}</strong> ·
+              Ganancia Mostrador: <strong class="money-in">+${MTP.fmtUSD(stats.retailProfitUsd)}</strong>
+            </div>
+            <div style="font-size:12.5px;color:#334155">
+              ${(stats.retailItemsList || []).slice(0, 5).map(r => `<div>• <strong>${r.qty}x</strong> ${r.name} (${MTP.fmtUSD(r.salesUsd)})</div>`).join('') || 'Sin mercancía empaquetada vendida en este período.'}
+            </div>
+          </div>
+        </div>
+        <div style="padding-top:8px;border-top:1px dashed var(--line);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <strong style="font-size:12.5px">🍲 Kilos / Gramos de Ingredientes de Cocina consumidos por la comida preparada:</strong>
+          ${ingHtml}
+        </div>
+      `;
     }
 
     function renderCierrePage() {
-      setupIcons();
+      const dateInp = document.getElementById('dailyDateInput');
+      if (dateInp && !dateInp.value) {
+        dateInp.value = new Date().toISOString().slice(0, 10);
+      }
+      const selectedDate = dateInp ? dateInp.value : new Date().toISOString().slice(0, 10);
+      const stats = MTP.getPeriodAnalytics('DAY', selectedDate);
       const fin = MTP.getFinancialAnalytics();
-      const sales = MTP.state.sales || [];
-      const expenses = MTP.state.expenses || [];
-      const bcv = fin.bcv;
-
-      let totVueltosUsd = fin.outChangeUsdCash + (fin.outChangePmBs + fin.outChangeBsCash) / bcv;
-
-      const cashIco = window.MTPIcons ? MTPIcons.get('cash', { size: 16 }) : '';
-      const refreshIco = window.MTPIcons ? MTPIcons.get('refresh', { size: 16 }) : '';
-      const wasteIco = window.MTPIcons ? MTPIcons.get('waste', { size: 16 }) : '';
-      const chartIco = window.MTPIcons ? MTPIcons.get('chart', { size: 16 }) : '';
+      const bcv = stats.bcv;
 
       document.getElementById('cierreTotalsGrid').innerHTML = `
         <div class="stat-card">
-          <div class="stat-ico green">${cashIco}</div>
           <div>
-            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(fin.grossSalesUsd)}</div>
-            <div class="stat-l">Ventas Brutas (${sales.length} órdenes)</div>
-            <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(fin.grossSalesUsd * bcv)}</div>
+            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(stats.grossSalesUsd)}</div>
+            <div class="stat-l">Total Cobrado (${stats.ordersCount} órdenes)</div>
+            <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(stats.grossSalesBs)}</div>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-ico yellow">${refreshIco}</div>
           <div>
-            <div class="stat-n tabular-nums" style="color:var(--sec-cocina)">${MTP.fmtUSD(totVueltosUsd)}</div>
-            <div class="stat-l">Total Vueltos Entregados</div>
-            <div class="stat-sub tabular-nums">$${fin.outChangeUsdCash.toFixed(2)} Efec + ${fin.outChangePmBs.toFixed(2)} Bs PM</div>
+            <div class="stat-n tabular-nums" style="color:#b45309">${MTP.fmtUSD(stats.ivaUsd)}</div>
+            <div class="stat-l">IVA 16% del Día</div>
+            <div class="stat-sub tabular-nums">Base 16%: ${MTP.fmtUSD(stats.baseG16Usd)} · Exento: ${MTP.fmtUSD(stats.exentoUsd)}</div>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-ico red">${wasteIco}</div>
           <div>
-            <div class="stat-n tabular-nums money-out">-${MTP.fmtUSD(fin.totalExpensesUsd)}</div>
-            <div class="stat-l">Gastos Operativos Pagados</div>
-            <div class="stat-sub tabular-nums">${expenses.length} salidas de caja</div>
+            <div class="stat-n tabular-nums money-out">-${MTP.fmtUSD(stats.totalExpensesUsd)}</div>
+            <div class="stat-l">Compras y Gastos del Día</div>
+            <div class="stat-sub tabular-nums">${stats.expenses.length} salidas registradas</div>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-ico blue">${chartIco}</div>
           <div>
-            <div class="stat-n tabular-nums money-bs">+${MTP.fmtUSD(fin.netOperatingProfitUsd)}</div>
-            <div class="stat-l">Ganancia Neta Limpia</div>
-            <div class="stat-sub tabular-nums">+${MTP.fmtBsRaw(fin.netOperatingProfitUsd * bcv)}</div>
+            <div class="stat-n tabular-nums money-bs">+${MTP.fmtUSD(stats.netOperatingProfitUsd)}</div>
+            <div class="stat-l">Ganancia Neta Limpia (Sin IVA)</div>
+            <div class="stat-sub tabular-nums">+${MTP.fmtBsRaw(stats.netOperatingProfitUsd * bcv)}</div>
           </div>
         </div>
       `;
+
+      renderKitchenVsRetailCard('dailyKitchenVsRetailBox', stats);
 
       document.getElementById('netDrawerGrid').innerHTML = `
         <div class="stat-card" style="border-left:3px solid var(--money-in)">
           <div>
-            <div class="stat-l" style="color:var(--money-in)">EFECTIVO USD FÍSICO EN GAVETA</div>
-            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(fin.netDrawerUsd)}</div>
-            <div class="stat-sub tabular-nums">Entró: $${fin.inUsdCash.toFixed(2)} − Vueltos: $${fin.outChangeUsdCash.toFixed(2)} − Gastos: $${fin.expUsdCash.toFixed(2)}</div>
+            <div class="stat-l" style="color:var(--money-in)">EFECTIVO USD EN GAVETA</div>
+            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(stats.netDrawerUsd)}</div>
+            <div class="stat-sub tabular-nums">Entró: $${stats.inUsdCash.toFixed(2)} − Vueltos: $${stats.outChangeUsdCash.toFixed(2)} − Gastos: $${stats.expUsdCash.toFixed(2)}</div>
           </div>
         </div>
-
         <div class="stat-card" style="border-left:3px solid var(--info)">
           <div>
             <div class="stat-l" style="color:var(--info)">SALDO NETO PAGO MÓVIL (BS)</div>
-            <div class="stat-n tabular-nums money-bs">${MTP.fmtBsRaw(fin.netBankPmBs)}</div>
-            <div class="stat-sub tabular-nums">Entró: ${fin.inPmBs.toFixed(2)} Bs − Vuelto PM: ${fin.outChangePmBs.toFixed(2)} Bs − Gastos PM: ${fin.expPmBs.toFixed(2)} Bs</div>
+            <div class="stat-n tabular-nums money-bs">${MTP.fmtBsRaw(stats.netBankPmBs)}</div>
+            <div class="stat-sub tabular-nums">Entró: ${stats.inPmBs.toFixed(2)} Bs − Vuelto PM: ${stats.outChangePmBs.toFixed(2)} Bs</div>
           </div>
         </div>
-
         <div class="stat-card" style="border-left:3px solid var(--purple)">
           <div>
-            <div class="stat-l">CIERRE LOTE PUNTO / BIOPAGO</div>
-            <div class="stat-n tabular-nums">${MTP.fmtBsRaw(fin.inPuntoBs)}</div>
-            <div class="stat-sub tabular-nums">Equivalente: ${MTP.fmtUSD(bcv > 0 ? fin.inPuntoBs / bcv : 0)}</div>
+            <div class="stat-l">PUNTO DE VENTA / BIOPAGO</div>
+            <div class="stat-n tabular-nums">${MTP.fmtBsRaw(stats.inPuntoBs)}</div>
+            <div class="stat-sub tabular-nums">Equiv: ${MTP.fmtUSD(bcv > 0 ? stats.inPuntoBs / bcv : 0)}</div>
           </div>
         </div>
-
         <div class="stat-card" style="border-left:3px solid var(--action)">
           <div>
-            <div class="stat-l">EFECTIVO BS FÍSICO EN GAVETA</div>
-            <div class="stat-n tabular-nums">${MTP.fmtBsRaw(fin.netDrawerBs)}</div>
-            <div class="stat-sub tabular-nums">Zelle/USDT: ${MTP.fmtUSD(fin.inZelleUsd)}</div>
+            <div class="stat-l">EFECTIVO BS EN GAVETA</div>
+            <div class="stat-n tabular-nums">${MTP.fmtBsRaw(stats.netDrawerBs)}</div>
+            <div class="stat-sub tabular-nums">Zelle: ${MTP.fmtUSD(stats.inZelleUsd)}</div>
           </div>
         </div>
       `;
 
-      // Puntos de Venta (Terminales)
+      // Historial de cierres diarios guardados
+      const dailyList = MTP.state.dailyClosures || [];
+      document.getElementById('savedDailyClosuresBody').innerHTML = dailyList.length
+        ? dailyList.map(c => `
+            <tr>
+              <td>
+                <strong>${c.date}</strong>
+                <div style="font-size:11px;color:var(--txt-3)">${c.id} · ${c.responsible}</div>
+              </td>
+              <td class="tabular-nums">${c.ordersCount}</td>
+              <td><span class="badge badge-yellow tabular-nums">${c.kitchenPreparedQty} platos (${MTP.fmtUSD(c.kitchenSalesUsd)})</span></td>
+              <td><span class="badge badge-blue tabular-nums">${c.retailSoldQty} und (${MTP.fmtUSD(c.retailSalesUsd)})</span></td>
+              <td class="tabular-nums">${MTP.fmtUSD(c.subtotalBaseUsd)} + ${MTP.fmtUSD(c.ivaUsd)} IVA</td>
+              <td><strong class="money-in tabular-nums">${MTP.fmtUSD(c.grossSalesUsd)}</strong></td>
+              <td><span class="money-out tabular-nums">-${MTP.fmtUSD(c.totalExpensesUsd)}</span></td>
+              <td class="tabular-nums">
+                Contado: <strong>${MTP.fmtUSD(c.countedDrawerUsd)}</strong>
+                <div style="font-size:11px;color:${Math.abs(c.diffDrawerUsd) < 0.05 ? 'var(--money-in)' : 'var(--money-out)'}">
+                  ${Math.abs(c.diffDrawerUsd) < 0.05 ? '✔ Cuadrado' : ('Dif: ' + MTP.fmtUSD(c.diffDrawerUsd))}
+                </div>
+              </td>
+              <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(c.netOperatingProfitUsd)}</span></td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="9" style="text-align:center;padding:14px;color:var(--txt-3)">Aún no has guardado ningún cierre diario. Haz clic en "🔒 Ejecutar Cierre Diario y Guardar Acta".</td></tr>';
+
+      // Terminales Punto de Venta
       const termGrid = document.getElementById('posTerminalsStatusGrid');
       const terminals = MTP.state.posTerminals || [];
       if (termGrid) {
         termGrid.innerHTML = terminals.map(t => {
-          const stats = fin.puntoByTerminal[t.id] || { txCount: 0, totalBs: 0, totalUsd: 0 };
+          const tStats = fin.puntoByTerminal[t.id] || { txCount: 0, totalBs: 0, totalUsd: 0 };
           return `
             <div class="kpi" style="display:block;border-left:3px solid var(--money-in)">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-                <strong style="font-size:12px;color:var(--txt)">${t.name}</strong>
-                <span class="badge badge-green tabular-nums" style="font-size:11px">Lote: ${t.currentBatch || '0001'}</span>
+                <strong style="font-size:13px;color:var(--txt)">${t.name}</strong>
+                <span class="badge badge-green tabular-nums">Lote: ${t.currentBatch || '0001'}</span>
               </div>
-              <div style="font-size:11px;color:var(--txt-2);margin-bottom:6px">${t.bank} · ${t.model || 'POS'}</div>
-              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
                 <div>
-                  <div class="money-bs tabular-nums" style="font-size:15px;font-weight:var(--fw-bold)">${MTP.fmtBsRaw(stats.totalBs)}</div>
-                  <div class="tabular-nums" style="font-size:11px;color:var(--txt-3)">${stats.txCount} transacciones (${MTP.fmtUSD(stats.totalUsd)})</div>
+                  <div class="money-bs tabular-nums" style="font-size:15px;font-weight:var(--fw-bold)">${MTP.fmtBsRaw(tStats.totalBs)}</div>
+                  <div class="tabular-nums" style="font-size:11.5px;color:var(--txt-3)">${tStats.txCount} cobros (${MTP.fmtUSD(tStats.totalUsd)})</div>
                 </div>
-                <button class="btn btn-secondary btn-sm" onclick="openBatchClosureModal('${t.id}')">
-                  Cerrar Lote
-                </button>
+                <button class="btn btn-secondary btn-sm" onclick="openBatchClosureModal('${t.id}')">Cerrar Punto</button>
               </div>
             </div>
           `;
         }).join('');
       }
 
-      // Pagos Móviles
+      // Pagos Móviles del día
       const pmRows = [];
-      sales.forEach(s => {
+      stats.sales.forEach(s => {
         (s.payments || []).forEach(p => {
           if (p.method === 'Pago Móvil') {
             pmRows.push({
@@ -366,7 +717,7 @@
               customer: s.customer,
               time: new Date(s.createdAt).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' }),
               destAccount: p.destAccountName || 'Cuenta Principal',
-              bank: p.bank || 'Banco Nacional',
+              bank: p.bank || 'Banco',
               phone: p.phone || '—',
               ref: p.ref || '—',
               amountBs: Number(p.amountBs || 0),
@@ -378,42 +729,25 @@
       });
 
       document.getElementById('pmVerificationTable').innerHTML = pmRows.length
-        ? pmRows.map(r => {
-            let statusBadge = '<span class="badge badge-green">✔ Confirmado en Banco</span>';
-            let actionHtml = '<span style="font-size:11px;color:var(--txt-3)">Auditado</span>';
-            if (r.verifyStatus === 'PENDIENTE') {
-              statusBadge = '<span class="badge badge-yellow">⏳ Pendiente Verificar</span>';
-              actionHtml = `
-                <div style="display:flex;gap:4px">
-                  <button class="btn btn-sm btn-secondary" onclick="confirmPmStatus('${r.saleId}', '${r.ref}')">✔ Confirmar</button>
-                  <button class="btn btn-sm btn-secondary" style="color:var(--money-out)" onclick="rejectPmStatus('${r.saleId}', '${r.ref}')">✕ Falso</button>
-                </div>
-              `;
-            } else if (r.verifyStatus === 'RECHAZADO') {
-              statusBadge = '<span class="badge badge-red">🚨 Rechazado / Falso</span>';
-              actionHtml = `<button class="btn btn-sm btn-secondary" onclick="confirmPmStatus('${r.saleId}', '${r.ref}')">Re-verificar</button>`;
-            }
+        ? pmRows.map(r => `
+            <tr>
+              <td><span class="code-pill plu">#${r.orderNumber}</span></td>
+              <td><strong>${r.customer}</strong> <span style="font-size:11px;color:var(--txt-3)">(${r.time})</span></td>
+              <td><span class="badge badge-blue">${r.destAccount}</span></td>
+              <td>${r.bank}</td>
+              <td>${r.phone}</td>
+              <td><span class="code-pill">#${r.ref}</span></td>
+              <td><strong class="money-bs tabular-nums">${MTP.fmtBsRaw(r.amountBs)}</strong></td>
+              <td><strong class="tabular-nums">${MTP.fmtUSD(r.amountUsd)}</strong></td>
+              <td><span class="badge badge-green">✔ Verificado</span></td>
+              <td>—</td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="10" style="text-align:center;color:var(--txt-3);padding:14px">Sin pagos móviles en esta fecha</td></tr>';
 
-            return `
-              <tr>
-                <td><span class="code-pill plu">#${r.orderNumber}</span></td>
-                <td><strong>${r.customer}</strong> <span style="font-size:11px;color:var(--txt-3)">(${r.time})</span></td>
-                <td><span class="badge badge-blue" style="font-size:11px">${r.destAccount}</span></td>
-                <td style="font-size:11px">${r.bank}</td>
-                <td style="font-size:11px">${r.phone}</td>
-                <td><span class="code-pill">#${r.ref}</span></td>
-                <td><strong class="money-bs tabular-nums">${MTP.fmtBsRaw(r.amountBs)}</strong></td>
-                <td><strong class="tabular-nums">${MTP.fmtUSD(r.amountUsd)}</strong></td>
-                <td>${statusBadge}</td>
-                <td>${actionHtml}</td>
-              </tr>
-            `;
-          }).join('')
-        : `<tr><td colspan="10" style="text-align:center;color:var(--txt-3);padding:14px;font-size:12px">No hay pagos móviles registrados en este turno</td></tr>`;
-
-      // Gastos del Turno
-      document.getElementById('cierreExpensesTable').innerHTML = expenses.length
-        ? expenses.map(e => `
+      // Gastos del día
+      document.getElementById('cierreExpensesTable').innerHTML = stats.expenses.length
+        ? stats.expenses.map(e => `
             <tr>
               <td>${new Date(e.createdAt).toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'})}</td>
               <td><span class="badge badge-yellow">${e.category}</span></td>
@@ -421,43 +755,242 @@
               <td><span class="badge badge-green">${e.paymentSource}</span></td>
               <td><strong class="money-out tabular-nums">-${MTP.fmtUSD(e.amountUsd)}</strong></td>
               <td><strong class="money-out tabular-nums">-${MTP.fmtBsRaw(e.amountBs)}</strong></td>
-              <td style="font-size:11px;color:var(--txt-2)">${e.responsible}</td>
+              <td>${e.responsible}</td>
             </tr>
           `).join('')
-        : `<tr><td colspan="7" style="text-align:center;color:var(--txt-3);padding:14px;font-size:12px">Sin gastos registrados</td></tr>`;
+        : '<tr><td colspan="7" style="text-align:center;color:var(--txt-3);padding:14px">Sin compras ni gastos en esta fecha</td></tr>';
 
-      // Ventas
-      document.getElementById('cierreSalesTable').innerHTML = sales.map(s => {
-        const timeStr = new Date(s.createdAt).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
-        return `
-          <tr>
-            <td><span class="code-pill plu">#${s.orderNumber}</span></td>
-            <td>
-              <strong>${s.customer}</strong>
-              <div style="font-size:11px;color:var(--txt-3)">${timeStr} · ${s.cashier}</div>
-            </td>
-            <td style="font-size:12px">
-              ${s.items.map(i => `<div>• <strong>${i.qty}x</strong> ${i.name} (${MTP.fmtUSD(i.subtotalUsd || i.qty * i.priceUsd)})</div>`).join('')}
-            </td>
-            <td>
-              <div class="price-dual">
-                <span class="price-usd tabular-nums">${MTP.fmtUSD(s.totalUsd)}</span>
-                <span class="price-bs tabular-nums">${MTP.fmtBsRaw(s.totalBs)}</span>
-              </div>
-            </td>
-            <td style="font-size:11px">
-              ${(s.payments || []).map(p => `<div><strong>${p.method}:</strong> ${MTP.fmtUSD(p.amountUsd)} (Ref: ${p.ref || '—'})</div>`).join('')}
-            </td>
-            <td style="font-size:11px">
-              <strong class="tabular-nums">Total: ${MTP.fmtUSD(s.changeGiven?.totalChangeUsd || 0)}</strong>
-              <div style="color:var(--txt-2);font-size:11px">${s.changeGiven?.breakdown || 'Exacto'}</div>
-            </td>
-            <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(s.profitUsd)}</span></td>
-          </tr>
-        `;
-      }).join('');
+      // Ventas del día
+      document.getElementById('cierreSalesTable').innerHTML = stats.sales.length
+        ? stats.sales.map(s => {
+            const timeStr = new Date(s.createdAt).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+            const subUsd = s.subtotalUsd != null ? s.subtotalUsd : s.totalUsd;
+            const ivaUsd = s.ivaUsd || (s.fiscalData && s.fiscalData.ivaUsd) || 0;
+            return `
+              <tr>
+                <td><span class="code-pill plu">#${s.orderNumber}</span></td>
+                <td>
+                  <strong>${s.customer}</strong>
+                  <div style="font-size:11px;color:var(--txt-3)">${timeStr} · ${s.cashier}</div>
+                </td>
+                <td>
+                  ${(s.items || []).map(i => `<div>• <strong>${i.qty}x</strong> ${i.name} (${MTP.fmtUSD(i.subtotalUsd || i.qty * i.priceUsd)})</div>`).join('')}
+                </td>
+                <td class="tabular-nums">
+                  <div>Base: ${MTP.fmtUSD(subUsd)}</div>
+                  <div style="font-size:11.5px;color:#b45309">+IVA 16%: ${MTP.fmtUSD(ivaUsd)}</div>
+                </td>
+                <td>
+                  <div class="price-dual">
+                    <span class="price-usd tabular-nums">${MTP.fmtUSD(s.totalUsd)}</span>
+                    <span class="price-bs tabular-nums">${MTP.fmtBsRaw(s.totalBs)}</span>
+                  </div>
+                </td>
+                <td style="font-size:12px">
+                  ${(s.payments || []).map(p => `<div><strong>${p.method}:</strong> ${MTP.fmtUSD(p.amountUsd)}</div>`).join('')}
+                </td>
+                <td style="font-size:12px">
+                  <strong class="tabular-nums">${MTP.fmtUSD(s.changeGiven?.totalChangeUsd || 0)}</strong>
+                  <div style="color:var(--txt-2);font-size:11px">${s.changeGiven?.breakdown || 'Exacto'}</div>
+                </td>
+                <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(s.profitUsd)}</span></td>
+              </tr>
+            `;
+          }).join('')
+        : '<tr><td colspan="8" style="text-align:center;color:var(--txt-3);padding:14px">No hay ventas registradas en esta fecha</td></tr>';
     }
 
+    /* ========================================================================
+       MODAL Y ACCIÓN DE CIERRE DIARIO
+       ======================================================================== */
+    function openDailyClosureModal() {
+      const dateInp = document.getElementById('dailyDateInput');
+      const selectedDate = (dateInp && dateInp.value) ? dateInp.value : new Date().toISOString().slice(0, 10);
+      const stats = MTP.getPeriodAnalytics('DAY', selectedDate);
+
+      document.getElementById('dcCountedUsd').value = stats.netDrawerUsd.toFixed(2);
+      document.getElementById('dcCountedBs').value = stats.netDrawerBs.toFixed(2);
+      document.getElementById('dailyModalSummaryBox').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div>📅 Fecha a cerrar: <strong>${selectedDate}</strong></div>
+          <div>🧾 Órdenes cobradas: <strong>${stats.ordersCount}</strong></div>
+          <div>🥟 Comida preparada hoy: <strong>${stats.kitchenPreparedQty} platos (${MTP.fmtUSD(stats.kitchenSalesUsd)})</strong></div>
+          <div>🛒 Mercancía vendida hoy: <strong>${stats.retailSoldQty} und (${MTP.fmtUSD(stats.retailSalesUsd)})</strong></div>
+          <div>💵 Subtotal + IVA 16%: <strong>${MTP.fmtUSD(stats.subtotalBaseUsd)} + ${MTP.fmtUSD(stats.ivaUsd)}</strong></div>
+          <div>💰 Total Cobrado: <strong class="money-in">${MTP.fmtUSD(stats.grossSalesUsd)}</strong></div>
+          <div>💵 Efectivo USD Esperado: <strong class="money-in">${MTP.fmtUSD(stats.netDrawerUsd)}</strong></div>
+          <div>🏦 Pago Móvil Neto: <strong class="money-bs">${MTP.fmtBsRaw(stats.netBankPmBs)}</strong></div>
+        </div>
+      `;
+      document.getElementById('dailyClosureModal').classList.add('open');
+    }
+
+    function confirmDailyClosureAction() {
+      const dateInp = document.getElementById('dailyDateInput');
+      const selectedDate = (dateInp && dateInp.value) ? dateInp.value : new Date().toISOString().slice(0, 10);
+      const countedUsd = parseFloat(document.getElementById('dcCountedUsd').value) || 0;
+      const countedBs = parseFloat(document.getElementById('dcCountedBs').value) || 0;
+      const responsible = document.getElementById('dcResponsible').value.trim() || 'Dueño';
+      const notes = document.getElementById('dcNotes').value.trim() || 'Cierre diario normal';
+
+      const closure = MTP.performDailyClosure({
+        date: selectedDate,
+        countedUsd,
+        countedBs,
+        responsible,
+        notes
+      });
+
+      document.getElementById('dailyClosureModal').classList.remove('open');
+      MTP.toast(`¡Acta de Cierre Diario (${closure.date}) guardada con éxito!`);
+      renderCierrePage();
+    }
+
+    /* ========================================================================
+       PESTAÑA 2: CIERRE MENSUAL
+       ======================================================================== */
+    function renderMonthlyPane() {
+      const mInp = document.getElementById('monthlyMonthInput');
+      if (mInp && !mInp.value) {
+        mInp.value = new Date().toISOString().slice(0, 7);
+      }
+      const selectedMonth = mInp ? mInp.value : new Date().toISOString().slice(0, 7);
+      const stats = MTP.getPeriodAnalytics('MONTH', selectedMonth);
+      const bcv = stats.bcv;
+
+      document.getElementById('monthlyStatsGrid').innerHTML = `
+        <div class="stat-card">
+          <div>
+            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(stats.grossSalesUsd)}</div>
+            <div class="stat-l">Ventas Totales del Mes (${stats.ordersCount} órdenes)</div>
+            <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(stats.grossSalesBs)}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div>
+            <div class="stat-n tabular-nums" style="color:#b45309">${MTP.fmtUSD(stats.ivaUsd)}</div>
+            <div class="stat-l">IVA 16% Acumulado del Mes</div>
+            <div class="stat-sub tabular-nums">Base Gravada: ${MTP.fmtUSD(stats.baseG16Usd)} · Exento: ${MTP.fmtUSD(stats.exentoUsd)}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div>
+            <div class="stat-n tabular-nums money-out">-${MTP.fmtUSD(stats.totalExpensesUsd)}</div>
+            <div class="stat-l">Compras y Gastos del Mes</div>
+            <div class="stat-sub tabular-nums">Costo recetas + mercancía: ${MTP.fmtUSD(stats.totalCostOfGoodsUsd)}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div>
+            <div class="stat-n tabular-nums money-bs">+${MTP.fmtUSD(stats.netOperatingProfitUsd)}</div>
+            <div class="stat-l">Ganancia Neta Limpia del Mes</div>
+            <div class="stat-sub tabular-nums">+${MTP.fmtBsRaw(stats.netOperatingProfitUsd * bcv)}</div>
+          </div>
+        </div>
+      `;
+
+      renderKitchenVsRetailCard('monthlyKitchenVsRetailBox', stats);
+
+      document.getElementById('monthlyDaysTableBody').innerHTML = stats.daysList.length
+        ? stats.daysList.map(d => `
+            <tr>
+              <td><strong>${d.date}</strong></td>
+              <td class="tabular-nums">${d.ordersCount}</td>
+              <td><span class="badge badge-yellow tabular-nums">${d.kitchenPreparedQty} platos</span></td>
+              <td><span class="badge badge-blue tabular-nums">${d.retailSoldQty} und</span></td>
+              <td class="tabular-nums">${MTP.fmtUSD(d.subtotalBaseUsd)}</td>
+              <td class="tabular-nums" style="color:#b45309">${MTP.fmtUSD(d.ivaUsd)}</td>
+              <td><strong class="money-in tabular-nums">${MTP.fmtUSD(d.grossSalesUsd)}</strong></td>
+              <td><span class="money-out tabular-nums">-${MTP.fmtUSD(d.expensesUsd)}</span></td>
+              <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(d.netProfitUsd)}</span></td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="9" style="text-align:center;padding:16px;color:var(--txt-3)">No hay movimientos registrados en este mes.</td></tr>';
+
+      const mClosures = MTP.state.monthlyClosures || [];
+      document.getElementById('savedMonthlyClosuresBody').innerHTML = mClosures.length
+        ? mClosures.map(c => `
+            <tr>
+              <td><strong>${c.month}</strong> <span style="font-size:11px;color:var(--txt-3)">(${c.id})</span></td>
+              <td class="tabular-nums">${c.daysWorked} días</td>
+              <td class="tabular-nums">${c.ordersCount}</td>
+              <td><span class="badge badge-yellow tabular-nums">${c.kitchenPreparedQty} platos (${MTP.fmtUSD(c.kitchenSalesUsd)})</span></td>
+              <td><span class="badge badge-blue tabular-nums">${c.retailSoldQty} und (${MTP.fmtUSD(c.retailSalesUsd)})</span></td>
+              <td class="tabular-nums">${MTP.fmtUSD(c.ivaUsd)}</td>
+              <td><strong class="money-in tabular-nums">${MTP.fmtUSD(c.grossSalesUsd)}</strong></td>
+              <td><span class="money-out tabular-nums">-${MTP.fmtUSD(c.totalExpensesUsd)}</span></td>
+              <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(c.netOperatingProfitUsd)}</span></td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="9" style="text-align:center;padding:14px;color:var(--txt-3)">Aún no se han guardado actas de cierre mensual.</td></tr>';
+    }
+
+    function saveMonthlyClosureAction() {
+      const mInp = document.getElementById('monthlyMonthInput');
+      const selectedMonth = (mInp && mInp.value) ? mInp.value : new Date().toISOString().slice(0, 7);
+      const c = MTP.performMonthlyClosure({ month: selectedMonth });
+      MTP.toast(`¡Cierre Mensual de ${c.month} guardado con éxito!`);
+      renderMonthlyPane();
+    }
+
+    /* ========================================================================
+       PESTAÑA 3: CIERRE ANUAL
+       ======================================================================== */
+    function renderAnnualPane() {
+      const ySel = document.getElementById('annualYearSelect');
+      const selectedYear = ySel ? ySel.value : String(new Date().getFullYear());
+      const stats = MTP.getPeriodAnalytics('YEAR', selectedYear);
+      const bcv = stats.bcv;
+
+      document.getElementById('annualStatsGrid').innerHTML = `
+        <div class="stat-card">
+          <div>
+            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(stats.grossSalesUsd)}</div>
+            <div class="stat-l">Ventas Acumuladas Año ${selectedYear} (${stats.ordersCount} órdenes)</div>
+            <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(stats.grossSalesBs)}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div>
+            <div class="stat-n tabular-nums" style="color:#b45309">${MTP.fmtUSD(stats.ivaUsd)}</div>
+            <div class="stat-l">IVA 16% Acumulado del Año</div>
+            <div class="stat-sub tabular-nums">Base Gravada: ${MTP.fmtUSD(stats.baseG16Usd)} · Exento: ${MTP.fmtUSD(stats.exentoUsd)}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div>
+            <div class="stat-n tabular-nums" style="color:#d97706">${stats.kitchenPreparedQty} platos / ${stats.retailSoldQty} und</div>
+            <div class="stat-l">Producción Cocina vs. Mercancía Anual</div>
+            <div class="stat-sub tabular-nums">Cocina: ${MTP.fmtUSD(stats.kitchenSalesUsd)} · Tienda: ${MTP.fmtUSD(stats.retailSalesUsd)}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div>
+            <div class="stat-n tabular-nums money-bs">+${MTP.fmtUSD(stats.netOperatingProfitUsd)}</div>
+            <div class="stat-l">Ganancia Neta Anual (${selectedYear})</div>
+            <div class="stat-sub tabular-nums">Gastos descontados: -${MTP.fmtUSD(stats.totalExpensesUsd)}</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('annualMonthsTableBody').innerHTML = (stats.monthsList || []).map(m => `
+        <tr style="${m.ordersCount > 0 ? 'background:#ffffff' : 'color:var(--txt-3)'}">
+          <td><strong>${m.monthName} ${selectedYear}</strong></td>
+          <td class="tabular-nums">${m.ordersCount}</td>
+          <td><span class="badge badge-yellow tabular-nums">${m.kitchenPreparedQty} platos</span></td>
+          <td><span class="badge badge-blue tabular-nums">${m.retailSoldQty} und</span></td>
+          <td class="tabular-nums">${MTP.fmtUSD(m.subtotalBaseUsd)}</td>
+          <td class="tabular-nums" style="color:#b45309">${MTP.fmtUSD(m.ivaUsd)}</td>
+          <td><strong class="money-in tabular-nums">${MTP.fmtUSD(m.grossSalesUsd)}</strong></td>
+          <td><span class="money-out tabular-nums">-${MTP.fmtUSD(m.expensesUsd)}</span></td>
+          <td><span class="badge ${m.netProfitUsd >= 0 ? 'badge-green' : 'badge-red'} tabular-nums">${m.netProfitUsd >= 0 ? '+' : ''}${MTP.fmtUSD(m.netProfitUsd)}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    /* ========================================================================
+       CIERRE DE PUNTO DE VENTA
+       ======================================================================== */
     let activeBatchTerminal = null;
 
     function openBatchClosureModal(termId) {
@@ -501,13 +1034,13 @@
       if (badge) {
         if (Math.abs(diffBs) < 0.05) {
           badge.className = 'badge badge-green';
-          badge.textContent = '✔ Lote Cuadrado Exacto (0,00 Bs Diferencia)';
+          badge.textContent = '✔ Cuadrado Exacto (0,00 Bs Diferencia)';
         } else if (diffBs > 0) {
           badge.className = 'badge badge-blue';
-          badge.textContent = `Sobrante de Voucher: +${diffBs.toFixed(2)} Bs`;
+          badge.textContent = `Sobrante: +${diffBs.toFixed(2)} Bs`;
         } else {
           badge.className = 'badge badge-red';
-          badge.textContent = `Faltante de Voucher: ${diffBs.toFixed(2)} Bs`;
+          badge.textContent = `Faltante: ${diffBs.toFixed(2)} Bs`;
         }
       }
     }
@@ -522,7 +1055,7 @@
         terminalId: activeBatchTerminal.id,
         voucherTotalBs,
         voucherTxCount,
-        closedBy: 'Administrador / Turno',
+        closedBy: 'Administrador',
         notes
       });
 
@@ -532,26 +1065,18 @@
       }
 
       document.getElementById('batchClosureModal').classList.remove('open');
-      MTP.toast(`¡Lote #${res.closure.batchNumber} de ${activeBatchTerminal.name} cerrado exitosamente! Próximo lote: ${res.closure.nextBatch}`);
+      MTP.toast(`¡Cierre de punto ${activeBatchTerminal.name} guardado!`);
       renderCierrePage();
     }
 
-    function confirmPmStatus(saleId, ref) {
-      MTP.updatePagoMovilStatus(saleId, ref, 'CONCILIADO');
-      MTP.toast(`Pago Móvil Ref #${ref} marcado como CONFIRMADO EN BANCO`);
+    document.addEventListener('DOMContentLoaded', () => {
       renderCierrePage();
-    }
-
-    function rejectPmStatus(saleId, ref) {
-      const reason = prompt('Motivo del rechazo / alerta (ej: Captura falsa o dinero no cayó en cuenta):', 'No acreditado en banco');
-      if (reason === null) return;
-      MTP.updatePagoMovilStatus(saleId, ref, 'RECHAZADO', reason);
-      MTP.toast(`Pago Móvil Ref #${ref} marcado como RECHAZADO`, 'warn');
-      renderCierrePage();
-    }
-
-    document.addEventListener('DOMContentLoaded', renderCierrePage);
-    window.addEventListener('mtp:state-updated', renderCierrePage);
+    });
+    window.addEventListener('mtp:state-updated', () => {
+      if (currentCierreTab === 'DIARIO') renderCierrePage();
+      else if (currentCierreTab === 'MENSUAL') renderMonthlyPane();
+      else if (currentCierreTab === 'ANUAL') renderAnnualPane();
+    });
   </script>
 </body>
 </html>

@@ -102,9 +102,9 @@
   /* ========================================================================
      5. Dimensiones de Layout
      ======================================================================== */
-  --aside-w: 195px;
-  --aside-collapsed-w: 52px;
-  --topbar-h: 38px;
+  --aside-w: 218px;
+  --aside-collapsed-w: 54px;
+  --topbar-h: 42px;
 
   /* ========================================================================
      6. Tipografía y Pesos
@@ -128,9 +128,9 @@ html, body {
   font-family: var(--font-sans);
   background: var(--page);
   color: var(--txt);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: var(--fw-normal);
-  line-height: 1.4;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
 

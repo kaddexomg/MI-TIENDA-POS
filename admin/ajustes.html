@@ -213,29 +213,36 @@
                 </select>
               </div>
               <div class="form-group">
-                <label>Serial de la Máquina Fiscal (Impreso en el equipo)</label>
-                <input type="text" id="fiscSerialInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)" placeholder="Ej: Z4A2098124">
-              </div>
-              <div class="form-group">
-                <label>Modo de Emisión de Facturas</label>
-                <select id="fiscModeSelect" class="select" style="font-weight:var(--fw-bold)">
-                  <option value="DUAL">DUAL (Factura Fiscal Homologada + Comanda de Cocina)</option>
-                  <option value="HOMOLOGADO">SOLO FISCAL (Todo por Impresora Fiscal SENIAT)</option>
-                  <option value="INTERNO">CONTROL INTERNO (Notas de Despacho Sin Valor Fiscal)</option>
+                <label>¿Los precios que cargo ya incluyen el IVA (16%)?</label>
+                <select id="fiscIvaModeSelect" class="select" style="font-weight:var(--fw-bold)">
+                  <option value="RECARGO">No — Sumar el 16% de IVA al cobrar en Caja (Recargo)</option>
+                  <option value="INCLUIDO">Sí — Los precios del catálogo ya traen el IVA incluido</option>
                 </select>
               </div>
               <div class="form-group">
-                <label>Último Reporte Z Fiscal Emitido</label>
-                <input type="number" id="fiscReportZInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)" min="1">
+                <label>Modo del Comprobante en Caja</label>
+                <select id="fiscModeSelect" class="select" style="font-weight:var(--fw-bold)">
+                  <option value="INTERNO">CONTROL INTERNO (Nota de Entrega sin máquina fiscal)</option>
+                  <option value="DUAL">DUAL (Factura Fiscal Homologada + Comanda de Cocina)</option>
+                  <option value="HOMOLOGADO">SOLO FISCAL (Todo por Impresora Fiscal SENIAT)</option>
+                </select>
               </div>
               <div class="form-group">
-                <label>Próximo N° de Factura Fiscal Consecutiva</label>
+                <label>Serial de la Máquina Fiscal (Solo si tiene impresora fiscal)</label>
+                <input type="text" id="fiscSerialInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)" placeholder="Dejar vacío si usa Control Interno">
+              </div>
+              <div class="form-group">
+                <label>Último Reporte Z Fiscal Emitido</label>
+                <input type="number" id="fiscReportZInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)" min="0">
+              </div>
+              <div class="form-group">
+                <label>Próximo N° de Comprobante / Factura</label>
                 <input type="number" id="fiscNextInvoiceInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)" min="1">
               </div>
               <div class="form-group" style="grid-column:1/-1">
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-                  <input type="checkbox" id="fiscApplyIgtfCheck" checked>
-                  <strong>Percibir IGTF 3% en Factura Fiscal cuando el cliente pague en divisas en efectivo ($) o Zelle (Ley IGTF Divisas)</strong>
+                  <input type="checkbox" id="fiscApplyIgtfCheck">
+                  <strong>¿El negocio es Contribuyente Especial? (Cobrar 3% de IGTF adicional cuando el cliente pague en dólares efectivo o Zelle)</strong>
                 </label>
               </div>
             </div>
@@ -374,6 +381,7 @@
   </div>
 
   <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/tax.js"></script>
   <script src="../assets/js/config.js"></script>
   <script src="../assets/js/rates.js"></script>
   <script src="../assets/js/permissions.js"></script>
@@ -415,28 +423,39 @@
       const fc = s.fiscalConfig || {};
       if (document.getElementById('fiscBrandSelect')) document.getElementById('fiscBrandSelect').value = fc.brand || 'THE_FACTORY_HKA';
       if (document.getElementById('fiscPortSelect')) document.getElementById('fiscPortSelect').value = fc.port || 'COM1';
-      if (document.getElementById('fiscSerialInput')) document.getElementById('fiscSerialInput').value = fc.serialNumber || 'Z4A2098124';
-      if (document.getElementById('fiscModeSelect')) document.getElementById('fiscModeSelect').value = fc.mode || 'DUAL';
-      if (document.getElementById('fiscReportZInput')) document.getElementById('fiscReportZInput').value = fc.lastReportZ || 142;
-      if (document.getElementById('fiscNextInvoiceInput')) document.getElementById('fiscNextInvoiceInput').value = fc.currentInvoiceNumber || 4892;
-      if (document.getElementById('fiscApplyIgtfCheck')) document.getElementById('fiscApplyIgtfCheck').checked = fc.applyIgtf3 !== false;
+      if (document.getElementById('fiscIvaModeSelect')) document.getElementById('fiscIvaModeSelect').value = s.ivaMode || fc.ivaMode || 'RECARGO';
+      if (document.getElementById('fiscSerialInput')) document.getElementById('fiscSerialInput').value = fc.serialNumber || '';
+      if (document.getElementById('fiscModeSelect')) document.getElementById('fiscModeSelect').value = fc.mode || 'INTERNO';
+      if (document.getElementById('fiscReportZInput')) document.getElementById('fiscReportZInput').value = fc.lastReportZ || 0;
+      if (document.getElementById('fiscNextInvoiceInput')) document.getElementById('fiscNextInvoiceInput').value = fc.currentInvoiceNumber || s.nextOrderNumber || 105;
+      if (document.getElementById('fiscApplyIgtfCheck')) document.getElementById('fiscApplyIgtfCheck').checked = Boolean(s.isContribuyenteEspecial);
 
       renderTerminalsTable();
       renderPmAccountsTable();
     });
 
     function saveFiscalConfigForm() {
+      const ivaMode = document.getElementById('fiscIvaModeSelect')?.value || 'RECARGO';
+      const isContribEsp = Boolean(document.getElementById('fiscApplyIgtfCheck')?.checked);
+      const serialNumber = document.getElementById('fiscSerialInput')?.value.trim() || '';
+      const mode = document.getElementById('fiscModeSelect')?.value || 'INTERNO';
       const fc = {
         brand: document.getElementById('fiscBrandSelect').value,
         port: document.getElementById('fiscPortSelect').value,
-        serialNumber: document.getElementById('fiscSerialInput').value.trim() || 'Z4A2098124',
-        mode: document.getElementById('fiscModeSelect').value,
-        lastReportZ: parseInt(document.getElementById('fiscReportZInput').value, 10) || 142,
-        currentInvoiceNumber: parseInt(document.getElementById('fiscNextInvoiceInput').value, 10) || 4892,
-        applyIgtf3: document.getElementById('fiscApplyIgtfCheck').checked
+        ivaMode,
+        isContribuyenteEspecial: isContribEsp,
+        serialNumber,
+        enabled: Boolean(serialNumber && mode !== 'INTERNO'),
+        mode,
+        lastReportZ: parseInt(document.getElementById('fiscReportZInput').value, 10) || 0,
+        currentInvoiceNumber: parseInt(document.getElementById('fiscNextInvoiceInput').value, 10) || 105,
+        applyIgtf3: isContribEsp
       };
+      MTP.state.settings.ivaMode = ivaMode;
+      MTP.state.settings.isContribuyenteEspecial = isContribEsp;
+      MTP.state.settings.applyIgtf = isContribEsp;
       MTP.saveFiscalConfig(fc);
-      MTP.toast('Configuración fiscal guardada con éxito.');
+      MTP.toast('Configuración de IVA y comprobantes guardada.');
     }
 
     function triggerFiscalReportX() {

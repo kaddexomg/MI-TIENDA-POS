@@ -249,11 +249,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4.5px 7px;
-  border-radius: 5px;
+  padding: 6px 8px;
+  border-radius: 6px;
   color: #CBD5E1;
   font-weight: var(--fw-semibold);
-  font-size: 11.5px;
+  font-size: 13px;
   text-decoration: none;
   transition: background 0.12s ease, color 0.12s ease;
 }
@@ -483,7 +483,7 @@ body.pos-fullscreen-body.aside-collapsed .admin-main {
 }
 
 .topbar-title h2 {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: var(--fw-bold);
   color: var(--txt);
   line-height: 1.15;
@@ -493,7 +493,7 @@ body.pos-fullscreen-body.aside-collapsed .admin-main {
 }
 
 .topbar-title p {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--txt-2);
   font-weight: 500;
   white-space: nowrap;

@@ -164,7 +164,7 @@ body.pos-fullscreen-body .admin-content {
 }
 
 .pos-fam-name {
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 800;
   color: #1e293b;
   line-height: 1.2;
@@ -430,8 +430,8 @@ body.pos-fullscreen-body .admin-content {
 /* Grilla de Sabores táctiles grandes */
 .pos-flavors-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-  gap: 5px;
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: 6px;
 }
 
 @media (max-width: 1120px) {
@@ -506,12 +506,69 @@ body.pos-fullscreen-body .admin-content {
 }
 
 .pos-btn-name {
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 800;
   color: #0f172a;
   line-height: 1.2;
-  margin: 2px 0 4px 0;
+  margin: 1px 0 3px 0;
   word-break: break-word;
+}
+
+.pos-card-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.pos-card-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 7px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+}
+
+.pos-card-thumb-ico {
+  width: 44px;
+  height: 44px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #475569;
+}
+
+.pos-card-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.pos-tax-pill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.pos-tax-pill.g16 {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.pos-tax-pill.exento {
+  background: #dcfce7;
+  color: #166534;
 }
 
 .pos-btn-bottom {
@@ -525,7 +582,7 @@ body.pos-fullscreen-body .admin-content {
 
 .pos-btn-usd {
   font-family: var(--font-mono, monospace);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 900;
   color: #0f172a;
 }

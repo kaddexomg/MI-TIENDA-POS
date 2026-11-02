@@ -12,12 +12,12 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 4px 10px;
-  height: 28px;
-  min-height: 28px;
+  padding: 6px 12px;
+  height: 34px;
+  min-height: 34px;
   border-radius: var(--radius-sm);
   font-weight: var(--fw-semibold);
-  font-size: 12px;
+  font-size: 13.5px;
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.12s ease;
@@ -241,7 +241,7 @@
 }
 
 .card-hd h3 {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: var(--fw-bold);
   display: flex;
   align-items: center;
@@ -251,7 +251,7 @@
 }
 
 .card-hd p {
-  font-size: 11px;
+  font-size: 12.5px;
   color: var(--txt-2);
   margin-top: 2px;
 }
@@ -378,7 +378,7 @@ table.data-table {
 table.data-table th {
   background: var(--surface-2);
   color: var(--txt-2);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: var(--fw-bold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -388,9 +388,9 @@ table.data-table th {
 }
 
 table.data-table td {
-  padding: 6px 10px;
+  padding: 7px 10px;
   border-bottom: 1px solid var(--line);
-  font-size: 12px;
+  font-size: 13.5px;
   vertical-align: middle;
   color: var(--txt);
 }
@@ -477,13 +477,13 @@ table.data-table th.num {
    ========================================================================== */
 .input, .select {
   width: 100%;
-  padding: 4px 8px;
-  height: 28px;
+  padding: 5px 9px;
+  height: 34px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--txt);
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 500;
   transition: border-color 0.12s, box-shadow 0.12s;
 }
@@ -509,7 +509,7 @@ table.data-table th.num {
 
 .form-group label {
   display: block;
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: var(--fw-semibold);
   color: var(--txt-2);
   margin-bottom: 2px;

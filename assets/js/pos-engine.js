@@ -247,22 +247,29 @@
           const cleanName = cleanFlavorName(v.name);
           const bsPrice = (v.priceUsd * bcv).toFixed(2);
           const hasMods = prod.modifierGroupIds && prod.modifierGroupIds.length > 0;
+          const imgSrc = v.img || prod.img || '../assets/img/productos/empanadas.jpg';
 
           return `
             <div class="pos-flavor-card ${qtyInCart > 0 ? 'in-cart' : ''}"
               onclick="window.MTPPos.addVariantQuick('${v.id}')"
-              title="${v.name} · #${v.code}">
-              <div class="pos-btn-top">
-                <span class="pos-btn-plu">#${v.code}</span>
-                ${qtyInCart > 0 ? `
-                  <div class="pos-btn-stepper" onclick="event.stopPropagation()">
-                    <button type="button" class="pos-step-btn minus" onclick="window.MTPPos.stepVariantQty('${v.id}', -1, event)" title="Restar 1">−</button>
-                    <span class="pos-step-num">${qtyInCart}</span>
-                    <button type="button" class="pos-step-btn plus" onclick="window.MTPPos.stepVariantQty('${v.id}', 1, event)" title="Sumar 1">+</button>
+              title="${v.name} · #${v.code} (+IVA 16%)">
+              <div class="pos-card-row">
+                <img class="pos-card-thumb" src="${imgSrc}" alt="${cleanName}" loading="lazy"
+                  onerror="this.style.display='none'">
+                <div class="pos-card-main">
+                  <div class="pos-btn-top">
+                    <span class="pos-btn-plu">#${v.code}</span>
+                    ${qtyInCart > 0 ? `
+                      <div class="pos-btn-stepper" onclick="event.stopPropagation()">
+                        <button type="button" class="pos-step-btn minus" onclick="window.MTPPos.stepVariantQty('${v.id}', -1, event)" title="Restar 1">−</button>
+                        <span class="pos-step-num">${qtyInCart}</span>
+                        <button type="button" class="pos-step-btn plus" onclick="window.MTPPos.stepVariantQty('${v.id}', 1, event)" title="Sumar 1">+</button>
+                      </div>
+                    ` : ''}
                   </div>
-                ` : ''}
+                  <div class="pos-btn-name">${cleanName}</div>
+                </div>
               </div>
-              <div class="pos-btn-name">${cleanName}</div>
               <div class="pos-btn-bottom">
                 <div class="pos-btn-prices">
                   <span class="pos-btn-usd">${MTP.fmtUSD(v.priceUsd)}</span>
@@ -272,7 +279,7 @@
                   <button type="button" class="pos-btn-mod-tag" onclick="event.stopPropagation(); window.MTPPos.openModifiersForRef('${v.id}')" title="Personalizar masa y extras">
                     ⚙ Extras
                   </button>
-                ` : ''}
+                ` : '<span class="pos-tax-pill g16">+IVA</span>'}
               </div>
             </div>
           `;
@@ -299,28 +306,40 @@
         const bsPrice = (item.priceUsd * bcv).toFixed(2);
         const isLow = (Number(item.stock) || 0) <= (Number(item.minStock) || 5);
         const stockClass = isLow ? 'pos-stock-low' : 'pos-stock-ok';
+        const isCigarro = item.familyId === 'cigarros' || item.group === 'cigarros';
+        const ivaClass = window.MTPTax ? window.MTPTax.classify(item) : (item.iva || (item.taxExempt ? 'E' : 'G16'));
+        const isExempt = ivaClass === 'E';
+        const thumbHtml = isCigarro
+          ? `<div class="pos-card-thumb-ico" title="Cigarros">${window.MTPIcons ? window.MTPIcons.get('bolt', 20) : '🚬'}</div>`
+          : `<img class="pos-card-thumb" src="${item.img || '../assets/img/productos/viveres.jpg'}" alt="${item.name}" loading="lazy" onerror="this.style.display='none'">`;
 
         return `
           <div class="pos-retail-card ${qtyInCart > 0 ? 'in-cart' : ''}"
             onclick="window.MTPPos.addRetailQuick('${item.id}')"
-            title="${item.name} · #${item.code}">
-            <div class="pos-btn-top">
-              <span class="pos-btn-plu">#${item.code}</span>
-              <span class="pos-stock-pill ${stockClass}">${Math.round(item.stock || 0)} ${item.unit || 'und'}</span>
-              ${qtyInCart > 0 ? `
-                <div class="pos-btn-stepper" onclick="event.stopPropagation()">
-                  <button type="button" class="pos-step-btn minus" onclick="window.MTPPos.stepRetailQty('${item.id}', -1, event)" title="Restar 1">−</button>
-                  <span class="pos-step-num">${qtyInCart}</span>
-                  <button type="button" class="pos-step-btn plus" onclick="window.MTPPos.stepRetailQty('${item.id}', 1, event)" title="Sumar 1">+</button>
+            title="${item.name} · #${item.code} (${isExempt ? 'Exento de IVA' : '+IVA 16%'})">
+            <div class="pos-card-row">
+              ${thumbHtml}
+              <div class="pos-card-main">
+                <div class="pos-btn-top">
+                  <span class="pos-btn-plu">#${item.code}</span>
+                  <span class="pos-stock-pill ${stockClass}">${Math.round(item.stock || 0)} ${item.unit || 'und'}</span>
+                  ${qtyInCart > 0 ? `
+                    <div class="pos-btn-stepper" onclick="event.stopPropagation()">
+                      <button type="button" class="pos-step-btn minus" onclick="window.MTPPos.stepRetailQty('${item.id}', -1, event)" title="Restar 1">−</button>
+                      <span class="pos-step-num">${qtyInCart}</span>
+                      <button type="button" class="pos-step-btn plus" onclick="window.MTPPos.stepRetailQty('${item.id}', 1, event)" title="Sumar 1">+</button>
+                    </div>
+                  ` : ''}
                 </div>
-              ` : ''}
+                <div class="pos-btn-name">${item.name}</div>
+              </div>
             </div>
-            <div class="pos-btn-name">${item.name}</div>
             <div class="pos-btn-bottom">
               <div class="pos-btn-prices">
                 <span class="pos-btn-usd">${MTP.fmtUSD(item.priceUsd)}</span>
                 <span class="pos-btn-bs">${bsPrice} Bs</span>
               </div>
+              <span class="pos-tax-pill ${isExempt ? 'exento' : 'g16'}">${isExempt ? 'Exento' : '+IVA'}</span>
             </div>
           </div>
         `;
@@ -405,20 +424,35 @@
     matchingVariants.forEach(v => {
       const qtyInCart = getCartQtyForRef(v.id, true);
       const bsPrice = (v.priceUsd * bcv).toFixed(2);
+      const imgSrc = v.img || '../assets/img/productos/empanadas.jpg';
       cards.push(`
-        <button type="button" class="pos-flavor-btn ${qtyInCart > 0 ? 'in-cart' : ''}"
+        <div class="pos-flavor-card ${qtyInCart > 0 ? 'in-cart' : ''}"
           onclick="window.MTPPos.addVariantQuick('${v.id}')">
-          <div class="pos-btn-top">
-            <span class="pos-btn-plu">#${v.code}</span>
-            <span class="badge badge-amber" style="font-size:9px;padding:0 4px">Cocina</span>
-            ${qtyInCart > 0 ? `<span class="pos-btn-cart-badge">✓ ${qtyInCart}</span>` : ''}
+          <div class="pos-card-row">
+            <img class="pos-card-thumb" src="${imgSrc}" alt="${v.name}" loading="lazy" onerror="this.style.display='none'">
+            <div class="pos-card-main">
+              <div class="pos-btn-top">
+                <span class="pos-btn-plu">#${v.code}</span>
+                <span class="badge badge-amber" style="font-size:9px;padding:0 4px">Cocina</span>
+                ${qtyInCart > 0 ? `
+                  <div class="pos-btn-stepper" onclick="event.stopPropagation()">
+                    <button type="button" class="pos-step-btn minus" onclick="window.MTPPos.stepVariantQty('${v.id}', -1, event)">−</button>
+                    <span class="pos-step-num">${qtyInCart}</span>
+                    <button type="button" class="pos-step-btn plus" onclick="window.MTPPos.stepVariantQty('${v.id}', 1, event)">+</button>
+                  </div>
+                ` : ''}
+              </div>
+              <div class="pos-btn-name">${v.name}</div>
+            </div>
           </div>
-          <div class="pos-btn-name">${v.name}</div>
           <div class="pos-btn-bottom">
-            <span class="pos-btn-usd">${MTP.fmtUSD(v.priceUsd)}</span>
-            <span class="pos-btn-bs">${bsPrice} Bs</span>
+            <div class="pos-btn-prices">
+              <span class="pos-btn-usd">${MTP.fmtUSD(v.priceUsd)}</span>
+              <span class="pos-btn-bs">${bsPrice} Bs</span>
+            </div>
+            <span class="pos-tax-pill g16">+IVA</span>
           </div>
-        </button>
+        </div>
       `);
     });
 
@@ -427,21 +461,41 @@
       const bsPrice = (i.priceUsd * bcv).toFixed(2);
       const isLow = (Number(i.stock) || 0) <= (Number(i.minStock) || 5);
       const stockClass = isLow ? 'pos-stock-low' : 'pos-stock-ok';
+      const isCigarro = i.familyId === 'cigarros' || i.group === 'cigarros';
+      const ivaClass = window.MTPTax ? window.MTPTax.classify(i) : (i.iva || (i.taxExempt ? 'E' : 'G16'));
+      const isExempt = ivaClass === 'E';
+      const thumbHtml = isCigarro
+        ? `<div class="pos-card-thumb-ico">${window.MTPIcons ? window.MTPIcons.get('bolt', 20) : '🚬'}</div>`
+        : `<img class="pos-card-thumb" src="${i.img || '../assets/img/productos/viveres.jpg'}" alt="${i.name}" loading="lazy" onerror="this.style.display='none'">`;
 
       cards.push(`
-        <button type="button" class="pos-retail-btn ${qtyInCart > 0 ? 'in-cart' : ''}"
+        <div class="pos-retail-card ${qtyInCart > 0 ? 'in-cart' : ''}"
           onclick="window.MTPPos.addRetailQuick('${i.id}')">
-          <div class="pos-btn-top">
-            <span class="pos-btn-plu">#${i.code}</span>
-            <span class="pos-stock-pill ${stockClass}">${Math.round(i.stock || 0)} ${i.unit || 'und'}</span>
-            ${qtyInCart > 0 ? `<span class="pos-btn-cart-badge">✓ ${qtyInCart}</span>` : ''}
+          <div class="pos-card-row">
+            ${thumbHtml}
+            <div class="pos-card-main">
+              <div class="pos-btn-top">
+                <span class="pos-btn-plu">#${i.code}</span>
+                <span class="pos-stock-pill ${stockClass}">${Math.round(i.stock || 0)} ${i.unit || 'und'}</span>
+                ${qtyInCart > 0 ? `
+                  <div class="pos-btn-stepper" onclick="event.stopPropagation()">
+                    <button type="button" class="pos-step-btn minus" onclick="window.MTPPos.stepRetailQty('${i.id}', -1, event)">−</button>
+                    <span class="pos-step-num">${qtyInCart}</span>
+                    <button type="button" class="pos-step-btn plus" onclick="window.MTPPos.stepRetailQty('${i.id}', 1, event)">+</button>
+                  </div>
+                ` : ''}
+              </div>
+              <div class="pos-btn-name">${i.name}</div>
+            </div>
           </div>
-          <div class="pos-btn-name">${i.name}</div>
           <div class="pos-btn-bottom">
-            <span class="pos-btn-usd">${MTP.fmtUSD(i.priceUsd)}</span>
-            <span class="pos-btn-bs">${bsPrice} Bs</span>
+            <div class="pos-btn-prices">
+              <span class="pos-btn-usd">${MTP.fmtUSD(i.priceUsd)}</span>
+              <span class="pos-btn-bs">${bsPrice} Bs</span>
+            </div>
+            <span class="pos-tax-pill ${isExempt ? 'exento' : 'g16'}">${isExempt ? 'Exento' : '+IVA'}</span>
           </div>
-        </button>
+        </div>
       `);
     });
 
@@ -611,6 +665,7 @@
       refId: variant.id,
       variantId: variant.id,
       productId: variant.productId,
+      familyId: variant.familyId || 'fritos',
       code: variant.code,
       name: variant.name,
       isDish: true,
@@ -619,16 +674,20 @@
       qty,
       basePriceUsd: basePrice,
       priceUsd: Number((basePrice + modsPrice).toFixed(2)),
-      ivaType: variant.ivaType || 'E',
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
       selectedModifiers: mods,
       note: ''
     };
   }
 
   function createCartLineFromRetail(item, qty) {
+    const ivaClass = window.MTPTax ? window.MTPTax.classify(item) : (item.iva || (item.taxExempt ? 'E' : 'G16'));
     return {
       cartId: 'c-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
       refId: item.id,
+      familyId: item.familyId || item.group || 'viveres',
       code: item.code,
       barcode: item.barcode,
       name: item.name,
@@ -638,7 +697,9 @@
       qty,
       basePriceUsd: Number(item.priceUsd) || 0,
       priceUsd: Number(item.priceUsd) || 0,
-      ivaType: item.ivaType || 'G',
+      iva: ivaClass,
+      ivaType: ivaClass === 'E' ? 'E' : 'G',
+      taxExempt: ivaClass === 'E',
       selectedModifiers: [],
       note: ''
     };
@@ -771,16 +832,36 @@
     const countEl = document.getElementById('posTicketCount');
     const totUsdEl = document.getElementById('posTotalUsd');
     const totBsEl = document.getElementById('posTotalBs');
+    const taxBoxEl = document.getElementById('posTaxBreakdown');
     if (!listEl) return;
 
     const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
     const totalItems = cart.reduce((acc, c) => acc + c.qty, 0);
-    const totalUsd = getCartTotalUsd();
-    const totalBs = totalUsd * bcv;
+    const tax = getCartTaxSummary([]);
+    const totalUsd = tax.totalUsd;
+    const totalBs = tax.totalBs;
 
-    if (countEl) countEl.textContent = `${totalItems} ítem${totalItems === 1 ? '' : 's'}`;
+    if (countEl) countEl.textContent = `${totalItems} producto${totalItems === 1 ? '' : 's'}`;
     if (totUsdEl) totUsdEl.textContent = MTP.fmtUSD(totalUsd);
     if (totBsEl) totBsEl.textContent = MTP.fmtBsRaw(totalBs);
+    if (taxBoxEl) {
+      if (!cart.length) {
+        taxBoxEl.style.display = 'none';
+      } else {
+        taxBoxEl.style.display = 'block';
+        const modeLabel = tax.ivaMode === 'INCLUIDO' ? 'IVA 16% (incluido)' : 'IVA 16% (+recargo)';
+        taxBoxEl.innerHTML = `
+          <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#475569">
+            <span>Subtotal (Exento: ${MTP.fmtUSD(tax.exentoUsd)} · Gravado: ${MTP.fmtUSD(tax.baseG16Usd)})</span>
+            <strong style="font-family:var(--font-mono)">${MTP.fmtUSD(tax.subtotalBaseUsd)}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#0f172a;margin-top:2px">
+            <span>${modeLabel}:</span>
+            <strong style="font-family:var(--font-mono);color:#b45309">+${MTP.fmtUSD(tax.totalIvaUsd)} (${tax.totalIvaBs.toFixed(2)} Bs)</strong>
+          </div>
+        `;
+      }
+    }
 
     if (!cart.length) {
       listEl.innerHTML = `
@@ -885,8 +966,35 @@
     MTP.toast('Ticket vaciado', 'warn');
   }
 
+  function getCartTaxSummary(paymentsOverride = null, changeUsdCashGiven = 0) {
+    const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
+    const paymentsList = Array.isArray(paymentsOverride) ? paymentsOverride : currentPayments;
+    if (window.MTPTax && window.MTPTax.computeTotals) {
+      return window.MTPTax.computeTotals({
+        lines: cart,
+        payments: paymentsList,
+        changeUsdCashGiven,
+        rateBcv: bcv,
+        settings: MTP.state.settings
+      });
+    }
+    const sub = cart.reduce((acc, item) => acc + (item.qty * item.priceUsd), 0);
+    return {
+      ivaMode: 'RECARGO',
+      subtotalBaseUsd: Number(sub.toFixed(2)),
+      exentoUsd: 0,
+      baseG16Usd: Number(sub.toFixed(2)),
+      totalIvaUsd: Number((sub * 0.16).toFixed(2)),
+      totalIvaBs: Number((sub * 0.16 * bcv).toFixed(2)),
+      igtfUsd: 0,
+      igtfBs: 0,
+      totalUsd: Number((sub * 1.16).toFixed(2)),
+      totalBs: Number((sub * 1.16 * bcv).toFixed(2))
+    };
+  }
+
   function getCartTotalUsd() {
-    return cart.reduce((acc, item) => acc + (item.qty * item.priceUsd), 0);
+    return getCartTaxSummary().totalUsd;
   }
 
   /* ==========================================================================
@@ -1213,12 +1321,16 @@
       return;
     }
 
-    const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
-    const totalUsd = getCartTotalUsd();
-    const totalBs = totalUsd * bcv;
+    const tax = getCartTaxSummary([]);
+    const totalUsd = tax.totalUsd;
+    const totalBs = tax.totalBs;
 
     document.getElementById('chkTotalUsd').textContent = MTP.fmtUSD(totalUsd);
     document.getElementById('chkTotalBs').textContent = MTP.fmtBsRaw(totalBs);
+    const chkTaxSummaryEl = document.getElementById('chkTaxSummary');
+    if (chkTaxSummaryEl) {
+      chkTaxSummaryEl.innerHTML = `Subtotal: <strong>${MTP.fmtUSD(tax.subtotalBaseUsd)}</strong> (Exento: ${MTP.fmtUSD(tax.exentoUsd)} · Base 16%: ${MTP.fmtUSD(tax.baseG16Usd)}) + <strong>IVA 16%: ${MTP.fmtUSD(tax.totalIvaUsd)} (${tax.totalIvaBs.toFixed(2)} Bs)</strong>${tax.igtfUsd > 0 ? ` + <strong>IGTF 3%: ${MTP.fmtUSD(tax.igtfUsd)}</strong>` : ''}`;
+    }
 
     currentPayments = [];
     const payUsdInput = document.getElementById('payAmountUsd');
@@ -1356,10 +1468,21 @@
   }
 
   function renderPaymentsAndChange() {
-    const totalUsd = getCartTotalUsd();
+    const tax = getCartTaxSummary(currentPayments);
+    const totalUsd = tax.totalUsd;
+    const totalBs = tax.totalBs;
     const paidUsd = getPaidTotalUsd();
     const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
     const chgRate = getActiveChangeRate();
+
+    const chkTotUsdEl = document.getElementById('chkTotalUsd');
+    const chkTotBsEl = document.getElementById('chkTotalBs');
+    if (chkTotUsdEl) chkTotUsdEl.textContent = MTP.fmtUSD(totalUsd);
+    if (chkTotBsEl) chkTotBsEl.textContent = MTP.fmtBsRaw(totalBs);
+    const chkTaxSummaryEl = document.getElementById('chkTaxSummary');
+    if (chkTaxSummaryEl) {
+      chkTaxSummaryEl.innerHTML = `Subtotal: <strong>${MTP.fmtUSD(tax.subtotalBaseUsd)}</strong> (Exento: ${MTP.fmtUSD(tax.exentoUsd)} · Base 16%: ${MTP.fmtUSD(tax.baseG16Usd)}) + <strong>IVA 16%: ${MTP.fmtUSD(tax.totalIvaUsd)} (${tax.totalIvaBs.toFixed(2)} Bs)</strong>${tax.igtfUsd > 0 ? ` + <strong>IGTF 3%: ${MTP.fmtUSD(tax.igtfUsd)}</strong>` : ''}`;
+    }
 
     // Lista de pagos sumados
     const listEl = document.getElementById('chkPaymentsList');
@@ -1638,13 +1761,31 @@
           </div>
           <div style="border-bottom:1px dashed #000;padding-bottom:5px">${itemsHtml}</div>
           <div style="padding-top:5px;border-bottom:1px dashed #000;padding-bottom:5px">
-            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900">
-              <span>TOTAL USD:</span>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#333">
+              <span>Monto Exento (E):</span>
+              <span style="font-family:monospace">${MTP.fmtUSD(sale.exentoUsd || (sale.fiscalData && sale.fiscalData.taxExemptUsd) || 0)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#333">
+              <span>Base Imponible (G 16%):</span>
+              <span style="font-family:monospace">${MTP.fmtUSD(sale.baseG16Usd || (sale.fiscalData && sale.fiscalData.taxableBaseUsd) || sale.subtotalUsd || 0)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:bold;color:#000">
+              <span>IVA (16%):</span>
+              <span style="font-family:monospace">${MTP.fmtUSD(sale.ivaUsd || (sale.fiscalData && sale.fiscalData.ivaUsd) || 0)} (${((sale.ivaBs !== undefined ? sale.ivaBs : ((sale.ivaUsd || 0) * (sale.rateBcv || 42.85)))).toFixed(2)} Bs)</span>
+            </div>
+            ${sale.igtfUsd > 0 ? `
+              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:bold;color:#b45309">
+                <span>IGTF (3% Divisas):</span>
+                <span style="font-family:monospace">${MTP.fmtUSD(sale.igtfUsd)}</span>
+              </div>
+            ` : ''}
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:900;margin-top:3px;border-top:1px solid #000;padding-top:3px">
+              <span>TOTAL A PAGAR ($):</span>
               <span style="font-family:monospace">${MTP.fmtUSD(sale.totalUsd)}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:bold;color:#059669">
-              <span>TOTAL BS (BCV):</span>
-              <span style="font-family:monospace">${MTP.fmtBsRaw(sale.totalUsd * (sale.rateBcv || 42.85))}</span>
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:bold;color:#059669">
+              <span>TOTAL EN BOLÍVARES (BCV):</span>
+              <span style="font-family:monospace">${MTP.fmtBsRaw(sale.totalBs || (sale.totalUsd * (sale.rateBcv || 42.85)))}</span>
             </div>
             ${sale.changeGiven && sale.changeGiven.totalChangeUsd > 0 ? `
               <div style="font-size:10.5px;margin-top:3px;color:#1e40af">
@@ -1704,6 +1845,8 @@
     checkPagoMovilRefLive,
     rebalanceChangeDistribution,
     finalizeSale,
+    getCartTaxSummary,
+    getCartTotalUsd,
 
     // Métodos legados para compatibilidad
     addOrReplaceDish: (id, qty) => addVariantQuick(id, qty),

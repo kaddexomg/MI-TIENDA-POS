@@ -79,8 +79,8 @@
         <div class="topbar-left">
           <button class="menu-toggle" id="menuToggleBtn">☰</button>
           <div class="topbar-title">
-            <h2>Recetas de Cocina · Escandallos por Variante & Salida a Olla</h2>
-            <p>Control de gramos por sabor/variante, simulación de rendimiento y registro de tandas de producción</p>
+            <h2>Recetas de Cocina (Cuánto lleva cada plato)</h2>
+            <p>Revisa qué ingredientes lleva cada plato y anota lo que salió para cocinar hoy</p>
           </div>
         </div>
         <div class="topbar-right">
@@ -96,7 +96,7 @@
         <div class="card" data-section="cocina" style="margin-bottom:12px">
           <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center">
             <div>
-              <h3 style="font-size:13px">Salida a Producción de Cocina ("Salida a Olla / Batea")</h3>
+              <h3 style="font-size:13px">Lo que salió para cocinar hoy</h3>
               <p style="font-size:11px">Kilos de masa, carne, queso y papas entregados a cocineros en la mañana vs. piezas contadas al cierre</p>
             </div>
             <button class="btn btn-p btn-sm" onclick="openNewBatchModal()">Registrar Tanda</button>
@@ -164,7 +164,7 @@
         <div class="card" data-section="cocina" style="margin-bottom:12px">
           <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center">
             <div>
-              <h3 style="font-size:13px">Menú de Escandallos por Sabor y Variante</h3>
+              <h3 style="font-size:13px">Recetas por Plato y Sabor (Cuánto lleva cada uno)</h3>
               <p style="font-size:11px">Cada sabor descuenta sus propios gramos de harina, carne, pollo, queso o aliños en cada venta</p>
             </div>
             <input type="text" id="recipeSearchInput" class="input" style="max-width:240px;height:30px" placeholder="Buscar sabor o código..." oninput="renderRecipesCards()">
@@ -182,7 +182,7 @@
         <div class="card" data-section="cocina">
           <div class="card-hd">
             <div>
-              <h3 style="font-size:13px">Escandallo de Extras y Modificadores (+Queso, +Aguacate, +Empaque)</h3>
+              <h3 style="font-size:13px">Ingredientes que llevan los Extras (+Queso, +Aguacate, +Envase)</h3>
               <p style="font-size:11px">Insumos que se descuentan automáticamente cuando el cliente pide adicionales</p>
             </div>
           </div>
@@ -296,6 +296,7 @@
   </div>
 
   <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/tax.js"></script>
   <script src="../assets/js/config.js"></script>
   <script src="../assets/js/rates.js"></script>
   <script src="../assets/js/permissions.js"></script>
