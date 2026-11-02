@@ -58,9 +58,21 @@ function serveStaticFile(req, res, pathname) {
     decodedPath = pathname;
   }
 
-  // Si la ruta raíz es '/', servir index.html
-  if (decodedPath === '/' || decodedPath === '') {
+  // Si la ruta raíz es '/' o '/login', servir index.html
+  if (decodedPath === '/' || decodedPath === '' || decodedPath === '/login') {
     decodedPath = '/index.html';
+  }
+
+  // Redirecciones limpias para que las rutas relativas de CSS/JS funcionen siempre
+  if (decodedPath === '/caja' || decodedPath === '/caja/') {
+    res.writeHead(302, { 'Location': '/caja/pos.html' });
+    res.end();
+    return;
+  }
+  if (decodedPath === '/admin' || decodedPath === '/admin/') {
+    res.writeHead(302, { 'Location': '/admin/index.html' });
+    res.end();
+    return;
   }
 
   // Prevenir Directory Traversal fuera de PROJECT_ROOT
@@ -72,6 +84,11 @@ function serveStaticFile(req, res, pathname) {
     res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('403 Prohibido: Acceso no permitido fuera del directorio del proyecto');
     return;
+  }
+
+  // Soporte de URLs limpias sin .html (ej. /admin/cierres -> /admin/cierres.html)
+  if (!path.extname(filePath) && !fs.existsSync(filePath) && fs.existsSync(filePath + '.html')) {
+    filePath = filePath + '.html';
   }
 
   fs.stat(filePath, function (err, stats) {
