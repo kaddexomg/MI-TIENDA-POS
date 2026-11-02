@@ -70,7 +70,7 @@
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
           <button class="btn btn-secondary btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Compras / Gastos (F6)</button>
           <button class="btn btn-action btn-sm" onclick="openDailyClosureModal()">🔒 Cerrar el Día</button>
-          <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimir</button>
+          <button class="btn btn-secondary btn-sm" onclick="openClosureReportModal(currentCierreTab)">📄 Ver / Descargar Resumen</button>
         </div>
       </header>
 
@@ -102,6 +102,12 @@
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                 <button class="btn btn-action" onclick="openDailyClosureModal()">
                   🔒 Ejecutar Cierre Diario y Guardar Acta
+                </button>
+                <button class="btn btn-secondary" style="background:#fff;color:#0f172a" onclick="openClosureReportModal('DIARIO')">
+                  📄 Ver / Imprimir Resumen del Día
+                </button>
+                <button class="btn btn-secondary" style="background:#10b981;color:#fff;border-color:#059669" onclick="downloadClosureSummaryFile('DIARIO')">
+                  📥 Descargar Archivo Resumen
                 </button>
               </div>
             </div>
@@ -157,6 +163,7 @@
                     <th>Gastos</th>
                     <th>Efectivo Gaveta ($)</th>
                     <th>Ganancia Limpia</th>
+                    <th>Archivo Resumen</th>
                   </tr>
                 </thead>
                 <tbody id="savedDailyClosuresBody"></tbody>
@@ -277,8 +284,11 @@
                 <button class="btn btn-action" onclick="saveMonthlyClosureAction()">
                   🔒 Guardar Acta de Cierre Mensual
                 </button>
-                <button class="btn btn-secondary" onclick="window.print()">
-                  🖨️ Imprimir Resumen Mensual
+                <button class="btn btn-secondary" style="background:#fff;color:#0f172a" onclick="openClosureReportModal('MENSUAL')">
+                  📄 Ver / Imprimir Resumen Mensual
+                </button>
+                <button class="btn btn-secondary" style="background:#10b981;color:#fff;border-color:#059669" onclick="downloadClosureSummaryFile('MENSUAL')">
+                  📥 Descargar Archivo Mensual
                 </button>
               </div>
             </div>
@@ -363,9 +373,14 @@
                   <option value="2027">2027</option>
                 </select>
               </div>
-              <button class="btn btn-action" onclick="window.print()">
-                🖨️ Imprimir Balance Anual Completo
-              </button>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-action" onclick="openClosureReportModal('ANUAL')">
+                  📄 Ver / Imprimir Resumen Anual
+                </button>
+                <button class="btn btn-secondary" style="background:#10b981;color:#fff;border-color:#059669" onclick="downloadClosureSummaryFile('ANUAL')">
+                  📥 Descargar Archivo Anual
+                </button>
+              </div>
             </div>
           </div>
 
@@ -433,6 +448,41 @@
             <div class="modal-ft">
               <button class="btn btn-secondary" onclick="document.getElementById('dailyClosureModal').classList.remove('open')">Cancelar</button>
               <button class="btn btn-action" onclick="confirmDailyClosureAction()">✔ Confirmar y Guardar Cierre Diario</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL DE VISTA PREVIA, IMPRESIÓN LIMPIA Y DESCARGA DE ARCHIVO RESUMEN DE CIERRE -->
+        <div class="modal-backdrop" id="closureReportModal">
+          <div class="modal-box" style="max-width:860px;width:96%">
+            <div class="modal-hd" style="background:#0f2a3d;color:#fff">
+              <div>
+                <h3 style="color:#fff" id="closureReportModalTitle">📄 Resumen Ejecutivo de Cierre (Listo para Imprimir o Descargar)</h3>
+                <p style="color:#cbd5e1;font-size:12px">Este documento contiene únicamente el resumen contable limpio, sin botones ni menús del sistema</p>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('closureReportModal').classList.remove('open')">✕</button>
+            </div>
+            <div class="modal-bd" style="background:#e2e8f0;padding:14px;max-height:76vh;overflow-y:auto">
+              <div id="closureReportPreviewContainer" style="background:#ffffff;color:#0f172a;padding:24px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);max-width:780px;margin:0 auto"></div>
+            </div>
+            <div class="modal-ft" style="justify-content:space-between;flex-wrap:wrap">
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn btn-secondary" onclick="printThermalClosureTicket()">
+                  🧾 Imprimir en Ticket Térmico (80mm)
+                </button>
+                <button class="btn btn-secondary" style="background:#10b981;color:#fff;border-color:#059669" onclick="downloadCurrentReportHtml()">
+                  📥 Descargar Archivo Resumen (.HTML)
+                </button>
+                <button class="btn btn-secondary" onclick="downloadCurrentReportTxt()">
+                  📝 Descargar en Texto (.TXT)
+                </button>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-secondary" onclick="document.getElementById('closureReportModal').classList.remove('open')">Cerrar</button>
+                <button class="btn btn-action" onclick="printCleanClosureSheet()">
+                  🖨️ Imprimir Hoja Resumen Limpia
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -678,9 +728,12 @@
                 </div>
               </td>
               <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(c.netOperatingProfitUsd)}</span></td>
+              <td>
+                <button class="btn btn-secondary btn-sm" onclick="openClosureReportModal('DIARIO', '${c.date}')">📄 Resumen</button>
+              </td>
             </tr>
           `).join('')
-        : '<tr><td colspan="9" style="text-align:center;padding:14px;color:var(--txt-3)">Aún no has guardado ningún cierre diario. Haz clic en "🔒 Ejecutar Cierre Diario y Guardar Acta".</td></tr>';
+        : '<tr><td colspan="10" style="text-align:center;padding:14px;color:var(--txt-3)">Aún no has guardado ningún cierre diario. Haz clic en "🔒 Ejecutar Cierre Diario y Guardar Acta".</td></tr>';
 
       // Terminales Punto de Venta
       const termGrid = document.getElementById('posTerminalsStatusGrid');
@@ -844,6 +897,7 @@
       document.getElementById('dailyClosureModal').classList.remove('open');
       MTP.toast(`¡Acta de Cierre Diario (${closure.date}) guardada con éxito!`);
       renderCierrePage();
+      openClosureReportModal('DIARIO', closure.date);
     }
 
     /* ========================================================================
@@ -931,6 +985,7 @@
       const c = MTP.performMonthlyClosure({ month: selectedMonth });
       MTP.toast(`¡Cierre Mensual de ${c.month} guardado con éxito!`);
       renderMonthlyPane();
+      openClosureReportModal('MENSUAL', c.month);
     }
 
     /* ========================================================================
@@ -1067,6 +1122,506 @@
       document.getElementById('batchClosureModal').classList.remove('open');
       MTP.toast(`¡Cierre de punto ${activeBatchTerminal.name} guardado!`);
       renderCierrePage();
+    }
+
+
+    /* ========================================================================
+       GENERADOR DE ARCHIVO RESUMEN E IMPRESIÓN LIMPIA (DIARIO, MENSUAL, ANUAL)
+       - Imprime y descarga SOLO el documento contable resumido (Cero interfaz)
+       ======================================================================== */
+    let activeReportPeriodType = 'DIARIO';
+    let activeReportFilterVal = '';
+
+    function getActiveFilterForTab(tab, customFilter = '') {
+      if (customFilter) return customFilter;
+      if (tab === 'DIARIO') {
+        const el = document.getElementById('dailyDateInput');
+        return (el && el.value) ? el.value : new Date().toISOString().slice(0, 10);
+      }
+      if (tab === 'MENSUAL') {
+        const el = document.getElementById('monthlyMonthInput');
+        return (el && el.value) ? el.value : new Date().toISOString().slice(0, 7);
+      }
+      if (tab === 'ANUAL') {
+        const el = document.getElementById('annualYearSelect');
+        return (el && el.value) ? el.value : String(new Date().getFullYear());
+      }
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function buildClosureReportData(tab = 'DIARIO', customFilter = '') {
+      const fVal = getActiveFilterForTab(tab, customFilter);
+      const pType = tab === 'DIARIO' ? 'DAY' : (tab === 'MENSUAL' ? 'MONTH' : 'YEAR');
+      const stats = MTP.getPeriodAnalytics(pType, fVal);
+      const s = MTP.state.settings || {};
+      const storeName = s.storeName || s.businessName || 'MI TIENDA POS';
+      const storeRif = s.rif || 'V-00000000-0';
+      const storeAddress = s.address || 'Mostrador Principal';
+
+      let title = 'ACTA RESUMEN DE CIERRE DIARIO';
+      let periodLabel = 'Fecha: ' + fVal;
+      let fileSlug = 'CIERRE-DIARIO-' + fVal;
+
+      if (tab === 'MENSUAL') {
+        title = 'INFORME EJECUTIVO DE CIERRE MENSUAL';
+        periodLabel = 'Mes: ' + fVal;
+        fileSlug = 'CIERRE-MENSUAL-' + fVal;
+      } else if (tab === 'ANUAL') {
+        title = 'BALANCE EJECUTIVO DE CIERRE ANUAL';
+        periodLabel = 'Año: ' + fVal;
+        fileSlug = 'CIERRE-ANUAL-' + fVal;
+      }
+
+      const savedDaily = (MTP.state.dailyClosures || []).find(c => c.date === fVal);
+
+      return {
+        tab,
+        fVal,
+        title,
+        periodLabel,
+        fileSlug,
+        storeName,
+        storeRif,
+        storeAddress,
+        emittedAt: new Date().toLocaleString('es-VE'),
+        stats,
+        savedDaily
+      };
+    }
+
+    function buildClosureReportInnerHtml(data) {
+      const st = data.stats;
+      const bcv = st.bcv;
+
+      const famRows = (st.kitchenByFamily || []).map(f => `
+        <tr>
+          <td style="padding:5px 8px;border-bottom:1px solid #cbd5e1">${f.name}</td>
+          <td style="padding:5px 8px;border-bottom:1px solid #cbd5e1;text-align:right;font-weight:700">${f.qty} platos</td>
+          <td style="padding:5px 8px;border-bottom:1px solid #cbd5e1;text-align:right;font-weight:700">${MTP.fmtUSD(f.salesUsd)}</td>
+        </tr>
+      `).join('');
+
+      const ingRows = (st.kitchenIngredientsUsed || []).length
+        ? st.kitchenIngredientsUsed.map(i => `
+            <tr>
+              <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0">${i.name}</td>
+              <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700">-${MTP.fmtWeight(i.qtyUsed, i.unit)}</td>
+              <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${MTP.fmtUSD(i.costUsd)}</td>
+              <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;color:#059669;font-weight:700">${MTP.fmtWeight(i.remainingStock, i.unit)}</td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="4" style="padding:8px;text-align:center;color:#64748b">Sin consumo de ingredientes registrado en este período</td></tr>';
+
+      const retailRows = (st.retailItemsList || []).length
+        ? st.retailItemsList.map(r => `
+            <tr>
+              <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0">${r.name}</td>
+              <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700">${r.qty} und</td>
+              <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700">${MTP.fmtUSD(r.salesUsd)}</td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="3" style="padding:8px;text-align:center;color:#64748b">Sin mercancía empaquetada vendida en este período</td></tr>';
+
+      let periodBreakdownHtml = '';
+      if (data.tab === 'MENSUAL' && st.daysList && st.daysList.length) {
+        periodBreakdownHtml = `
+          <div style="margin-top:16px">
+            <h4 style="font-size:13px;text-transform:uppercase;background:#f1f5f9;padding:6px 10px;border-left:4px solid #0f2a3d;margin:0 0 8px 0">
+              📅 Resumen Día por Día del Mes (${data.fVal})
+            </h4>
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead>
+                <tr style="background:#f8fafc;border-bottom:2px solid #cbd5e1">
+                  <th style="padding:5px 8px;text-align:left">Fecha</th>
+                  <th style="padding:5px 8px;text-align:right">Órdenes</th>
+                  <th style="padding:5px 8px;text-align:right">Platos Cocina</th>
+                  <th style="padding:5px 8px;text-align:right">Mercancía</th>
+                  <th style="padding:5px 8px;text-align:right">Base + IVA 16%</th>
+                  <th style="padding:5px 8px;text-align:right">Total Cobrado</th>
+                  <th style="padding:5px 8px;text-align:right">Gastos</th>
+                  <th style="padding:5px 8px;text-align:right">Ganancia Neta</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${st.daysList.map(d => `
+                  <tr>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;font-weight:700">${d.date}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${d.ordersCount}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${d.kitchenPreparedQty}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${d.retailSoldQty}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${MTP.fmtUSD(d.subtotalBaseUsd)} + ${MTP.fmtUSD(d.ivaUsd)}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700">${MTP.fmtUSD(d.grossSalesUsd)}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;color:#b91c1c">-${MTP.fmtUSD(d.expensesUsd)}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;color:#15803d">+${MTP.fmtUSD(d.netProfitUsd)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else if (data.tab === 'ANUAL' && st.monthsList) {
+        periodBreakdownHtml = `
+          <div style="margin-top:16px">
+            <h4 style="font-size:13px;text-transform:uppercase;background:#f1f5f9;padding:6px 10px;border-left:4px solid #0f2a3d;margin:0 0 8px 0">
+              📊 Resumen Mes por Mes del Año (${data.fVal})
+            </h4>
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead>
+                <tr style="background:#f8fafc;border-bottom:2px solid #cbd5e1">
+                  <th style="padding:5px 8px;text-align:left">Mes</th>
+                  <th style="padding:5px 8px;text-align:right">Órdenes</th>
+                  <th style="padding:5px 8px;text-align:right">Platos Cocina</th>
+                  <th style="padding:5px 8px;text-align:right">Mercancía</th>
+                  <th style="padding:5px 8px;text-align:right">IVA 16%</th>
+                  <th style="padding:5px 8px;text-align:right">Total Ventas</th>
+                  <th style="padding:5px 8px;text-align:right">Gastos</th>
+                  <th style="padding:5px 8px;text-align:right">Ganancia Neta</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${st.monthsList.map(m => `
+                  <tr>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;font-weight:700">${m.monthName}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${m.ordersCount}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${m.kitchenPreparedQty}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${m.retailSoldQty}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right">${MTP.fmtUSD(m.ivaUsd)}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700">${MTP.fmtUSD(m.grossSalesUsd)}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;color:#b91c1c">-${MTP.fmtUSD(m.expensesUsd)}</td>
+                    <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;color:#15803d">+${MTP.fmtUSD(m.netProfitUsd)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      return `
+        <div style="font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;line-height:1.4">
+          <!-- CABECERA DEL REPORTE -->
+          <div style="border-bottom:2px solid #0f2a3d;padding-bottom:10px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div>
+              <div style="font-size:18px;font-weight:900;color:#0f2a3d">${data.storeName}</div>
+              <div style="font-size:12px;color:#475569">RIF: ${data.storeRif} · ${data.storeAddress}</div>
+              <div style="font-size:15px;font-weight:800;margin-top:6px;color:#b45309">${data.title}</div>
+            </div>
+            <div style="text-align:right;font-size:12px">
+              <div style="font-size:14px;font-weight:800;color:#0f172a">${data.periodLabel}</div>
+              <div>Emitido: ${data.emittedAt}</div>
+              <div style="margin-top:3px;font-weight:700;color:#059669">Tasa BCV: ${bcv.toFixed(2)} Bs/$ · Euro: ${st.eur.toFixed(2)} Bs/€</div>
+            </div>
+          </div>
+
+          <!-- 1. CUADRO RESUMEN FINANCIERO Y FISCAL -->
+          <h4 style="font-size:13px;text-transform:uppercase;background:#f1f5f9;padding:6px 10px;border-left:4px solid #15803d;margin:0 0 8px 0">
+            1. Resumen General de Ventas, IVA (16%) y Ganancia Limpia
+          </h4>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px">
+            <tbody>
+              <tr>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1"><strong>Órdenes Cobradas:</strong> ${st.ordersCount} órdenes</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1"><strong>Ventas Exentas (0%):</strong> ${MTP.fmtUSD(st.exentoUsd)}</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1"><strong>Base Gravada (16%):</strong> ${MTP.fmtUSD(st.baseG16Usd)}</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1"><strong>IVA 16% Recaudado:</strong> ${MTP.fmtUSD(st.ivaUsd)} (${MTP.fmtBsRaw(st.ivaBs)})</td>
+              </tr>
+              <tr style="background:#f0fdf4">
+                <td colspan="2" style="padding:7px 8px;border:1px solid #cbd5e1;font-size:14px">
+                  <strong>TOTAL COBRADO BRUTO:</strong> <span style="color:#15803d;font-weight:900">${MTP.fmtUSD(st.grossSalesUsd)}</span> (${MTP.fmtBsRaw(st.grossSalesBs)})
+                </td>
+                <td style="padding:7px 8px;border:1px solid #cbd5e1">
+                  <strong>Compras / Gastos:</strong> <span style="color:#b91c1c;font-weight:800">-${MTP.fmtUSD(st.totalExpensesUsd)}</span>
+                </td>
+                <td style="padding:7px 8px;border:1px solid #cbd5e1;font-size:14px">
+                  <strong>GANANCIA LIMPIA:</strong> <span style="color:#1d4ed8;font-weight:900">+${MTP.fmtUSD(st.netOperatingProfitUsd)}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- 2. CUADRE DE GAVETA Y BANCOS -->
+          <h4 style="font-size:13px;text-transform:uppercase;background:#f1f5f9;padding:6px 10px;border-left:4px solid #1d4ed8;margin:0 0 8px 0">
+            2. Dinero Neto en Gaveta y Cuentas Bancarias
+          </h4>
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:14px">
+            <thead>
+              <tr style="background:#f8fafc">
+                <th style="padding:5px 8px;border:1px solid #cbd5e1;text-align:left">Medio / Gaveta</th>
+                <th style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">Entró</th>
+                <th style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">Vueltos Dados</th>
+                <th style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">Gastos Pagados</th>
+                <th style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">Saldo Neto en Mano</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;font-weight:700">💵 Efectivo Dólares (USD)</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">${MTP.fmtUSD(st.inUsdCash)}</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">-${MTP.fmtUSD(st.outChangeUsdCash)}</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">-${MTP.fmtUSD(st.expUsdCash)}</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right;font-weight:900;color:#15803d">${MTP.fmtUSD(st.netDrawerUsd)}</td>
+              </tr>
+              <tr>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;font-weight:700">📲 Pago Móvil (Bs)</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">${MTP.fmtBsRaw(st.inPmBs)}</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">-${MTP.fmtBsRaw(st.outChangePmBs)}</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">-${MTP.fmtBsRaw(st.expPmBs)}</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right;font-weight:900;color:#1d4ed8">${MTP.fmtBsRaw(st.netBankPmBs)}</td>
+              </tr>
+              <tr>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;font-weight:700">💳 Punto de Venta / Biopago (Bs)</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">${MTP.fmtBsRaw(st.inPuntoBs)}</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">0.00 Bs</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">0.00 Bs</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right;font-weight:900">${MTP.fmtBsRaw(st.inPuntoBs)} (${MTP.fmtUSD(bcv > 0 ? st.inPuntoBs / bcv : 0)})</td>
+              </tr>
+              <tr>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;font-weight:700">🇻🇪 Efectivo Bolívares (Bs)</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">${MTP.fmtBsRaw(st.inBsCash)}</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">-${MTP.fmtBsRaw(st.outChangeBsCash)}</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right">-${MTP.fmtBsRaw(st.expBsCash)}</td>
+                <td style="padding:5px 8px;border:1px solid #cbd5e1;text-align:right;font-weight:900">${MTP.fmtBsRaw(st.netDrawerBs)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- 3. PRODUCCIÓN DIARIA DE COCINA VS MERCANCÍA EMPAQUETADA -->
+          <h4 style="font-size:13px;text-transform:uppercase;background:#f1f5f9;padding:6px 10px;border-left:4px solid #f59e0b;margin:0 0 8px 0">
+            3. Comida Preparada en Cocina (${st.kitchenPreparedQty} platos) vs. Mercancía Empaquetada (${st.retailSoldQty} und)
+          </h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px">
+              <div style="font-weight:800;font-size:12.5px;margin-bottom:6px;color:#92400e">
+                🥟 Platos Preparados en Cocina (Venta: ${MTP.fmtUSD(st.kitchenSalesUsd)} · Costo Receta: -${MTP.fmtUSD(st.kitchenCostUsd)})
+              </div>
+              <table style="width:100%;border-collapse:collapse;font-size:12px">
+                <tbody>${famRows}</tbody>
+              </table>
+            </div>
+            <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px">
+              <div style="font-weight:800;font-size:12.5px;margin-bottom:6px;color:#1e40af">
+                🛒 Mercancía de Mostrador Vendida (Venta: ${MTP.fmtUSD(st.retailSalesUsd)} · Costo: -${MTP.fmtUSD(st.retailCostUsd)})
+              </div>
+              <table style="width:100%;border-collapse:collapse;font-size:12px">
+                <tbody>${retailRows}</tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- INGREDIENTES DE COCINA CONSUMIDOS POR LA COMIDA PREPARADA -->
+          <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;margin-bottom:14px">
+            <div style="font-weight:800;font-size:12.5px;margin-bottom:6px">
+              🍲 Ingredientes de Cocina Consumidos por los Platos Preparados
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead>
+                <tr style="background:#f8fafc;border-bottom:1px solid #cbd5e1">
+                  <th style="padding:4px 8px;text-align:left">Ingrediente de Cocina</th>
+                  <th style="padding:4px 8px;text-align:right">Cantidad Usada</th>
+                  <th style="padding:4px 8px;text-align:right">Costo Consumido</th>
+                  <th style="padding:4px 8px;text-align:right">Queda en Almacén Cocina</th>
+                </tr>
+              </thead>
+              <tbody>${ingRows}</tbody>
+            </table>
+          </div>
+
+          ${periodBreakdownHtml}
+
+          <!-- FIRMAS DE CONFORMIDAD -->
+          <div style="margin-top:28px;padding-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center;font-size:12px;color:#334155">
+            <div>
+              <div style="border-top:1px solid #475569;padding-top:6px;margin-top:24px">
+                <strong>Entregado por (Cajero / Encargado)</strong>
+              </div>
+            </div>
+            <div>
+              <div style="border-top:1px solid #475569;padding-top:6px;margin-top:24px">
+                <strong>Recibido Conforme (Dueño / Administrador)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function openClosureReportModal(tab = 'DIARIO', customFilter = '') {
+      activeReportPeriodType = tab || currentCierreTab || 'DIARIO';
+      activeReportFilterVal = customFilter || '';
+      const data = buildClosureReportData(activeReportPeriodType, activeReportFilterVal);
+      document.getElementById('closureReportModalTitle').textContent = '📄 ' + data.title + ' (' + data.periodLabel + ')';
+      document.getElementById('closureReportPreviewContainer').innerHTML = buildClosureReportInnerHtml(data);
+      document.getElementById('closureReportModal').classList.add('open');
+    }
+
+    function buildStandaloneReportHtmlDocument(data) {
+      const inner = buildClosureReportInnerHtml(data);
+      return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>${data.title} - ${data.fVal}</title>
+  <style>
+    @page { size: auto; margin: 12mm; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #0f172a; background: #ffffff; margin: 0; padding: 16px; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; page-break-after: auto; }
+  </style>
+</head>
+<body>
+  ${inner}
+</body>
+</html>`;
+    }
+
+    function printCleanClosureSheet() {
+      const data = buildClosureReportData(activeReportPeriodType, activeReportFilterVal);
+      const fullHtml = buildStandaloneReportHtmlDocument(data);
+      const printWin = window.open('', '_blank', 'width=880,height=720');
+      if (!printWin) {
+        MTP.toast('Permite las ventanas emergentes o descarga el archivo resumen directamente', 'warn');
+        downloadCurrentReportHtml();
+        return;
+      }
+      printWin.document.open();
+      printWin.document.write(fullHtml);
+      printWin.document.close();
+      printWin.focus();
+      setTimeout(() => {
+        printWin.print();
+      }, 250);
+    }
+
+    function printThermalClosureTicket() {
+      const data = buildClosureReportData(activeReportPeriodType, activeReportFilterVal);
+      const st = data.stats;
+      const ticketHtml = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticket Cierre ${data.fVal}</title>
+  <style>
+    @page { size: 80mm auto; margin: 2mm; }
+    body { font-family: 'Consolas', monospace; width: 76mm; margin: 0 auto; padding: 4px; font-size: 12px; color: #000; }
+    .line { border-top: 1px dashed #000; margin: 5px 0; }
+    .row { display: flex; justify-content: space-between; margin: 2px 0; }
+    .center { text-align: center; }
+    .bold { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="center bold" style="font-size:14px">${data.storeName}</div>
+  <div class="center">RIF: ${data.storeRif}</div>
+  <div class="center bold" style="margin-top:4px">${data.title}</div>
+  <div class="center">${data.periodLabel}</div>
+  <div class="center" style="font-size:10px">Emitido: ${data.emittedAt}</div>
+  <div class="line"></div>
+  <div class="row"><span>Ordenes cobradas:</span><span class="bold">${st.ordersCount}</span></div>
+  <div class="row"><span>Platos Cocina:</span><span class="bold">${st.kitchenPreparedQty} (${MTP.fmtUSD(st.kitchenSalesUsd)})</span></div>
+  <div class="row"><span>Mercancia Tienda:</span><span class="bold">${st.retailSoldQty} (${MTP.fmtUSD(st.retailSalesUsd)})</span></div>
+  <div class="line"></div>
+  <div class="row"><span>Exento (0%):</span><span>${MTP.fmtUSD(st.exentoUsd)}</span></div>
+  <div class="row"><span>Base Gravada 16%:</span><span>${MTP.fmtUSD(st.baseG16Usd)}</span></div>
+  <div class="row"><span>IVA 16%:</span><span>${MTP.fmtUSD(st.ivaUsd)}</span></div>
+  <div class="row bold" style="font-size:13px"><span>TOTAL COBRADO:</span><span>${MTP.fmtUSD(st.grossSalesUsd)}</span></div>
+  <div class="row"><span>Equiv. Bs (BCV ${st.bcv.toFixed(2)}):</span><span>${MTP.fmtBsRaw(st.grossSalesBs)}</span></div>
+  <div class="line"></div>
+  <div class="row"><span>Efectivo USD Neto:</span><span class="bold">${MTP.fmtUSD(st.netDrawerUsd)}</span></div>
+  <div class="row"><span>Efectivo Bs Neto:</span><span class="bold">${MTP.fmtBsRaw(st.netDrawerBs)}</span></div>
+  <div class="row"><span>Pago Movil Neto:</span><span class="bold">${MTP.fmtBsRaw(st.netBankPmBs)}</span></div>
+  <div class="row"><span>Punto de Venta:</span><span class="bold">${MTP.fmtBsRaw(st.inPuntoBs)}</span></div>
+  <div class="line"></div>
+  <div class="row"><span>Gastos Pagados:</span><span>-${MTP.fmtUSD(st.totalExpensesUsd)}</span></div>
+  <div class="row bold" style="font-size:13px"><span>GANANCIA LIMPIA:</span><span>+${MTP.fmtUSD(st.netOperatingProfitUsd)}</span></div>
+  <div class="line"></div>
+</body>
+</html>`;
+      const printWin = window.open('', '_blank', 'width=380,height=620');
+      if (!printWin) return;
+      printWin.document.open();
+      printWin.document.write(ticketHtml);
+      printWin.document.close();
+      printWin.focus();
+      setTimeout(() => printWin.print(), 250);
+    }
+
+    function downloadClosureSummaryFile(tab = 'DIARIO', customFilter = '') {
+      activeReportPeriodType = tab || currentCierreTab || 'DIARIO';
+      activeReportFilterVal = customFilter || '';
+      downloadCurrentReportHtml();
+    }
+
+    function downloadCurrentReportHtml() {
+      const data = buildClosureReportData(activeReportPeriodType, activeReportFilterVal);
+      const htmlContent = buildStandaloneReportHtmlDocument(data);
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RESUMEN-${data.fileSlug}.html`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      MTP.toast(`Archivo RESUMEN-${data.fileSlug}.html descargado`);
+    }
+
+    function downloadCurrentReportTxt() {
+      const data = buildClosureReportData(activeReportPeriodType, activeReportFilterVal);
+      const st = data.stats;
+      const lines = [
+        '============================================================',
+        data.storeName + ' - RIF: ' + data.storeRif,
+        data.title + ' (' + data.periodLabel + ')',
+        'Emitido: ' + data.emittedAt + ' | Tasa BCV: ' + st.bcv.toFixed(2) + ' Bs/
+      renderCierrePage();
+    });
+    window.addEventListener('mtp:state-updated', () => {
+      if (currentCierreTab === 'DIARIO') renderCierrePage();
+      else if (currentCierreTab === 'MENSUAL') renderMonthlyPane();
+      else if (currentCierreTab === 'ANUAL') renderAnnualPane();
+    });
+  </script>
+</body>
+</html>,
+        '============================================================',
+        '',
+        '1. RESUMEN DE VENTAS E IMPUESTOS (IVA 16%):',
+        '   - Ordenes cobradas:       ' + st.ordersCount,
+        '   - Ventas Exentas (0%):    ' + MTP.fmtUSD(st.exentoUsd),
+        '   - Base Gravada (16%):     ' + MTP.fmtUSD(st.baseG16Usd),
+        '   - IVA 16% Recaudado:      ' + MTP.fmtUSD(st.ivaUsd) + ' (' + MTP.fmtBsRaw(st.ivaBs) + ')',
+        '   - TOTAL COBRADO BRUTO:    ' + MTP.fmtUSD(st.grossSalesUsd) + ' (' + MTP.fmtBsRaw(st.grossSalesBs) + ')',
+        '   - Compras y Gastos:      -' + MTP.fmtUSD(st.totalExpensesUsd),
+        '   - GANANCIA NETA LIMPIA:  +' + MTP.fmtUSD(st.netOperatingProfitUsd),
+        '',
+        '2. DINERO NETO EN MANO Y BANCOS:',
+        '   - Efectivo USD en Gaveta: ' + MTP.fmtUSD(st.netDrawerUsd),
+        '   - Efectivo Bs en Gaveta:  ' + MTP.fmtBsRaw(st.netDrawerBs),
+        '   - Pago Movil Neto (Bs):   ' + MTP.fmtBsRaw(st.netBankPmBs),
+        '   - Punto de Venta (Bs):    ' + MTP.fmtBsRaw(st.inPuntoBs),
+        '   - Zelle / Transf (USD):   ' + MTP.fmtUSD(st.inZelleUsd),
+        '',
+        '3. COMIDA PREPARADA EN COCINA VS MERCANCIA EMPAQUETADA:',
+        '   - Platos Preparados en Cocina: ' + st.kitchenPreparedQty + ' platos (' + MTP.fmtUSD(st.kitchenSalesUsd) + ')',
+        '   - Mercancia Empaquetada:       ' + st.retailSoldQty + ' unidades (' + MTP.fmtUSD(st.retailSalesUsd) + ')',
+        '',
+        '4. INGREDIENTES DE COCINA CONSUMIDOS:',
+        ...(st.kitchenIngredientsUsed.length
+          ? st.kitchenIngredientsUsed.map(i => '   * ' + i.name + ': -' + MTP.fmtWeight(i.qtyUsed, i.unit) + ' (Quedan: ' + MTP.fmtWeight(i.remainingStock, i.unit) + ')')
+          : ['   * Sin consumo de ingredientes registrado en este periodo']),
+        '============================================================'
+      ];
+      const blob = new Blob([lines.join('\r\n')], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RESUMEN-${data.fileSlug}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      MTP.toast(`Archivo RESUMEN-${data.fileSlug}.txt descargado`);
     }
 
     document.addEventListener('DOMContentLoaded', () => {

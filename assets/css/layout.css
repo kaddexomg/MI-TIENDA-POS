@@ -559,3 +559,32 @@ body.pos-fullscreen-body.aside-collapsed .admin-main {
     justify-content: center;
   }
 }
+
+
+/* ==========================================================================
+   6. Reglas de Impresión Limpia (@media print) — Cero Interfaz del Sistema
+   ========================================================================== */
+@media print {
+  .admin-aside,
+  .admin-topbar,
+  .cierre-period-tabs,
+  .toolbar,
+  .btn,
+  button,
+  .no-print {
+    display: none !important;
+  }
+  .admin-main,
+  body.aside-collapsed .admin-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: #ffffff !important;
+  }
+  .admin-content {
+    padding: 0 !important;
+  }
+  body {
+    background: #ffffff !important;
+  }
+}
