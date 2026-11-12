@@ -307,6 +307,60 @@ assert.strictEqual(annualStats.monthsList.length, 12, 'El cierre anual debe cons
 console.log('✅ [Integración 7] Cierre Diario, Mensual y Anual + Producción diaria de cocina verificados.\n');
 
 // ============================================================================
+// TEST 8: Creación, Edición Rápida, Pausado y Eliminación de Productos (v8)
+// ============================================================================
+const newRetail = MTP.quickSaveItem({
+  name: 'Galleta Susy Savoy',
+  familyId: 'chucherias',
+  type: 'venta',
+  priceUsd: 0.85,
+  costUsd: 0.45,
+  stock: 24,
+  minStock: 6,
+  taxType: 'G'
+});
+assert.strictEqual(newRetail.success, true, 'Debe guardar el producto de venta rápida');
+assert.strictEqual(newRetail.item.name, 'Galleta Susy Savoy');
+assert.strictEqual(newRetail.item.priceUsd, 0.85);
+assert.strictEqual(newRetail.item.iva, 'G16');
+
+const foundRetail = MTP.getItemById(newRetail.item.id);
+assert.ok(foundRetail, 'Debe encontrar el nuevo artículo por id');
+assert.strictEqual(foundRetail.stock, 24);
+
+// Pausar producto
+MTP.toggleProductAvailability(newRetail.item.id, false);
+const pausedRetail = MTP.getItemById(newRetail.item.id);
+assert.strictEqual(pausedRetail.active, false, 'El producto debe estar pausado');
+
+// Reanudar producto
+MTP.toggleProductAvailability(newRetail.item.id, true);
+const resumedRetail = MTP.getItemById(newRetail.item.id);
+assert.strictEqual(resumedRetail.active, true, 'El producto debe estar reanudado');
+
+// Guardar plato de cocina
+const newDish = MTP.quickSaveItem({
+  name: 'Empanada Cazón Especial',
+  familyId: 'fritos',
+  type: 'cocina',
+  priceUsd: 1.50,
+  taxType: 'G'
+});
+assert.strictEqual(newDish.success, true, 'Debe guardar la nueva empanada');
+assert.strictEqual(newDish.item.iva, 'G16');
+
+// Eliminar productos creados
+const delRetailOk = MTP.deleteProduct(newRetail.item.id);
+assert.strictEqual(delRetailOk, true, 'Debe eliminar el producto de venta');
+assert.strictEqual(MTP.getItemById(newRetail.item.id), null, 'Ya no debe existir el producto eliminado');
+
+const delDishOk = MTP.deleteProduct(newDish.item.id);
+assert.strictEqual(delDishOk, true, 'Debe eliminar el plato de cocina');
+assert.strictEqual(MTP.getItemById(newDish.item.id), null, 'Ya no debe existir el plato eliminado');
+
+console.log('✅ [Integración 8] Creación rápida, pausado y eliminación en 1 clic verificados.\n');
+
+// ============================================================================
 // SUITE v7 — Pruebas de UI, Helpers Puros y Flujo de Caja
 // ============================================================================
 require('./ui.test.js');

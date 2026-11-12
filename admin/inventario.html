@@ -24,7 +24,7 @@
         </div>
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
-          <button class="btn btn-action btn-sm" onclick="openInvItemModal(null, 'venta')">+ Nuevo Artículo</button>
+          <button class="btn btn-action btn-sm" onclick="window.MTPProductDrawer ? window.MTPProductDrawer.open({ mode: 'create', onSaved: () => initInvPage() }) : openInvItemModal(null, 'venta')">+ Nuevo Artículo</button>
         </div>
       </header>
 
@@ -511,6 +511,7 @@
   <script src="../assets/js/keys.js"></script>
   <script src="../assets/js/sidenav.js"></script>
   <script src="../assets/js/barcode-engine.js"></script>
+  <script src="../assets/js/product-drawer.js"></script>
   <script>
     let currentFilter = 'ALL';
 
@@ -737,7 +738,14 @@
 
       MTPUI.menuDialog('Opciones para: ' + item.name, [
         { label: '📋 Ver movimientos (Kardex)', run: function () { openKardexModal(itemId); } },
-        { label: '✏️ Editar artículo', run: function () { openInvItemModal(itemId); } },
+        { label: '⚡ Editar datos en 5 segundos (Drawer)', run: function () {
+          if (window.MTPProductDrawer) {
+            window.MTPProductDrawer.open({ mode: 'edit', id: itemId, onSaved: () => initInvPage(), onDeleted: () => initInvPage() });
+          } else {
+            openInvItemModal(itemId);
+          }
+        }},
+        { label: '✏️ Edición avanzada y receta completa', run: function () { openInvItemModal(itemId); } },
         { label: '🗑️ Registrar lo que se dañó o perdió (Merma)', run: function () { openWasteModal(itemId); } },
         { label: '🔍 Ajustar por conteo físico (Auditoría)', run: function () { openAuditModal(itemId); } }
       ]);

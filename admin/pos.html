@@ -65,6 +65,13 @@
                 Cámara
               </button>
 
+              <button type="button" class="btn btn-action" id="btnPosQuickNewProduct"
+                onclick="window.MTPProductDrawer && window.MTPProductDrawer.open({ mode: 'create', defaultFamilyId: (window.MTPPos && window.MTPPos.getActiveFamilyId) ? window.MTPPos.getActiveFamilyId() : 'fritos' })"
+                title="Crear nuevo producto en 5 segundos (sin perder la orden activa)"
+                style="height:36px;padding:0 12px;font-size:12.5px;font-weight:800;gap:4px">
+                + Producto
+              </button>
+
               <div class="pos-scanner-status" title="Presiona F1 para buscar o escanear">
                 <span class="pulse-dot"></span>
                 <span>F1</span>
@@ -285,6 +292,7 @@
   <script src="../assets/js/sidenav.js"></script>
   <script src="../assets/js/barcode-engine.js"></script>
   <script src="../assets/js/change.js"></script>
+  <script src="../assets/js/product-drawer.js"></script>
   <script src="../assets/js/pos-engine.js"></script>
 </body>
 </html>

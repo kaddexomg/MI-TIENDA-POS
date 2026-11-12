@@ -158,3 +158,16 @@
    - **Caja Rápida Zero-Scroll (`assets/css/pos.css` — Modo Operate Quieter)**: Botón Ámbar gigante F2 de 52px con micro-hundimiento de 80ms (`scale(0.97)`), tarjetas de catálogo con números tabulares sin saltos de alineación, respuesta de resorte en selección de producto y modal de cobro multimoneda con calculadora física de billetes y redondeo a 0.50 Bs.
    - **Cuadre del Día y Arqueo Físico (`admin/cierres.html`)**: Micro-celebración inercial (`spring-pop`) en el badge de gaveta cuadrada exacta (`$0.00`) al empatar el conteo físico de denominaciones reales frente al sistema.
    - **Verificación Automatizada 100% Verde**: Pruebas fiscales, integración v6, UI v7, pruebas de flujo de caja (`tests/run.js`), balanceo semántico HTML (`tools/check-html.js`) y validez de scripts en línea (`tools/check-scripts.js`) pasando al 100%.
+
+10. **✅ FLUJO RADICAL DE GESTIÓN RÁPIDA EN 5 SEGUNDOS Y PRODUCT SHEET DRAWER ESTILO APPLE (`assets/js/product-drawer.js`)**:
+    - **Apple-Style Sliding Sheet Drawer**: Componente deslizante desde la derecha con curva inercial WWDC (`--ease-drawer: cubic-bezier(0.32, 0.72, 0, 1)`), backdrop scrim con desenfoque de 12px (`backdrop-filter: blur(12px)`), trampa de foco y cierre accesible por tecla `Esc` o clic exterior.
+    - **Control Segmentado Táctil y 9 Familias**: Alternancia en 1 toque entre *Plato de Cocina* (preparado al momento) y *Mercancía / Víveres* (empaquetado). Selector de 9 categorías venezolanas con emojis y clasificación automática de IVA según Art. 18.
+    - **Cálculos en Tiempo Real**: Cálculo automático del PVP en Bolívares usando la tasa BCV del día y visualización inmediata de margen de ganancia comercial (% y USD) al escribir el costo estimado.
+    - **Selector Visual de 47 Fotos Locales Offline**: Miniatura destacada con cuadrícula desplazable de las 47 fotografías auténticas locales (`empanadas.jpg`, `arepas.jpg`, `pabellon.jpg`, `harina-pan.jpg`, `malta.jpg`, `polar.jpg`, etc.).
+    - **Acceso Inmediato desde Caja y Administración**:
+      - Botón `[+ Producto]` en la barra de herramientas de Caja (`admin/pos.html` y `caja/pos.html`).
+      - Botón táctil `✏️` sobre cada tarjeta de producto en el catálogo y en resultados de búsqueda para editar precio, nombre o pausar en 5 segundos sin resetear ni perder la orden activa del cliente.
+      - Botón `+ Crear producto ahora` en búsquedas sin resultados.
+      - Integración en `admin/productos.html` y `admin/inventario.html` con actualización reactiva instantánea.
+    - **Métodos Core en `MTP`**: `quickSaveItem(payload)`, `deleteProduct(id)`, `toggleProductAvailability(id)`, `getItemById(id)` y evento desacoplado `mtp:state-updated`.
+    - **Suite de Pruebas 100% Pasando**: Pruebas fiscales, integración v6, UI v7, pruebas de caja y Test 8 de creación/edición/pausado rápido pasando limpiamente.

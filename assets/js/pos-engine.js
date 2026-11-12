@@ -266,6 +266,9 @@
             <div class="pos-flavor-card ${qtyInCart > 0 ? 'in-cart' : ''}"
               onclick="window.MTPPos.addVariantQuick('${v.id}')"
               title="${v.name} · #${v.code} (+IVA 16%)">
+              <button type="button" class="pos-card-edit-btn"
+                onclick="event.stopPropagation(); window.MTPProductDrawer && window.MTPProductDrawer.open({ mode: 'edit', id: '${v.id}' })"
+                title="Editar plato en 5 segundos">✏️</button>
               <div class="pos-card-row">
                 <img class="pos-card-thumb" src="${imgSrc}" alt="${cleanName}" loading="lazy"
                   onerror="this.style.display='none'">
@@ -330,6 +333,9 @@
           <div class="pos-retail-card ${qtyInCart > 0 ? 'in-cart' : ''}"
             onclick="window.MTPPos.addRetailQuick('${item.id}')"
             title="${item.name} · #${item.code} (${isExempt ? 'Exento de IVA' : '+IVA 16%'})">
+            <button type="button" class="pos-card-edit-btn"
+              onclick="event.stopPropagation(); window.MTPProductDrawer && window.MTPProductDrawer.open({ mode: 'edit', id: '${item.id}' })"
+              title="Editar producto en 5 segundos">✏️</button>
             <div class="pos-card-row">
               ${thumbHtml}
               <div class="pos-card-main">
@@ -422,9 +428,12 @@
         <div style="text-align:center;padding:26px 10px;background:#fff;border-radius:8px;border:1px dashed var(--border)">
           <div style="font-size:22px;margin-bottom:4px">🔍</div>
           <strong>Sin resultados para "${query}"</strong>
-          <div style="margin-top:8px">
+          <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
             <button type="button" class="btn btn-sm btn-ghost" onclick="document.getElementById('posScannerInput').value='';window.MTPPos.renderProductsCol('');">
               Limpiar búsqueda (ESC)
+            </button>
+            <button type="button" class="btn btn-sm btn-action" onclick="window.MTPProductDrawer && window.MTPProductDrawer.open({ mode: 'create', defaultFamilyId: (window.MTPPos && window.MTPPos.getActiveFamilyId) ? window.MTPPos.getActiveFamilyId() : 'fritos' })">
+              + Crear producto ahora
             </button>
           </div>
         </div>
@@ -441,6 +450,9 @@
       cards.push(`
         <div class="pos-flavor-card ${qtyInCart > 0 ? 'in-cart' : ''}"
           onclick="window.MTPPos.addVariantQuick('${v.id}')">
+          <button type="button" class="pos-card-edit-btn"
+            onclick="event.stopPropagation(); window.MTPProductDrawer && window.MTPProductDrawer.open({ mode: 'edit', id: '${v.id}' })"
+            title="Editar plato en 5 segundos">✏️</button>
           <div class="pos-card-row">
             <img class="pos-card-thumb" src="${imgSrc}" alt="${v.name}" loading="lazy" onerror="this.style.display='none'">
             <div class="pos-card-main">
@@ -484,6 +496,9 @@
       cards.push(`
         <div class="pos-retail-card ${qtyInCart > 0 ? 'in-cart' : ''}"
           onclick="window.MTPPos.addRetailQuick('${i.id}')">
+          <button type="button" class="pos-card-edit-btn"
+            onclick="event.stopPropagation(); window.MTPProductDrawer && window.MTPProductDrawer.open({ mode: 'edit', id: '${i.id}' })"
+            title="Editar producto en 5 segundos">✏️</button>
           <div class="pos-card-row">
             ${thumbHtml}
             <div class="pos-card-main">
@@ -2029,6 +2044,7 @@
     // Inicialización y navegación
     initPOS,
     setActiveFamily,
+    getActiveFamilyId: () => activeFamilyId,
     setMultiplier,
     renderProductsCol,
     addVariantQuick,

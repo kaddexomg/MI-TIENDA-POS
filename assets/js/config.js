@@ -4465,6 +4465,226 @@
     return true;
   }
 
+  function deleteProduct(id) {
+    if (!id) return false;
+    let found = false;
+    if (Array.isArray(state.variants)) {
+      const prevLen = state.variants.length;
+      state.variants = state.variants.filter(v => v.id !== id);
+      if (state.variants.length !== prevLen) found = true;
+    }
+    if (Array.isArray(state.retailItems)) {
+      const prevLen = state.retailItems.length;
+      state.retailItems = state.retailItems.filter(r => r.id !== id);
+      if (state.retailItems.length !== prevLen) found = true;
+    }
+    if (Array.isArray(state.inventory)) {
+      const prevLen = state.inventory.length;
+      state.inventory = state.inventory.filter(i => i.id !== id);
+      if (state.inventory.length !== prevLen) found = true;
+    }
+    if (Array.isArray(state.products)) {
+      const prevLen = state.products.length;
+      state.products = state.products.filter(p => p.id !== id);
+      if (state.products.length !== prevLen) found = true;
+    }
+    if (found) {
+      saveState(state);
+      if (typeof window !== 'undefined' && window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('mtp:state-updated', { detail: { action: 'deleteProduct', id } }));
+      }
+    }
+    return found;
+  }
+
+  function toggleProductAvailability(id, forceState) {
+    if (!id) return null;
+    let target = null;
+    if (Array.isArray(state.variants)) {
+      const v = state.variants.find(x => x.id === id);
+      if (v) target = v;
+    }
+    if (!target && Array.isArray(state.retailItems)) {
+      const r = state.retailItems.find(x => x.id === id);
+      if (r) target = r;
+    }
+    if (!target && Array.isArray(state.inventory)) {
+      const i = state.inventory.find(x => x.id === id);
+      if (i) target = i;
+    }
+    if (!target && Array.isArray(state.products)) {
+      const p = state.products.find(x => x.id === id);
+      if (p) target = p;
+    }
+
+    if (!target) return null;
+    const nextState = forceState !== undefined ? !!forceState : (target.active === false ? true : false);
+    target.active = nextState;
+    if (target.sellable !== undefined) {
+      target.sellable = nextState;
+    }
+
+    // Sincronizar en inventory si existe en retailItems o viceversa
+    if (Array.isArray(state.inventory)) {
+      const inv = state.inventory.find(x => x.id === id);
+      if (inv) {
+        inv.active = nextState;
+        inv.sellable = nextState;
+      }
+    }
+    if (Array.isArray(state.retailItems)) {
+      const ret = state.retailItems.find(x => x.id === id);
+      if (ret) {
+        ret.active = nextState;
+        ret.sellable = nextState;
+      }
+    }
+
+    saveState(state);
+    if (typeof window !== 'undefined' && window.dispatchEvent) {
+      window.dispatchEvent(new CustomEvent('mtp:state-updated', { detail: { action: 'toggleAvailability', id, active: nextState } }));
+    }
+    return target;
+  }
+
+  function getItemById(id) {
+    if (!id) return null;
+    const v = (state.variants || []).find(x => x.id === id);
+    if (v) return Object.assign({}, v, { isVariant: true, kind: 'variant' });
+    const r = (state.retailItems || []).find(x => x.id === id);
+    if (r) return Object.assign({}, r, { isRetail: true, kind: 'retail' });
+    const inv = (state.inventory || []).find(x => x.id === id);
+    if (inv) return Object.assign({}, inv, { isRetail: true, kind: 'retail' });
+    const p = (state.products || []).find(x => x.id === id);
+    if (p) return Object.assign({}, p, { isProduct: true, kind: 'product' });
+    return null;
+  }
+
+  function quickSaveItem(itemData) {
+    if (!itemData || !itemData.name) {
+      return { success: false, error: 'El nombre del producto es obligatorio' };
+    }
+    const name = String(itemData.name).trim();
+    const familyId = String(itemData.familyId || 'viveres').trim();
+    const priceUsd = Math.max(0, Number(itemData.priceUsd) || 0);
+    const costUsd = Math.max(0, Number(itemData.costUsd) || 0);
+    const isKitchenFamily = ['fritos', 'arepas', 'almuerzos', 'cafeteria'].includes(familyId);
+    const type = itemData.type ? itemData.type : (isKitchenFamily ? 'cocina' : 'venta');
+    const isKitchen = type === 'cocina';
+    const taxType = (itemData.taxType === 'E' || itemData.taxExempt) ? 'E' : 'G';
+    const isExempt = taxType === 'E';
+    const ivaCode = isExempt ? 'E' : 'G16';
+    const code = String(itemData.code || Math.floor(100 + Math.random() * 900)).trim();
+    const barcode = String(itemData.barcode || ('8800' + code)).trim();
+    const img = itemData.img || (isKitchen ? '../assets/img/productos/empanadas.jpg' : '../assets/img/productos/viveres.jpg');
+    const emoji = itemData.emoji || (isKitchen ? '🍳' : '📦');
+    const active = itemData.active !== undefined ? !!itemData.active : true;
+
+    if (isKitchen) {
+      if (!Array.isArray(state.variants)) state.variants = [];
+      const id = itemData.id || ('var-quick-' + Date.now());
+      let parentProdId = itemData.productId;
+      if (!parentProdId) {
+        const existingParent = (state.products || []).find(p => p.familyId === familyId);
+        if (existingParent) {
+          parentProdId = existingParent.id;
+        } else {
+          parentProdId = 'prod-' + familyId + '-' + Date.now();
+          saveProduct({
+            id: parentProdId,
+            familyId,
+            name: name,
+            subtitle: 'Platos preparados',
+            active: true
+          });
+        }
+      }
+
+      const existingIdx = state.variants.findIndex(v => v.id === id);
+      const variantObj = {
+        id,
+        productId: parentProdId,
+        familyId,
+        name,
+        code,
+        barcode,
+        priceUsd,
+        costUsd,
+        iva: ivaCode,
+        ivaType: taxType,
+        taxExempt: isExempt,
+        active,
+        order: existingIdx >= 0 ? state.variants[existingIdx].order : (state.variants.length + 1),
+        emoji,
+        img,
+        recipe: (existingIdx >= 0 && state.variants[existingIdx].recipe) ? state.variants[existingIdx].recipe : []
+      };
+
+      if (existingIdx >= 0) {
+        state.variants[existingIdx] = Object.assign({}, state.variants[existingIdx], variantObj);
+      } else {
+        state.variants.push(variantObj);
+      }
+
+      saveState(state);
+      if (typeof window !== 'undefined' && window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('mtp:state-updated', { detail: { action: 'saveItem', item: variantObj, kind: 'variant' } }));
+      }
+      return { success: true, item: variantObj, kind: 'variant' };
+    } else {
+      if (!Array.isArray(state.retailItems)) state.retailItems = [];
+      if (!Array.isArray(state.inventory)) state.inventory = [];
+      const id = itemData.id || ('prod-quick-' + Date.now());
+      const stock = itemData.stock !== undefined ? Math.max(0, Number(itemData.stock) || 0) : 20;
+      const minStock = itemData.minStock !== undefined ? Math.max(0, Number(itemData.minStock) || 0) : 5;
+      const unit = itemData.unit || 'und';
+
+      const retailObj = {
+        id,
+        familyId,
+        group: familyId,
+        code,
+        barcode,
+        qrCode: 'QR-' + code,
+        name,
+        category: familyId.charAt(0).toUpperCase() + familyId.slice(1),
+        type: 'venta',
+        sellable: active,
+        active,
+        iva: ivaCode,
+        taxExempt: isExempt,
+        ivaType: taxType,
+        unit,
+        stock,
+        minStock,
+        costUsd,
+        priceUsd,
+        emoji,
+        img
+      };
+
+      const retIdx = state.retailItems.findIndex(r => r.id === id);
+      if (retIdx >= 0) {
+        state.retailItems[retIdx] = Object.assign({}, state.retailItems[retIdx], retailObj);
+      } else {
+        state.retailItems.push(retailObj);
+      }
+
+      const invIdx = state.inventory.findIndex(i => i.id === id);
+      if (invIdx >= 0) {
+        state.inventory[invIdx] = Object.assign({}, state.inventory[invIdx], retailObj);
+      } else {
+        state.inventory.push(retailObj);
+      }
+
+      saveState(state);
+      if (typeof window !== 'undefined' && window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('mtp:state-updated', { detail: { action: 'saveItem', item: retailObj, kind: 'retail' } }));
+      }
+      return { success: true, item: retailObj, kind: 'retail' };
+    }
+  }
+
   function saveModifierGroup(group) {
     if (!group || !group.name) return false;
     if (!Array.isArray(state.modifierGroups)) state.modifierGroups = [];
@@ -4495,6 +4715,10 @@
     saveProduct,
     saveVariant,
     deleteVariant,
+    deleteProduct,
+    toggleProductAvailability,
+    getItemById,
+    quickSaveItem,
     saveModifierGroup,
     migrateV3toV5,
     migrateToV6,
