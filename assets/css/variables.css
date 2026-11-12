@@ -41,12 +41,12 @@
   --purple-light: #F5F3FF;
   --purple-txt: #5B21B6;
 
-  --page: #F3F5F9;               /* Fondo de página moderno y limpio */
+  --page: #F8FAFC;               /* Fondo pizarra ultra-limpio y moderno */
   --surface: #FFFFFF;            /* Fondo de tarjetas, modales y superficies */
-  --surface-2: #F8FAFC;          /* Fondo de cabeceras secundarias y th de tablas */
-  --surface-3: #F1F5F9;          /* Fondos muted de inputs y áreas de control */
+  --surface-2: #F1F5F9;          /* Fondos secundarios y cabeceras de tabla */
+  --surface-3: #E2E8F0;          /* Fondos muted de inputs y áreas de control */
 
-  --line: #E2E8F0;               /* Bordes limpios, nítidos y bien definidos */
+  --line: #E2E8F0;               /* Bordes nítidos y finos */
   --line-strong: #CBD5E1;        /* Bordes reforzados / divisores fuertes */
 
   --txt: #0F172A;                /* Texto principal (Slate 900, máxima legibilidad) */
@@ -55,13 +55,13 @@
   --txt-inv: #FFFFFF;            /* Texto invertido sobre fondos oscuros */
 
   /* ========================================================================
-     2. Colores de Sección (Franjas laterales sutiles en .card-hd)
+     2. Colores de Sección
      ======================================================================== */
   --sec-cocina: #F59E0B;
   --sec-abasto: #3B82F6;
   --sec-dinero: #10B981;
   --sec-gastos: #EF4444;
-  --sec-fiscal: #6B7280;
+  --sec-fiscal: #8B5CF6;
 
   /* ========================================================================
      3. Tokens de Compatibilidad Hacia Atrás (Evita regresiones)
@@ -96,21 +96,21 @@
   --txt-muted: var(--txt-3);
 
   /* ========================================================================
-     4. Radios y Sombras Refinados (Cero halos toscos)
+     4. Radios y Sombras Artesanales de Alta Gama (Apple Design Standard)
      ======================================================================== */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
   --radius-full: 9999px;
 
   --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 10px 25px -3px rgba(15, 23, 42, 0.1), 0 4px 10px -4px rgba(15, 23, 42, 0.06);
-  --shadow-glow-amber: 0 0 16px rgba(245, 158, 11, 0.35);
-  --shadow-glow-green: 0 0 16px rgba(16, 185, 129, 0.35);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -2px rgba(15, 23, 42, 0.03);
+  --shadow-lg: 0 12px 28px -4px rgba(15, 23, 42, 0.09), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+  --shadow-glow-amber: 0 4px 16px rgba(245, 158, 11, 0.35);
+  --shadow-glow-green: 0 4px 16px rgba(16, 185, 129, 0.35);
 
   /* ========================================================================
      5. Dimensiones de Layout

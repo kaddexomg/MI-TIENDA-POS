@@ -5,222 +5,203 @@
    ========================================================================== */
 
 /* ==========================================================================
-   1. BOTONES DE ACCIÓN (Estándar Unificado)
+   1. BOTONES DE ACCIÓN (Estándar Artesanal Apple + Emil Kowalski)
    ========================================================================== */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 14px;
-  height: 36px;
-  min-height: 36px;
-  border-radius: var(--radius-sm);
-  font-weight: var(--fw-semibold);
+  gap: 7px;
+  padding: 0 16px;
+  height: 38px;
+  min-height: 38px;
+  border-radius: var(--radius-sm, 8px);
+  font-weight: 700;
   font-size: 13.5px;
+  letter-spacing: -0.01em;
   border: 1px solid transparent;
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
   line-height: 1;
   text-decoration: none;
-  transition: background-color var(--transition-fast),
-              border-color var(--transition-fast),
-              color var(--transition-fast),
-              transform var(--transition-fast),
-              box-shadow var(--transition-fast);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform var(--dur-tap, 80ms) var(--ease-out),
+              background var(--dur-fast, 140ms) var(--ease-fluid),
+              border-color var(--dur-fast, 140ms) var(--ease-fluid),
+              box-shadow var(--dur-fast, 140ms) var(--ease-fluid);
 }
 
 .btn:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .btn:active {
-  transform: scale(0.97) translateY(1px);
-  box-shadow: none;
-  transition: transform var(--dur-tap) var(--ease-out);
+  transform: scale(0.96) translateY(1px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: transform var(--dur-tap, 80ms) var(--ease-out);
 }
 
-/* 1.1 Botón Principal / Acción Ámbar (Para la acción más destacada) */
+/* 1.1 Botón Principal / Acción Ámbar (Llamado a la acción heroico) */
 .btn-action,
 .btn-amber {
-  background: var(--action);
-  color: var(--action-txt);
-  border-color: #D97706;
-  font-weight: var(--fw-bold);
-  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.25);
+  background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 40%, #D97706 100%);
+  color: #0F172A;
+  border-color: #B45309;
+  font-weight: 800;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .btn-action:hover,
 .btn-amber:hover {
-  background: var(--action-hover);
-  color: var(--action-txt);
-  border-color: #B45309;
-  box-shadow: 0 3px 8px rgba(245, 158, 11, 0.35);
+  background: linear-gradient(180deg, #FDE68A 0%, #FBBF24 40%, #D97706 100%);
+  border-color: #92400E;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-/* 1.2 Botón de Éxito / Cobrar / Confirmar (Esmeralda) */
+/* 1.2 Botón de Éxito / Cobrar / Confirmar (Esmeralda Apple) */
 .btn-success,
 .btn-p,
 .btn-primary {
-  background: var(--money-in);
+  background: linear-gradient(180deg, #34D399 0%, #10B981 40%, #059669 100%);
   color: #FFFFFF;
-  border-color: #059669;
-  font-weight: var(--fw-bold);
-  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.25);
+  border-color: #047857;
+  font-weight: 800;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .btn-success:hover,
 .btn-p:hover,
 .btn-primary:hover {
-  background: var(--money-in-hover);
-  color: #FFFFFF;
-  border-color: #047857;
-  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.35);
+  background: linear-gradient(180deg, #6EE7B7 0%, #10B981 40%, #047857 100%);
+  border-color: #065F46;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-/* 1.3 Botón Secundario (Blanco con Borde Nítido) */
+/* 1.3 Botón Secundario (Blanco puro con relieve nítido) */
 .btn-secondary,
 .btn-ghost {
-  background: var(--surface);
-  color: var(--txt);
-  border: 1px solid var(--line);
-  font-weight: var(--fw-semibold);
-  box-shadow: var(--shadow-xs);
+  background: #FFFFFF;
+  color: #0F172A;
+  border: 1px solid #CBD5E1;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
 }
 
 .btn-secondary:hover,
 .btn-ghost:hover {
-  background: var(--surface-2);
-  border-color: var(--line-strong);
-  color: var(--txt);
+  background: #F8FAFC;
+  border-color: #94A3B8;
+  color: #0F172A;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.08);
 }
 
-/* 1.4 Botón Peligro / Gastos / Anular (Carmesí) */
+/* 1.4 Botón Peligro / Gastos / Anular (Carmesí Profundo) */
 .btn-danger {
-  background: var(--money-out);
+  background: linear-gradient(180deg, #F87171 0%, #EF4444 40%, #DC2626 100%);
   color: #FFFFFF;
-  border-color: #DC2626;
-  font-weight: var(--fw-semibold);
-  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.25);
+  border-color: #B91C1C;
+  font-weight: 800;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .btn-danger:hover {
-  background: var(--money-out-hover);
-  color: #FFFFFF;
-  border-color: #B91C1C;
-  box-shadow: 0 3px 8px rgba(239, 68, 68, 0.35);
+  background: linear-gradient(180deg, #FCA5A5 0%, #EF4444 40%, #B91C1C 100%);
+  border-color: #991B1B;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45);
 }
 
 /* 1.5 Botón Azul / Informativo */
 .btn-blue,
 .btn-info {
-  background: var(--info);
+  background: linear-gradient(180deg, #60A5FA 0%, #3B82F6 40%, #2563EB 100%);
   color: #FFFFFF;
-  border-color: #2563EB;
-  font-weight: var(--fw-semibold);
+  border-color: #1D4ED8;
+  font-weight: 800;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
 }
 
 .btn-blue:hover,
 .btn-info:hover {
-  background: var(--info-hover);
-  color: #FFFFFF;
-  border-color: #1D4ED8;
+  background: linear-gradient(180deg, #93C5FD 0%, #3B82F6 40%, #1D4ED8 100%);
+  border-color: #1E40AF;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
 }
 
-/* Modificadores de Tamaño */
+/* Modificadores de Tamaño Ergonómicos */
 .btn-sm {
-  height: 28px;
-  min-height: 28px;
-  padding: 0 10px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 12px;
   font-size: 12px;
-  border-radius: var(--radius-sm);
-  gap: 4px;
+  border-radius: 7px;
+  gap: 5px;
 }
 
 .btn-lg {
-  height: 44px;
-  min-height: 44px;
-  padding: 0 18px;
-  font-size: 15px;
-  font-weight: var(--fw-bold);
-  border-radius: var(--radius);
+  height: 48px;
+  min-height: 48px;
+  padding: 0 22px;
+  font-size: 16px;
+  font-weight: 800;
+  border-radius: var(--radius, 12px);
 }
 
 /* ==========================================================================
-   2. TARJETAS Y PANELES (.card)
+   2. TARJETAS Y PANELES (.card — Estilo Apple & Taste-Skill)
    ========================================================================== */
 .card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-xs);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: var(--radius, 12px);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.02);
   overflow: hidden;
-  margin-bottom: 14px;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  margin-bottom: 16px;
+  transition: border-color var(--dur-fast, 140ms) var(--ease-fluid),
+              box-shadow var(--dur-fast, 140ms) var(--ease-fluid),
+              transform var(--dur-fast, 140ms) var(--ease-fluid);
 }
 
 .card:hover {
   border-color: #CBD5E1;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
 }
 
 .card-hd {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--line);
+  padding: 14px 18px;
+  border-bottom: 1px solid #F1F5F9;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-  background: var(--surface-2);
+  background: #FFFFFF;
 }
 
 .card-hd h3 {
-  font-size: 14.5px;
-  font-weight: var(--fw-bold);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   display: flex;
   align-items: center;
-  gap: 7px;
-  color: var(--txt);
+  gap: 8px;
+  color: #0F172A;
   line-height: 1.25;
 }
 
 .card-hd p {
   font-size: 12px;
-  color: var(--txt-3);
+  color: #64748B;
   margin-top: 2px;
 }
 
 .card-bd {
-  padding: 12px 14px;
-}
-
-/* Franjas Laterales Sutiles por Sección */
-.card[data-section="cocina"] .card-hd,
-.card-hd[data-section="cocina"] {
-  border-left: 4px solid var(--sec-cocina);
-}
-
-.card[data-section="abasto"] .card-hd,
-.card-hd[data-section="abasto"] {
-  border-left: 4px solid var(--sec-abasto);
-}
-
-.card[data-section="dinero"] .card-hd,
-.card-hd[data-section="dinero"] {
-  border-left: 4px solid var(--sec-dinero);
-}
-
-.card[data-section="gastos"] .card-hd,
-.card-hd[data-section="gastos"] {
-  border-left: 4px solid var(--sec-gastos);
-}
-
-.card[data-section="fiscal"] .card-hd,
-.card-hd[data-section="fiscal"] {
-  border-left: 4px solid var(--sec-fiscal);
+  padding: 16px 18px;
 }
 
 /* ==========================================================================
@@ -228,59 +209,65 @@
    ========================================================================== */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-  margin-bottom: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
 .stat-card,
 .kpi {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 14px 16px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: var(--radius, 12px);
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  box-shadow: var(--shadow-xs);
-  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  gap: 5px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 10px rgba(15, 23, 42, 0.02);
+  transition: transform var(--dur-fast, 140ms) var(--ease-fluid),
+              border-color var(--dur-fast, 140ms) var(--ease-fluid),
+              box-shadow var(--dur-fast, 140ms) var(--ease-fluid);
   text-decoration: none;
   color: inherit;
+  position: relative;
 }
 
 .stat-card:hover,
 .kpi:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: #CBD5E1;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
 }
 
-.stat-card.tone-in   { border-left: 4px solid var(--money-in); }
-.stat-card.tone-out  { border-left: 4px solid var(--money-out); }
-.stat-card.tone-cash { border-left: 4px solid var(--action); }
-.stat-card.tone-info { border-left: 4px solid var(--info); }
+.stat-card.tone-in   { background: linear-gradient(180deg, #FFFFFF 0%, #F0FDF4 100%); border-color: #A7F3D0; }
+.stat-card.tone-out  { background: linear-gradient(180deg, #FFFFFF 0%, #FEF2F2 100%); border-color: #FECACA; }
+.stat-card.tone-cash { background: linear-gradient(180deg, #FFFFFF 0%, #FFFBEB 100%); border-color: #FDE68A; }
+.stat-card.tone-info { background: linear-gradient(180deg, #FFFFFF 0%, #EFF6FF 100%); border-color: #BFDBFE; }
 
 .stat-l,
 .kpi-label {
-  font-size: 12.5px;
-  font-weight: var(--fw-semibold);
-  color: var(--txt-2);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748B;
 }
 
 .stat-n,
 .kpi-val {
-  font-size: 24px;
-  font-weight: var(--fw-extrabold);
-  color: var(--txt);
+  font-size: 28px;
+  font-weight: 900;
+  color: #0F172A;
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 
 .stat-sub,
 .kpi-sub {
-  font-size: 11.5px;
-  color: var(--txt-3);
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   margin-top: 2px;
 }
@@ -292,9 +279,9 @@
   width: 100%;
   overflow-x: auto;
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--radius, 12px);
   background: var(--surface);
-  box-shadow: var(--shadow-xs);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 table.data-table {
@@ -304,24 +291,24 @@ table.data-table {
 }
 
 table.data-table th {
-  background: var(--surface-2);
-  color: var(--txt-2);
+  background: #F8FAFC;
+  color: #475569;
   font-size: 11.5px;
-  font-weight: var(--fw-bold);
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 9px 12px;
-  border-bottom: 1px solid var(--line);
+  letter-spacing: 0.05em;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--line);
   white-space: nowrap;
 }
 
 table.data-table td {
-  padding: 9px 12px;
-  border-bottom: 1px solid var(--line);
+  padding: 12px 16px;
+  border-bottom: 1px solid #F1F5F9;
   font-size: 13.5px;
   vertical-align: middle;
   color: var(--txt);
-  transition: background-color var(--transition-fast);
+  transition: background-color 100ms ease;
 }
 
 table.data-table tbody tr:last-child td {
@@ -380,60 +367,62 @@ table.data-table th.num {
 }
 
 /* ==========================================================================
-   6. INPUTS Y FORMULARIOS
+   6. INPUTS Y FORMULARIOS (Estándar Ergonómico 38px)
    ========================================================================== */
 .input, .select, .textarea {
   width: 100%;
-  padding: 6px 11px;
-  height: 36px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  height: 38px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm, 8px);
   background: var(--surface);
   color: var(--txt);
-  font-size: 13.5px;
-  font-weight: var(--fw-medium);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  font-size: 14px;
+  font-weight: 500;
+  transition: border-color var(--dur-fast, 140ms) var(--ease-fluid),
+              box-shadow var(--dur-fast, 140ms) var(--ease-fluid);
 }
 
 .textarea {
   height: auto;
-  min-height: 70px;
+  min-height: 80px;
+  padding: 10px 12px;
 }
 
 .input:focus, .select:focus, .textarea:focus {
   outline: none;
   border-color: var(--action);
-  box-shadow: var(--focus-ring);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
 }
 
 .form-group label {
   display: block;
   font-size: 12px;
-  font-weight: var(--fw-semibold);
+  font-weight: 700;
   color: var(--txt-2);
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 
 /* ==========================================================================
-   7. MODALES PROFESIONALES (.modal-backdrop)
+   7. MODALES PROFESIONALES (.modal-backdrop — Apple Sheet Depth)
    ========================================================================== */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.65);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   display: none;
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  padding: 14px;
+  padding: 16px;
 }
 
 .modal-backdrop.open {
@@ -442,15 +431,15 @@ table.data-table th.num {
 
 .modal-box {
   background: var(--surface);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-lg, 16px);
   width: 100%;
   max-width: 640px;
   max-height: 92vh;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35), 0 0 1px rgba(0, 0, 0, 0.2);
   border: 1px solid var(--line);
-  animation: modalScaleUp 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: modalScaleUp 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes modalScaleUp {
@@ -459,36 +448,37 @@ table.data-table th.num {
 }
 
 .modal-hd {
-  padding: 12px 16px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--surface-2);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: #FFFFFF;
+  border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0;
 }
 
 .modal-hd h3 {
-  font-size: 14px;
-  font-weight: var(--fw-bold);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   color: var(--txt);
 }
 
 .modal-bd {
-  padding: 14px 16px;
+  padding: 20px;
   overflow-y: auto;
-  font-size: 13px;
+  font-size: 13.5px;
 }
 
 .modal-ft {
-  padding: 10px 16px;
+  padding: 14px 20px;
   border-top: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-  background: var(--surface-2);
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  gap: 10px;
+  background: #F8FAFC;
+  border-radius: 0 0 var(--radius-lg, 16px) var(--radius-lg, 16px);
 }
 
 /* ==========================================================================
