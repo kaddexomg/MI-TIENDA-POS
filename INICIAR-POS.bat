@@ -46,27 +46,29 @@ if defined NODE_CMD (
 echo [+] Abriendo interfaz de Caja...
 echo.
 
+set "STANDALONE_ARGS=--app="%APP_TARGET%" --user-data-dir="%LOCALAPPDATA%\MI-TIENDA-POS\Profile" --window-size=1280,820 --start-maximized --disable-features=Translate,OptimizationHints --disable-extensions --no-first-run --no-default-browser-check"
+
 :: 3. Buscar Google Chrome en rutas tradicionales de Windows 7
 if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe" (
-    start "" "%ProgramFiles%\Google\Chrome\Application\chrome.exe" --app="%APP_TARGET%"
+    start "" "%ProgramFiles%\Google\Chrome\Application\chrome.exe" %STANDALONE_ARGS%
     exit /b
 )
 if exist "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" (
-    start "" "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" --app="%APP_TARGET%"
+    start "" "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" %STANDALONE_ARGS%
     exit /b
 )
 if exist "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe" (
-    start "" "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe" --app="%APP_TARGET%"
+    start "" "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe" %STANDALONE_ARGS%
     exit /b
 )
 
 :: 4. Buscar Microsoft Edge si no tiene Chrome
 if exist "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" (
-    start "" "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" --app="%APP_TARGET%"
+    start "" "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" %STANDALONE_ARGS%
     exit /b
 )
 if exist "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe" (
-    start "" "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe" --app="%APP_TARGET%"
+    start "" "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe" %STANDALONE_ARGS%
     exit /b
 )
 

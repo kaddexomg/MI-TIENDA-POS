@@ -33,6 +33,14 @@ set "VBS_SCRIPT=%TEMP%\crear_accesos_mtp.vbs"
 echo Set oWS = WScript.CreateObject("WScript.Shell"^)
 echo sDesktop = oWS.SpecialFolders("Desktop"^)
 echo.
+echo ' Acceso directo 0: APLICACION DE ESCRITORIO STANDALONE (PROGRAMA PC)
+echo Set oLink0 = oWS.CreateShortcut(sDesktop ^& "\MI TIENDA POS (Programa PC).lnk"^)
+echo oLink0.TargetPath = "%~dp0MI-TIENDA-POS.exe"
+echo oLink0.WorkingDirectory = "%~dp0"
+echo oLink0.Description = "MI TIENDA POS - Programa de Escritorio para PC"
+echo oLink0.WindowStyle = 1
+echo oLink0.Save
+echo.
 echo ' Acceso directo 1: CAJA REGISTRADORA (POS)
 echo Set oLink1 = oWS.CreateShortcut(sDesktop ^& "\MI TIENDA - CAJA.lnk"^)
 echo oLink1.TargetPath = "%~dp0INICIAR-POS.bat"
@@ -54,8 +62,9 @@ cscript //nologo "%VBS_SCRIPT%"
 del "%VBS_SCRIPT%" 2>nul
 
 echo [OK] Accesos directos creados exitosamente en el Escritorio:
-echo      1. MI TIENDA - CAJA.lnk
-echo      2. MI TIENDA - ADMINISTRADOR.lnk
+echo      1. MI TIENDA POS (Programa PC).lnk -> MI-TIENDA-POS.exe (Sin pestañas de navegador)
+echo      2. MI TIENDA - CAJA.lnk
+echo      3. MI TIENDA - ADMINISTRADOR.lnk
 echo.
 echo ======================================================================
 echo   ¡INSTALACIÓN COMPLETADA!

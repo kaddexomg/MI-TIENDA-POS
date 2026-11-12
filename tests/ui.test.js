@@ -183,4 +183,74 @@ test('UI-9: fixtures.js exporta CARRT_2_EMPANADAS y CART_MIXTO con estructura v�
   assert.strictEqual(fixtures.CARRITO_MIXTO, fixtures.CART_MIXTO);
 });
 
-console.log('\n' + (process.exitCode ? '❌ Hubo pruebas fallidas en UI' : '✅ Pruebas de UI y Helpers: ' + passed + '/9 OK') + '\n');
+/* --------------------------------------------------------------------- */
+/* 5. Renderizado seguro de Sidebar y píldora de tasas                   */
+/* --------------------------------------------------------------------- */
+
+test('UI-10: renderSidebar() se ejecuta sin lanzar excepciones y actualiza aside y tasa', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const vm = require('vm');
+
+  const asideEl = { innerHTML: '', classList: { add: () => {}, remove: () => {}, contains: () => false, toggle: () => {} } };
+  const topRateEl = { innerHTML: '', onclick: null };
+
+  const storageMap = new Map();
+  const sandbox = {
+    console,
+    Math,
+    Date,
+    Number,
+    String,
+    Boolean,
+    Array,
+    Object,
+    JSON,
+    document: {
+      body: { classList: { add: () => {}, remove: () => {}, contains: () => false, toggle: () => {} } },
+      getElementById: (id) => {
+        if (id === 'adminAside') return asideEl;
+        if (id === 'topRatePill') return topRateEl;
+        return null;
+      },
+      querySelector: () => null,
+      querySelectorAll: () => [],
+      addEventListener: () => {}
+    },
+    location: { pathname: '/admin/pos.html' },
+    localStorage: {
+      getItem: (k) => storageMap.get(k) || null,
+      setItem: (k, v) => storageMap.set(k, String(v)),
+      removeItem: (k) => storageMap.delete(k)
+    },
+    window: null,
+    addEventListener: () => {},
+    dispatchEvent: () => {},
+    MTP: {
+      state: {
+        inventory: [{ id: 'i1', stock: 10, minStock: 2 }],
+        heldOrders: [],
+        settings: { rateBcv: 42.85, rateEur: 46.60, rateUsdt: 51.40 }
+      }
+    },
+    MTPIcons: { get: () => '<svg></svg>' },
+    MTPAuth: { getCurrentUser: () => ({ role: 'admin', name: 'Admin' }) }
+  };
+  sandbox.window = sandbox;
+
+  const sidenavCode = fs.readFileSync(path.join(__dirname, '../assets/js/sidenav.js'), 'utf8');
+  vm.createContext(sandbox);
+  vm.runInContext(sidenavCode, sandbox);
+
+  // Ejecutar renderSidebar directamente
+  assert.doesNotThrow(() => {
+    sandbox.window.MTPSidebar.renderSidebar();
+  }, 'renderSidebar() no debe lanzar ninguna excepción');
+
+  assert.ok(asideEl.innerHTML.length > 100, 'El HTML del sidebar debe haberse inyectado en adminAside');
+  assert.ok(asideEl.innerHTML.includes('Vender'), 'Debe incluir la opción Vender');
+  assert.ok(asideEl.innerHTML.includes('Imprimir Etiquetas'), 'Debe incluir la opción Imprimir Etiquetas');
+  assert.ok(topRateEl.innerHTML.includes('BCV: <strong>42.85</strong>'), 'Debe haber actualizado la tasa BCV en el topbar');
+});
+
+console.log('\n' + (process.exitCode ? '❌ Hubo pruebas fallidas en UI' : '✅ Pruebas de UI y Helpers: ' + passed + '/10 OK') + '\n');

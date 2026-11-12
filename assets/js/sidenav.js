@@ -389,15 +389,15 @@
         `;
       }
 
-      const targetFile = item.href.split('/').pop().toLowerCase();
-      const isCross = item.href.startsWith('..');
+      const targetFile = item.href ? item.href.split('/').pop().toLowerCase() : '';
+      const isCross = item.href ? item.href.startsWith('..') : false;
       const isActive = !isCross && targetFile === currentFile;
       const badgeHtml = item.badge
         ? `<span class="aside-badge ${item.badgeClass || ''}">${item.badge}</span>`
         : '';
 
       return `
-        <a href="${item.href}" class="aside-link ${item.theme || ''} ${isActive ? 'active' : ''}" title="${item.label}">
+        <a href="${item.href || '#'}" class="aside-link ${item.theme || ''} ${isActive ? 'active' : ''}" title="${item.label}">
           <span class="aside-link-left">
             <span class="aside-ico-box">
               ${icoHtml}
@@ -409,7 +409,7 @@
       `;
     }
 
-    const isOnMorePage = !isCaja && ADMIN_MORE_LINKS.some(m => m.href.toLowerCase() === currentFile);
+    const isOnMorePage = !isCaja && ADMIN_MORE_LINKS.some(m => m.href && m.href.toLowerCase() === currentFile);
     const moreOpenSaved = localStorage.getItem(MORE_KEY) === '1';
     const showMoreOpen = isOnMorePage || moreOpenSaved || isCollapsed;
 
