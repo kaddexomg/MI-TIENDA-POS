@@ -22,7 +22,31 @@
   let changeRemainderMode = 'PM'; // 'PM' (Pago Móvil Bs) | 'BS_CASH' (Efectivo Bs)
   let changeRateManual = 0;     // tasa real negociada por el cajero en el momento
   let lastRenderedSale = null;
+  let activeOrderMode = 'comer_aqui'; // 'comer_aqui' | 'para_llevar' | 'delivery'
   const BS_CHANGE_STEP = 0.50; // el vuelto en Bs se entrega en monedas de 0,50
+
+  function setOrderMode(mode) {
+    activeOrderMode = mode || 'comer_aqui';
+    const btns = document.querySelectorAll('#posOrderModeBar .order-mode-btn');
+    btns.forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-mode') === activeOrderMode);
+    });
+  }
+
+  function getOrderMode() {
+    return activeOrderMode;
+  }
+
+  function flashCardTap(refId) {
+    try {
+      const card = document.querySelector(`[onclick*="${refId}"]`);
+      if (card) {
+        card.classList.remove('card-tap-glow');
+        void card.offsetWidth;
+        card.classList.add('card-tap-glow');
+      }
+    } catch (_) {}
+  }
 
   /* ==========================================================================
      INICIALIZACIÓN DEL POS
@@ -136,6 +160,12 @@
     const scanInput = document.getElementById('posScannerInput');
     if (scanInput) scanInput.value = '';
     renderFamiliesNav();
+    const container = document.getElementById('posProductsContainer');
+    if (container) {
+      container.style.animation = 'none';
+      void container.offsetWidth;
+      container.style.animation = '';
+    }
     renderProductsCol('');
   }
 
@@ -647,6 +677,7 @@
       closeModifiersDrawer();
     }
 
+    flashCardTap(variant.id);
     renderTicket();
     renderProductsCol();
   }
@@ -690,6 +721,7 @@
     }
 
     closeModifiersDrawer();
+    flashCardTap(item.id);
     renderTicket();
     renderProductsCol();
   }
@@ -881,6 +913,15 @@
     if (countEl) countEl.textContent = `${totalItems} producto${totalItems === 1 ? '' : 's'}`;
     if (totUsdEl) totUsdEl.textContent = MTP.fmtUSD(totalUsd);
     if (totBsEl) totBsEl.textContent = MTP.fmtBsRaw(totalBs);
+
+    // Sincronizar botones de modalidad (Comer Aquí / Para Llevar / Delivery)
+    const modeBtns = document.querySelectorAll('#posOrderModeBar .order-mode-btn');
+    if (modeBtns.length) {
+      modeBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-mode') === activeOrderMode);
+      });
+    }
+
     if (taxBoxEl) {
       if (!cart.length) {
         taxBoxEl.style.display = 'none';
@@ -888,13 +929,13 @@
         taxBoxEl.style.display = 'block';
         const modeLabel = tax.ivaMode === 'INCLUIDO' ? 'IVA 16% (incluido)' : 'IVA 16% (+recargo)';
         taxBoxEl.innerHTML = `
-          <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#475569">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#94A3B8">
             <span>Subtotal (Exento: ${MTP.fmtUSD(tax.exentoUsd)} · Gravado: ${MTP.fmtUSD(tax.baseG16Usd)})</span>
-            <strong style="font-family:var(--font-mono)">${MTP.fmtUSD(tax.subtotalBaseUsd)}</strong>
+            <strong style="font-family:var(--font-mono);color:#FFFFFF">${MTP.fmtUSD(tax.subtotalBaseUsd)}</strong>
           </div>
-          <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#0f172a;margin-top:2px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#F8FAFC;margin-top:2px">
             <span>${modeLabel}:</span>
-            <strong style="font-family:var(--font-mono);color:#b45309">+${MTP.fmtUSD(tax.totalIvaUsd)} (${tax.totalIvaBs.toFixed(2)} Bs)</strong>
+            <strong style="font-family:var(--font-mono);color:#FBBF24">+${MTP.fmtUSD(tax.totalIvaUsd)} (${tax.totalIvaBs.toFixed(2)} Bs)</strong>
           </div>
         `;
       }
@@ -902,10 +943,10 @@
 
     if (!cart.length) {
       listEl.innerHTML = `
-        <div style="text-align:center;padding:36px 12px;color:#64748b;font-size:12px">
+        <div style="text-align:center;padding:36px 12px;color:#94A3B8;font-size:12px">
           <div style="font-size:26px;margin-bottom:6px">🛒</div>
-          <strong>Orden vacía</strong>
-          <p style="margin:4px 0 0 0;font-size:11px">
+          <strong style="color:#FFFFFF">Orden vacía</strong>
+          <p style="margin:4px 0 0 0;font-size:11px;color:#64748B">
             Toca un sabor o escanea un código para facturar rápido.
           </p>
         </div>
@@ -1824,6 +1865,7 @@
 
     const recorded = MTP.recordSale({
       customer,
+      orderMode: activeOrderMode,
       cashier: location.pathname.includes('/caja/') ? 'Cajero Turno' : 'Admin / Caja',
       totalUsd,
       totalBs,
@@ -1885,6 +1927,7 @@
       orderNumber: MTP.state.settings.nextOrderNumber,
       createdAt: new Date().toISOString(),
       customer: (customerInput && customerInput.value.trim()) || 'Orden / Cotización',
+      orderMode: activeOrderMode,
       rateBcv: bcv,
       subtotalUsd: tax.subtotalBaseUsd,
       exentoUsd: tax.exentoUsd,
@@ -1962,12 +2005,17 @@
       ? 'COMPROBANTE FISCAL HOMOLOGADO'
       : 'NOTA DE ENTREGA · CONTROL INTERNO · NO ES FACTURA FISCAL';
 
+    const modeLabel = sale.orderMode === 'delivery'
+      ? '🛵 DELIVERY'
+      : (sale.orderMode === 'para_llevar' ? '🛍️ PARA LLEVAR' : '🍽️ COMER AQUÍ');
+
     // La comanda de cocina SOLO se imprime si la venta tiene platos.
     const kitchenTicket = hasDishes ? `
         <div class="thermal-ticket">
           <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:6px">
             <h4 style="margin:0;font-size:15px;font-weight:900">🍳 COMANDA DE COCINA</h4>
             <div style="font-size:13px;font-weight:bold;margin-top:2px">ORDEN #${sale.orderNumber}</div>
+            <div style="font-size:12px;font-weight:900;border:2px solid #000;padding:2px 4px;margin:4px 0">${modeLabel}</div>
             <div style="font-size:11px">${dateStr}</div>
             <div style="font-size:12px;font-weight:bold;margin-top:3px;background:#000;color:#fff;padding:2px">CLIENTE: ${sale.customer}</div>
           </div>
@@ -2059,6 +2107,8 @@
     closeModifiersDrawer,
 
     // Gestión del ticket
+    setOrderMode,
+    getOrderMode,
     changeCartQty,
     removeCartLine,
     addKitchenNote,

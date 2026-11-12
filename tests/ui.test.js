@@ -253,4 +253,28 @@ test('UI-10: renderSidebar() se ejecuta sin lanzar excepciones y actualiza aside
   assert.ok(topRateEl.innerHTML.includes('BCV: <strong>42.85</strong>'), 'Debe haber actualizado la tasa BCV en el topbar');
 });
 
-console.log('\n' + (process.exitCode ? '❌ Hubo pruebas fallidas en UI' : '✅ Pruebas de UI y Helpers: ' + passed + '/10 OK') + '\n');
+test('UI-11: view-transitions.js define window.MTPNavigate de forma segura', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const vm = require('vm');
+
+  const sandbox = {
+    window: {},
+    document: {
+      addEventListener: () => {},
+      querySelector: () => null,
+      body: { classList: { add: () => {}, remove: () => {} } }
+    },
+    matchMedia: () => ({ matches: false }),
+    requestAnimationFrame: (cb) => cb()
+  };
+  sandbox.window = sandbox;
+
+  const code = fs.readFileSync(path.join(__dirname, '../assets/js/view-transitions.js'), 'utf8');
+  vm.createContext(sandbox);
+  vm.runInContext(code, sandbox);
+
+  assert.strictEqual(typeof sandbox.window.MTPNavigate, 'function', 'MTPNavigate debe ser una función');
+});
+
+console.log('\n' + (process.exitCode ? '❌ Hubo pruebas fallidas en UI' : '✅ Pruebas de UI y Helpers: ' + passed + '/11 OK') + '\n');

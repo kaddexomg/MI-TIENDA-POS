@@ -191,3 +191,26 @@
       - Botón `[🏷️ Etiqueta de Tanda]` para bandejas de producción en `admin/recetas.html`.
       - Enlace `"🏷️ Imprimir Etiquetas"` con badge de novedad en el menú lateral.
     - **Suite de Pruebas `tests/barcode.test.js` (8/8 OK)** integrada en `tests/run.js` (100% de pruebas automáticas pasando).
+
+12. **✅ REDISEÑO RADICAL DEL POS Y COTIZADOR (Obsidian Pro & Neon Luminescence, Apple Design & Emil Kowalski Motion Transitions)**:
+    - **Atmósfera Visual Obsidian Pro Glass (`assets/css/pos.css`)**:
+      - Eliminación total del ruido visual discordante (fondos amarillos y menta sucios, bordes caóticos y botones diminutos).
+      - Paleta oscura Obsidian Slate (`#0B0F19`) con paneles en cristal satinado (`background: rgba(15, 23, 42, 0.82); backdrop-filter: blur(16px)`).
+      - Acentos de neón lumínicos de alta gama: Esmeralda Neón (`#10B981` / `#34D399`) para dinero, totales y confirmaciones; Ámbar Cálido (`#F59E0B` / `#FBBF24`) para el botón gigante F2 y comandas; Cyan Neón (`#38BDF8`) para montos en Bolívares calculados con tasa BCV.
+    - **Motor de Transiciones Fluidas entre Secciones (`assets/js/view-transitions.js`)**:
+      - Transición suave por hardware GPU (`opacity`, `transform`) al navegar entre el Cotizador/Caja y el Dashboard (Mi Día), eliminando por completo el pantallazo blanco de recarga clásica.
+      - Botón directo en la barra superior: `[ 🏠 Mi Día / Dashboard ]`.
+      - Soporte para View Transitions API nativa con fallback acelerado y salvaguarda `@media (prefers-reduced-motion: reduce)`.
+    - **Presentación de Catálogo y Micro-Interacciones Hápticas**:
+      - Tarjetas de producto (`.pos-flavor-card`, `.pos-retail-card`) con presencia ejecutiva, fotos reales locales nítidas de 48px, código PLU en badge dorado, precios tabulares de alto contraste (`$1.50` en esmeralda y `Bs` en cyan).
+      - Destello lumínico táctil (`@keyframes cardTapGlow`) al seleccionar productos y respuesta háptica inercial (`:active { transform: scale(0.96); }`).
+      - Steppers de cantidad táctiles generosos (`[−]` y `[+]`) directamente en las tarjetas para ajustar productos sin necesidad de buscar en el ticket.
+      - Animación de cascada inercial (`cardCascadeIn 180ms`) al alternar entre las 9 Familias maestras.
+    - **Pre-Ticket, Cotizador y Selector de Modalidad**:
+      - Selector de modalidad de venta en 1 toque en la cabecera del pedido: `[🍽️ Comer Aquí]`, `[🛍️ Para Llevar]`, `[🛵 Delivery]` con reflejo instantáneo en comandas de cocina y registros de venta.
+      - Barra ergonómica de cliente/mesa con botón `[Vaciar]` de acceso rápido.
+      - Renglones de pedido en tarjetas oscuras elevadas con animación de entrada (`ticketRowEnter 160ms`), steppers táctiles de 26px y subtotales en números tabulares sin saltos de alineación.
+      - Desglose fiscal transparente (Base Gravada 16%, Exento Art. 18, IVA 16%).
+      - Gran bloque de totales con Cifra Gigante en Dólares (`$0.00`) y Cifra en Bolívares calculada en tiempo real.
+      - Botón central gigante `[ 💳 COBRAR Y ENTREGAR VUELTO (F2) ]` con gradiente ámbar/dorado de alto relieve y glow lumínico.
+    - **Verificación Automatizada 100% Verde**: 31 pruebas automatizadas pasando con éxito (`tests/run.js`), balanceo de etiquetas HTML íntegro y validación de sintaxis en todos los scripts.

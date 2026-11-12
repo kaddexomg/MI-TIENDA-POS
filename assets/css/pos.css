@@ -1,20 +1,34 @@
 /* ==========================================================================
-   MI-TIENDA-POS — Pantalla de Caja Rápida v5 (Fast Touch POS Engine)
-   - Arquitectura 3 Columnas Fijas (Zero-Scroll global a 1366x768 y 1024x768)
-   - Col 1: Familias maestras (~160px) con atajo [1]-[9]
-   - Col 2: Toolbar + Multiplicador + Más Vendidos + Cuadrícula de Sabores y Productos
-   - Col 3: Ticket Activo (~340px) + Botón Gigante Ámbar (F2)
-   - Cero imágenes pesadas en botones de venta para ultra-rendimiento Windows 7
+   MI-TIENDA-POS — pos.css (Rediseño Radical Obsidian Pro & Neon Luminescence)
+   - Arquitectura a 3 Columnas Fijas (Zero-Scroll 100vh)
+   - Columna 1: Familias Maestras (~165px) con accesos directos [1]-[9]
+   - Columna 2: Centro Flexible (Toolbar, Más Vendidos, Cuadrícula de Sabores y Mercancía)
+   - Columna 3: Pre-Ticket / Cotizador Activo (~350px) + Selector de Modalidad + Botón Gigante (F2)
+   - Principios Apple Design & Emil Kowalski: Micro-interacciones hápticas,
+     números tabulares, curvas inerciales y cero saltos de página
+   - 100% Offline, compatible con Windows 7 y Chromium 109
    ========================================================================== */
 
+/* --------------------------------------------------------------------------
+   1. ESTRUCTURA Y ENTORNO GLOBAL ZERO-SCROLL
+   -------------------------------------------------------------------------- */
 body.pos-fullscreen-body {
   overflow: hidden;
   height: 100vh;
   width: 100vw;
   margin: 0;
   padding: 0;
-  background: var(--bg, #f4f6f8);
+  background: #0B0F19 radial-gradient(1200px 800px at 50% -120px, #162036 0%, #0B0F19 100%);
+  color: #F8FAFC;
   font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+body.pos-fullscreen-body .admin-wrap {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
 }
 
 body.pos-fullscreen-body .admin-main {
@@ -24,19 +38,146 @@ body.pos-fullscreen-body .admin-main {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
+  transition: opacity 160ms cubic-bezier(0.16, 1, 0.3, 1), transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Transiciones fluidas entre pantallas (Apple Motion View Transitions) */
+.mtp-page-entering {
+  animation: posViewEnter 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mtp-page-exiting {
+  opacity: 0 !important;
+  transform: translateY(-6px) scale(0.995) !important;
+  transition: opacity 160ms cubic-bezier(0.16, 1, 0.3, 1), transform 160ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  pointer-events: none;
+}
+
+@keyframes posViewEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. CABECERA SUPERIOR REFINADA (TOPBAR)
+   -------------------------------------------------------------------------- */
 body.pos-fullscreen-body .admin-topbar {
-  height: 42px;
-  min-height: 42px;
-  max-height: 42px;
-  padding: 0 10px;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  padding: 0 12px;
+  flex-shrink: 0;
+  background: rgba(11, 15, 25, 0.88);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  z-index: 20;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.topbar-title {
+  min-width: 0;
+}
+
+.topbar-title h2 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-title p {
+  margin: 1px 0 0 0;
+  font-size: 10.5px;
+  color: #94A3B8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
 }
 
+.topbar-rate-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34D399;
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.topbar-rate-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34D399;
+  box-shadow: 0 0 6px #34D399;
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.btn-nav-morph {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #F1F5F9;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 7px;
+  text-decoration: none;
+  transition: all 140ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-nav-morph:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10B981;
+  color: #FFFFFF;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+}
+
 body.pos-fullscreen-body .admin-content {
-  padding: 5px 8px;
-  height: calc(100vh - 42px);
+  padding: 8px 10px;
+  height: calc(100vh - 44px);
   width: 100%;
   max-width: 100%;
   overflow: hidden;
@@ -45,26 +186,14 @@ body.pos-fullscreen-body .admin-content {
   box-sizing: border-box;
 }
 
-/* ==========================================================================
-   DISTRIBUCIÓN A 3 COLUMNAS FIJAS (ZERO-SCROLL GLOBAL)
-   ========================================================================== */
-.pos-layout-3col {
-  display: grid;
-  grid-template-columns: 160px minmax(0, 1fr) 340px;
-  gap: 6px;
-  height: 100%;
-  width: 100%;
-  max-width: 100%;
-  min-height: 0;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-/* Compatibilidad con clase anterior */
+/* --------------------------------------------------------------------------
+   3. ARQUITECTURA A 3 COLUMNAS FIJAS (ZERO-SCROLL)
+   -------------------------------------------------------------------------- */
+.pos-layout-3col,
 .pos-layout {
   display: grid;
-  grid-template-columns: 160px minmax(0, 1fr) 340px;
-  gap: 6px;
+  grid-template-columns: 165px minmax(0, 1fr) 350px;
+  gap: 8px;
   height: 100%;
   width: 100%;
   max-width: 100%;
@@ -76,60 +205,91 @@ body.pos-fullscreen-body .admin-content {
 @media (max-width: 1120px) {
   .pos-layout-3col,
   .pos-layout {
-    grid-template-columns: 135px minmax(0, 1fr) 315px;
-    gap: 5px;
+    grid-template-columns: 140px minmax(0, 1fr) 320px;
+    gap: 6px;
   }
 }
 
-/* ==========================================================================
-   COLUMNA 1: FAMILIAS MAESTRAS (Izquierda, ~160px — Apple Tabs)
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   4. COLUMNA 1: FAMILIAS MAESTRAS (IZQUIERDA)
+   -------------------------------------------------------------------------- */
 .pos-col-families {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   gap: 5px;
-  background: #FFFFFF;
-  border: 1.5px solid var(--border, #E2E8F0);
-  border-radius: var(--radius, 12px);
-  padding: 6px 5px;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 7px 6px;
   overflow-y: auto;
   overflow-x: hidden;
   flex-shrink: 0;
   box-sizing: border-box;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* Scrollbar estilizado oscuro */
+.pos-col-families::-webkit-scrollbar,
+.pos-products-scroll::-webkit-scrollbar,
+.ticket-items::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.pos-col-families::-webkit-scrollbar-track,
+.pos-products-scroll::-webkit-scrollbar-track,
+.ticket-items::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 99px;
+}
+.pos-col-families::-webkit-scrollbar-thumb,
+.pos-products-scroll::-webkit-scrollbar-thumb,
+.ticket-items::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 99px;
+}
+.pos-col-families::-webkit-scrollbar-thumb:hover,
+.pos-products-scroll::-webkit-scrollbar-thumb:hover,
+.ticket-items::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.5);
 }
 
 .pos-family-nav-btn {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: 8px 9px;
-  background: #F8FAFC;
-  border: 1.5px solid #E2E8F0;
+  padding: 8px 10px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1.5px solid rgba(255, 255, 255, 0.06);
   border-left: 4px solid var(--fam-color, #64748B);
-  border-radius: var(--radius-sm, 8px);
+  border-radius: 10px;
   cursor: pointer;
   text-align: left;
   user-select: none;
-  transition: all var(--dur-fast, 140ms) var(--ease-fluid);
+  transition: all 140ms cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
+  box-sizing: border-box;
 }
 
 .pos-family-nav-btn:hover {
-  background: #F1F5F9;
-  border-color: #CBD5E1;
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateX(3px);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.pos-family-nav-btn:active {
+  transform: scale(0.97) translateX(2px);
 }
 
 .pos-family-nav-btn.active {
-  background: #ECFDF5;
+  background: rgba(16, 185, 129, 0.16);
   border-color: #10B981;
   border-left-width: 5px;
   border-left-color: var(--fam-color, #10B981);
-  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3), 0 4px 14px rgba(16, 185, 129, 0.22);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.25), inset 0 0 12px rgba(16, 185, 129, 0.1);
 }
 
 .pos-fam-top {
@@ -141,46 +301,71 @@ body.pos-fullscreen-body .admin-content {
 
 .pos-fam-key {
   font-family: var(--font-mono, monospace);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 900;
-  background: #0F172A;
+  background: rgba(2, 6, 23, 0.85);
   color: #FBBF24;
   padding: 2px 5px;
   border-radius: 4px;
   line-height: 1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .pos-family-nav-btn.active .pos-fam-key {
   background: #10B981;
-  color: #FFFFFF;
+  color: #0F172A;
+  font-weight: 900;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
 }
 
 .pos-fam-count {
   font-size: 9.5px;
   font-weight: 700;
-  color: #64748B;
+  color: #94A3B8;
   text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .pos-family-nav-btn.active .pos-fam-count {
-  color: #065F46;
+  color: #34D399;
 }
 
 .pos-fam-name {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 800;
-  color: #0F172A;
-  line-height: 1.2;
+  color: #F8FAFC;
+  line-height: 1.25;
 }
 
 .pos-family-nav-btn.active .pos-fam-name {
-  color: #065F46;
+  color: #FFFFFF;
   font-weight: 900;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
 }
 
-/* ==========================================================================
-   COLUMNA 2: CENTRO FLEXIBLE
-   ========================================================================== */
+/* Colores de las 9 Familias */
+.pos-family-nav-btn[data-fam-id="fritos"],
+.pos-family-nav-btn[data-family="fritos"]    { --fam-color: #F59E0B; }
+.pos-family-nav-btn[data-fam-id="arepas"],
+.pos-family-nav-btn[data-family="arepas"]    { --fam-color: #10B981; }
+.pos-family-nav-btn[data-fam-id="almuerzos"],
+.pos-family-nav-btn[data-family="almuerzos"] { --fam-color: #F97316; }
+.pos-family-nav-btn[data-fam-id="viveres"],
+.pos-family-nav-btn[data-family="viveres"]   { --fam-color: #0EA5E9; }
+.pos-family-nav-btn[data-fam-id="bebidas"],
+.pos-family-nav-btn[data-family="bebidas"]   { --fam-color: #06B6D4; }
+.pos-family-nav-btn[data-fam-id="cafeteria"],
+.pos-family-nav-btn[data-family="cafeteria"] { --fam-color: #8B5CF6; }
+.pos-family-nav-btn[data-fam-id="chucherias"],
+.pos-family-nav-btn[data-family="chucherias"]{ --fam-color: #EC4899; }
+.pos-family-nav-btn[data-fam-id="cervezas"],
+.pos-family-nav-btn[data-family="cervezas"]  { --fam-color: #EAB308; }
+.pos-family-nav-btn[data-fam-id="cigarros"],
+.pos-family-nav-btn[data-family="cigarros"]  { --fam-color: #64748B; }
+
+/* --------------------------------------------------------------------------
+   5. COLUMNA 2: CENTRO FLEXIBLE (CATÁLOGO Y VENTAS)
+   -------------------------------------------------------------------------- */
 .pos-col-main,
 .pos-left-col {
   flex: 1;
@@ -188,24 +373,26 @@ body.pos-fullscreen-body .admin-content {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   overflow: hidden;
   box-sizing: border-box;
 }
 
-/* Barra Superior: Escáner + Multiplicador + Cámara + Estado */
+/* Toolbar Superior: Escáner + Multiplicador + Cámara + Acciones */
 .pos-main-toolbar,
 .scanner-bar {
-  background: #111827;
-  border-radius: 8px;
-  padding: 4px 8px;
+  background: rgba(15, 23, 42, 0.82);
+  border-radius: 10px;
+  padding: 5px 8px;
   display: flex;
   align-items: center;
   gap: 6px;
-  border: 1.5px solid #10b981;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
   min-width: 0;
   box-sizing: border-box;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
 }
 
 .pos-scanner-wrap,
@@ -219,167 +406,174 @@ body.pos-fullscreen-body .admin-content {
 
 .scanner-icon {
   position: absolute;
-  left: 8px;
+  left: 9px;
   font-size: 13px;
   pointer-events: none;
-  color: #94a3b8;
+  color: #94A3B8;
 }
 
 .pos-scanner-input,
 .scanner-input {
   width: 100%;
-  padding: 5px 8px 5px 28px;
-  border-radius: 5px;
-  border: 1.5px solid #374151;
-  background: #ffffff;
-  color: #0f172a;
+  padding: 6px 10px 6px 30px;
+  border-radius: 7px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  background: rgba(2, 6, 23, 0.7);
+  color: #FFFFFF;
   font-size: 12.5px;
   font-weight: 700;
   box-sizing: border-box;
+  transition: all 140ms ease;
+}
+
+.pos-scanner-input::placeholder {
+  color: #64748B;
+  font-weight: 500;
 }
 
 .pos-scanner-input:focus,
 .scanner-input:focus {
   outline: none;
-  border-color: #10b981;
+  border-color: #10B981;
+  background: rgba(2, 6, 23, 0.9);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
 }
 
-/* Selector de Multiplicador Rápido [1x], [2x], [3x], [5x] */
+/* Multiplicador [1x] [2x] [3x] [5x] */
 .pos-multiplier-group {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  background: #1f2937;
+  background: rgba(2, 6, 23, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
   padding: 2px;
-  border-radius: 5px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
 .pos-mult-btn {
-  padding: 3px 6px;
-  border-radius: 4px;
-  border: 1px solid transparent;
   background: transparent;
-  color: #cbd5e1;
+  border: none;
+  color: #94A3B8;
   font-family: var(--font-mono, monospace);
-  font-size: 11px;
-  font-weight: 900;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 4px 7px;
+  border-radius: 5px;
   cursor: pointer;
-  transition: all 0.1s ease;
+  user-select: none;
+  transition: all 100ms;
 }
 
 .pos-mult-btn:hover {
-  background: #374151;
-  color: #ffffff;
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .pos-mult-btn.active {
-  background: #f59e0b;
-  color: #0f172a;
+  background: #10B981;
+  color: #0F172A;
   font-weight: 900;
-  border-color: #d97706;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
 }
 
 .btn-camera-scan {
-  background: #059669;
-  color: #ffffff;
-  border: none;
-  font-weight: 800;
-  padding: 5px 8px;
-  font-size: 11px;
-  border-radius: 5px;
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #F1F5F9;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 9px;
+  border-radius: 7px;
   cursor: pointer;
   white-space: nowrap;
-  flex-shrink: 0;
+  transition: all 120ms;
 }
 
 .btn-camera-scan:hover {
-  background: #047857;
+  background: rgba(59, 130, 246, 0.25);
+  border-color: #3B82F6;
+  color: #FFFFFF;
 }
 
-.pos-scanner-status,
-.scanner-status {
-  display: flex;
+.pos-scanner-status {
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #10b981;
   font-family: var(--font-mono, monospace);
   font-size: 10.5px;
   font-weight: 900;
-  white-space: nowrap;
+  color: #FBBF24;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 3px 6px;
+  border-radius: 5px;
   flex-shrink: 0;
 }
 
-.pulse-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
-  display: inline-block;
-}
-
-/* Barra de Más Vendidos (Chips de 1 Toque) */
+/* Barra de Más Vendidos (Chips Rápidos) */
 .pos-bestsellers-bar {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   overflow-x: auto;
   overflow-y: hidden;
-  background: #ffffff;
-  border: 1.5px solid var(--border, #cbd5e1);
-  border-radius: 7px;
-  padding: 3px 6px;
+  padding: 3px 2px;
   flex-shrink: 0;
-  box-sizing: border-box;
+}
+
+.pos-bestsellers-bar::-webkit-scrollbar {
+  height: 3px;
 }
 
 .pos-bs-label {
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 900;
-  color: #b45309;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
+  color: #FBBF24;
   white-space: nowrap;
-  flex-shrink: 0;
-  margin-right: 2px;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .pos-chip-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 7px;
-  border-radius: 5px;
-  background: #f8fafc;
-  border: 1px solid var(--border, #cbd5e1);
-  font-size: 11px;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 7px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11.5px;
   font-weight: 700;
-  color: var(--txt, #0f172a);
+  color: #F1F5F9;
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
   flex-shrink: 0;
-  transition: all 0.1s;
+  transition: all 120ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 .pos-chip-btn:hover {
-  background: #ecfdf5;
-  border-color: #059669;
-  color: #065f46;
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10B981;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
 }
 
 .pos-chip-btn:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
 }
 
 .pos-chip-price {
   font-family: var(--font-mono, monospace);
   font-weight: 900;
-  color: #059669;
-  font-size: 10px;
+  color: #34D399;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Cuadrícula de Productos y Sabores (Scroll interno vertical) */
@@ -389,7 +583,7 @@ body.pos-fullscreen-body .admin-content {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 3px;
+  padding-right: 4px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -399,89 +593,157 @@ body.pos-fullscreen-body .admin-content {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
+  animation: cardCascadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cardCascadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .pos-product-section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .pos-section-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding: 3px 8px;
-  background: #f1f5f9;
-  border-left: 4px solid var(--primary, #059669);
-  border-radius: 4px;
+  padding: 4px 10px;
+  background: rgba(30, 41, 59, 0.45);
+  border-left: 4px solid #10B981;
+  border-radius: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .pos-section-title {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 800;
-  color: #0f172a;
+  color: #FFFFFF;
 }
 
 .pos-section-subtitle {
   font-size: 10.5px;
-  color: #64748b;
+  color: #94A3B8;
   font-weight: 600;
 }
 
-/* Grilla de Sabores táctiles grandes */
+/* Cuadrícula de Tarjetas Táctiles */
 .pos-flavors-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
   gap: 6px;
 }
 
 @media (max-width: 1120px) {
   .pos-flavors-grid {
-    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
-    gap: 4px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 5px;
   }
 }
 
-/* Botón táctil de sabor (Estilo Apple Touch POS) */
-.pos-flavor-btn {
+/* Tarjeta de Producto (Estilo Obsidian Pro Glass) */
+.pos-flavor-card,
+.pos-retail-card {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 70px;
+  min-height: 74px;
   padding: 8px 10px;
-  background: #FFFFFF;
-  border: 1.5px solid var(--border, #E2E8F0);
-  border-radius: var(--radius, 12px);
+  background: rgba(22, 30, 46, 0.72);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   cursor: pointer;
   text-align: left;
   user-select: none;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-  transition: border-color var(--dur-fast, 140ms) var(--ease-fluid),
-              background var(--dur-fast, 140ms) var(--ease-fluid),
-              transform var(--dur-tap, 80ms) var(--ease-out),
-              box-shadow var(--dur-fast, 140ms) var(--ease-fluid);
+  transition: all 140ms cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
   position: relative;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
 }
 
-.pos-flavor-btn:hover {
-  border-color: #10B981;
-  background: #F8FAFC;
+.pos-flavor-card:hover,
+.pos-retail-card:hover {
+  border-color: rgba(16, 185, 129, 0.7);
+  background: rgba(30, 41, 59, 0.9);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.pos-flavor-btn:active {
+.pos-flavor-card:active,
+.pos-retail-card:active {
   transform: scale(0.96) translateY(1px);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.pos-flavor-btn.in-cart {
+/* Estado de Producto en el Carrito */
+.pos-flavor-card.in-cart,
+.pos-retail-card.in-cart {
   border-color: #10B981;
-  background: #F0FDF4;
-  box-shadow: 0 0 0 2px #10B981, 0 4px 12px rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 0 1.5px #10B981, 0 0 20px rgba(16, 185, 129, 0.32);
+}
+
+/* Efecto de destello al añadir al carrito */
+.card-tap-glow {
+  animation: cardTapGlow 220ms ease-out forwards;
+}
+
+@keyframes cardTapGlow {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8), 0 0 24px rgba(16, 185, 129, 0.6); }
+  100% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0), 0 0 16px rgba(16, 185, 129, 0.25); }
+}
+
+.pos-card-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+}
+
+.pos-card-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 9px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0F172A;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.pos-card-thumb-ico {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #94A3B8;
+  font-size: 20px;
+}
+
+.pos-card-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .pos-btn-top {
@@ -496,90 +758,100 @@ body.pos-fullscreen-body .admin-content {
   font-family: var(--font-mono, monospace);
   font-size: 10px;
   font-weight: 800;
-  color: #1E293B;
-  background: #E2E8F0;
+  color: #FBBF24;
+  background: rgba(2, 6, 23, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 1px 5px;
   border-radius: 4px;
   line-height: 1;
 }
 
-.pos-btn-cart-badge {
-  font-family: var(--font-mono, monospace);
-  font-size: 10.5px;
-  font-weight: 900;
-  color: #FFFFFF;
-  background: #10B981;
-  padding: 2px 7px;
-  border-radius: 99px;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
-  line-height: 1.1;
-}
-
 .pos-btn-name {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 800;
-  color: #0F172A;
+  color: #FFFFFF;
   line-height: 1.25;
-  margin: 1px 0 4px 0;
+  margin: 2px 0 4px 0;
   word-break: break-word;
 }
 
-.pos-card-row {
-  display: flex;
+/* Stepper integrado dentro de la tarjeta */
+.pos-btn-stepper {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  width: 100%;
+  background: rgba(16, 185, 129, 0.95);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  z-index: 2;
 }
 
-.pos-card-thumb {
-  width: 50px;
-  height: 50px;
-  border-radius: 9px;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 1px solid #CBD5E1;
-  background: #F8FAFC;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+.pos-step-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: none;
+  background: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  transition: background 100ms;
 }
 
-.pos-card-thumb-ico {
-  width: 44px;
-  height: 44px;
-  border-radius: 7px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
+.pos-step-btn:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.pos-step-btn.minus {
+  background: rgba(220, 38, 38, 0.85);
+}
+
+.pos-step-btn.minus:hover {
+  background: #DC2626;
+}
+
+.pos-step-num {
+  font-size: 12px;
+  font-weight: 900;
+  color: #FFFFFF;
+  padding: 0 5px;
+  min-width: 16px;
+  text-align: center;
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.pos-card-edit-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+  font-size: 11px;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  color: #475569;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 120ms;
 }
 
-.pos-card-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.pos-tax-pill {
-  font-size: 10px;
-  font-weight: 800;
-  padding: 1px 5px;
-  border-radius: 4px;
-  line-height: 1.1;
-  white-space: nowrap;
-}
-
-.pos-tax-pill.g16 {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.pos-tax-pill.exento {
-  background: #dcfce7;
-  color: #166534;
+.pos-card-edit-btn:hover {
+  opacity: 1;
+  background: #3B82F6;
+  color: #FFFFFF;
+  border-color: #3B82F6;
 }
 
 .pos-btn-bottom {
@@ -587,176 +859,106 @@ body.pos-fullscreen-body .admin-content {
   align-items: baseline;
   justify-content: space-between;
   gap: 4px;
-  border-top: 1px dashed #e2e8f0;
-  padding-top: 3px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 4px;
+}
+
+.pos-btn-prices {
+  display: flex;
+  flex-direction: column;
 }
 
 .pos-btn-usd {
   font-family: var(--font-mono, monospace);
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 900;
-  color: #0f172a;
+  color: #34D399;
 }
 
 .pos-btn-bs {
   font-family: var(--font-mono, monospace);
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 700;
-  color: #059669;
+  color: #38BDF8;
 }
 
-/* Botón de producto de minimercado / venta directa */
-.pos-retail-btn {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 64px;
-  padding: 5px 7px;
-  background: #ffffff;
-  border: 1.5px solid var(--border, #cbd5e1);
-  border-radius: 7px;
-  cursor: pointer;
-  text-align: left;
-  user-select: none;
-  transition: border-color 0.1s, background 0.1s, transform 0.05s;
-  box-sizing: border-box;
-  position: relative;
+/* Badges Fiscales (+IVA / Exento) */
+.pos-tax-pill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
-.pos-retail-btn:hover {
-  border-color: #2563eb;
-  background: #f8fafc;
+.pos-tax-pill.g16 {
+  background: rgba(245, 158, 11, 0.2);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
-.pos-retail-btn:active {
-  transform: scale(0.97);
-}
-
-.pos-retail-btn.in-cart {
-  border-color: #059669;
-  background: #f0fdf4;
-  box-shadow: 0 0 0 1px #059669;
+.pos-tax-pill.exento {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .pos-stock-pill {
   font-size: 9.5px;
   font-weight: 800;
-  padding: 1px 4px;
-  border-radius: 3px;
+  padding: 1px 5px;
+  border-radius: 4px;
   line-height: 1;
 }
 
-.pos-stock-ok {
-  background: #dcfce7;
-  color: #166534;
+.pos-stock-pill.pos-stock-ok {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34D399;
 }
 
-.pos-stock-low {
-  background: #fee2e2;
-  color: #991b1b;
+.pos-stock-pill.pos-stock-low {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
-/* Panel / Drawer Integrado de Modificadores (No Bloqueante) */
-.pos-modifiers-drawer {
-  background: #0f172a;
-  color: #ffffff;
-  border-radius: 8px;
-  padding: 7px 10px;
-  border: 1.5px solid #334155;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-  animation: posSlideUp 0.15s ease-out;
-  box-sizing: border-box;
-}
-
-@keyframes posSlideUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.pos-mod-hd {
-  display: flex;
+.pos-btn-mod-tag {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.pos-mod-title {
-  font-size: 12px;
-  font-weight: 800;
-  color: #fbbf24;
-}
-
-.pos-mod-close-btn {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 2px 8px;
+  gap: 2px;
+  background: rgba(245, 158, 11, 0.25);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
   border-radius: 4px;
-  cursor: pointer;
-}
-
-.pos-mod-close-btn:hover {
-  background: #059669;
-  border-color: #10b981;
-}
-
-.pos-mod-body {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.pos-mod-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.pos-mod-label {
-  font-size: 10.5px;
+  font-size: 9.5px;
   font-weight: 800;
-  color: #94a3b8;
-  margin-right: 2px;
-}
-
-.mod-opt-btn {
-  padding: 3px 8px;
-  border-radius: 5px;
-  border: 1px solid #475569;
-  background: #1e293b;
-  color: #e2e8f0;
-  font-size: 11px;
-  font-weight: 700;
+  padding: 2px 6px;
   cursor: pointer;
-  transition: all 0.1s;
+  transition: all 100ms;
 }
 
-.mod-opt-btn:hover {
-  background: #334155;
+.pos-btn-mod-tag:hover {
+  background: rgba(245, 158, 11, 0.45);
+  color: #FFFFFF;
 }
 
-.mod-opt-btn.active {
-  background: #059669;
-  border-color: #10b981;
-  color: #ffffff;
-  font-weight: 900;
+/* Drawer de Modificadores (No Bloqueante) */
+.pos-modifiers-drawer {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1.5px solid #10B981;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 6px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
 }
 
-/* ==========================================================================
-   COLUMNA 3: TICKET DE ORDEN ACTIVA (Derecha, ~340px)
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   6. COLUMNA 3: PRE-TICKET / COTIZADOR ACTIVO (DERECHA)
+   -------------------------------------------------------------------------- */
 .pos-col-ticket,
 .pos-ticket-panel {
   width: 100%;
@@ -765,18 +967,21 @@ body.pos-fullscreen-body .admin-content {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border: 1.5px solid var(--border, #cbd5e1);
-  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   overflow: hidden;
   flex-shrink: 0;
   box-sizing: border-box;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
 .ticket-hd {
-  padding: 6px 10px;
-  background: #0f172a;
-  color: #ffffff;
+  padding: 7px 10px;
+  background: rgba(2, 6, 23, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -785,19 +990,133 @@ body.pos-fullscreen-body .admin-content {
 }
 
 .ticket-hd h3 {
-  font-size: 12.5px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 900;
   display: flex;
   align-items: center;
   gap: 5px;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
-/* Barra de Cuentas en Espera / Multicuenta (F3) */
+.ticket-hd .badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Selector de Modalidad (Comer Aquí / Llevar / Delivery) */
+.pos-order-mode-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  padding: 5px 8px;
+  background: rgba(2, 6, 23, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.order-mode-btn {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #94A3B8;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 2px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 120ms ease;
+  user-select: none;
+}
+
+.order-mode-btn:hover {
+  background: rgba(30, 41, 59, 0.9);
+  color: #FFFFFF;
+}
+
+.order-mode-btn.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10B981;
+  color: #FFFFFF;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+  font-weight: 900;
+}
+
+/* Barra de Cliente y Vaciar */
+.ticket-customer-bar {
+  padding: 6px 8px;
+  background: rgba(2, 6, 23, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.customer-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.customer-icon {
+  position: absolute;
+  left: 8px;
+  font-size: 12px;
+  color: #94A3B8;
+  pointer-events: none;
+}
+
+.customer-input {
+  width: 100%;
+  padding: 5px 8px 5px 26px !important;
+  background: rgba(30, 41, 59, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px;
+  color: #FFFFFF !important;
+  font-size: 12px !important;
+  font-weight: 700;
+  transition: all 120ms ease;
+}
+
+.customer-input:focus {
+  border-color: #10B981 !important;
+  outline: none;
+  background: rgba(30, 41, 59, 0.95) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+}
+
+.btn-clear-cart {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+  color: #F87171 !important;
+  font-size: 11px !important;
+  font-weight: 800;
+  border-radius: 6px;
+  padding: 5px 8px !important;
+  cursor: pointer;
+  transition: all 120ms;
+}
+
+.btn-clear-cart:hover {
+  background: #DC2626 !important;
+  color: #FFFFFF !important;
+  border-color: #DC2626 !important;
+}
+
+/* Barra de Cuentas en Espera (F3) */
 .held-orders-bar {
-  padding: 4px 8px;
-  background: #eff6ff;
-  border-bottom: 1px solid #bfdbfe;
+  padding: 5px 8px;
+  background: rgba(59, 130, 246, 0.15);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.3);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -806,48 +1125,60 @@ body.pos-fullscreen-body .admin-content {
 }
 
 .held-pill {
-  background: #ffffff;
-  border: 1px solid #93c5fd;
-  color: #1e40af;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid #3B82F6;
+  color: #93C5FD;
   font-size: 10.5px;
   font-weight: 800;
   padding: 2px 7px;
   border-radius: 99px;
   cursor: pointer;
   white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .held-pill:hover {
-  background: #dbeafe;
+  background: #2563EB;
+  color: #FFFFFF;
 }
 
-.ticket-customer-bar {
-  padding: 5px 8px;
-  background: #f8faf9;
-  border-bottom: 1px solid var(--border, #cbd5e1);
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
+/* Lista de Renglones del Ticket */
 .ticket-items {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 6px;
+  padding: 6px;
   min-height: 0;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .ticket-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 5px;
-  padding: 5px 3px;
-  border-bottom: 1px solid #eef2f6;
+  gap: 6px;
+  padding: 7px 8px;
+  background: rgba(30, 41, 59, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  animation: ticketRowEnter 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes ticketRowEnter {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.ticket-row.in-cart {
+  border-color: #F59E0B;
+  background: rgba(245, 158, 11, 0.12);
 }
 
 .ticket-row-info {
@@ -857,8 +1188,8 @@ body.pos-fullscreen-body .admin-content {
 
 .ticket-row-title {
   font-weight: 800;
-  font-size: 11.8px;
-  color: var(--txt, #0f172a);
+  font-size: 12px;
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -867,53 +1198,66 @@ body.pos-fullscreen-body .admin-content {
   text-overflow: ellipsis;
 }
 
+.code-pill {
+  font-family: var(--font-mono, monospace);
+  font-size: 9.5px;
+  background: rgba(2, 6, 23, 0.8);
+  color: #FBBF24;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
 .ticket-row-sub {
   font-size: 10.5px;
-  color: var(--txt-sec, #64748b);
+  color: #94A3B8;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-top: 2px;
+  margin-top: 3px;
   flex-wrap: wrap;
 }
 
-.ticket-row-mods {
-  font-size: 9.8px;
-  color: #1e40af;
-  background: #dbeafe;
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-weight: 700;
-}
-
 .ticket-mini-btn {
-  padding: 1px 5px;
-  font-size: 9.8px;
+  padding: 2px 6px;
+  font-size: 9.5px;
   font-weight: 700;
   border-radius: 4px;
-  border: 1px solid var(--border, #cbd5e1);
-  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.6);
   cursor: pointer;
-  color: var(--txt-sec, #64748b);
+  color: #CBD5E1;
+  transition: all 100ms;
 }
 
 .ticket-mini-btn:hover {
-  background: var(--primary-light, #ecfdf5);
-  border-color: var(--primary, #059669);
-  color: #065f46;
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #10B981;
+  color: #FFFFFF;
+}
+
+.ticket-row-mods {
+  font-size: 9.5px;
+  color: #93C5FD;
+  background: rgba(59, 130, 246, 0.2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
+  margin-top: 2px;
 }
 
 .ticket-row-note {
-  font-size: 10px;
-  color: #b45309;
-  background: #fef3c7;
+  font-size: 9.5px;
+  color: #FBBF24;
+  background: rgba(245, 158, 11, 0.2);
   padding: 1px 5px;
   border-radius: 4px;
   display: inline-block;
   margin-top: 2px;
 }
 
+/* Stepper de Cantidad del Ticket */
 .ticket-qty-ctrl {
   display: flex;
   align-items: center;
@@ -925,50 +1269,53 @@ body.pos-fullscreen-body .admin-content {
   width: 26px;
   height: 26px;
   border-radius: 6px;
-  border: 1.5px solid #CBD5E1;
-  background: #F8FAFC;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.8);
   font-weight: 900;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--dur-fast, 140ms) var(--ease-fluid);
+  transition: all 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .qty-btn.minus {
-  color: #DC2626;
-  border-color: #FECACA;
-  background: #FEF2F2;
+  color: #F87171;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.15);
 }
 .qty-btn.minus:hover {
-  background: #FEE2E2;
-  border-color: #EF4444;
+  background: #DC2626;
+  color: #FFFFFF;
+  border-color: #DC2626;
   transform: scale(1.08);
 }
 
 .qty-btn.plus {
-  color: #059669;
-  border-color: #A7F3D0;
-  background: #ECFDF5;
+  color: #34D399;
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.15);
 }
 .qty-btn.plus:hover {
-  background: #D1FAE5;
+  background: #10B981;
+  color: #0F172A;
   border-color: #10B981;
   transform: scale(1.08);
 }
 
 .ticket-row-tot {
   text-align: right;
-  min-width: 60px;
+  min-width: 62px;
   flex-shrink: 0;
 }
 
+/* Bloque de Totales y Desglose Fiscal */
 .ticket-totals {
-  padding: 6px 9px;
-  background: #f0fdf4;
-  border-top: 1.5px solid #bbf7d0;
-  border-bottom: 1px solid #bbf7d0;
+  padding: 8px 10px;
+  background: rgba(6, 78, 59, 0.25);
+  border-top: 1.5px solid rgba(16, 185, 129, 0.35);
+  border-bottom: 1px solid rgba(16, 185, 129, 0.35);
   flex-shrink: 0;
 }
 
@@ -979,10 +1326,10 @@ body.pos-fullscreen-body .admin-content {
 }
 
 .tot-box {
-  background: #ffffff;
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid #bbf7d0;
+  background: rgba(15, 23, 42, 0.85);
+  padding: 6px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .tot-box span {
@@ -990,401 +1337,390 @@ body.pos-fullscreen-body .admin-content {
   font-size: 9.5px;
   font-weight: 800;
   text-transform: uppercase;
-  color: var(--txt-sec, #64748b);
+  color: #94A3B8;
+  letter-spacing: 0.02em;
 }
 
 .tot-box strong {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 900;
   font-family: var(--font-mono, monospace);
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
-  color: #0f172a;
+  color: #34D399;
+  text-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
 }
 
 .tot-box.bs strong {
-  color: #059669;
+  color: #38BDF8;
+  font-size: 15px;
+  text-shadow: none;
 }
 
+/* Botones de Acción del Ticket */
 .ticket-actions {
-  padding: 6px 8px;
+  padding: 8px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 5px;
-  background: #ffffff;
+  gap: 6px;
+  background: rgba(2, 6, 23, 0.7);
   flex-shrink: 0;
 }
 
-/* Botón principal gigante en ámbar: COBRAR Y ENTREGAR VUELTO (F2) */
+/* Botón Principal Gigante: COBRAR Y ENTREGAR VUELTO (F2) */
 .btn-cobrar-big {
   grid-column: 1 / -1;
-  min-height: 54px;
-  padding: 12px 16px;
-  font-size: 15.5px;
+  min-height: 52px;
+  padding: 11px 16px;
+  font-size: 15px;
   font-weight: 900;
   letter-spacing: -0.01em;
-  border-radius: var(--radius-sm, 8px);
-  background: linear-gradient(180deg, #F59E0B, #D97706);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
   color: #0F172A;
-  border: 1.5px solid #B45309;
+  border: 1.5px solid #FBBF24;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.45), 0 4px 18px rgba(217, 119, 6, 0.45);
-  transition: transform var(--dur-tap) var(--ease-out), background-color var(--dur-fast) var(--ease-fluid), box-shadow var(--dur-fast) var(--ease-fluid);
+  box-shadow: 0 0 22px rgba(245, 158, 11, 0.45), 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: all 80ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-cobrar-big:hover {
-  background: linear-gradient(180deg, #FBBF24, #D97706);
-  box-shadow: 0 0 0 2px #F59E0B, 0 6px 24px rgba(217, 119, 6, 0.65);
+  background: linear-gradient(180deg, #FBBF24 0%, #D97706 100%);
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.65), 0 6px 20px rgba(0, 0, 0, 0.4);
   transform: translateY(-1px);
 }
 
 .btn-cobrar-big:active {
   transform: scale(0.97) translateY(1px);
-  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.3);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
-/* ==========================================================================
-   MODAL DE COBRO VENEZOLANO Y CALCULADORA DE VUELTOS (100% OPERATIVO)
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   7. MODAL DE COBRO Y CALCULADORA DE VUELTOS (DARK OBSIDIAN GLASS)
+   -------------------------------------------------------------------------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 12px;
+}
+
+.modal-backdrop.open {
+  display: flex;
+}
+
+.modal-box {
+  background: #0F172A;
+  border: 1.5px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 32px rgba(16, 185, 129, 0.22), 0 20px 48px rgba(0, 0, 0, 0.6);
+  border-radius: 14px;
+  color: #FFFFFF;
+  width: 100%;
+  max-width: 680px;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalScaleIn 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-hd {
+  padding: 12px 16px;
+  background: rgba(2, 6, 23, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-hd h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 900;
+  color: #FFFFFF;
+}
+
+.modal-bd {
+  padding: 14px 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-ft {
+  padding: 10px 16px;
+  background: rgba(2, 6, 23, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Bloque Total a Cobrar */
+.chk-total-block {
+  background: rgba(6, 78, 59, 0.35);
+  border: 1.5px solid rgba(16, 185, 129, 0.4);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.chk-total-usd {
+  font-size: 26px;
+  font-weight: 900;
+  font-family: var(--font-mono, monospace);
+  color: #34D399;
+  text-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
+  font-variant-numeric: tabular-nums;
+  margin-right: 8px;
+}
+
+.chk-total-bs {
+  font-size: 16px;
+  font-weight: 800;
+  font-family: var(--font-mono, monospace);
+  color: #38BDF8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Billetes rápidos en USD */
+.chk-bills {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  background: rgba(30, 41, 59, 0.5);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.chk-bills-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94A3B8;
+  width: 100%;
+  margin-bottom: 3px;
+}
+
+.chk-bill-btn {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34D399;
+  font-family: var(--font-mono, monospace);
+  font-weight: 900;
+  font-size: 12px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 100ms;
+}
+
+.chk-bill-btn:hover {
+  background: #10B981;
+  color: #0F172A;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.chk-bill-btn.chk-bill-exact {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #F59E0B;
+  color: #FBBF24;
+}
+
+.chk-bill-btn.chk-bill-exact:hover {
+  background: #F59E0B;
+  color: #0F172A;
+}
+
+/* Métodos de Pago */
 .pay-methods-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 5px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .pay-method-btn {
-  padding: 6px 4px;
-  border-radius: 7px;
-  border: 1.5px solid var(--border, #cbd5e1);
-  background: #ffffff;
+  padding: 7px 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(30, 41, 59, 0.6);
+  color: #CBD5E1;
   font-weight: 800;
   font-size: 11px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
+  transition: all 120ms;
 }
 
-.pay-method-btn:hover,
+.pay-method-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  color: #FFFFFF;
+}
+
 .pay-method-btn.active {
-  border-color: var(--primary, #059669);
-  background: #ecfdf5;
-  color: #065f46;
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10B981;
+  color: #FFFFFF;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
 }
 
+/* Panel de Vuelto */
 .vuelto-panel {
-  background: #0f172a;
-  color: #ffffff;
+  background: rgba(2, 6, 23, 0.85);
+  border: 1.5px solid rgba(16, 185, 129, 0.35);
   border-radius: 10px;
   padding: 10px 12px;
   margin-top: 8px;
-  border: 1.5px solid #334155;
 }
 
-.vuelto-rate-bar {
+.vuelto-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  flex-wrap: wrap;
-  background: #1e293b;
-  padding: 6px 8px;
-  border-radius: 7px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
-.vuelto-rate-chip {
-  background: #0f172a;
-  color: #cbd5e1;
-  border: 1px solid #475569;
-  padding: 3px 8px;
-  border-radius: 5px;
-  font-size: 10.8px;
+.vuelto-label {
+  font-size: 11px;
   font-weight: 800;
-  cursor: pointer;
+  color: #94A3B8;
+  text-transform: uppercase;
 }
 
-.vuelto-rate-chip.active {
-  background: #fbbf24;
-  color: #0f172a;
-  border-color: #fbbf24;
+.chk-ok {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #34D399;
+}
+
+.chk-err {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #F87171;
 }
 
 .vuelto-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-top: 4px;
+  margin-bottom: 6px;
 }
 
 .vuelto-card {
-  background: #1e293b;
+  background: rgba(30, 41, 59, 0.7);
   padding: 6px 10px;
   border-radius: 7px;
-  border: 1px solid #334155;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .vuelto-card span {
   font-size: 10px;
-  color: #94a3b8;
+  color: #94A3B8;
   font-weight: 700;
   display: block;
 }
 
 .vuelto-card strong {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 900;
   font-family: var(--font-mono, monospace);
-  color: #34d399;
+  color: #34D399;
+  font-variant-numeric: tabular-nums;
 }
 
 .vuelto-card.faltante strong {
-  color: #f87171;
+  color: #F87171;
 }
 
-.vuelto-bills-bar {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
-  margin: 7px 0;
-}
-
-.vuelto-bill-btn {
-  background: #1e293b;
-  border: 1px solid #475569;
-  color: #34d399;
-  font-family: var(--font-mono, monospace);
-  font-size: 11px;
-  font-weight: 900;
-  padding: 4px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.vuelto-bill-btn:hover {
-  background: #059669;
-  color: #ffffff;
-  border-color: #059669;
-}
-
-.thermal-ticket {
-  font-family: var(--font-mono, monospace);
-  background: #ffffff;
-  color: #000000;
-  border: 1px dashed #94a3b8;
-  padding: 14px;
-  max-width: 315px;
-  margin: 0 auto;
-  font-size: 12px;
-  line-height: 1.38;
-}
-
-
-/* ==========================================================================
-   ESTILOS DINÁMICOS Y STEPPERS INTERACTIVOS DE CANTIDAD EN PRODUCTOS
-   ========================================================================== */
-.pos-flavor-card,
-.pos-retail-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 74px;
-  padding: 8px 10px;
-  background: #FFFFFF;
-  border: 1.5px solid #CBD5E1;
-  border-radius: var(--radius, 12px);
-  cursor: pointer;
-  text-align: left;
-  user-select: none;
-  transition: all var(--dur-fast, 140ms) var(--ease-fluid);
-  box-sizing: border-box;
-  position: relative;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
-}
-
-.pos-flavor-card:hover,
-.pos-retail-card:hover {
-  border-color: #10B981;
-  background: #F8FAFC;
-  transform: translateY(-2px);
-  box-shadow: 0 0 0 1px #10B981, 0 8px 22px rgba(16, 185, 129, 0.22);
-}
-
-.pos-flavor-card.in-cart,
-.pos-retail-card.in-cart {
-  border-color: #10B981;
-  background: #F0FDF4;
-  box-shadow: 0 0 0 2px #10B981, 0 0 16px rgba(16, 185, 129, 0.38);
-}
-
-/* Stepper Interactivo directo en la tarjeta */
-.pos-btn-stepper {
-  display: inline-flex;
-  align-items: center;
-  background: #059669;
-  border-radius: 6px;
-  padding: 1px 2px;
-  gap: 2px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-  z-index: 2;
-}
-
-.pos-step-btn {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: none;
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 900;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  padding: 0;
-  transition: background 0.1s;
-}
-
-.pos-step-btn:hover {
-  background: rgba(255, 255, 255, 0.45);
-}
-
-.pos-step-btn.minus {
-  background: rgba(220, 38, 38, 0.8);
-}
-
-.pos-step-btn.minus:hover {
-  background: #dc2626;
-}
-
-.pos-step-num {
+.vuelto-suggestion {
   font-size: 11.5px;
-  font-weight: 900;
-  color: #ffffff;
-  padding: 0 4px;
-  min-width: 16px;
-  text-align: center;
-  font-family: var(--font-mono, monospace);
+  color: #CBD5E1;
+  margin: 4px 0 8px 0;
 }
 
-/* Tag de Extras/Opciones */
-.pos-btn-mod-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #f59e0b;
-  border-radius: 4px;
-  font-size: 9.5px;
-  font-weight: 800;
-  padding: 2px 6px;
-  cursor: pointer;
-  transition: all 0.1s;
+.vuelto-suggestion strong {
+  color: #FBBF24;
 }
 
-.pos-btn-mod-tag:hover {
-  background: #fde68a;
-  color: #78350f;
-  transform: scale(1.05);
-}
-
-.pos-btn-prices {
+.vuelto-quick {
   display: flex;
-  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 8px;
 }
 
-/* Colores Vibrantes en las Familias de la Izquierda */
-.pos-family-nav-btn {
-  background: #ffffff;
-  border: 1.5px solid #cbd5e1;
-  border-left: 5px solid var(--fam-color, #64748b);
-  border-radius: 7px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+.vuelto-dist-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #94A3B8;
+  display: block;
+  margin-bottom: 4px;
 }
 
-.pos-family-nav-btn:hover {
-  border-color: var(--fam-color, #059669);
-  transform: translateX(2px);
+.vuelto-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
 }
 
-.pos-family-nav-btn.active {
-  background: #ffffff;
-  border-color: var(--fam-color, #059669);
-  border-left-width: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.vuelto-field span {
+  display: block;
+  font-size: 10px;
+  color: #94A3B8;
+  font-weight: 700;
+  margin-bottom: 2px;
 }
 
-.pos-family-nav-btn.active .pos-fam-name {
-  color: var(--fam-color, #059669);
-  font-weight: 900;
+.vuelto-field input {
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  font-size: 13px;
+  background: rgba(30, 41, 59, 0.8) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
-.pos-family-nav-btn.active .pos-fam-key {
-  background: var(--fam-color, #059669);
-  color: #ffffff;
-}
-
-/* Drawer de Modificadores refinado sin salto brusco */
-.pos-modifiers-drawer {
-  background: #1e293b;
-  border: 1.5px solid #059669;
-  border-radius: 8px;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
-}
-
-/* Familias con Colores Vivos Oficiales */
-.pos-family-nav-btn[data-family="fritos"]    { --fam-color: #F59E0B; }
-.pos-family-nav-btn[data-family="arepas"]    { --fam-color: #10B981; }
-.pos-family-nav-btn[data-family="almuerzos"] { --fam-color: #F97316; }
-.pos-family-nav-btn[data-family="viveres"]   { --fam-color: #0EA5E9; }
-.pos-family-nav-btn[data-family="bebidas"]   { --fam-color: #06B6D4; }
-.pos-family-nav-btn[data-family="cafeteria"] { --fam-color: #8B5CF6; }
-.pos-family-nav-btn[data-family="chucherias"]{ --fam-color: #EC4899; }
-.pos-family-nav-btn[data-family="cervezas"]  { --fam-color: #EAB308; }
-.pos-family-nav-btn[data-family="cigarros"]  { --fam-color: #64748B; }
-
-/* Transición suave entre secciones de catálogo (Apple Fluid) */
-.pos-products-container {
-  animation: appleCatalogFadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes appleCatalogFadeIn {
-  from {
-    opacity: 0.2;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+/* --------------------------------------------------------------------------
+   8. ESTILOS DE IMPRESIÓN Y ACCESIBILIDAD
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-/* Micro-feedback háptico en cards y botones */
-.pos-flavor-card:active,
-.pos-retail-card:active {
-  transform: scale(0.97);
-  transition: transform 70ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.pos-chip-btn:active,
-.pos-mult-btn:active,
-.pos-step-btn:active {
-  transform: scale(0.92);
-  transition: transform 70ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-/* Estilos de Impresión Térmica de Etiquetas (100% Limpio y Sin Márgenes) */
 @media print {
   body * {
     visibility: hidden;

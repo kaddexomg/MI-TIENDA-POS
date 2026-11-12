@@ -21,6 +21,28 @@ button:active {
 }
 
 /* 1.1 Keyframes Acelerados por Hardware (GPU Puro) */
+.mtp-page-entering {
+  animation: v7PageEnter 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mtp-page-exiting {
+  opacity: 0 !important;
+  transform: translateY(-6px) scale(0.995) !important;
+  transition: opacity 160ms cubic-bezier(0.16, 1, 0.3, 1), transform 160ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  pointer-events: none;
+}
+
+@keyframes v7PageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes v7FadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }

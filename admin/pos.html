@@ -20,14 +20,15 @@
         <div class="topbar-left">
           <button class="menu-toggle" id="menuToggleBtn">☰</button>
           <div class="topbar-title">
-            <h2>POS a Caja Compacto · Familias de Comida, Víveres y Bebidas</h2>
-            <p>Familias Agrupadas · Lector Cámara/USB · Pago Móvil y Vueltos</p>
+            <h2>Terminal de Caja & Cotizador</h2>
+            <p>Comida Preparada · Víveres · Pago Móvil y Vueltos</p>
           </div>
         </div>
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
-          <button class="btn btn-ghost btn-sm" onclick="window.MTPBarcode && window.MTPBarcode.openCameraScannerModal()">Cámara / Lector</button>
-          <button class="btn btn-amber btn-sm" onclick="window.MTPPos.openQuickKitchenTicketPreview()">Comanda / Orden (F4)</button>
+          <a href="index.html" class="btn-nav-morph" id="btnGoDashboard" title="Ver resumen del día, métricas y estado del negocio">🏠 Mi Día / Dashboard</a>
+          <button class="btn btn-ghost btn-sm" onclick="window.MTPBarcode && window.MTPBarcode.openCameraScannerModal()">📷 Escáner</button>
+          <button class="btn btn-amber btn-sm" onclick="window.MTPPos.openQuickKitchenTicketPreview()">🍳 Comanda (F4)</button>
         </div>
       </header>
 
@@ -103,16 +104,26 @@
             </div>
           </section>
 
-          <!-- COLUMNA 3: TICKET DE ORDEN ACTIVA (Derecha, ~340px) -->
+          <!-- COLUMNA 3: TICKET DE ORDEN ACTIVA (Derecha, ~350px) -->
           <aside class="pos-col-ticket pos-ticket-panel" aria-label="Ticket de Venta">
             <div class="ticket-hd">
               <h3>Orden Activa en Caja</h3>
-              <span class="badge badge-green" id="posTicketCount">0 ítems</span>
+              <span class="badge" id="posTicketCount">0 ítems</span>
+            </div>
+
+            <!-- Selector Rápido de Modalidad de Orden -->
+            <div class="pos-order-mode-bar" id="posOrderModeBar">
+              <button type="button" class="order-mode-btn active" data-mode="comer_aqui" onclick="window.MTPPos.setOrderMode('comer_aqui')">🍽️ Comer Aquí</button>
+              <button type="button" class="order-mode-btn" data-mode="para_llevar" onclick="window.MTPPos.setOrderMode('para_llevar')">🛍️ Para Llevar</button>
+              <button type="button" class="order-mode-btn" data-mode="delivery" onclick="window.MTPPos.setOrderMode('delivery')">🛵 Delivery</button>
             </div>
 
             <div class="ticket-customer-bar">
-              <input type="text" id="posCustomerInput" class="input" placeholder="Cliente / Mesa / Para Llevar" style="padding:5px 9px;font-size:12px">
-              <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.clearCart()" title="Vaciar todo el ticket">Vaciar</button>
+              <div class="customer-input-wrap">
+                <span class="customer-icon">👤</span>
+                <input type="text" id="posCustomerInput" class="input customer-input" placeholder="Cliente / Mesa #..." autocomplete="off">
+              </div>
+              <button class="btn btn-clear-cart btn-sm" onclick="window.MTPPos.clearCart()" title="Vaciar todo el ticket (Esc)">Vaciar</button>
             </div>
 
             <!-- Barra de Cuentas en Espera (F3) -->
@@ -301,6 +312,7 @@
   <script src="../assets/js/barcode-printer.js"></script>
   <script src="../assets/js/barcode-engine.js"></script>
   <script src="../assets/js/change.js"></script>
+  <script src="../assets/js/view-transitions.js"></script>
   <script src="../assets/js/product-drawer.js"></script>
   <script src="../assets/js/pos-engine.js"></script>
 </body>
