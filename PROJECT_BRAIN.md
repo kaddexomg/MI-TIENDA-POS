@@ -57,3 +57,9 @@
    - Navegación limpia sin botones flotantes invasivos, barra lateral en 3 estados con colapso fluido (`Ctrl+B`) y barra superior sincronizada.
    - Pantalla de inicio de sesión por PIN (`index.html`) con contenedor fintech moderno, puntitos de PIN animados y teclado numérico táctil.
    - 100% de la suite de pruebas automatizadas y comprobaciones de integridad pasando con éxito.
+
+7. **Integración de Spec Kit y Skills de Animación/Diseño (`.agents/skills/`)**:
+   - `specify-cli 1.4.0` de GitHub para Spec-Driven Development (`.specify/`).
+   - 14 habilidades de micro-interacciones, coreografía y rendimiento de animación de Emil Kowalski (`emilkowalski/skills`).
+   - Suite de artesanía y auditoría de UI/UX `impeccable` de Paul Bakaus (`pbakaus/impeccable`).
+   - Habilidad de calidad y diseño frontend `design-taste-frontend` (`Leonxlnx/taste-skill`).

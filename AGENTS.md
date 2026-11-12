@@ -145,3 +145,9 @@
      - `admin/pos.html` y `caja/pos.html`: Caja compacta Zero-Scroll a 3 columnas con miniaturas de 48px, botón F2 Ámbar gigante para cobro y modal de pago multimoneda con calculadora de denominaciones.
      - `admin/cierres.html`, `admin/inventario.html`, `admin/productos.html`, `admin/recetas.html`, `admin/facturas.html`, `admin/precios.html`, `admin/usuarios.html`, `admin/ajustes.html` y `caja/index.html`: Modernizados con consistencia absoluta en botones, diálogos modales y tablas de datos con cabecera fija.
    - **100% de Pruebas Automatizadas Pasando**: Fiscales, integración v6, UI v7, validación sintáctica de scripts y balanceo de etiquetas HTML.
+
+8. **✅ INTEGRACIÓN DE SPEC KIT Y HABILIDADES DE DISEÑO/ANIMACIÓN AVANZADAS**:
+   - **GitHub Spec Kit (`specify-cli 1.4.0`)**: Instalado y configurado en el proyecto (`.specify/`) con integración nativa para Antigravity (`agy`), flujo SDD (`Full SDD Cycle v1.0.1`) y constitución ratificada en `.specify/memory/constitution.md`.
+   - **Habilidades de Animación de Emil Kowalski (`emilkowalski/skills`)**: 14 habilidades instaladas en `.agents/skills/` (`animate`, `animation-performance`, `animation-vocabulary`, `apple-design`, `choreograph`, `emil-design-eng`, `find-animation-opportunities`, `gestures`, `improve-animations`, `learn-taste`, `mobile-native`, `remove-animations`, `review-animations`, `break-ui`) más cheatsheets de rendimiento y diseño de componentes.
+   - **Artesanía y Calidad UI Impeccable (`pbakaus/impeccable`)**: Suite de diseño profesional en `.agents/skills/impeccable/` para auditorías UX, refinamiento de tipografía, contraste, layout y micro-detalles.
+   - **Anti-Slop Frontend Taste (`Leonxlnx/taste-skill`)**: Habilidad `design-taste-frontend` en `.agents/skills/design-taste-frontend/` con referencias de micro-interacciones, fotografía real y acabados pulidos.
