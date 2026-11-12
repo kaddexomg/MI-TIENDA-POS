@@ -37,8 +37,9 @@
 }
 
 .btn:active {
-  transform: translateY(1px);
+  transform: scale(0.97) translateY(1px);
   box-shadow: none;
+  transition: transform var(--dur-tap) var(--ease-out);
 }
 
 /* 1.1 Botón Principal / Acción Ámbar (Para la acción más destacada) */

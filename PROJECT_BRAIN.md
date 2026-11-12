@@ -63,3 +63,10 @@
    - 14 habilidades de micro-interacciones, coreografía y rendimiento de animación de Emil Kowalski (`emilkowalski/skills`).
    - Suite de artesanía y auditoría de UI/UX `impeccable` de Paul Bakaus (`pbakaus/impeccable`).
    - Habilidad de calidad y diseño frontend `design-taste-frontend` (`Leonxlnx/taste-skill`).
+
+7. **Rediseño V8 Maestro (Apple Design + Emil Kowalski + Impeccable + Taste-Skill)**:
+   - Tokens de resorte (`--ease-out`, `--ease-fluid`, `--ease-drawer`) y escala de tiempos (`--dur-tap: 80ms`).
+   - Bóveda de login por PIN con sacudida elástica (`springShake`) y teclado numérico ergonómico de 52px.
+   - Caja Zero-Scroll con botón Ámbar F2 de 52px, números tabulares sin temblores y respuesta táctil en `pointerdown`.
+   - Micro-celebración (`spring-pop`) en cuadre exacto de caja ($0.00).
+   - 100% de la suite de pruebas automatizadas y chequeos de validación en verde.

@@ -14,10 +14,13 @@
   border-radius: var(--radius-sm);
 }
 
-.btn:active {
-  transform: translateY(1px) scale(0.99);
+.btn:active,
+button:active {
+  transform: scale(0.97) translateY(1px);
+  transition: transform var(--dur-tap) var(--ease-out);
 }
 
+/* 1.1 Keyframes Acelerados por Hardware (GPU Puro) */
 @keyframes v7FadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -33,6 +36,29 @@
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+/* Sacudida Inercial (Spring Shake - Damping 0.8) ante error */
+@keyframes springShake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-3px); }
+  80%      { transform: translateX(3px); }
+}
+
+/* Celebración Suave (Spring Pop - Damping 1.0) */
+@keyframes springPop {
+  0%   { transform: scale(0.96); opacity: 0; }
+  60%  { transform: scale(1.03); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+/* Relleno de PIN Táctil */
+@keyframes springFill {
+  0%   { transform: scale(0.7);  opacity: 0.5; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
 @keyframes v7BadgePulse {
   0%, 100% { transform: scale(1); }
   50%      { transform: scale(1.05); }
@@ -45,15 +71,53 @@
 
 .v7-enter,
 .anim-fade-in {
-  animation: v7FadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: v7FadeIn var(--dur-fast) var(--ease-fluid) both;
 }
 
 .anim-slide-up {
-  animation: v7SlideUp 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: v7SlideUp var(--dur-normal) var(--ease-fluid) both;
 }
 
 .anim-scale-in {
-  animation: v7ScaleIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: v7ScaleIn var(--dur-normal) var(--ease-out) both;
+}
+
+.spring-shake {
+  animation: springShake 320ms var(--ease-fluid) both;
+}
+
+.spring-pop {
+  animation: springPop 300ms var(--ease-fluid) both;
+}
+
+.spring-fill {
+  animation: springFill 140ms var(--ease-out) both;
+}
+
+/* 1.2 Utilidades de Tipografía y Ergonomía Impeccable */
+.tabular-nums,
+.num-t {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.tracking-tight {
+  letter-spacing: var(--tracking-tight);
+}
+
+.tap-target {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift {
+    transition: transform var(--dur-fast) var(--ease-fluid), box-shadow var(--dur-fast) var(--ease-fluid);
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
 }
 
 .pulse-badge {

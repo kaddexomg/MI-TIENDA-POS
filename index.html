@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="assets/css/design-v7.css">
   <style>
     body {
-      background: radial-gradient(circle at 50% 15%, #1E293B 0%, #0F172A 50%, #020617 100%);
+      background: radial-gradient(circle at 50% 12%, #17243B 0%, #0B132B 45%, #050A18 100%);
       color: #F8FAFC;
       min-height: 100vh;
       display: flex;
@@ -24,11 +24,14 @@
     .login-container {
       width: 100%;
       max-width: 460px;
-      background: #0B132B;
+      background: rgba(11, 19, 43, 0.92);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: var(--radius-lg);
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
-      padding: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: var(--radius-xl, 18px);
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(16, 185, 129, 0.08);
+      padding: 26px 24px;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -118,32 +121,33 @@
     }
 
     .user-card-btn {
-      background: #131E33;
+      background: rgba(19, 30, 51, 0.7);
       border: 1.5px solid rgba(255, 255, 255, 0.08);
-      border-radius: var(--radius);
-      padding: 10px 6px;
+      border-radius: var(--radius, 10px);
+      padding: 10px 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 5px;
       cursor: pointer;
-      transition: all var(--transition-fast);
+      transition: transform var(--dur-fast) var(--ease-fluid), border-color var(--dur-fast) var(--ease-fluid), background-color var(--dur-fast) var(--ease-fluid);
       color: #cbd5e1;
       text-align: center;
     }
     .user-card-btn:hover {
-      background: #1A2942;
-      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(26, 41, 66, 0.9);
+      border-color: rgba(255, 255, 255, 0.22);
       transform: translateY(-2px);
     }
+    .user-card-btn:active {
+      transform: scale(0.96);
+      transition: transform var(--dur-tap) var(--ease-out);
+    }
     .user-card-btn.active {
-      background: #1E3454;
+      background: rgba(30, 52, 84, 0.95);
       border-color: #10B981;
       color: #ffffff;
-      box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
-    }
-      color: #ffffff;
-      box-shadow: 0 0 12px rgba(52, 211, 153, 0.35);
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
     }
 
     .user-role-badge {
@@ -172,12 +176,13 @@
       gap: 12px;
       align-items: center;
       justify-content: center;
-      height: 38px;
-      padding: 0 16px;
-      background: #081622;
-      border: 1.5px solid rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
-      min-width: 200px;
+      height: 44px;
+      padding: 0 18px;
+      background: rgba(8, 22, 34, 0.85);
+      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      border-radius: 12px;
+      min-width: 220px;
+      transition: border-color var(--dur-fast) var(--ease-fluid);
     }
 
     .pin-dot {
@@ -186,13 +191,14 @@
       border-radius: 50%;
       border: 2px solid #64748b;
       background: transparent;
-      transition: all 0.12s ease;
+      transition: transform var(--dur-fast) var(--ease-fluid), background-color var(--dur-fast) var(--ease-fluid), border-color var(--dur-fast) var(--ease-fluid);
     }
     .pin-dot.filled {
-      background: #34d399;
-      border-color: #34d399;
-      box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+      background: #10B981;
+      border-color: #34D399;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
       transform: scale(1.15);
+      animation: springFill 140ms var(--ease-out) both;
     }
 
     .pin-error-msg {
@@ -211,11 +217,12 @@
     }
 
     .key-btn {
-      height: 48px;
-      background: #17243B;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: var(--radius);
-      font-size: 20px;
+      height: 52px;
+      min-height: 48px;
+      background: rgba(23, 36, 59, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius, 10px);
+      font-size: 22px;
       font-weight: 800;
       color: #ffffff;
       display: flex;
@@ -223,42 +230,39 @@
       justify-content: center;
       cursor: pointer;
       user-select: none;
-      transition: all var(--transition-fast);
+      transition: transform var(--dur-tap) var(--ease-out), background-color var(--dur-fast) var(--ease-fluid), border-color var(--dur-fast) var(--ease-fluid);
     }
     .key-btn:hover {
-      background: #233554;
-      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(35, 53, 84, 0.95);
+      border-color: rgba(255, 255, 255, 0.25);
       transform: translateY(-1px);
     }
     .key-btn:active {
-      transform: translateY(1px);
-      background: #0F172A;
+      transform: scale(0.95) translateY(1px);
+      background: rgba(15, 23, 42, 0.95);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     .key-btn.action-clear {
       font-size: 13px;
       font-weight: 800;
-      background: rgba(239, 68, 68, 0.18);
-      border-color: rgba(239, 68, 68, 0.35);
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.4);
       color: #fca5a5;
     }
     .key-btn.action-clear:hover {
-      background: rgba(239, 68, 68, 0.28);
+      background: rgba(239, 68, 68, 0.32);
     }
     .key-btn.action-enter {
       font-size: 13px;
       font-weight: 900;
       background: #059669;
-      border-color: #10b981;
+      border-color: #10B981;
       color: #ffffff;
-      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 2px 12px rgba(16, 185, 129, 0.35);
     }
     .key-btn.action-enter:hover {
       background: #047857;
-      border-color: #34d399;
-    }
-    }
-    .key-btn.action-enter:hover {
-      background: #047857;
+      border-color: #34D399;
     }
 
     /* Modal de Selección de Destino para Admin / Encargado */
@@ -586,10 +590,14 @@
           errorEl.style.color = '#f87171';
           errorEl.textContent = result.error || 'PIN incorrecto';
           clearPin();
-          // Efecto de sacudida
+          // Sacudida inercial con física de resorte (Apple/Emil spring damping 0.8)
+          dotsEl.classList.remove('spring-shake');
+          void dotsEl.offsetWidth; // Forzar reflow para reiniciar la animación
+          dotsEl.classList.add('spring-shake');
           dotsEl.style.borderColor = '#f87171';
           setTimeout(function () {
-            dotsEl.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+            dotsEl.classList.remove('spring-shake');
+            dotsEl.style.borderColor = 'rgba(255, 255, 255, 0.16)';
           }, 450);
         }
       }

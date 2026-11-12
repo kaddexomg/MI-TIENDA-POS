@@ -132,11 +132,25 @@
   --fw-extrabold: 800;
 
   /* ========================================================================
-     7. Transiciones y Animaciones Suaves
+     7. Transiciones, Curvas y Animaciones Artesanales (Emil Kowalski + Apple)
      ======================================================================== */
-  --transition-fast: 140ms cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-normal: 220ms cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-slow: 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);        /* Entradas directas ultra-responsivas */
+  --ease-fluid: cubic-bezier(0.16, 1, 0.3, 1);       /* Resorte fluido amortiguado */
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);     /* Inercia física para hojas y cajones */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);    /* Morphing y movimiento en pantalla */
+
+  --dur-tap: 80ms;                                   /* Feedback instantáneo en pointerdown */
+  --dur-fast: 140ms;                                 /* Transiciones sutiles y hover */
+  --dur-normal: 200ms;                               /* Modales y cambios de vista */
+  --dur-drawer: 260ms;                               /* Paneles laterales y drawers */
+
+  --transition-tap: var(--dur-tap) var(--ease-out);
+  --transition-fast: var(--dur-fast) var(--ease-fluid);
+  --transition-normal: var(--dur-normal) var(--ease-out);
+  --transition-slow: var(--dur-drawer) var(--ease-drawer);
+
+  --tracking-tight: -0.02em;                         /* Tracking óptico display */
+  --tap-min: 44px;                                   /* Tap target ergonómico mínimo */
   --focus-ring: 0 0 0 3px rgba(245, 158, 11, 0.38);
 }
 

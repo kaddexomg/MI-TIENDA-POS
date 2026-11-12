@@ -582,6 +582,8 @@ body.pos-fullscreen-body .admin-content {
 
 .pos-btn-usd {
   font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
   font-size: 14px;
   font-weight: 900;
   color: #0f172a;
@@ -589,6 +591,8 @@ body.pos-fullscreen-body .admin-content {
 
 .pos-btn-bs {
   font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
   font-size: 10px;
   font-weight: 700;
   color: #059669;
@@ -961,6 +965,8 @@ body.pos-fullscreen-body .admin-content {
   font-size: 16px;
   font-weight: 900;
   font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
   color: #0f172a;
 }
 
@@ -980,29 +986,33 @@ body.pos-fullscreen-body .admin-content {
 /* Botón principal gigante en ámbar: COBRAR Y ENTREGAR VUELTO (F2) */
 .btn-cobrar-big {
   grid-column: 1 / -1;
-  padding: 10px;
-  font-size: 13.5px;
+  min-height: 52px;
+  padding: 12px 14px;
+  font-size: 15px;
   font-weight: 900;
-  border-radius: 7px;
-  background: linear-gradient(180deg, #f59e0b, #d97706);
-  color: #0f172a;
-  border: 1.5px solid #b45309;
+  letter-spacing: -0.01em;
+  border-radius: var(--radius-sm, 8px);
+  background: linear-gradient(180deg, #F59E0B, #D97706);
+  color: #0F172A;
+  border: 1.5px solid #B45309;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
-  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.25);
-  transition: background 0.1s, transform 0.05s;
+  gap: 8px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
+  transition: transform var(--dur-tap) var(--ease-out), background-color var(--dur-fast) var(--ease-fluid), box-shadow var(--dur-fast) var(--ease-fluid);
 }
 
 .btn-cobrar-big:hover {
-  background: linear-gradient(180deg, #fbbf24, #d97706);
+  background: linear-gradient(180deg, #FBBF24, #D97706);
+  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.45);
 }
 
 .btn-cobrar-big:active {
-  transform: scale(0.99);
+  transform: scale(0.97) translateY(1px);
+  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.2);
 }
 
 /* ==========================================================================
