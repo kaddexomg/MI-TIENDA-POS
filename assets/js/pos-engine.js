@@ -939,9 +939,9 @@
           </div>
 
           <div class="ticket-qty-ctrl">
-            <button type="button" class="qty-btn" onclick="window.MTPPos.changeCartQty('${c.cartId}', -1)" title="Restar 1">−</button>
-            <span style="font-family:var(--font-mono);font-weight:900;font-size:12.5px;min-width:18px;text-align:center">${c.qty}</span>
-            <button type="button" class="qty-btn" onclick="window.MTPPos.changeCartQty('${c.cartId}', 1)" title="Sumar 1">+</button>
+            <button type="button" class="qty-btn minus" onclick="window.MTPPos.changeCartQty('${c.cartId}', -1)" title="Restar 1">−</button>
+            <span style="font-family:var(--font-mono);font-weight:900;font-size:13px;min-width:20px;text-align:center;color:#0F172A">${c.qty}</span>
+            <button type="button" class="qty-btn plus" onclick="window.MTPPos.changeCartQty('${c.cartId}', 1)" title="Sumar 1">+</button>
           </div>
 
           <div class="ticket-row-tot">

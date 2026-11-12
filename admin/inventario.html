@@ -32,23 +32,30 @@
         <!-- 2 TARJETAS KPI PRINCIPALES -->
         <div class="stat-grid" id="invStatsGrid" style="margin-bottom:var(--sp-4)"></div>
 
-        <!-- 3 BOTONES DE ACCIÓN PRINCIPALES -->
-        <div class="action-bar">
-          <button class="action-btn action-primary" onclick="openMultiPurchaseModal()">
+        <!-- 4 BOTONES DE ACCIÓN PRINCIPALES CON PRESENCIA LUMÍNICA -->
+        <div class="action-bar" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:8px;margin-bottom:var(--sp-4)">
+          <button class="action-btn action-primary" onclick="openMultiPurchaseModal()" style="border-color:rgba(16, 185, 129, 0.4);box-shadow:0 0 12px rgba(16, 185, 129, 0.15)">
             <span class="action-ico">📦</span>
             <span class="action-txt">
               <strong>Llegó mercancía</strong>
-              <small>Registrar compra, bultos y facturas</small>
+              <small>Entrada por bulto, caja o factura</small>
             </span>
           </button>
-          <button class="action-btn" onclick="openQuickExpenseModal()">
-            <span class="action-ico">🧾</span>
+          <button class="action-btn" onclick="openQuickExpenseModal()" style="border-color:rgba(245, 158, 11, 0.4);box-shadow:0 0 12px rgba(245, 158, 11, 0.15)">
+            <span class="action-ico">🍲</span>
             <span class="action-txt">
               <strong>Gasto de cocina</strong>
               <small>Carne, aceite, harina, aliños</small>
             </span>
           </button>
-          <button class="action-btn" onclick="openAuditModal()">
+          <button class="action-btn" onclick="openWasteModal()" style="border-color:rgba(244, 63, 94, 0.4);box-shadow:0 0 12px rgba(244, 63, 94, 0.15)">
+            <span class="action-ico">🗑️</span>
+            <span class="action-txt">
+              <strong>Salida o Merma</strong>
+              <small>Registrar lo que se dañó o gastó</small>
+            </span>
+          </button>
+          <button class="action-btn" onclick="openAuditModal()" style="border-color:rgba(14, 165, 233, 0.4);box-shadow:0 0 12px rgba(14, 165, 233, 0.15)">
             <span class="action-ico">🔍</span>
             <span class="action-txt">
               <strong>Contar lo que hay</strong>
@@ -725,11 +732,44 @@
                 : '<span style="color:var(--txt-3)">—</span>'}
             </td>
             <td style="padding:8px 10px;text-align:center">
-              <button class="btn btn-secondary btn-sm" style="font-size:16px;line-height:1;padding:4px 10px;font-weight:900" onclick="openRowMenu('${i.id}')" title="Opciones de este artículo">⋯</button>
+              <div style="display:flex;align-items:center;justify-content:center;gap:4px">
+                <button class="btn btn-action btn-sm" style="padding:3px 7px;font-size:11px;font-weight:800;gap:3px" onclick="quickAddStockRow('${i.id}')" title="Registrar llegada de mercancía / comprar más">+ Entrada</button>
+                <button class="btn btn-secondary btn-sm" style="padding:3px 7px;font-size:11px;font-weight:700;color:var(--money-out);gap:3px" onclick="openWasteModal('${i.id}')" title="Registrar salida a cocina o lo que se dañó">- Salida</button>
+                <button class="btn btn-secondary btn-sm" style="font-size:16px;line-height:1;padding:3px 8px;font-weight:900" onclick="openRowMenu('${i.id}')" title="Más opciones">⋯</button>
+              </div>
             </td>
           </tr>
         `;
       }).join('');
+    }
+
+    function quickAddStockRow(itemId) {
+      const item = MTP.getInsumoById(itemId);
+      if (!item) return;
+      MTPUI.promptDialog(`¿Cuántas unidades o kilos llegaron de "${item.name}"?`, {
+        title: '📥 Registrar Entrada de Mercancía',
+        defaultValue: item.unit === 'kg' ? '5' : '6',
+        okText: '+ Sumar al Stock'
+      }).then(val => {
+        if (!val) return;
+        const qty = parseFloat(val);
+        if (isNaN(qty) || qty <= 0) return;
+        const oldStock = Number(item.stock) || 0;
+        item.stock = oldStock + qty;
+        MTP.saveState();
+        MTP.recordKardex({
+          insumoId: item.id,
+          type: 'IN',
+          qty: qty,
+          prevStock: oldStock,
+          newStock: item.stock,
+          unitCostUsd: item.costUsd || 0,
+          reason: 'Entrada rápida de mercancía / compra',
+          responsible: 'Administrador'
+        });
+        initInvPage();
+        MTP.toast(`Sumados +${qty} ${item.unit} a "${item.name}". Total en tienda: ${item.stock} ${item.unit}`);
+      });
     }
 
     /* ==========================================================================

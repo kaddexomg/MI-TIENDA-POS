@@ -38,102 +38,102 @@
     } catch (_) {}
   }
 
-  /* MODAL RÁPIDO DE COMPRAS DE COCINA Y GASTOS OPERATIVOS */
+  /* MODAL RÁPIDO DE COMPRAS DE COCINA Y GASTOS OPERATIVOS CON PRESENCIA LUMÍNICA */
   function ensureQuickExpenseModal() {
     if (document.getElementById('globalExpenseModal')) return;
     const modal = document.createElement('div');
     modal.id = 'globalExpenseModal';
     modal.className = 'modal-backdrop';
     modal.innerHTML = `
-      <div class="modal-box" style="max-width:560px">
-        <div class="modal-hd" style="background:#065f46;color:#fff;border-radius:12px 12px 0 0;padding:10px 14px">
+      <div class="modal-box" style="max-width:580px;border:1.5px solid rgba(16, 185, 129, 0.4);box-shadow:0 0 25px rgba(16, 185, 129, 0.25), 0 12px 36px rgba(15, 23, 42, 0.25)">
+        <div class="modal-hd" style="background:linear-gradient(135deg, #064e3b, #065f46);color:#fff;border-radius:12px 12px 0 0;padding:12px 16px;border-bottom:1.5px solid rgba(16, 185, 129, 0.4)">
           <div>
-            <h3 style="color:#fff;margin:0;font-size:14px;display:flex;align-items:center;gap:6px">
-              ${window.MTPIcons ? window.MTPIcons.get('kitchen', { size: 16 }) : '🍲'} Registrar Compra de Ingredientes o Gasto
+            <h3 style="color:#fff;margin:0;font-size:15px;font-weight:900;display:flex;align-items:center;gap:8px">
+              ${window.MTPIcons ? window.MTPIcons.get('kitchen', { size: 18 }) : '🍲'} Registrar Compra de Cocina o Gasto
             </h3>
-            <p style="color:#a7f3d0;font-size:11.5px;margin:2px 0 0 0">Suma kilos a cocina y descuenta el pago de la gaveta de caja</p>
+            <p style="color:#a7f3d0;font-size:12px;margin:3px 0 0 0;font-weight:600">Suma kilos a cocina y descuenta el pago del dinero en gaveta</p>
           </div>
-          <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.2)" onclick="window.MTPSidebar.closeExpenseModal()">✕</button>
+          <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.25);width:30px;height:30px;padding:0;font-size:14px" onclick="window.MTPSidebar.closeExpenseModal()">✕</button>
         </div>
-        <div class="modal-bd">
-          <div style="margin-bottom:10px">
-            <span style="font-size:11px;font-weight:700;color:var(--txt-2);display:block;margin-bottom:5px">Acceso rápido a compras frecuentes:</span>
-            <div style="display:flex;gap:5px;flex-wrap:wrap">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-alinos', 5, 12.00, 'Compra 5kg aliños frescos para guisos')">Aliños (5 kg · $12)</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-papa', 25, 33.75, 'Saco de papa 25kg para empanadas/comida')">Saco Papa (25 kg)</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-carne-mechada', 5, 34.00, '5kg carne para mechar/guisar')">Carne Res (5 kg · $34)</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-queso-cocina', 3, 16.20, '3kg queso blanco llanero para relleno')">Queso (3 kg)</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-pollo-cocina', 5, 18.00, '5kg pollo crudo para desmechar/broaster')">Pollo (5 kg)</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-aceite-cocina', 6, 12.90, '6 litros aceite vegetal de freír')">Aceite (6 L)</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillServicePreset('Gas / Bombona', 'Recarga de bombona de gas para cocina', 10.00)">Gas ($10)</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillServicePreset('Hielo / Bolsas', 'Bolsas de hielo y bolsas despacho', 3.00)">Hielo ($3)</button>
+        <div class="modal-bd" style="padding:16px">
+          <div style="margin-bottom:12px;background:#F8FAFC;padding:10px 12px;border-radius:8px;border:1px solid #E2E8F0">
+            <span style="font-size:11px;font-weight:800;color:#0F172A;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.03em">⚡ Compras frecuentes de 1 solo toque:</span>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button type="button" class="btn btn-secondary btn-sm" style="font-weight:700" onclick="window.MTPSidebar.fillKitchenPreset('ins-alinos', 5, 12.00, 'Compra 5kg aliños frescos para guisos')">🧅 Aliños (5 kg · $12)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-weight:700" onclick="window.MTPSidebar.fillKitchenPreset('ins-papa', 25, 33.75, 'Saco de papa 25kg para empanadas/comida')">🥔 Saco Papa (25 kg · $33.75)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-weight:700" onclick="window.MTPSidebar.fillKitchenPreset('ins-carne-mechada', 5, 34.00, '5kg carne para mechar/guisar')">🥩 Carne Res (5 kg · $34)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-weight:700" onclick="window.MTPSidebar.fillKitchenPreset('ins-queso-cocina', 3, 16.20, '3kg queso blanco llanero para relleno')">🧀 Queso (3 kg · $16.20)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-weight:700" onclick="window.MTPSidebar.fillKitchenPreset('ins-pollo-cocina', 5, 18.00, '5kg pollo crudo para desmechar/broaster')">🍗 Pollo (5 kg · $18)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-weight:700" onclick="window.MTPSidebar.fillKitchenPreset('ins-aceite-cocina', 6, 12.90, '6 litros aceite vegetal de freír')">🛢️ Aceite (6 L · $12.90)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-weight:700" onclick="window.MTPSidebar.fillServicePreset('Gas / Bombona', 'Recarga de bombona de gas para cocina', 10.00)">🔥 Gas ($10)</button>
+              <button type="button" class="btn btn-secondary btn-sm" style="font-weight:700" onclick="window.MTPSidebar.fillServicePreset('Hielo / Bolsas', 'Bolsas de hielo y bolsas despacho', 3.00)">🧊 Hielo ($3)</button>
             </div>
           </div>
 
           <div class="form-grid">
             <div class="form-group" style="grid-column:1/-1">
-              <label>1. ¿Qué se está comprando o pagando?</label>
-              <select id="gExpItemSelect" class="select" onchange="window.MTPSidebar.onItemSelectChange()">
-                <optgroup label="Ingredientes de Cocina (suman kilos o litros al stock)">
-                  <option value="ins-alinos">Aliños Frescos (Cebolla, Ajo, Pimentón, Ají Dulce, Cilantro)</option>
-                  <option value="ins-papa">Papa Cruda para Comida y Papas Rellenas</option>
-                  <option value="ins-carne-mechada">Carne de Res Cruda (Mechar / Moler / Guisar)</option>
-                  <option value="ins-pollo-cocina">Pollo Crudo (Broaster / Desmechar)</option>
-                  <option value="ins-queso-cocina">Queso Blanco Llanero / Amarillo para Relleno</option>
-                  <option value="ins-harina-cocina">Harina de Amasar en Cocina (Maíz / Trigo)</option>
-                  <option value="ins-aceite-cocina">Aceite Vegetal para Freír en Cocina</option>
-                  <option value="ins-arroz-cocina">Arroz en Saco para Cocina (Pabellón / Chino)</option>
-                  <option value="ins-ensalada">Plátanos para Tajadas y Vegetales</option>
-                  <option value="ins-envase">Envases Térmicos y Servilletas</option>
+              <label style="font-weight:800;color:#0F172A">1. ¿Qué se está comprando o pagando?</label>
+              <select id="gExpItemSelect" class="select" style="font-weight:700;font-size:13.5px;height:40px" onchange="window.MTPSidebar.onItemSelectChange()">
+                <optgroup label="🍲 Ingredientes de Cocina (suman kilos o litros al stock)">
+                  <option value="ins-alinos">🧅 Aliños Frescos (Cebolla, Ajo, Pimentón, Ají Dulce, Cilantro)</option>
+                  <option value="ins-papa">🥔 Papa Cruda para Comida y Papas Rellenas</option>
+                  <option value="ins-carne-mechada">🥩 Carne de Res Cruda (Mechar / Moler / Guisar)</option>
+                  <option value="ins-pollo-cocina">🍗 Pollo Crudo (Broaster / Desmechar)</option>
+                  <option value="ins-queso-cocina">🧀 Queso Blanco Llanero / Amarillo para Relleno</option>
+                  <option value="ins-harina-cocina">🌽 Harina de Amasar en Cocina (Maíz / Trigo)</option>
+                  <option value="ins-aceite-cocina">🛢️ Aceite Vegetal para Freír en Cocina</option>
+                  <option value="ins-arroz-cocina">🍚 Arroz en Saco para Cocina (Pabellón / Chino)</option>
+                  <option value="ins-ensalada">🍌 Plátanos para Tajadas y Vegetales</option>
+                  <option value="ins-envase">📦 Envases Térmicos y Servilletas</option>
                 </optgroup>
-                <optgroup label="Servicios y gastos del día (salida de dinero)">
-                  <option value="SERV_GAS">Recarga Bombona de Gas / Agua Potable</option>
-                  <option value="SERV_HIELO">Bolsas de Hielo para Cavas y Bolsas</option>
-                  <option value="SERV_FLETE">Flete / Carrera de Motorizado para Compras</option>
-                  <option value="SERV_PERSONAL">Pago de Jornal / Turno a Ayudante</option>
-                  <option value="SERV_OTRO">Retiro de Caja Chica / Otros Gastos</option>
+                <optgroup label="💸 Servicios y gastos del día (salida de dinero)">
+                  <option value="SERV_GAS">🔥 Recarga Bombona de Gas / Agua Potable</option>
+                  <option value="SERV_HIELO">🧊 Bolsas de Hielo para Cavas y Bolsas</option>
+                  <option value="SERV_FLETE">🛵 Flete / Carrera de Motorizado para Compras</option>
+                  <option value="SERV_PERSONAL">👤 Pago de Jornal / Turno a Ayudante</option>
+                  <option value="SERV_OTRO">💵 Retiro de Caja Chica / Otros Gastos</option>
                 </optgroup>
               </select>
             </div>
 
             <div class="form-group" id="gExpQtyWrap">
-              <label id="gExpQtyLabel">Cantidad Comprada (Kg o Litros)</label>
-              <input type="number" step="0.5" id="gExpQty" class="input" value="5" style="font-weight:700" oninput="window.MTPSidebar.recalcUnitCostNotice()">
+              <label id="gExpQtyLabel" style="font-weight:800">Cantidad Comprada (Kg o Litros)</label>
+              <input type="number" step="0.5" id="gExpQty" class="input" value="5" style="font-weight:900;font-size:15px;height:40px" oninput="window.MTPSidebar.recalcUnitCostNotice()">
             </div>
 
             <div class="form-group">
-              <label>¿De dónde salió el dinero?</label>
-              <select id="gExpSource" class="select" style="font-weight:700">
-                <option value="Efectivo USD">Efectivo USD ($) - Gaveta</option>
-                <option value="Pago Móvil">Pago Móvil - Banco Bs</option>
-                <option value="Efectivo Bs">Efectivo Bolívares - Gaveta</option>
-                <option value="Caja Externa Admin">Dinero Propio del Dueño (No toca gaveta)</option>
+              <label style="font-weight:800">¿De dónde salió el dinero?</label>
+              <select id="gExpSource" class="select" style="font-weight:800;font-size:13px;height:40px">
+                <option value="Efectivo USD">💵 Efectivo USD ($) - Gaveta</option>
+                <option value="Pago Móvil">📲 Pago Móvil - Banco Bs</option>
+                <option value="Efectivo Bs">🇻🇪 Efectivo Bolívares - Gaveta</option>
+                <option value="Caja Externa Admin">💼 Dinero Propio del Dueño (No toca gaveta)</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label>Total Pagado en Dólares ($)</label>
-              <input type="number" step="0.10" id="gExpUsd" class="input" placeholder="Ej: 12.00" style="font-weight:800;font-size:15px"
+              <label style="font-weight:800">Total en Dólares ($)</label>
+              <input type="number" step="0.10" id="gExpUsd" class="input" placeholder="Ej: 12.00" style="font-weight:900;font-size:16px;height:40px;color:#0F172A"
                 oninput="window.MTPSidebar.syncExpBs(this.value); window.MTPSidebar.recalcUnitCostNotice();">
             </div>
 
             <div class="form-group">
-              <label>Equivalente en Bolívares (BCV)</label>
-              <input type="number" step="0.5" id="gExpBs" class="input" placeholder="Ej: 514.20" style="font-weight:700"
+              <label style="font-weight:800">Equivalente en Bolívares (BCV)</label>
+              <input type="number" step="0.5" id="gExpBs" class="input" placeholder="Ej: 514.20" style="font-weight:900;font-size:16px;height:40px;color:#059669"
                 oninput="window.MTPSidebar.syncExpUsd(this.value); window.MTPSidebar.recalcUnitCostNotice();">
             </div>
 
             <div class="form-group" style="grid-column:1/-1">
-              <label>Detalle / Proveedor (Opcional)</label>
-              <input type="text" id="gExpDesc" class="input" placeholder="Ej: Comprado en el mercado municipal...">
+              <label style="font-weight:800">Detalle / Proveedor (Opcional)</label>
+              <input type="text" id="gExpDesc" class="input" placeholder="Ej: Comprado en el mercado municipal..." style="height:38px">
             </div>
           </div>
 
-          <div id="gExpActionNotice" style="margin-top:10px;padding:8px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;color:#065f46;font-weight:600"></div>
+          <div id="gExpActionNotice" style="margin-top:12px;padding:10px 14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;font-size:12.5px;color:#065f46;font-weight:700"></div>
         </div>
-        <div class="modal-ft">
+        <div class="modal-ft" style="padding:12px 16px;background:#F8FAFC;border-top:1px solid #E2E8F0">
           <button class="btn btn-secondary" onclick="window.MTPSidebar.closeExpenseModal()">Cancelar</button>
-          <button class="btn btn-primary" onclick="window.MTPSidebar.submitQuickExpense()">📥 Guardar Compra o Gasto</button>
+          <button class="btn btn-action" style="min-width:200px;font-weight:900" onclick="window.MTPSidebar.submitQuickExpense()">📥 Guardar Compra o Gasto</button>
         </div>
       </div>
     `;

@@ -120,7 +120,8 @@ body.pos-fullscreen-body .admin-content {
 .pos-family-nav-btn:hover {
   background: #F1F5F9;
   border-color: #CBD5E1;
-  transform: translateX(2px);
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
 .pos-family-nav-btn.active {
@@ -128,7 +129,7 @@ body.pos-fullscreen-body .admin-content {
   border-color: #10B981;
   border-left-width: 5px;
   border-left-color: var(--fam-color, #10B981);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.18);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3), 0 4px 14px rgba(16, 185, 129, 0.22);
 }
 
 .pos-fam-top {
@@ -921,19 +922,40 @@ body.pos-fullscreen-body .admin-content {
 }
 
 .qty-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 5px;
-  border: 1px solid var(--border, #cbd5e1);
-  background: #f8fafc;
-  font-weight: 800;
-  font-size: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1.5px solid #CBD5E1;
+  background: #F8FAFC;
+  font-weight: 900;
+  font-size: 13px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--dur-fast, 140ms) var(--ease-fluid);
 }
 
-.qty-btn:hover {
-  background: var(--primary-light, #ecfdf5);
-  border-color: var(--primary, #059669);
+.qty-btn.minus {
+  color: #DC2626;
+  border-color: #FECACA;
+  background: #FEF2F2;
+}
+.qty-btn.minus:hover {
+  background: #FEE2E2;
+  border-color: #EF4444;
+  transform: scale(1.08);
+}
+
+.qty-btn.plus {
+  color: #059669;
+  border-color: #A7F3D0;
+  background: #ECFDF5;
+}
+.qty-btn.plus:hover {
+  background: #D1FAE5;
+  border-color: #10B981;
+  transform: scale(1.08);
 }
 
 .ticket-row-tot {
@@ -996,9 +1018,9 @@ body.pos-fullscreen-body .admin-content {
 /* Botón principal gigante en ámbar: COBRAR Y ENTREGAR VUELTO (F2) */
 .btn-cobrar-big {
   grid-column: 1 / -1;
-  min-height: 52px;
-  padding: 12px 14px;
-  font-size: 15px;
+  min-height: 54px;
+  padding: 12px 16px;
+  font-size: 15.5px;
   font-weight: 900;
   letter-spacing: -0.01em;
   border-radius: var(--radius-sm, 8px);
@@ -1011,18 +1033,19 @@ body.pos-fullscreen-body .admin-content {
   justify-content: center;
   gap: 8px;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
+  box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.45), 0 4px 18px rgba(217, 119, 6, 0.45);
   transition: transform var(--dur-tap) var(--ease-out), background-color var(--dur-fast) var(--ease-fluid), box-shadow var(--dur-fast) var(--ease-fluid);
 }
 
 .btn-cobrar-big:hover {
   background: linear-gradient(180deg, #FBBF24, #D97706);
-  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.45);
+  box-shadow: 0 0 0 2px #F59E0B, 0 6px 24px rgba(217, 119, 6, 0.65);
+  transform: translateY(-1px);
 }
 
 .btn-cobrar-big:active {
   transform: scale(0.97) translateY(1px);
-  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.2);
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.3);
 }
 
 /* ==========================================================================
@@ -1173,33 +1196,33 @@ body.pos-fullscreen-body .admin-content {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 68px;
-  padding: 6px 8px;
-  background: #ffffff;
-  border: 1.5px solid #d1d5db;
-  border-radius: 8px;
+  min-height: 74px;
+  padding: 8px 10px;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: var(--radius, 12px);
   cursor: pointer;
   text-align: left;
   user-select: none;
-  transition: all 0.12s ease;
+  transition: all var(--dur-fast, 140ms) var(--ease-fluid);
   box-sizing: border-box;
   position: relative;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
 }
 
 .pos-flavor-card:hover,
 .pos-retail-card:hover {
-  border-color: #059669;
-  background: #f8fafc;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  border-color: #10B981;
+  background: #F8FAFC;
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px #10B981, 0 8px 22px rgba(16, 185, 129, 0.22);
 }
 
 .pos-flavor-card.in-cart,
 .pos-retail-card.in-cart {
-  border-color: #059669;
-  background: #f0fdf4;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
+  border-color: #10B981;
+  background: #F0FDF4;
+  box-shadow: 0 0 0 2px #10B981, 0 0 16px rgba(16, 185, 129, 0.38);
 }
 
 /* Stepper Interactivo directo en la tarjeta */

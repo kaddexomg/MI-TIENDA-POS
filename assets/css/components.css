@@ -217,7 +217,7 @@
 .stat-card,
 .kpi {
   background: #FFFFFF;
-  border: 1px solid #E2E8F0;
+  border: 1.5px solid #CBD5E1;
   border-radius: var(--radius, 12px);
   padding: 18px 20px;
   display: flex;
@@ -235,14 +235,49 @@
 .stat-card:hover,
 .kpi:hover {
   transform: translateY(-3px);
-  border-color: #CBD5E1;
+  border-color: #94A3B8;
   box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
 }
 
-.stat-card.tone-in   { background: linear-gradient(180deg, #FFFFFF 0%, #F0FDF4 100%); border-color: #A7F3D0; }
-.stat-card.tone-out  { background: linear-gradient(180deg, #FFFFFF 0%, #FEF2F2 100%); border-color: #FECACA; }
-.stat-card.tone-cash { background: linear-gradient(180deg, #FFFFFF 0%, #FFFBEB 100%); border-color: #FDE68A; }
-.stat-card.tone-info { background: linear-gradient(180deg, #FFFFFF 0%, #EFF6FF 100%); border-color: #BFDBFE; }
+.stat-card.tone-in   {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F0FDF4 100%);
+  border: 1.5px solid #86EFAC;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.15), 0 4px 16px rgba(16, 185, 129, 0.12);
+}
+.stat-card.tone-in:hover {
+  border-color: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35), 0 8px 24px rgba(16, 185, 129, 0.22);
+}
+
+.stat-card.tone-out  {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FEF2F2 100%);
+  border: 1.5px solid #FCA5A5;
+  box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.15), 0 4px 16px rgba(244, 63, 94, 0.12);
+}
+.stat-card.tone-out:hover {
+  border-color: #F43F5E;
+  box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.35), 0 8px 24px rgba(244, 63, 94, 0.22);
+}
+
+.stat-card.tone-cash {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFFBEB 100%);
+  border: 1.5px solid #FCD34D;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.15), 0 4px 16px rgba(245, 158, 11, 0.12);
+}
+.stat-card.tone-cash:hover {
+  border-color: #F59E0B;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35), 0 8px 24px rgba(245, 158, 11, 0.22);
+}
+
+.stat-card.tone-info {
+  background: linear-gradient(180deg, #FFFFFF 0%, #EFF6FF 100%);
+  border: 1.5px solid #93C5FD;
+  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.15), 0 4px 16px rgba(14, 165, 233, 0.12);
+}
+.stat-card.tone-info:hover {
+  border-color: #0EA5E9;
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.35), 0 8px 24px rgba(14, 165, 233, 0.22);
+}
 
 .stat-l,
 .kpi-label {
