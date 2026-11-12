@@ -24,143 +24,78 @@
         </div>
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
-          <button class="btn btn-action btn-sm" onclick="toggleBulkCard(true)">+ Entrada Bulto</button>
+          <button class="btn btn-action btn-sm" onclick="openInvItemModal(null, 'venta')">+ Nuevo Artículo</button>
         </div>
       </header>
 
       <div class="admin-content">
-        <!-- ESTADÍSTICAS DEL INVENTARIO -->
-        <div class="stat-grid" id="invStatsGrid"></div>
+        <!-- 2 TARJETAS KPI PRINCIPALES -->
+        <div class="stat-grid" id="invStatsGrid" style="margin-bottom:var(--sp-4)"></div>
 
-        <!-- EXPLICACIÓN CLARA Y PANEL EN VIVO: COMIDA PREPARADA AL DÍA VS MERCANCÍA EMPAQUETADA -->
-        <div class="card" data-section="cocina" style="margin-bottom:12px;border:1.5px solid #f59e0b">
-          <div class="card-hd" style="background:#fffbeb">
-            <div>
-              <h3 style="color:#92400e">🥟 ¿Cómo entra la Comida Preparada (Empanadas, Arepas, Almuerzos) vs. la Mercancía?</h3>
-              <p style="color:#78350f;font-size:13px">
-                <strong>Las empanadas, arepas y almuerzos se preparan a diario</strong> (no se cargan como "30 empanadas guardadas en almacén"). Lo que tienes aquí en inventario son los <strong>Ingredientes de Cocina en Kilos/Litros</strong> (harina de amasar, carne, pollo, queso, papas, aceite). Cada vez que vendes comida en Caja, el sistema cuenta cuántas preparaste hoy y descuenta automáticamente los gramos usados.
-              </p>
-            </div>
-            <a href="recetas.html" class="btn btn-secondary btn-sm">Ver Recetas y Salida a Cocina →</a>
-          </div>
-          <div class="card-bd" id="dailyKitchenPrepSummary" style="background:#ffffff;padding:10px 12px"></div>
+        <!-- 3 BOTONES DE ACCIÓN PRINCIPALES -->
+        <div class="action-bar">
+          <button class="action-btn action-primary" onclick="openMultiPurchaseModal()">
+            <span class="action-ico">📦</span>
+            <span class="action-txt">
+              <strong>Llegó mercancía</strong>
+              <small>Registrar compra, bultos y facturas</small>
+            </span>
+          </button>
+          <button class="action-btn" onclick="openQuickExpenseModal()">
+            <span class="action-ico">🧾</span>
+            <span class="action-txt">
+              <strong>Gasto de cocina</strong>
+              <small>Carne, aceite, harina, aliños</small>
+            </span>
+          </button>
+          <button class="action-btn" onclick="openAuditModal()">
+            <span class="action-ico">🔍</span>
+            <span class="action-txt">
+              <strong>Contar lo que hay</strong>
+              <small>Comparar anaquel con el sistema</small>
+            </span>
+          </button>
         </div>
 
-        <!-- TOOLBAR PRINCIPAL CON 3 ZONAS: PRINCIPAL, SECUNDARIA Y ACCESOS RÁPIDOS -->
-        <div class="toolbar" style="margin-bottom:12px">
-          <!-- Zona Principal -->
-          <div class="toolbar-primary">
-            <button class="btn btn-action" onclick="toggleBulkCard(true)">
-              <span id="bulkToolbarIcon"></span> + Registrar Entrada Bulto / Saco
-            </button>
-            <button class="btn btn-secondary" onclick="openInvItemModal(null, 'insumo')">
-              <span id="insumoToolbarIcon"></span> + Ingrediente de cocina
-            </button>
-            <button class="btn btn-secondary" onclick="openInvItemModal(null, 'venta')">
-              <span id="ventaToolbarIcon"></span> + Producto para vender
-            </button>
-          </div>
-
-          <!-- Zona Secundaria -->
-          <div class="toolbar-secondary">
-            <button class="btn btn-secondary" onclick="openMultiPurchaseModal()">
-              <span id="truckToolbarIcon"></span> + Llegó mercancía
-            </button>
-            <button class="btn btn-secondary" onclick="openWasteModal()">
-              <span id="wasteToolbarIcon"></span> + Se dañó o se perdió
-            </button>
-            <button class="btn btn-secondary" onclick="openAuditModal()">
-              <span id="auditToolbarIcon"></span> Contar lo que hay
-            </button>
-            <button class="btn btn-secondary" onclick="openKardexModal('ALL')">
-              <span id="kardexToolbarIcon"></span> Historial de entradas y salidas
-            </button>
-          </div>
-        </div>
-
-        <!-- HERRAMIENTA: CALCULADORA DE COMPRA POR BULTO / CAJA / CARTÓN / SACO -> UNIDAD O KILO -->
-        <div class="card" id="bulkCard" data-section="cocina" style="margin-bottom:12px">
-          <div class="card-hd">
-            <div>
-              <h3>
-                <span id="bulkCardIcon"></span> Calculadora de Entrada por Bulto / Saco → Unidad o Kg
-              </h3>
-              <p>Calcula costo unitario, margen comercial y precio sugerido antiperdida en USD y Bs</p>
-            </div>
-            <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkPreset('prod-harina-pan', 1, 20, 21.60)">Harina (20u)</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkPreset('prod-cerveza-polar', 1, 36, 25.90)">Cerveza (36u)</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkPreset('ins-papa', 1, 25, 33.75)">Papa (25kg)</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleBulkCard()" id="bulkToggleBtn">Ocultar ▲</button>
+        <!-- EXPLICACIÓN PLEGADA EN ACORDEÓN: COCINA VS TIENDA -->
+        <details class="v7-accordion" style="margin-bottom:var(--sp-4)">
+          <summary>🥟 ¿Qué es cocina y qué es tienda? (Comida preparada vs Mercancía)</summary>
+          <div class="v7-accordion-body">
+            <p style="font-size:13px;line-height:1.5;color:var(--txt-2);margin-bottom:10px">
+              <strong>Las empanadas, arepas y almuerzos se preparan a diario</strong> (no se cargan como "30 empanadas guardadas en almacén"). Lo que tienes aquí en inventario son los <strong>Ingredientes de Cocina en Kilos/Litros</strong> (harina de amasar, carne, pollo, queso, papas, aceite). Cada vez que vendes comida en Caja, el sistema cuenta cuántas preparaste hoy y descuenta automáticamente los gramos usados.
+            </p>
+            <div id="dailyKitchenPrepSummary" style="background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px"></div>
+            <div style="margin-top:10px;text-align:right">
+              <a href="recetas.html" class="btn btn-secondary btn-sm">Ver Recetas y Salida a Cocina →</a>
             </div>
           </div>
-          <div class="card-bd" id="bulkCardBody">
-            <div style="display:grid;grid-template-columns:1.8fr 0.8fr 0.8fr 0.9fr 0.9fr 1fr auto;gap:8px;align-items:end">
-              <div class="form-group">
-                <label>1. Artículo</label>
-                <select id="bulkItemSelect" class="select" onchange="recalcBulkPreview()"></select>
-              </div>
-              <div class="form-group">
-                <label>2. Bultos</label>
-                <input type="number" step="1" min="1" id="bulkPacksCount" class="input tabular-nums" value="1" style="font-weight:var(--fw-bold)" oninput="recalcBulkPreview()">
-              </div>
-              <div class="form-group">
-                <label>3. Und/Kg x Bulto</label>
-                <input type="number" step="0.5" min="1" id="bulkUnitsPerPack" class="input tabular-nums" value="20" style="font-weight:var(--fw-bold)" oninput="recalcBulkPreview()">
-              </div>
-              <div class="form-group">
-                <label>4. Costo Bulto ($)</label>
-                <input type="number" step="0.01" min="0" id="bulkPackCostUsd" class="input tabular-nums" value="21.60" style="font-weight:var(--fw-bold)" oninput="recalcBulkPreview()">
-              </div>
-              <div class="form-group">
-                <label>Nuevo PVP ($)</label>
-                <input type="number" step="0.05" min="0" id="bulkNewSalePrice" class="input tabular-nums money-in" style="font-weight:var(--fw-bold)">
-              </div>
-              <div class="form-group">
-                <label>¿Registrar Gasto?</label>
-                <select id="bulkExpenseSource" class="select">
-                  <option value="NONE">No (Solo stock)</option>
-                  <option value="Efectivo USD">Efectivo USD</option>
-                  <option value="Pago Móvil">Pago Móvil</option>
-                  <option value="Efectivo Bs">Efectivo Bs</option>
-                </select>
-              </div>
-              <button class="btn btn-secondary" onclick="submitBulkEntry()">📥 Ingresar</button>
-            </div>
+        </details>
 
-            <div id="bulkCalcSummaryBar" style="margin-top:8px;padding:6px 10px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px"></div>
-          </div>
-        </div>
-
-        <!-- TABLA DE INVENTARIO CON FRANJA ABASTO Y FILTROS ESTRUCTURADOS -->
+        <!-- TABLA DE INVENTARIO SIMPLIFICADA A 5 COLUMNAS CLAVE -->
         <div class="card" data-section="abasto" style="margin-bottom:0">
-          <div class="card-hd">
-            <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center" id="invFilterBtns">
-              <span style="font-size:11px;font-weight:var(--fw-bold);color:var(--txt-2);margin-right:4px">FILTRAR:</span>
+          <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center" id="invFilterBtns">
               <button class="btn btn-action btn-sm" onclick="setInvFilter('ALL', this)">Todo</button>
-              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('COCINA', this)">🍲 Ingredientes de cocina</button>
-              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('VENTA', this)">🛒 Mercancía para vender</button>
-              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('Víveres', this)">Víveres</button>
-              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('Chucherías', this)">Chucherías</button>
-              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('Refrescos & Cervezas', this)">Bebidas</button>
-              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('Cigarros', this)">Cigarros</button>
-              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('LOW', this)">⚠️ Stock Bajo</button>
+              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('COCINA', this)">🍲 Cocina</button>
+              <button class="btn btn-secondary btn-sm" onclick="setInvFilter('VENTA', this)">🛒 Tienda</button>
+              <button class="btn btn-secondary btn-sm" id="btnFilterLow" onclick="setInvFilter('LOW', this)" style="color:var(--money-out);font-weight:700">
+                ⚠️ Se está acabando (<span id="lowCountBadge">0</span>)
+              </button>
             </div>
-            <input type="text" id="invSearchInput" class="input" style="max-width:220px;height:26px;font-size:11px" placeholder="Buscar artículo, código..." oninput="renderInventoryTable()">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" id="invSearchInput" class="input" style="max-width:280px;height:36px;font-size:var(--fs-md)" placeholder="Buscar artículo, código..." oninput="renderInventoryTable()">
+              <button class="btn btn-secondary btn-sm" onclick="openKardexModal('ALL')" title="Historial completo de movimientos">Historial</button>
+            </div>
           </div>
-          <div class="table-wrap" style="max-height:calc(100vh - 220px);overflow-y:auto">
+          <div class="table-wrap" style="max-height:calc(100vh - 270px);overflow-y:auto">
             <table class="data-table">
               <thead style="position:sticky;top:0;z-index:5">
                 <tr>
-                  <th style="width:40px">Img</th>
-                  <th>Cód / Barras</th>
-                  <th>Artículo y Categoría</th>
-                  <th>Destino en Negocio</th>
-                  <th>Stock Actual</th>
-                  <th>Costo Unit.</th>
-                  <th>PVP ($ / Bs)</th>
-                  <th>Margen</th>
-                  <th style="width:140px">Acciones</th>
+                  <th style="min-width:220px">Artículo</th>
+                  <th style="width:130px">Stock</th>
+                  <th style="width:140px">Precio Bs / $</th>
+                  <th style="width:100px">Margen</th>
+                  <th style="width:70px;text-align:center">Acción</th>
                 </tr>
               </thead>
               <tbody id="invTableBody"></tbody>
@@ -169,6 +104,56 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- MODAL: GASTO RÁPIDO DE COCINA (COMPRA DE INSUMOS) -->
+  <div class="modal-backdrop" id="quickExpenseModal">
+    <div class="modal-box" style="max-width:540px">
+      <div class="modal-hd">
+        <div>
+          <h3>🧾 Gasto de Cocina (Compra de Insumos)</h3>
+          <p>Suma los kilos al almacén de cocina y descuenta el dinero de la gaveta</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('quickExpenseModal').classList.remove('open')">✕</button>
+      </div>
+      <div class="modal-bd">
+        <div class="form-grid">
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Ingrediente de Cocina</label>
+            <select id="qeInsumoSelect" class="select" onchange="onQeInsumoChange()"></select>
+          </div>
+          <div class="form-group">
+            <label>Cantidad (Kg / L / Und)</label>
+            <input type="number" step="0.1" min="0.1" id="qeQty" class="input tabular-nums" value="10" oninput="recalcQePreview()">
+          </div>
+          <div class="form-group">
+            <label>Gasto Total en USD ($)</label>
+            <input type="number" step="0.01" min="0" id="qeTotalCostUsd" class="input tabular-nums money-out" value="25.00" oninput="recalcQePreview()">
+          </div>
+          <div class="form-group">
+            <label>Forma de Pago</label>
+            <select id="qePaymentSource" class="select">
+              <option value="Efectivo USD">Efectivo USD (Gaveta)</option>
+              <option value="Pago Móvil">Pago Móvil</option>
+              <option value="Efectivo Bs">Efectivo Bs (Gaveta)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Proveedor / Lugar</label>
+            <input type="text" id="qeSupplier" class="input" placeholder="Ej: Feria de la Hortaliza / Mercado">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Responsable</label>
+            <input type="text" id="qeResponsible" class="input" value="Administrador">
+          </div>
+        </div>
+        <div id="qePreviewBox" style="margin-top:10px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);font-size:12px"></div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-secondary" onclick="document.getElementById('quickExpenseModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-action" onclick="submitQuickKitchenExpense()">Guardar Gasto y Sumar a Cocina</button>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL CREAR / EDITAR ARTÍCULO DE INVENTARIO -->
@@ -252,7 +237,7 @@
       </div>
       <div class="modal-ft">
         <button class="btn btn-secondary" onclick="document.getElementById('invItemModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-secondary" onclick="saveInvItem()">Guardar en Inventario</button>
+        <button class="btn btn-action" onclick="saveInvItem()">Guardar en Inventario</button>
       </div>
     </div>
   </div>
@@ -308,17 +293,54 @@
     </div>
   </div>
 
-  <!-- MODAL RECEPCIÓN FORMAL DE MERCANCÍA / FACTURA MULTI-ÍTEM A PROVEEDOR -->
+  <!-- MODAL RECEPCIÓN FORMAL DE MERCANCÍA / FACTURA MULTI-ÍTEM A PROVEEDOR (CON CALCULADORA DE BULTOS INTEGRADA) -->
   <div class="modal-backdrop" id="multiPurchaseModal">
-    <div class="modal-box" style="max-width:920px;width:95%">
+    <div class="modal-box" style="max-width:940px;width:95%">
       <div class="modal-hd">
         <div>
-          <h3>Llegó Mercancía (Factura de Proveedor)</h3>
-          <p>Registra varios productos de una misma factura y sincroniza la gaveta de caja</p>
+          <h3>Llegó Mercancía (Factura de Proveedor y Bultos)</h3>
+          <p>Registra varios productos de una misma factura, calcula bultos y sincroniza la gaveta de caja</p>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('multiPurchaseModal').classList.remove('open')">✕</button>
       </div>
       <div class="modal-bd">
+        <!-- CALCULADORA DE BULTOS INTEGRADA EN ACORDEÓN -->
+        <details class="v7-accordion" style="margin-bottom:12px">
+          <summary>🧮 Calculadora Rápida: Bulto / Saco → Unidad o Kg</summary>
+          <div class="v7-accordion-body">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+              <span style="font-size:11px;font-weight:var(--fw-bold);color:var(--txt-2)">PREAJUSTES COMUNES:</span>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkPreset('prod-harina-pan', 1, 20, 21.60)">Harina PAN (20u)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkPreset('prod-cerveza-polar', 1, 36, 25.90)">Cerveza Polar (36u)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkPreset('ins-papa', 1, 25, 33.75)">Papa Cocina (25kg)</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1.8fr 0.8fr 0.8fr 0.9fr 0.9fr auto;gap:8px;align-items:end">
+              <div class="form-group">
+                <label>Artículo</label>
+                <select id="bulkItemSelect" class="select" onchange="recalcBulkPreview()"></select>
+              </div>
+              <div class="form-group">
+                <label>Bultos</label>
+                <input type="number" step="1" min="1" id="bulkPacksCount" class="input tabular-nums" value="1" oninput="recalcBulkPreview()">
+              </div>
+              <div class="form-group">
+                <label>Und/Kg x Bulto</label>
+                <input type="number" step="0.5" min="1" id="bulkUnitsPerPack" class="input tabular-nums" value="20" oninput="recalcBulkPreview()">
+              </div>
+              <div class="form-group">
+                <label>Costo Bulto ($)</label>
+                <input type="number" step="0.01" min="0" id="bulkPackCostUsd" class="input tabular-nums" value="21.60" oninput="recalcBulkPreview()">
+              </div>
+              <div class="form-group">
+                <label>Nuevo PVP ($)</label>
+                <input type="number" step="0.05" min="0" id="bulkNewSalePrice" class="input tabular-nums money-in">
+              </div>
+              <button type="button" class="btn btn-secondary" onclick="addBulkRowToPurchase()" title="Copiar este cálculo a los renglones de la factura">⬇ Pasar a Factura</button>
+            </div>
+            <div id="bulkCalcSummaryBar" style="margin-top:8px;padding:6px 10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);font-size:12px"></div>
+          </div>
+        </details>
+
         <div class="form-grid" style="grid-template-columns:1.8fr 1.2fr 1.2fr 1.2fr;gap:10px;margin-bottom:12px">
           <div class="form-group">
             <label>Proveedor</label>
@@ -350,17 +372,17 @@
             <strong style="font-size:12px;color:var(--txt)">Renglones de la Factura:</strong>
             <button type="button" class="btn btn-secondary btn-sm" onclick="addPurchaseRow()">+ Agregar Renglón</button>
           </div>
-          <div class="table-wrap" style="max-height:240px;overflow-y:auto">
+          <div class="table-wrap" style="max-height:220px;overflow-y:auto">
             <table class="data-table" style="font-size:12px">
               <thead>
                 <tr>
                   <th style="min-width:200px">Producto / Insumo</th>
-                  <th style="width:90px">Bultos</th>
-                  <th style="width:100px">Und/Kg x Bulto</th>
-                  <th style="width:110px">Costo Bulto ($)</th>
-                  <th style="width:100px">Costo Unit.</th>
-                  <th style="width:100px">Total ($)</th>
-                  <th style="width:40px"></th>
+                  <th style="width:80px">Bultos</th>
+                  <th style="width:90px">Und/Bulto</th>
+                  <th style="width:100px">Costo Bulto ($)</th>
+                  <th style="width:90px">Costo Unit.</th>
+                  <th style="width:90px">Total ($)</th>
+                  <th style="width:36px"></th>
                 </tr>
               </thead>
               <tbody id="mpRowsBody"></tbody>
@@ -381,7 +403,7 @@
       </div>
       <div class="modal-ft">
         <button class="btn btn-secondary" onclick="document.getElementById('multiPurchaseModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-secondary" onclick="submitMultiPurchase()">Guardar Factura y Sumar a la Tienda</button>
+        <button class="btn btn-action" onclick="submitMultiPurchase()">Guardar Factura y Sumar a la Tienda</button>
       </div>
     </div>
   </div>
@@ -441,7 +463,7 @@
     <div class="modal-box" style="max-width:550px">
       <div class="modal-hd">
         <div>
-          <h3>Contar lo que hay en los estantes</h3>
+          <h3>Contar lo que hay en los estantes (Auditoría)</h3>
           <p>Cuadra la existencia física de los anaqueles contra el sistema y asienta la diferencia</p>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('auditModal').classList.remove('open')">✕</button>
@@ -462,7 +484,7 @@
           </div>
           <div class="form-group" style="grid-column:1/-1">
             <label>Motivo / Observación del Ajuste</label>
-            <input type="text" id="auditReason" class="input" placeholder="Ej: Conteo semanal de cierre de mes...">
+            <input type="text" id="auditReason" class="input" placeholder="Ej: Conteo semanal de anaquel...">
           </div>
           <div class="form-group" style="grid-column:1/-1">
             <label>Auditor / Responsable</label>
@@ -474,7 +496,7 @@
       </div>
       <div class="modal-ft">
         <button class="btn btn-secondary" onclick="document.getElementById('auditModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-secondary" onclick="submitAuditAdjustment()">Guardar Conteo Real</button>
+        <button class="btn btn-action" onclick="submitAuditAdjustment()">Guardar Conteo Real</button>
       </div>
     </div>
   </div>
@@ -492,25 +514,9 @@
   <script>
     let currentFilter = 'ALL';
 
-    function setupIcons() {
-      if (!window.MTPIcons) return;
-      const setIco = (id, name) => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = MTPIcons.get(name, { size: 14 });
-      };
-      setIco('bulkToolbarIcon', 'package');
-      setIco('insumoToolbarIcon', 'kitchen');
-      setIco('ventaToolbarIcon', 'store');
-      setIco('truckToolbarIcon', 'truck');
-      setIco('wasteToolbarIcon', 'waste');
-      setIco('auditToolbarIcon', 'scale');
-      setIco('kardexToolbarIcon', 'kardex');
-      setIco('bulkCardIcon', 'calculator');
-    }
-
     function initInvPage() {
-      setupIcons();
       populateBulkSelect();
+      populateQeSelect();
       renderInvStats();
       renderDailyKitchenPrep();
       renderInventoryTable();
@@ -542,7 +548,7 @@
       const packs = Math.max(0.01, parseFloat(document.getElementById('bulkPacksCount')?.value) || 1);
       const unitsPerPack = Math.max(0.01, parseFloat(document.getElementById('bulkUnitsPerPack')?.value) || 1);
       const packCost = Math.max(0, parseFloat(document.getElementById('bulkPackCostUsd')?.value) || 0);
-      const bcv = MTP.state.settings.rateBcv;
+      const bcv = MTP.state.settings.rateBcv || 42.85;
 
       const totalUnits = Number((packs * unitsPerPack).toFixed(2));
       const totalCost = Number((packs * packCost).toFixed(2));
@@ -564,62 +570,38 @@
       if (bar && item) {
         bar.innerHTML = `
           <div>
-            Entrarán al stock: <strong class="money-in tabular-nums">+${totalUnits} ${item.unit}</strong>
-            (Nuevo stock total: <strong class="tabular-nums">${(item.stock + totalUnits).toFixed(2)} ${item.unit}</strong>)
-          </div>
-          <div>
-            Inversión: <strong class="tabular-nums">${MTP.fmtUSD(totalCost)}</strong> (${(totalCost * bcv).toFixed(2)} Bs)
+            Entrarán: <strong class="money-in tabular-nums">+${totalUnits} ${item.unit}</strong>
+            (Total futuro: <strong class="tabular-nums">${(item.stock + totalUnits).toFixed(2)} ${item.unit}</strong>)
+            · Inversión: <strong class="tabular-nums">${MTP.fmtUSD(totalCost)}</strong> (${(totalCost * bcv).toFixed(2)} Bs)
             · Costo Unitario: <strong class="badge badge-yellow tabular-nums">$${unitCost.toFixed(3)} / ${item.unit}</strong>
+            ${item.sellable ? `· Sugerido: <strong class="money-in tabular-nums">${MTP.fmtUSD(recPrice)}</strong>` : `· <em>Insumo de cocina</em>`}
           </div>
-          ${item.sellable ? `<div>Precio Sugerido para no perder al reponer: <strong class="money-in tabular-nums">${MTP.fmtUSD(recPrice)}</strong></div>` : `<div>Insumo exclusivo de cocina (se descuenta en recetas)</div>`}
         `;
       }
     }
 
-    function submitBulkEntry() {
-      const itemId = document.getElementById('bulkItemSelect').value;
-      const packsCount = parseFloat(document.getElementById('bulkPacksCount').value) || 1;
-      const unitsPerPack = parseFloat(document.getElementById('bulkUnitsPerPack').value) || 1;
-      const packCostUsd = parseFloat(document.getElementById('bulkPackCostUsd').value) || 0;
-      const newSalePriceUsd = parseFloat(document.getElementById('bulkNewSalePrice').value) || 0;
-      const expSource = document.getElementById('bulkExpenseSource').value;
+    function addBulkRowToPurchase() {
+      const itemId = document.getElementById('bulkItemSelect')?.value;
+      const packs = parseFloat(document.getElementById('bulkPacksCount')?.value) || 1;
+      const unitsPerPack = parseFloat(document.getElementById('bulkUnitsPerPack')?.value) || 1;
+      const packCost = parseFloat(document.getElementById('bulkPackCostUsd')?.value) || 0;
+      if (!itemId) return;
 
-      const res = MTP.addBulkStockEntry({
-        itemId,
-        packsCount,
-        unitsPerPack,
-        packCostUsd,
-        newSalePriceUsd,
-        registerAsExpense: expSource !== 'NONE',
-        paymentSource: expSource
-      });
-
-      if (res) {
-        initInvPage();
-        MTP.toast(`¡Sumados +${res.totalUnitsAdded} ${res.item.unit} de "${res.item.name}"! Costo unitario: $${res.unitCostUsd.toFixed(2)}`);
-      }
+      addPurchaseRow(itemId, packs, unitsPerPack, packCost);
+      MTP.toast('Renglón agregado a la factura', 'info');
     }
 
     function setInvFilter(f, btnEl) {
       currentFilter = f;
-      document.querySelectorAll('#invFilterBtns .btn').forEach(b => b.className = 'btn btn-secondary btn-sm');
+      document.querySelectorAll('#invFilterBtns .btn').forEach(b => {
+        if (b.id === 'btnFilterLow') {
+          b.className = (f === 'LOW') ? 'btn btn-action btn-sm' : 'btn btn-secondary btn-sm';
+        } else {
+          b.className = 'btn btn-secondary btn-sm';
+        }
+      });
       if (btnEl) btnEl.className = 'btn btn-action btn-sm';
       renderInventoryTable();
-    }
-
-    function toggleBulkCard(forceOpen = false) {
-      const bd = document.getElementById('bulkCardBody');
-      const btn = document.getElementById('bulkToggleBtn');
-      if (!bd) return;
-      if (forceOpen) {
-        bd.style.display = 'block';
-        if (btn) btn.textContent = 'Ocultar ▲';
-        document.getElementById('bulkCard').scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
-      const isHidden = bd.style.display === 'none';
-      bd.style.display = isHidden ? 'block' : 'none';
-      if (btn) btn.textContent = isHidden ? 'Ocultar ▲' : 'Mostrar Calculadora ▼';
     }
 
     function renderDailyKitchenPrep() {
@@ -627,26 +609,26 @@
       if (!box || !MTP.getPeriodAnalytics) return;
       const today = MTP.getPeriodAnalytics('TODAY');
       const famHtml = (today.kitchenByFamily || []).map(f => `
-        <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px">
-          <span style="font-weight:700;font-size:13px;color:#0f172a">${f.name}</span>
-          <span class="badge badge-yellow tabular-nums" style="font-size:12.5px">${f.qty} preparados hoy (${MTP.fmtUSD(f.salesUsd)})</span>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span style="font-weight:700;font-size:13px;color:var(--txt)">${f.name}</span>
+          <span class="badge badge-yellow tabular-nums" style="font-size:12px">${f.qty} preparados hoy (${MTP.fmtUSD(f.salesUsd)})</span>
         </div>
       `).join('');
 
       const ingUsedHtml = (today.kitchenIngredientsUsed || []).length
         ? today.kitchenIngredientsUsed.map(ing => `
             <span class="badge badge-green tabular-nums" style="font-size:12px;padding:3px 8px">
-              ${ing.name}: <strong>-${MTP.fmtWeight(ing.qtyUsed, ing.unit)}</strong> usados hoy (Quedan: ${MTP.fmtWeight(ing.remainingStock, ing.unit)})
+              ${ing.name}: <strong>-${MTP.fmtWeight(ing.qtyUsed, ing.unit)}</strong> usados (Quedan: ${MTP.fmtWeight(ing.remainingStock, ing.unit)})
             </span>
           `).join(' ')
-        : '<span style="color:#64748b;font-size:13px">Aún no se han vendido platos preparados en el turno de hoy.</span>';
+        : '<span style="color:var(--txt-3);font-size:12px">Aún no se han vendido platos preparados en el turno de hoy.</span>';
 
       box.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-bottom:8px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:8px">
           ${famHtml}
         </div>
-        <div style="padding-top:6px;border-top:1px dashed #cbd5e1;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <strong style="font-size:12.5px;color:#0f172a">🍲 Ingredientes descontados hoy por comida preparada (${today.kitchenPreparedQty} platos):</strong>
+        <div style="padding-top:6px;border-top:1px dashed var(--line);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <strong style="font-size:12px;color:var(--txt)">🍲 Descontado hoy por comida preparada (${today.kitchenPreparedQty || 0} platos):</strong>
           ${ingUsedHtml}
         </div>
       `;
@@ -656,116 +638,184 @@
       const inv = MTP.state.inventory;
       const kitchenItems = inv.filter(i => !i.sellable);
       const saleItems = inv.filter(i => i.sellable);
-      const kitchenCapital = kitchenItems.reduce((acc, i) => acc + (i.stock * i.costUsd), 0);
-      const saleCapital = saleItems.reduce((acc, i) => acc + (i.stock * i.costUsd), 0);
-      const saleRevenue = saleItems.reduce((acc, i) => acc + (i.stock * i.priceUsd), 0);
-      const expectedRetailProfit = saleRevenue - saleCapital;
+      const totalCapital = inv.reduce((acc, i) => acc + (i.stock * i.costUsd), 0);
       const lowCount = inv.filter(i => i.stock <= i.minStock).length;
 
-      const kitchenIco = window.MTPIcons ? MTPIcons.get('kitchen', { size: 16 }) : '';
-      const pkgIco = window.MTPIcons ? MTPIcons.get('package', { size: 16 }) : '';
-      const alertIco = window.MTPIcons ? MTPIcons.get('alert', { size: 16 }) : '';
+      const badgeEl = document.getElementById('lowCountBadge');
+      if (badgeEl) badgeEl.textContent = lowCount;
 
-      document.getElementById('invStatsGrid').innerHTML = `
-        <div class="stat-card">
-          <div class="stat-ico yellow">${kitchenIco}</div>
-          <div>
-            <div class="stat-n tabular-nums" style="color:var(--sec-cocina)">${MTP.fmtUSD(kitchenCapital)}</div>
-            <div class="stat-l">Valor en Ingredientes de Cocina (${kitchenItems.length} insumos)</div>
-            <div class="stat-sub">Papa, aliños, carnes, pollo, queso, aceite</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-ico green">${pkgIco}</div>
-          <div>
-            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(saleCapital)}</div>
-            <div class="stat-l">Costo en Mercancía de Venta (${saleItems.length} productos)</div>
-            <div class="stat-sub tabular-nums">Valor venta: <strong>${MTP.fmtUSD(saleRevenue)}</strong> (+${MTP.fmtUSD(expectedRetailProfit)} ganancia)</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-ico ${lowCount ? 'red' : 'blue'}">${alertIco}</div>
-          <div>
-            <div class="stat-n tabular-nums ${lowCount ? 'money-out' : ''}">${lowCount} alertas</div>
-            <div class="stat-l">Ítems en Punto de Reposición</div>
-            <div class="stat-sub"><a href="#" onclick="setInvFilter('LOW');return false;" style="color:var(--money-out);font-weight:var(--fw-bold)">Ver agotándose →</a></div>
-          </div>
-        </div>
-      `;
+      const grid = document.getElementById('invStatsGrid');
+      if (!grid) return;
+
+      grid.innerHTML =
+        MTPUI.statCard({
+          label: 'Valor en el anaquel',
+          tone: 'cash',
+          value: MTP.fmtUSD(totalCapital),
+          sub: saleItems.length + ' productos en mostrador · ' + kitchenItems.length + ' insumos en cocina'
+        }) +
+        MTPUI.statCard({
+          label: 'Se está acabando',
+          tone: lowCount > 0 ? 'out' : 'in',
+          value: lowCount + (lowCount === 1 ? ' artículo' : ' artículos'),
+          sub: lowCount > 0 ? 'Toca reponer antes de que se agote' : 'Todo con buen nivel de inventario',
+          href: 'javascript:setInvFilter("LOW")'
+        });
     }
 
     function renderInventoryTable() {
       const tbody = document.getElementById('invTableBody');
-      const q = (document.getElementById('invSearchInput').value || '').toLowerCase();
-      const bcv = MTP.state.settings.rateBcv;
+      const q = (document.getElementById('invSearchInput').value || '').toLowerCase().trim();
+      const bcv = MTP.state.settings.rateBcv || 42.85;
 
       const rows = MTP.state.inventory.filter(i => {
         if (currentFilter === 'LOW' && i.stock > i.minStock) return false;
         if (currentFilter === 'COCINA' && i.sellable) return false;
         if (currentFilter === 'VENTA' && !i.sellable) return false;
-        if (currentFilter !== 'ALL' && currentFilter !== 'LOW' && currentFilter !== 'COCINA' && currentFilter !== 'VENTA' && i.category !== currentFilter) return false;
-        if (q && !i.name.toLowerCase().includes(q) && !i.code.toLowerCase().includes(q) && !i.barcode.includes(q)) return false;
+        if (q && !i.name.toLowerCase().includes(q) && !i.code.toLowerCase().includes(q) && !(i.barcode || '').includes(q)) return false;
         return true;
       });
 
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:36px;color:var(--txt-3);font-size:var(--fs-md)">No se encontraron artículos para este filtro.</td></tr>`;
+        return;
+      }
+
       tbody.innerHTML = rows.map(i => {
         const isLow = i.stock <= i.minStock;
-        const fallbackImg = MTP.getFallbackSvgDataUri(i.name, i.emoji);
+        const fallbackImg = MTP.getFallbackSvgDataUri(i.name, i.emoji || (i.sellable ? '🛒' : '🍲'));
         const marginPct = i.sellable && i.priceUsd > 0 ? (((i.priceUsd - i.costUsd) / i.priceUsd) * 100).toFixed(0) : 0;
-        const kardexIco = window.MTPIcons ? MTPIcons.get('kardex', { size: 12 }) : 'K';
-        const auditIco = window.MTPIcons ? MTPIcons.get('scale', { size: 12 }) : 'C';
-        const wasteIco = window.MTPIcons ? MTPIcons.get('waste', { size: 12 }) : 'M';
-        const editIco = window.MTPIcons ? MTPIcons.get('edit', { size: 12 }) : 'E';
 
         return `
           <tr>
-            <td style="width:34px;padding:4px 6px">
-              <img src="${i.img || fallbackImg}" alt="${i.name}" onerror="this.onerror=null;this.src='${fallbackImg}'"
-                style="width:28px;height:24px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--line)">
+            <td style="padding:8px 10px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <img src="${i.img || fallbackImg}" alt="${i.name}" onerror="this.onerror=null;this.src='${fallbackImg}'"
+                  style="width:36px;height:36px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--surface-2);flex-shrink:0">
+                <div>
+                  <div style="font-weight:var(--fw-bold);font-size:13px;color:var(--txt)">${i.name}</div>
+                  <div style="font-size:11px;color:var(--txt-3);display:flex;align-items:center;gap:6px;margin-top:2px">
+                    <span class="code-pill">#${i.code}</span>
+                    <span>${!i.sellable ? '🍲 Cocina' : '🛒 Tienda (' + (i.group || i.category) + ')'}</span>
+                  </div>
+                </div>
+              </div>
             </td>
-            <td style="padding:4px 6px">
-              <span class="code-pill">#${i.code}</span>
-              <div class="tabular-nums" style="font-family:var(--font-mono);font-size:11px;color:var(--txt-3)">${i.barcode}</div>
-            </td>
-            <td style="padding:4px 6px">
-              <div style="font-weight:var(--fw-bold);font-size:12px">${i.name}</div>
-              <div style="font-size:11px;color:var(--txt-2)">${i.category}</div>
-            </td>
-            <td style="padding:4px 6px">
-              ${!i.sellable
-                ? `<span class="badge badge-yellow" style="font-weight:var(--fw-semibold)">🍲 Ingrediente de Cocina (No se vende suelto)</span>`
-                : `<span class="badge badge-blue" style="font-weight:var(--fw-semibold)">🛒 Venta Directa (${i.group || 'Abasto'})</span>`}
-            </td>
-            <td style="padding:4px 6px">
-              <span class="badge ${isLow ? 'badge-red' : 'badge-green'} tabular-nums" style="font-size:11px">
+            <td style="padding:8px 10px">
+              <span class="badge ${isLow ? 'badge-red' : 'badge-green'} tabular-nums" style="font-size:12px;font-weight:700">
                 ${MTP.fmtWeight(i.stock, i.unit)}
               </span>
+              ${isLow ? '<div style="font-size:10.5px;color:var(--money-out);font-weight:700;margin-top:2px">¡Agotándose!</div>' : ''}
             </td>
-            <td style="padding:4px 6px;font-weight:var(--fw-bold)" class="tabular-nums">${MTP.fmtUSD(i.costUsd)}</td>
-            <td style="padding:4px 6px">
+            <td style="padding:8px 10px">
               ${i.sellable
                 ? `<div class="price-dual">
-                     <span class="price-usd tabular-nums money-in">${MTP.fmtUSD(i.priceUsd)}</span>
-                     <span class="price-bs tabular-nums money-bs">${(i.priceUsd * bcv).toFixed(2)} Bs</span>
+                     <span class="price-bs tabular-nums money-bs" style="font-size:13px;font-weight:800">${(i.priceUsd * bcv).toFixed(2)} Bs</span>
+                     <span class="price-usd tabular-nums" style="font-size:11px;color:var(--txt-3)">${MTP.fmtUSD(i.priceUsd)}</span>
                    </div>`
-                : `<span style="font-size:11px;color:var(--txt-3);font-style:italic">No se vende suelto</span>`}
+                : `<span style="font-size:12px;color:var(--txt-3);font-style:italic">Costo: ${MTP.fmtUSD(i.costUsd)}</span>`}
             </td>
-            <td style="padding:4px 6px">
+            <td style="padding:8px 10px">
               ${i.sellable
-                ? `<span class="badge ${marginPct >= 30 ? 'badge-green' : 'badge-yellow'} tabular-nums">${marginPct}%</span>`
-                : '—'}
+                ? `<span class="badge ${marginPct >= 30 ? 'badge-green' : 'badge-yellow'} tabular-nums" style="font-size:12px;font-weight:700">${marginPct}%</span>`
+                : '<span style="color:var(--txt-3)">—</span>'}
             </td>
-            <td style="padding:4px 6px">
-              <div style="display:flex;gap:4px;flex-wrap:wrap">
-                <button class="btn btn-secondary btn-sm" onclick="openKardexModal('${i.id}')" title="Ver historial de entradas y salidas">${kardexIco}</button>
-                <button class="btn btn-secondary btn-sm" onclick="openAuditModal('${i.id}')" title="Contar lo que hay">${auditIco}</button>
-                <button class="btn btn-secondary btn-sm" onclick="openWasteModal('${i.id}')" title="Anotar que se dañó o se perdió">${wasteIco}</button>
-                <button class="btn btn-secondary btn-sm" onclick="openInvItemModal('${i.id}')" title="Editar">${editIco}</button>
-              </div>
+            <td style="padding:8px 10px;text-align:center">
+              <button class="btn btn-secondary btn-sm" style="font-size:16px;line-height:1;padding:4px 10px;font-weight:900" onclick="openRowMenu('${i.id}')" title="Opciones de este artículo">⋯</button>
             </td>
           </tr>
         `;
       }).join('');
+    }
+
+    /* ==========================================================================
+       MENÚ CONTEXTUAL ⋯ POR FILA CON MTPUI.menuDialog
+       ========================================================================== */
+    function openRowMenu(itemId) {
+      const item = MTP.getInsumoById(itemId);
+      if (!item) return;
+
+      MTPUI.menuDialog('Opciones para: ' + item.name, [
+        { label: '📋 Ver movimientos (Kardex)', run: function () { openKardexModal(itemId); } },
+        { label: '✏️ Editar artículo', run: function () { openInvItemModal(itemId); } },
+        { label: '🗑️ Registrar lo que se dañó o perdió (Merma)', run: function () { openWasteModal(itemId); } },
+        { label: '🔍 Ajustar por conteo físico (Auditoría)', run: function () { openAuditModal(itemId); } }
+      ]);
+    }
+
+    /* ==========================================================================
+       MODAL DE GASTO RÁPIDO DE COCINA (Aliños, carnes, papas, harina)
+       ========================================================================== */
+    function populateQeSelect() {
+      const sel = document.getElementById('qeInsumoSelect');
+      if (!sel) return;
+      const insumos = MTP.state.inventory.filter(i => !i.sellable);
+      sel.innerHTML = insumos.map(i =>
+        `<option value="${i.id}" data-cost="${i.costUsd}" data-unit="${i.unit}">[${i.code}] ${i.name} (Stock: ${i.stock} ${i.unit} · Costo: $${i.costUsd.toFixed(2)})</option>`
+      ).join('');
+      onQeInsumoChange();
+    }
+
+    function openQuickExpenseModal(insumoId = null) {
+      populateQeSelect();
+      const sel = document.getElementById('qeInsumoSelect');
+      if (insumoId && sel) sel.value = insumoId;
+      onQeInsumoChange();
+      document.getElementById('quickExpenseModal').classList.add('open');
+    }
+
+    function onQeInsumoChange() {
+      const sel = document.getElementById('qeInsumoSelect');
+      const item = MTP.getInsumoById(sel?.value);
+      if (!item) return;
+      const qty = parseFloat(document.getElementById('qeQty')?.value) || 10;
+      document.getElementById('qeTotalCostUsd').value = (qty * item.costUsd).toFixed(2);
+      recalcQePreview();
+    }
+
+    function recalcQePreview() {
+      const sel = document.getElementById('qeInsumoSelect');
+      const item = MTP.getInsumoById(sel?.value);
+      const qty = Math.max(0.01, parseFloat(document.getElementById('qeQty')?.value) || 1);
+      const totalCostUsd = Math.max(0, parseFloat(document.getElementById('qeTotalCostUsd')?.value) || 0);
+      const bcv = MTP.state.settings.rateBcv || 42.85;
+      const box = document.getElementById('qePreviewBox');
+      if (!item || !box) return;
+
+      const unitCost = qty > 0 ? (totalCostUsd / qty) : 0;
+      box.innerHTML = `
+        <div>Entrarán al almacén de cocina: <strong class="money-in tabular-nums">+${qty} ${item.unit}</strong> de "${item.name}" (Nuevo stock: ${(item.stock + qty).toFixed(2)} ${item.unit})</div>
+        <div style="margin-top:2px">Costo unitario resultante: <strong class="tabular-nums">$${unitCost.toFixed(2)} / ${item.unit}</strong> · Total en Bs: <strong class="tabular-nums">${(totalCostUsd * bcv).toFixed(2)} Bs</strong></div>
+      `;
+    }
+
+    function submitQuickKitchenExpense() {
+      const insumoId = document.getElementById('qeInsumoSelect')?.value;
+      const qty = parseFloat(document.getElementById('qeQty')?.value) || 0;
+      const totalCostUsd = parseFloat(document.getElementById('qeTotalCostUsd')?.value) || 0;
+      const paymentSource = document.getElementById('qePaymentSource')?.value || 'Efectivo USD';
+      const supplier = document.getElementById('qeSupplier')?.value.trim() || 'Mercado Mayorista / Feria';
+      const responsible = document.getElementById('qeResponsible')?.value.trim() || 'Administrador';
+
+      if (!insumoId || qty <= 0 || totalCostUsd <= 0) {
+        MTP.toast('Ingresa una cantidad y monto válidos mayores a 0', 'warn');
+        return;
+      }
+
+      const res = MTP.recordKitchenPurchase({
+        insumoId,
+        qty,
+        totalCostUsd,
+        paymentSource,
+        supplier,
+        responsible
+      });
+
+      if (res) {
+        document.getElementById('quickExpenseModal').classList.remove('open');
+        initInvPage();
+        MTP.toast(`¡Gasto de cocina guardado! +${res.qty} ${res.insumo.unit} de "${res.insumo.name}" sumados a cocina.`);
+      }
     }
 
     /* ==========================================================================
@@ -874,10 +924,12 @@
       addPurchaseRow();
       recalcPurchaseTotals();
       updateMpPaymentNotice();
+      populateBulkSelect();
+      recalcBulkPreview();
       document.getElementById('multiPurchaseModal').classList.add('open');
     }
 
-    function addPurchaseRow() {
+    function addPurchaseRow(defaultItemId = null, defaultPacks = 1, defaultUnitsPerPack = 20, defaultPackCost = 21.60) {
       const tbody = document.getElementById('mpRowsBody');
       if (!tbody) return;
       const rowId = 'mpRow_' + Date.now() + '_' + Math.floor(Math.random() * 100);
@@ -885,7 +937,7 @@
       tr.id = rowId;
 
       const optsHtml = MTP.state.inventory.map(i =>
-        `<option value="${i.id}" data-unit="${i.unit}" data-cost="${i.costUsd}">[${i.code}] ${i.name} (${i.unit})</option>`
+        `<option value="${i.id}" data-unit="${i.unit}" data-cost="${i.costUsd}" ${defaultItemId === i.id ? 'selected' : ''}>[${i.code}] ${i.name} (${i.unit})</option>`
       ).join('');
 
       tr.innerHTML = `
@@ -895,13 +947,13 @@
           </select>
         </td>
         <td>
-          <input type="number" step="1" min="1" value="1" class="input mp-packs tabular-nums" style="padding:4px 6px;font-weight:var(--fw-bold)" oninput="recalcPurchaseTotals()">
+          <input type="number" step="1" min="1" value="${defaultPacks}" class="input mp-packs tabular-nums" style="padding:4px 6px;font-weight:var(--fw-bold)" oninput="recalcPurchaseTotals()">
         </td>
         <td>
-          <input type="number" step="0.5" min="1" value="20" class="input mp-units-per-pack tabular-nums" style="padding:4px 6px;font-weight:var(--fw-bold)" oninput="recalcPurchaseTotals()">
+          <input type="number" step="0.5" min="1" value="${defaultUnitsPerPack}" class="input mp-units-per-pack tabular-nums" style="padding:4px 6px;font-weight:var(--fw-bold)" oninput="recalcPurchaseTotals()">
         </td>
         <td>
-          <input type="number" step="0.01" min="0" value="21.60" class="input mp-pack-cost tabular-nums" style="padding:4px 6px;font-weight:var(--fw-bold)" oninput="recalcPurchaseTotals()">
+          <input type="number" step="0.01" min="0" value="${defaultPackCost.toFixed(2)}" class="input mp-pack-cost tabular-nums" style="padding:4px 6px;font-weight:var(--fw-bold)" oninput="recalcPurchaseTotals()">
         </td>
         <td>
           <span class="mp-unit-cost-preview tabular-nums" style="font-weight:var(--fw-bold);font-size:12px">$1.08</span>
@@ -914,7 +966,7 @@
         </td>
       `;
       tbody.appendChild(tr);
-      onMpItemChange(rowId);
+      if (!defaultItemId) onMpItemChange(rowId);
       recalcPurchaseTotals();
     }
 
@@ -929,6 +981,7 @@
       if (!tr) return;
       const sel = tr.querySelector('.mp-item-select');
       const opt = sel.options[sel.selectedIndex];
+      if (!opt) return;
       const unit = opt.getAttribute('data-unit') || 'und';
       const cost = parseFloat(opt.getAttribute('data-cost')) || 1.0;
 

@@ -307,8 +307,9 @@ assert.strictEqual(annualStats.monthsList.length, 12, 'El cierre anual debe cons
 console.log('✅ [Integración 7] Cierre Diario, Mensual y Anual + Producción diaria de cocina verificados.\n');
 
 // ============================================================================
-// SUITE v7 — Flujo de caja (total único, IGTF, vuelto y denominación)
+// SUITE v7 — Pruebas de UI, Helpers Puros y Flujo de Caja
 // ============================================================================
+require('./ui.test.js');
 require('./pos.test.js');
 
-console.log('🎉 TODAS LAS PRUEBAS AUTOMATIZADAS (FISCALES, INTEGRACIÓN V6 Y CAJA v7) PASARON AL 100%.');
+console.log('🎉 TODAS LAS PRUEBAS AUTOMATIZADAS (FISCALES, INTEGRACIÓN V6, UI Y CAJA v7) PASARON AL 100%.');

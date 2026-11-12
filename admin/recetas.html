@@ -93,102 +93,106 @@
       </header>
 
       <div class="admin-content">
-        <!-- SECCIÓN 1: SALIDA A PRODUCCIÓN DE COCINA ("SALIDA A OLLA / BATEA") -->
-        <div class="card" data-section="cocina" style="margin-bottom:12px">
-          <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <h3 style="font-size:13px">Lo que salió para cocinar hoy</h3>
-              <p style="font-size:11px">Kilos de masa, carne, queso y papas entregados a cocineros en la mañana vs. piezas contadas al cierre</p>
+        <!-- BARRA DE PESTAÑAS PRINCIPALES -->
+        <div class="v7-period-bar" style="margin-bottom:var(--sp-4)">
+          <span class="v7-period-label">VISTA:</span>
+          <button type="button" class="v7-period-btn active" id="btnTabTanda" onclick="switchRecetasTab('tanda')">🍲 Tanda de cocina</button>
+          <button type="button" class="v7-period-btn" id="btnTabPlanificador" onclick="switchRecetasTab('planificador')">📊 Planificador de olla</button>
+          <button type="button" class="v7-period-btn" id="btnTabRecetario" onclick="switchRecetasTab('recetario')">📖 Recetario por plato</button>
+        </div>
+
+        <!-- TAB 1: TANDA DE COCINA (SALIDA A OLLA / BATEA) -->
+        <div id="tabTandaContent">
+          <div class="card" data-section="cocina" style="margin-bottom:12px">
+            <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <h3 style="font-size:14px">Lo que salió para cocinar hoy</h3>
+                <p style="font-size:12px">Kilos de masa, carne, queso y papas entregados a cocineros en la mañana vs. piezas contadas al cierre</p>
+              </div>
+              <button class="btn btn-action btn-sm" onclick="openNewBatchModal()">+ Registrar Tanda</button>
             </div>
-            <button class="btn btn-p btn-sm" onclick="openNewBatchModal()">Registrar Tanda</button>
-          </div>
-          <div class="table-wrap" style="max-height:160px;overflow-y:auto">
-            <table>
-              <thead>
-                <tr>
-                  <th>Fecha / Turno</th>
-                  <th>Insumos Entregados</th>
-                  <th>Piezas Esperadas</th>
-                  <th>Piezas Reales</th>
-                  <th>Rendimiento</th>
-                  <th>Costo Insumos</th>
-                  <th style="text-align:right">Acción</th>
-                </tr>
-              </thead>
-              <tbody id="kitchenBatchesTableBody"></tbody>
-            </table>
+            <div class="table-wrap" style="max-height:calc(100vh - 250px);overflow-y:auto">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Fecha / Turno</th>
+                    <th>Insumos Entregados</th>
+                    <th>Piezas Esperadas</th>
+                    <th>Piezas Reales</th>
+                    <th>Rendimiento</th>
+                    <th>Costo Insumos</th>
+                    <th style="text-align:right">Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="kitchenBatchesTableBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        <!-- SECCIÓN 2: SIMULADOR DE OLLA Y PLANIFICADOR DE PORCIONES -->
-        <div class="card" data-section="cocina" style="margin-bottom:12px">
-          <div class="card-hd">
-            <div>
-              <h3 style="font-size:13px">Planificador de Rendimiento de Olla / Batea</h3>
-              <p style="font-size:11px">Calcula insumos requeridos y rentabilidad según la receta del sabor seleccionado</p>
+        <!-- TAB 2: SIMULADOR DE OLLA Y PLANIFICADOR DE PORCIONES -->
+        <div id="tabPlanificadorContent" style="display:none">
+          <div class="card" data-section="cocina" style="margin-bottom:12px">
+            <div class="card-hd">
+              <div>
+                <h3 style="font-size:14px">Planificador de Rendimiento de Olla / Batea</h3>
+                <p style="font-size:12px">Calcula insumos requeridos y rentabilidad según la receta del sabor seleccionado</p>
+              </div>
+              <span class="badge badge-green">CÁLCULO EXACTO</span>
             </div>
-            <span class="badge badge-green">CÁLCULO EXACTO</span>
-          </div>
-          <div class="card-bd" style="padding:10px">
-            <div class="form-grid" style="margin-bottom:8px">
-              <div class="form-group" style="grid-column:span 2">
-                <label>Sabor / Variante a Evaluar en la Olla</label>
-                <select id="ollaDishSelect" class="select" onchange="loadDishIntoOllaPlanner()"></select>
+            <div class="card-bd" style="padding:12px">
+              <div class="form-grid" style="margin-bottom:10px">
+                <div class="form-group" style="grid-column:span 2">
+                  <label>Sabor / Variante a Evaluar en la Olla</label>
+                  <select id="ollaDishSelect" class="select" onchange="loadDishIntoOllaPlanner()"></select>
+                </div>
+                <div class="form-group">
+                  <label>Cantidad de Porciones Objetivo</label>
+                  <input type="number" id="ollaTargetPlates" class="input" value="40" min="1" style="font-weight:900" oninput="recalcOllaFromPlates(this.value)">
+                </div>
+                <div class="form-group">
+                  <label>Kilos de Proteína / Relleno (Kg)</label>
+                  <input type="number" step="0.1" id="ollaKgProteina" class="input" style="font-weight:700" oninput="recalcOllaCustom()">
+                </div>
+                <div class="form-group">
+                  <label>Kilos de Harina / Arroz (Kg)</label>
+                  <input type="number" step="0.1" id="ollaKgArroz" class="input" style="font-weight:700" oninput="recalcOllaCustom()">
+                </div>
+                <div class="form-group">
+                  <label>Kilos de Papa Cocina (Kg)</label>
+                  <input type="number" step="0.1" id="ollaKgPapa" class="input" style="font-weight:700" oninput="recalcOllaCustom()">
+                </div>
+                <div class="form-group">
+                  <label>Kilos de Aliños / Sofrito (Kg)</label>
+                  <input type="number" step="0.05" id="ollaKgAlinos" class="input" style="font-weight:700" oninput="recalcOllaCustom()">
+                </div>
               </div>
-              <div class="form-group">
-                <label>Cantidad de Porciones Objetivo</label>
-                <input type="number" id="ollaTargetPlates" class="input" value="40" min="1" style="font-weight:900" oninput="recalcOllaFromPlates(this.value)">
-              </div>
-              <div class="form-group">
-                <label>Kilos de Proteína / Relleno (Kg)</label>
-                <input type="number" step="0.1" id="ollaKgProteina" class="input" style="font-weight:700" oninput="recalcOllaCustom()">
-              </div>
-              <div class="form-group">
-                <label>Kilos de Harina / Arroz (Kg)</label>
-                <input type="number" step="0.1" id="ollaKgArroz" class="input" style="font-weight:700" oninput="recalcOllaCustom()">
-              </div>
-              <div class="form-group">
-                <label>Kilos de Papa Cocina (Kg)</label>
-                <input type="number" step="0.1" id="ollaKgPapa" class="input" style="font-weight:700" oninput="recalcOllaCustom()">
-              </div>
-              <div class="form-group">
-                <label>Kilos de Aliños / Sofrito (Kg)</label>
-                <input type="number" step="0.05" id="ollaKgAlinos" class="input" style="font-weight:700" oninput="recalcOllaCustom()">
-              </div>
-            </div>
 
-            <div id="ollaResultBox" style="background:#0f172a;color:#fff;border-radius:8px;padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px"></div>
+              <div id="ollaResultBox" style="background:#0f172a;color:#fff;border-radius:var(--radius);padding:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
+            </div>
           </div>
         </div>
 
-        <!-- SECCIÓN 3: RECETARIO Y ESCANDALLOS POR FAMILIA, PRODUCTO Y VARIANTE -->
-        <div class="card" data-section="cocina" style="margin-bottom:12px">
-          <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <h3 style="font-size:13px">Recetas por Plato y Sabor (Cuánto lleva cada uno)</h3>
-              <p style="font-size:11px">Cada sabor descuenta sus propios gramos de harina, carne, pollo, queso o aliños en cada venta</p>
+        <!-- TAB 3: RECETARIO Y ESCANDALLOS (CON EXTRAS COMO SUBFILTRO) -->
+        <div id="tabRecetarioContent" style="display:none">
+          <div class="card" data-section="cocina" style="margin-bottom:12px">
+            <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+              <div>
+                <h3 style="font-size:14px">Recetas por Plato y Sabor (Cuánto lleva cada uno)</h3>
+                <p style="font-size:12px">Cada sabor descuenta sus propios gramos de harina, carne, pollo, queso o aliños en cada venta</p>
+              </div>
+              <input type="text" id="recipeSearchInput" class="input" style="max-width:280px;height:34px;font-size:14px" placeholder="Buscar sabor o código..." oninput="renderRecipesCards()">
             </div>
-            <input type="text" id="recipeSearchInput" class="input" style="max-width:240px;height:30px" placeholder="Buscar sabor o código..." oninput="renderRecipesCards()">
-          </div>
-          <div class="card-bd" style="padding:10px">
-            <!-- Pestañas de Familia -->
-            <div class="fam-filter-tabs" id="recipeFamTabs"></div>
+            <div class="card-bd" style="padding:12px">
+              <!-- Pestañas de Familia y Subfiltro Extras -->
+              <div class="fam-filter-tabs" id="recipeFamTabs"></div>
 
-            <!-- Grilla de Recetas -->
-            <div id="recipesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px"></div>
-          </div>
-        </div>
+              <!-- Grilla de Recetas de Platos -->
+              <div id="recipesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px"></div>
 
-        <!-- SECCIÓN 4: ESCANDALLO DE EXTRAS Y MODIFICADORES -->
-        <div class="card" data-section="cocina">
-          <div class="card-hd">
-            <div>
-              <h3 style="font-size:13px">Ingredientes que llevan los Extras (+Queso, +Aguacate, +Envase)</h3>
-              <p style="font-size:11px">Insumos que se descuentan automáticamente cuando el cliente pide adicionales</p>
+              <!-- Grilla de Extras y Modificadores -->
+              <div id="modifierRecipesGrid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
             </div>
-          </div>
-          <div class="card-bd" style="padding:10px">
-            <div id="modifierRecipesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px"></div>
           </div>
         </div>
       </div>
@@ -307,15 +311,37 @@
   <script src="../assets/js/sidenav.js"></script>
   <script>
     let activeRecipeFam = 'all';
+    let currentRecetasTab = 'tanda';
     let editRecipeIngredients = [];
+
+    function switchRecetasTab(tab) {
+      currentRecetasTab = tab;
+      const tanda = document.getElementById('tabTandaContent');
+      const plan = document.getElementById('tabPlanificadorContent');
+      const receta = document.getElementById('tabRecetarioContent');
+      const btnTanda = document.getElementById('btnTabTanda');
+      const btnPlan = document.getElementById('btnTabPlanificador');
+      const btnReceta = document.getElementById('btnTabRecetario');
+
+      if (tanda) tanda.style.display = tab === 'tanda' ? 'block' : 'none';
+      if (plan) plan.style.display = tab === 'planificador' ? 'block' : 'none';
+      if (receta) receta.style.display = tab === 'recetario' ? 'block' : 'none';
+
+      if (btnTanda) btnTanda.classList.toggle('active', tab === 'tanda');
+      if (btnPlan) btnPlan.classList.toggle('active', tab === 'planificador');
+      if (btnReceta) btnReceta.classList.toggle('active', tab === 'recetario');
+
+      if (tab === 'planificador') {
+        loadDishIntoOllaPlanner();
+      }
+    }
 
     function initRecetasPage() {
       renderRecipeFamTabs();
       initOllaDishSelect();
-      loadDishIntoOllaPlanner();
       renderRecipesCards();
-      renderModifierRecipesCards();
       renderKitchenBatchesTable();
+      switchRecetasTab(currentRecetasTab);
     }
 
     function renderRecipeFamTabs() {
@@ -325,7 +351,7 @@
 
       let html = `
         <button class="fam-tab-pill ${activeRecipeFam === 'all' ? 'active' : ''}" onclick="selectRecipeFam('all')">
-          ${window.MTPIcons ? MTPIcons.get('store', { size: 14 }) : ''}
+          ${window.MTPIcons ? MTPIcons.get('store', { size: 14 }) : '🍽️'}
           Todos los Sabores
         </button>
       `;
@@ -339,6 +365,11 @@
           </button>
         `;
       });
+      html += `
+        <button class="fam-tab-pill ${activeRecipeFam === 'extras' ? 'active' : ''}" onclick="selectRecipeFam('extras')">
+          ➕ Extras y Adicionales
+        </button>
+      `;
       container.innerHTML = html;
     }
 
@@ -356,6 +387,17 @@
         const prodName = prod ? prod.name : 'Plato';
         return `<option value="${v.id}">[#${v.code}] ${prodName} · ${v.name} (${MTP.fmtUSD(v.priceUsd)})</option>`;
       }).join('');
+    }
+
+    function promptDeleteBatch(batchId) {
+      MTPUI.confirmDialog('¿Eliminar el registro de esta tanda de cocina?', {
+        title: 'Eliminar Tanda',
+        danger: true,
+        okText: 'Sí, eliminar'
+      }).then(ok => {
+        if (!ok) return;
+        deleteKitchenBatch(batchId);
+      });
     }
 
     function renderKitchenBatchesTable() {
@@ -391,7 +433,7 @@
             </td>
             <td><strong class="money-out">${MTP.fmtUSD(totalCost)}</strong></td>
             <td style="text-align:right">
-              <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="if(confirm('¿Eliminar registro de esta tanda?')) { deleteKitchenBatch('${b.id}'); }">✕</button>
+              <button class="btn btn-secondary btn-sm" style="color:var(--money-out)" onclick="promptDeleteBatch('${b.id}')">✕</button>
             </td>
           </tr>
         `;
@@ -523,6 +565,20 @@
 
     function renderRecipesCards() {
       const grid = document.getElementById('recipesGrid');
+      const modGrid = document.getElementById('modifierRecipesGrid');
+
+      if (activeRecipeFam === 'extras') {
+        if (grid) grid.style.display = 'none';
+        if (modGrid) {
+          modGrid.style.display = 'grid';
+          renderModifierRecipesCards();
+        }
+        return;
+      }
+
+      if (grid) grid.style.display = 'grid';
+      if (modGrid) modGrid.style.display = 'none';
+
       const q = (document.getElementById('recipeSearchInput')?.value || '').toLowerCase().trim();
       const bcv = Number(MTP.state.settings.rateBcv) || 1;
       const variants = MTP.state.variants || [];

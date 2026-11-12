@@ -117,3 +117,18 @@
      - La barra "Cocina vs Tienda" compara **importes** (antes pintaba el % de margen junto a un texto en dólares).
    - **Fase 05 — Impresión**: `assets/css/checkout.css` con `@page 80mm`, **un ticket por página**, comanda **solo si hay platos**, **detalle de pagos** en la nota de entrega y rótulo fiscal **dinámico**.
    - **Pruebas**: `tests/pos.test.js` (nuevo) con **12 casos** del flujo de caja (total único, IGTF con vuelto mixto, tarjeta en USD vs Bs, exentos, denominación) integrado en `tests/run.js`.
+   - **Fase 03 — Pantallas administrativas completadas**:
+     - `admin/cierres.html`: pantalla en **3 pasos** (*1. ¿Cuánto vendí?, 2. ¿Cuánto hay?, 3. ¿Cuadra?*) con **conciliación por denominación de billetes y monedas** (USD 1–100 y Bs 0,10–2.000) comparando sistema vs. conteo físico en tiempo real, selector de años dinámico (`año actual - 5` hasta `+1`) y 5 pestañas internas organizadas.
+     - `admin/inventario.html`: simplificado a **3 botones de acción principales** (*Llegó mercancía*, *Gasto de cocina*, *Contar lo que hay*), 2 KPIs clave, calculadora de bulto integrada dentro del modal de compra, tabla de **5 columnas clave** y menú contextual `⋯` con `MTPUI.menuDialog` (Kardex, Editar, Merma, Auditoría).
+     - `admin/productos.html`: dos pestañas claras (*Platos de cocina* vs *Mercancía de mostrador*), tabla de 5 columnas y modal de variantes con recetas en pestaña interna.
+     - `admin/recetas.html`: estructurado en 3 tabs limpios (*Tanda de cocina*, *Planificador de olla*, *Recetario por plato* con extras como subfiltro).
+     - `admin/facturas.html`: pantalla unificada de **Compras y Gastos en 3 pasos** (*¿Qué compraste?*, *¿Quién vendió?*, *¿Cómo pagaste?*), abonos con `MTPUI.promptDialog` registrando el egreso en gaveta.
+     - `admin/precios.html`: 4 tarjetas de tasas limpias con brecha real BCV↔USDT (*Cuánto pierdo si compro al paralelo*), sin columna Euro en platos, y confirmación previa de impacto al aplicar precios protegidos.
+   - **Fase 06 — Hardware, Lector y Máquina Fiscal**:
+     - `assets/js/barcode-engine.js`: guarda anti-foco con `isBusyField()`, evitando que la pistola lectora escriba dentro de campos de monto; `e.preventDefault()` en Enter de escáner; aviso toast si un código no existe; detección honesta de `BarcodeDetector` para cámara web con fallback claro.
+     - `assets/js/config.js`: reportes fiscales X y Z honestos que indican si la máquina está conectada o si es simulado (eliminando el número ficticio `142`).
+   - **Fase 08 — Suite de Pruebas y Fixtures**:
+     - `tests/fixtures.js`: carritos canónicos exportables (`CARRT_2_EMPANADAS`, `CART_MIXTO`).
+     - `tests/ui.test.js`: 9 pruebas unitarias exhaustivas para `MTPChange.breakDown()` (vuelto en billetes USD y resto en monedas Bs a 0,50), denominaciones Bs, formateadores y guardas de hardware.
+     - `tests/pos.test.js`: 12 pruebas del flujo de caja (total único, IGTF con vuelto mixto, tarjeta en USD vs Bs, exentos, denominación).
+     - `tests/run.js`: 100% de las pruebas automatizadas (fiscales, v6, UI v7 y caja v7) pasando con éxito.

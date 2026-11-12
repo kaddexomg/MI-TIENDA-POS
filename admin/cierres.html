@@ -9,48 +9,81 @@
   <link rel="stylesheet" href="../assets/css/design-v7.css">
   <link rel="stylesheet" href="../assets/css/layout.css">
   <style>
-    .cierre-period-tabs {
+    /* Estilos v7 para Cuadre de Caja */
+    .cierre-steps {
       display: flex;
       gap: 8px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
+      margin-bottom: 14px;
       background: var(--surface);
-      padding: 8px;
-      border-radius: var(--radius);
+      padding: 6px;
+      border-radius: var(--radius-lg);
       border: 1px solid var(--line);
+      flex-wrap: wrap;
     }
-    .cierre-tab-btn {
+    .cierre-step {
       flex: 1;
-      min-width: 210px;
-      padding: 10px 14px;
-      border-radius: 7px;
+      min-width: 180px;
+      padding: 12px 16px;
+      border-radius: var(--radius);
       border: 1.5px solid var(--line);
       background: var(--surface-2);
-      color: var(--txt);
-      font-size: 14px;
-      font-weight: 800;
+      color: var(--txt-2);
+      font-size: 15px;
+      font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: all 0.12s ease;
+      transition: all var(--dur-fast) var(--ease);
     }
-    .cierre-tab-btn:hover {
-      border-color: var(--nav-bg);
-      background: #ffffff;
+    .cierre-step:hover {
+      background: #FFFBEB;
+      border-color: var(--action);
+      color: var(--txt);
     }
-    .cierre-tab-btn.active {
+    .cierre-step.active {
       background: var(--nav-bg);
       color: #ffffff;
       border-color: var(--nav-bg);
       box-shadow: var(--shadow-sm);
+    }
+    .cierre-step-pane {
+      display: none;
+    }
+    .cierre-step-pane.active {
+      display: block;
+    }
+    .cierre-period-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
     }
     .cierre-tab-pane {
       display: none;
     }
     .cierre-tab-pane.active {
       display: block;
+    }
+    .subtab-btn {
+      transition: all var(--dur-fast) var(--ease);
+      font-weight: 700;
+    }
+    .subtab-btn.active {
+      background: var(--nav-bg) !important;
+      color: #ffffff !important;
+      border-color: var(--nav-bg) !important;
+      box-shadow: var(--shadow-sm);
+    }
+    .subpane {
+      display: none;
+    }
+    .subpane.active {
+      display: block;
+    }
+    .denom-diff {
+      font-weight: 700;
+      font-size: 13.5px;
     }
   </style>
 </head>
@@ -76,228 +109,317 @@
       </header>
 
       <div class="admin-content">
-        <!-- PESTAÑAS DE PERÍODO: DIARIO, MENSUAL Y ANUAL -->
-        <div class="cierre-period-tabs">
-          <button class="cierre-tab-btn active" id="tabBtnDiario" onclick="switchCierreTab('DIARIO')">
-            📅 1. Cierre Diario (Hoy / Por Día)
-          </button>
-          <button class="cierre-tab-btn" id="tabBtnMensual" onclick="switchCierreTab('MENSUAL')">
-            📆 2. Cierre Mensual (Mes por Mes)
-          </button>
-          <button class="cierre-tab-btn" id="tabBtnAnual" onclick="switchCierreTab('ANUAL')">
-            📊 3. Cierre Anual (Año Completo)
-          </button>
-        </div>
-
-        <!-- ==================================================================
-             PESTAÑA 1: CIERRE DIARIO (HOY / FECHA SELECCIONADA)
-             ================================================================== -->
-        <div class="cierre-tab-pane active" id="paneDiario">
-          <div class="card" style="margin-bottom:12px;background:#0f2a3d;color:#fff;border:none">
-            <div class="card-bd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                <label style="font-weight:800;font-size:14px;color:#fbbf24">📅 Ver Día:</label>
-                <input type="date" id="dailyDateInput" class="input" style="width:170px;background:#fff;color:#0f172a;font-weight:800" onchange="renderCierrePage()">
-                <button class="btn btn-secondary btn-sm" onclick="setTodayFilter()">Ir a Hoy</button>
-              </div>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <button class="btn btn-action" onclick="openDailyClosureModal()">
-                  🔒 Ejecutar Cierre Diario y Guardar Acta
+        <!-- BARRA UNIFICADA DE CONSULTA Y ACCIONES -->
+        <div class="card" style="margin-bottom:14px;background:#0f2a3d;color:#fff;border:none">
+          <div class="card-bd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:12px 16px">
+            <!-- Izquierda: selector de período y fecha unificada -->
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+              <!-- Selector de Tipo de Período -->
+              <div class="cierre-period-tabs">
+                <button type="button" class="v7-period-btn active" id="tabBtnDiario" onclick="switchCierreTab('DIARIO')">
+                  📅 Diario
                 </button>
-                <button class="btn btn-secondary" style="background:#fff;color:#0f172a" onclick="openClosureReportModal('DIARIO')">
-                  📄 Ver / Imprimir Resumen del Día
+                <button type="button" class="v7-period-btn" id="tabBtnMensual" onclick="switchCierreTab('MENSUAL')">
+                  📆 Mensual
                 </button>
-                <button class="btn btn-secondary" style="background:#10b981;color:#fff;border-color:#059669" onclick="downloadClosureSummaryFile('DIARIO')">
-                  📥 Descargar Archivo Resumen
+                <button type="button" class="v7-period-btn" id="tabBtnAnual" onclick="switchCierreTab('ANUAL')">
+                  📊 Anual
                 </button>
               </div>
-            </div>
-          </div>
 
-          <!-- TOTALES DEL DÍA -->
-          <div class="stat-grid" id="cierreTotalsGrid" style="margin-bottom:12px"></div>
-
-          <!-- DESGLOSE DE COMIDA PREPARADA A DIARIO VS MERCANCÍA EMPAQUETADA -->
-          <div class="card" data-section="cocina" style="margin-bottom:12px">
-            <div class="card-hd">
-              <div>
-                <h3>🥟 Comida Preparada en el Día (Cocina) vs. 🛒 Mercancía Empaquetada (Tienda)</h3>
-                <p>Las empanadas, arepas y almuerzos se preparan a diario y descuentan gramos de cocina; los víveres y bebidas descuentan unidades del estante</p>
-              </div>
-              <span class="badge badge-yellow" id="dailyKitchenVsRetailBadge">Producción Diaria</span>
-            </div>
-            <div class="card-bd" id="dailyKitchenVsRetailBox"></div>
-          </div>
-
-          <!-- DINERO REAL EN MANO: EFECTIVO EN GAVETA Y PAGO MÓVIL -->
-          <div class="card" data-section="dinero" style="margin-bottom:12px">
-            <div class="card-hd">
-              <div>
-                <h3><span id="drawerTitleIcon"></span> Dinero Real en Mano: Efectivo en Gaveta, Pago Móvil y Punto</h3>
-                <p>Fórmula: [Cobrado] − [Vueltos entregados] − [Compras y gastos pagados de caja]</p>
-              </div>
-              <span class="badge badge-green">Dinero en Mano</span>
-            </div>
-            <div class="card-bd">
-              <div class="stat-grid" id="netDrawerGrid" style="margin-bottom:0"></div>
-            </div>
-          </div>
-
-          <!-- HISTORIAL DE ACTAS DE CIERRE DIARIO GUARDADAS -->
-          <div class="card" data-section="fiscal" style="margin-bottom:12px">
-            <div class="card-hd">
-              <div>
-                <h3>📚 Historial de Cierres Diarios Guardados</h3>
-                <p>Registro de cada día cerrado con efectivo esperado vs. contado, IVA 16%, platos preparados y ganancia neta</p>
+              <!-- Selector de Fecha Unificado -->
+              <div id="unifiedDateContainer" style="display:flex;align-items:center;gap:8px">
+                <!-- Control Diario -->
+                <div id="ctrlDiarioDate" style="display:flex;align-items:center;gap:6px">
+                  <label for="dailyDateInput" style="font-weight:800;font-size:13px;color:#fbbf24">Día:</label>
+                  <input type="date" id="dailyDateInput" class="input" style="width:160px;background:#fff;color:#0f172a;font-weight:800" onchange="onUnifiedDateChange()">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="setTodayFilter()">Hoy</button>
+                </div>
+                <!-- Control Mensual (oculto en Diario) -->
+                <div id="ctrlMensualDate" style="display:none;align-items:center;gap:6px">
+                  <label for="monthlyMonthInput" style="font-weight:800;font-size:13px;color:#fbbf24">Mes:</label>
+                  <input type="month" id="monthlyMonthInput" class="input" style="width:170px;background:#fff;color:#0f172a;font-weight:800" onchange="renderMonthlyPane()">
+                </div>
+                <!-- Control Anual (oculto en Diario) -->
+                <div id="ctrlAnualDate" style="display:none;align-items:center;gap:6px">
+                  <label for="annualYearSelect" style="font-weight:800;font-size:13px;color:#fbbf24">Año:</label>
+                  <select id="annualYearSelect" class="select" style="width:120px;background:#fff;color:#0f172a;font-weight:800" onchange="renderAnnualPane()"></select>
+                </div>
               </div>
             </div>
-            <div class="table-wrap" style="max-height:220px;overflow-y:auto">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Fecha / Acta</th>
-                    <th>Órdenes</th>
-                    <th>Comida Preparada</th>
-                    <th>Mercancía</th>
-                    <th>Subtotal + IVA 16%</th>
-                    <th>Total Vendido</th>
-                    <th>Gastos</th>
-                    <th>Efectivo Gaveta ($)</th>
-                    <th>Ganancia Limpia</th>
-                    <th>Archivo Resumen</th>
-                  </tr>
-                </thead>
-                <tbody id="savedDailyClosuresBody"></tbody>
-              </table>
-            </div>
-          </div>
 
-          <!-- CONTROL DE PUNTOS DE VENTA Y CIERRE DEL PUNTO -->
-          <div class="card" data-section="dinero" style="margin-bottom:12px">
-            <div class="card-hd">
-              <div>
-                <h3><span id="posTitleIcon"></span> Control de Puntos de Venta y Cierre del Punto</h3>
-                <p>Compara el papelito del punto de venta con lo cobrado en el sistema</p>
-              </div>
-              <button class="btn btn-secondary btn-sm" onclick="openBatchClosureModal()">
-                <span id="batchBtnIcon"></span> Hacer Cierre del Punto de Venta
+            <!-- Derecha: Acciones principales -->
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button type="button" class="btn btn-action" id="btnMainCierreAction" onclick="triggerCurrentCierreAction()">
+                🔒 Cerrar el Día y Guardar Acta
+              </button>
+              <button type="button" class="btn btn-secondary" style="background:#fff;color:#0f172a" onclick="openClosureReportModal(currentCierreTab)">
+                📄 Ver / Imprimir Resumen
+              </button>
+              <button type="button" class="btn btn-secondary" style="background:#10b981;color:#fff;border-color:#059669" onclick="downloadClosureSummaryFile(currentCierreTab)">
+                📥 Descargar Archivo
               </button>
             </div>
-            <div class="card-bd">
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px" id="posTerminalsStatusGrid"></div>
+          </div>
+        </div>
+
+        <!-- ==================================================================
+             PESTAÑA 1: CIERRE DIARIO (3 PASOS)
+             ================================================================== -->
+        <div class="cierre-tab-pane active" id="paneDiario">
+          <!-- 3 PASOS DE CIERRE DIARIO -->
+          <div class="cierre-steps">
+            <button type="button" class="cierre-step active" data-step="1" id="cierreStepBtn1" onclick="switchCierreStep(1)">
+              1 · ¿Cuánto vendí?
+            </button>
+            <button type="button" class="cierre-step" data-step="2" id="cierreStepBtn2" onclick="switchCierreStep(2)">
+              2 · ¿Cuánto hay?
+            </button>
+            <button type="button" class="cierre-step" data-step="3" id="cierreStepBtn3" onclick="switchCierreStep(3)">
+              3 · ¿Cuadra?
+            </button>
+          </div>
+
+          <!-- PASO 1: ¿CUÁNTO VENDÍ? -->
+          <div class="cierre-step-pane active" id="cierreStepPane1">
+            <!-- 4 TARJETAS KPI -->
+            <div class="stat-grid" id="cierreTotalsGrid" style="margin-bottom:14px"></div>
+
+            <!-- DESGLOSE EN ACCORDIÓN: COCINA VS TIENDA -->
+            <details class="v7-accordion" id="cierreStep1Details" style="margin-bottom:14px">
+              <summary>Muéstrame más (Comida preparada en cocina vs. Mercancía empaquetada e ingredientes consumidos)</summary>
+              <div class="v7-accordion-body" id="dailyKitchenVsRetailBox"></div>
+            </details>
+          </div>
+
+          <!-- PASO 2: ¿CUÁNTO HAY? -->
+          <div class="cierre-step-pane" id="cierreStepPane2">
+            <!-- TARJETA GRANDE "DINERO REAL EN MANO" -->
+            <div class="card" data-section="dinero" style="margin-bottom:14px">
+              <div class="card-hd">
+                <div>
+                  <h3><span id="drawerTitleIcon"></span> Dinero Real en Mano</h3>
+                  <p>Fórmula: [Cobrado] − [Vueltos entregados] − [Compras y gastos pagados de caja]</p>
+                </div>
+                <span class="badge badge-green">Gaveta y Cuentas</span>
+              </div>
+              <div class="card-bd">
+                <div class="stat-grid" id="netDrawerGrid" style="margin-bottom:0"></div>
+              </div>
+            </div>
+
+            <!-- CONCILIACIÓN POR DENOMINACIÓN (EL CORAZÓN DEL CUADRE) -->
+            <div class="card" data-section="dinero" style="margin-bottom:14px">
+              <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+                <div>
+                  <h3>🧾 ¿Cuadra la gaveta? (por billete y moneda)</h3>
+                  <p>Compara los billetes y monedas que el sistema calculó con lo que contaste físicamente en la gaveta</p>
+                </div>
+                <span id="denomSummaryBadge" class="badge badge-yellow">Sin contar</span>
+              </div>
+              <div class="card-bd">
+                <div class="table-wrap">
+                  <table class="data-table" id="tblDenominaciones">
+                    <caption class="sr-only">Conciliación de efectivo por denominación</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Moneda</th>
+                        <th scope="col">Billete / moneda</th>
+                        <th scope="col">Cuántos hay en el sistema</th>
+                        <th scope="col">Cuántos contaste</th>
+                        <th scope="col">Diferencia</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot>
+                      <tr style="font-weight:800;background:var(--surface-2)">
+                        <td colspan="2">TOTAL EFECTIVO USD</td>
+                        <td id="denomSysTotalUsd" class="tabular-nums">$0.00</td>
+                        <td id="denomCountedTotalUsd" class="tabular-nums">$0.00</td>
+                        <td id="denomDiffTotalUsd" class="tabular-nums">—</td>
+                      </tr>
+                      <tr style="font-weight:800;background:var(--surface-2)">
+                        <td colspan="2">TOTAL EFECTIVO BS</td>
+                        <td id="denomSysTotalBs" class="tabular-nums">0,00 Bs</td>
+                        <td id="denomCountedTotalBs" class="tabular-nums">0,00 Bs</td>
+                        <td id="denomDiffTotalBs" class="tabular-nums">—</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- VERIFICACIÓN DE PAGOS MÓVILES -->
-          <div class="card" data-section="abasto" style="margin-bottom:12px">
-            <div class="card-hd">
-              <div>
-                <h3><span id="pmTitleIcon"></span> Verificación de Pagos Móviles Recibidos</h3>
-                <p>Revisa cada referencia bancaria recibida en el día</p>
-              </div>
-              <span class="badge badge-blue">Anti-Fraude</span>
+          <!-- PASO 3: ¿CUADRA? (TABLAS EN PESTAÑAS INTERNAS) -->
+          <div class="cierre-step-pane" id="cierreStepPane3">
+            <div class="cierre-subtabs" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+              <button type="button" class="btn btn-secondary subtab-btn active" id="subtabBtnVentas" onclick="switchStep3Tab('ventas')">
+                🧾 1. Ventas del Día
+              </button>
+              <button type="button" class="btn btn-secondary subtab-btn" id="subtabBtnActas" onclick="switchStep3Tab('actas')">
+                📚 2. Actas Guardadas
+              </button>
+              <button type="button" class="btn btn-secondary subtab-btn" id="subtabBtnPuntos" onclick="switchStep3Tab('puntos')">
+                💳 3. Puntos de Venta
+              </button>
+              <button type="button" class="btn btn-secondary subtab-btn" id="subtabBtnPagosMoviles" onclick="switchStep3Tab('pagos-moviles')">
+                📲 4. Pagos Móviles
+              </button>
+              <button type="button" class="btn btn-secondary subtab-btn" id="subtabBtnGastos" onclick="switchStep3Tab('gastos')">
+                💸 5. Compras y Gastos
+              </button>
             </div>
-            <div class="table-wrap" style="max-height:220px;overflow-y:auto">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Orden</th>
-                    <th>Cliente / Hora</th>
-                    <th>Cta. Destino</th>
-                    <th>Banco Origen</th>
-                    <th>Teléfono</th>
-                    <th>Nº Referencia</th>
-                    <th>Monto Bs</th>
-                    <th>Equiv. USD</th>
-                    <th>Estado</th>
-                    <th>Acción</th>
-                  </tr>
-                </thead>
-                <tbody id="pmVerificationTable"></tbody>
-              </table>
-            </div>
-          </div>
 
-          <!-- GASTOS Y COMPRAS DEL DÍA -->
-          <div class="card" data-section="gastos" style="margin-bottom:12px">
-            <div class="card-hd">
-              <div>
-                <h3><span id="expensesTitleIcon"></span> Compras y Gastos Pagados en el Día</h3>
+            <!-- SUBPANE 1: VENTAS -->
+            <div class="subpane active" id="subpaneVentas">
+              <div class="card" data-section="fiscal">
+                <div class="card-hd">
+                  <div>
+                    <h3><span id="salesTitleIcon"></span> Ventas del Día, Desglose de IVA 16% y Vueltos Entregados</h3>
+                    <p>Detalle de cada orden cobrada en la fecha seleccionada</p>
+                  </div>
+                </div>
+                <div class="table-wrap">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Nº Orden</th>
+                        <th>Cliente / Hora</th>
+                        <th>Detalle Vendido</th>
+                        <th>Subtotal / IVA 16%</th>
+                        <th>Total ($ / Bs)</th>
+                        <th>Pagos Recibidos</th>
+                        <th>Vuelto Entregado</th>
+                        <th>Ganancia</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cierreSalesTable"></tbody>
+                  </table>
+                </div>
               </div>
-              <button class="btn btn-secondary btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Anotar Compra o Gasto (F6)</button>
             </div>
-            <div class="table-wrap" style="max-height:180px;overflow-y:auto">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Hora</th>
-                    <th>Categoría</th>
-                    <th>Concepto</th>
-                    <th>De dónde salió</th>
-                    <th>Monto USD</th>
-                    <th>Equiv. Bs</th>
-                    <th>Responsable</th>
-                  </tr>
-                </thead>
-                <tbody id="cierreExpensesTable"></tbody>
-              </table>
-            </div>
-          </div>
 
-          <!-- VENTAS Y VUELTOS DEL DÍA -->
-          <div class="card" data-section="fiscal" style="margin-bottom:0">
-            <div class="card-hd">
-              <div>
-                <h3><span id="salesTitleIcon"></span> Ventas del Día, Desglose de IVA 16% y Vueltos Entregados</h3>
+            <!-- SUBPANE 2: ACTAS -->
+            <div class="subpane" id="subpaneActas">
+              <div class="card" data-section="fiscal">
+                <div class="card-hd">
+                  <div>
+                    <h3>📚 Historial de Cierres Diarios Guardados</h3>
+                    <p>Registro de cada día cerrado con efectivo esperado vs. contado, IVA 16%, platos preparados y ganancia neta</p>
+                  </div>
+                  <button type="button" class="btn btn-action btn-sm" onclick="openDailyClosureModal()">🔒 Cerrar el Día Ahora</button>
+                </div>
+                <div class="table-wrap" style="max-height:360px;overflow-y:auto">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Fecha / Acta</th>
+                        <th>Órdenes</th>
+                        <th>Comida Preparada</th>
+                        <th>Mercancía</th>
+                        <th>Subtotal + IVA 16%</th>
+                        <th>Total Vendido</th>
+                        <th>Gastos</th>
+                        <th>Efectivo Gaveta ($)</th>
+                        <th>Ganancia Limpia</th>
+                        <th>Archivo Resumen</th>
+                      </tr>
+                    </thead>
+                    <tbody id="savedDailyClosuresBody"></tbody>
+                  </table>
+                </div>
               </div>
             </div>
-            <div class="table-wrap">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Nº Orden</th>
-                    <th>Cliente / Hora</th>
-                    <th>Detalle Vendido</th>
-                    <th>Subtotal / IVA 16%</th>
-                    <th>Total ($ / Bs)</th>
-                    <th>Pagos Recibidos</th>
-                    <th>Vuelto Entregado</th>
-                    <th>Ganancia</th>
-                  </tr>
-                </thead>
-                <tbody id="cierreSalesTable"></tbody>
-              </table>
+
+            <!-- SUBPANE 3: PUNTOS DE VENTA -->
+            <div class="subpane" id="subpanePuntos">
+              <div class="card" data-section="dinero">
+                <div class="card-hd">
+                  <div>
+                    <h3><span id="posTitleIcon"></span> Control de Puntos de Venta y Cierre del Punto</h3>
+                    <p>Compara el papelito del punto de venta con lo cobrado en el sistema</p>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="openBatchClosureModal()">
+                    <span id="batchBtnIcon"></span> Hacer Cierre del Punto de Venta
+                  </button>
+                </div>
+                <div class="card-bd">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px" id="posTerminalsStatusGrid"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUBPANE 4: PAGOS MÓVILES -->
+            <div class="subpane" id="subpanePagosMoviles">
+              <div class="card" data-section="abasto">
+                <div class="card-hd">
+                  <div>
+                    <h3><span id="pmTitleIcon"></span> Verificación de Pagos Móviles Recibidos</h3>
+                    <p>Revisa cada referencia bancaria recibida en el día</p>
+                  </div>
+                  <span class="badge badge-blue">Anti-Fraude</span>
+                </div>
+                <div class="table-wrap" style="max-height:360px;overflow-y:auto">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Orden</th>
+                        <th>Cliente / Hora</th>
+                        <th>Cta. Destino</th>
+                        <th>Banco Origen</th>
+                        <th>Teléfono</th>
+                        <th>Nº Referencia</th>
+                        <th>Monto Bs</th>
+                        <th>Equiv. USD</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pmVerificationTable"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUBPANE 5: GASTOS -->
+            <div class="subpane" id="subpaneGastos">
+              <div class="card" data-section="gastos">
+                <div class="card-hd">
+                  <div>
+                    <h3><span id="expensesTitleIcon"></span> Compras y Gastos Pagados en el Día</h3>
+                    <p>Salidas de caja para reposición, ingredientes de cocina y pagos operativos</p>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Anotar Compra o Gasto (F6)</button>
+                </div>
+                <div class="table-wrap" style="max-height:360px;overflow-y:auto">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Hora</th>
+                        <th>Categoría</th>
+                        <th>Concepto</th>
+                        <th>De dónde salió</th>
+                        <th>Monto USD</th>
+                        <th>Equiv. Bs</th>
+                        <th>Responsable</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cierreExpensesTable"></tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- ==================================================================
-             PESTAÑA 2: CIERRE MENSUAL (RESUMEN Y ACTA POR MES)
+             PESTAÑA 2: CIERRE MENSUAL
              ================================================================== -->
         <div class="cierre-tab-pane" id="paneMensual">
-          <div class="card" style="margin-bottom:12px;background:#0f2a3d;color:#fff;border:none">
-            <div class="card-bd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                <label style="font-weight:800;font-size:14px;color:#fbbf24">📆 Seleccionar Mes:</label>
-                <input type="month" id="monthlyMonthInput" class="input" style="width:180px;background:#fff;color:#0f172a;font-weight:800" onchange="renderMonthlyPane()">
-              </div>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <button class="btn btn-action" onclick="saveMonthlyClosureAction()">
-                  🔒 Guardar Acta de Cierre Mensual
-                </button>
-                <button class="btn btn-secondary" style="background:#fff;color:#0f172a" onclick="openClosureReportModal('MENSUAL')">
-                  📄 Ver / Imprimir Resumen Mensual
-                </button>
-                <button class="btn btn-secondary" style="background:#10b981;color:#fff;border-color:#059669" onclick="downloadClosureSummaryFile('MENSUAL')">
-                  📥 Descargar Archivo Mensual
-                </button>
-              </div>
-            </div>
-          </div>
+          <div class="stat-grid" id="monthlyStatsGrid" style="margin-bottom:14px"></div>
 
-          <div class="stat-grid" id="monthlyStatsGrid" style="margin-bottom:12px"></div>
-
-          <div class="card" data-section="cocina" style="margin-bottom:12px">
+          <div class="card" data-section="cocina" style="margin-bottom:14px">
             <div class="card-hd">
               <div>
                 <h3>🥟 Producción de Cocina en el Mes vs. 🛒 Mercancía Vendida en el Mes</h3>
@@ -307,7 +429,7 @@
             <div class="card-bd" id="monthlyKitchenVsRetailBox"></div>
           </div>
 
-          <div class="card" data-section="dinero" style="margin-bottom:12px">
+          <div class="card" data-section="dinero" style="margin-bottom:14px">
             <div class="card-hd">
               <div>
                 <h3>📅 Desglose Día por Día del Mes Seleccionado</h3>
@@ -361,31 +483,10 @@
         </div>
 
         <!-- ==================================================================
-             PESTAÑA 3: CIERRE ANUAL (BALANCE DE LOS 12 MESES DEL AÑO)
+             PESTAÑA 3: CIERRE ANUAL
              ================================================================== -->
         <div class="cierre-tab-pane" id="paneAnual">
-          <div class="card" style="margin-bottom:12px;background:#0f2a3d;color:#fff;border:none">
-            <div class="card-bd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                <label style="font-weight:800;font-size:14px;color:#fbbf24">📊 Seleccionar Año:</label>
-                <select id="annualYearSelect" class="select" style="width:140px;background:#fff;color:#0f172a;font-weight:800" onchange="renderAnnualPane()">
-                  <option value="2026">2026</option>
-                  <option value="2025">2025</option>
-                  <option value="2027">2027</option>
-                </select>
-              </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-action" onclick="openClosureReportModal('ANUAL')">
-                  📄 Ver / Imprimir Resumen Anual
-                </button>
-                <button class="btn btn-secondary" style="background:#10b981;color:#fff;border-color:#059669" onclick="downloadClosureSummaryFile('ANUAL')">
-                  📥 Descargar Archivo Anual
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="stat-grid" id="annualStatsGrid" style="margin-bottom:12px"></div>
+          <div class="stat-grid" id="annualStatsGrid" style="margin-bottom:14px"></div>
 
           <div class="card" data-section="dinero">
             <div class="card-hd">
@@ -550,12 +651,47 @@
   <script src="../assets/js/rates.js"></script>
   <script src="../assets/js/permissions.js"></script>
   <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/change.js"></script>
   <script src="../assets/js/ui.js"></script>
   <script src="../assets/js/keys.js"></script>
   <script src="../assets/js/sidenav.js"></script>
   <script>
     let currentCierreTab = 'DIARIO';
+    let currentCierreStep = 1;
+    let activeStep3Tab = 'ventas';
 
+    // Denominaciones reales venezolanas para la conciliación
+    const DENOM_USD = [100, 50, 20, 10, 5, 2, 1];
+    const DENOM_BS  = [2000, 1000, 500, 200, 100, 50, 20, 10, 5, 2, 1, 0.50, 0.25, 0.10];
+
+    // Almacena lo contado físicamente por el cajero
+    let countedDenoms = {};
+
+    /* ========================================================================
+       SELECTOR DE AÑO DINÁMICO (actual - 5 a actual + 1)
+       ======================================================================== */
+    function populateYearSelect() {
+      const ySel = document.getElementById('annualYearSelect');
+      if (!ySel) return;
+      const currentYear = new Date().getFullYear();
+      const startYear = currentYear - 5;
+      const endYear = currentYear + 1;
+      const currentVal = ySel.value || String(currentYear);
+      ySel.innerHTML = '';
+      for (let y = endYear; y >= startYear; y--) {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = String(y);
+        if (String(y) === String(currentVal)) {
+          opt.selected = true;
+        }
+        ySel.appendChild(opt);
+      }
+    }
+
+    /* ========================================================================
+       CAMBIO DE PESTAÑA PRINCIPAL (DIARIO, MENSUAL, ANUAL)
+       ======================================================================== */
     function switchCierreTab(tab) {
       currentCierreTab = tab;
       document.getElementById('tabBtnDiario').classList.toggle('active', tab === 'DIARIO');
@@ -566,17 +702,385 @@
       document.getElementById('paneMensual').classList.toggle('active', tab === 'MENSUAL');
       document.getElementById('paneAnual').classList.toggle('active', tab === 'ANUAL');
 
+      // Control unificado de fecha
+      const cDiario = document.getElementById('ctrlDiarioDate');
+      const cMensual = document.getElementById('ctrlMensualDate');
+      const cAnual = document.getElementById('ctrlAnualDate');
+      const btnMain = document.getElementById('btnMainCierreAction');
+
+      if (cDiario) cDiario.style.display = (tab === 'DIARIO') ? 'flex' : 'none';
+      if (cMensual) cMensual.style.display = (tab === 'MENSUAL') ? 'flex' : 'none';
+      if (cAnual) cAnual.style.display = (tab === 'ANUAL') ? 'flex' : 'none';
+
+      if (btnMain) {
+        if (tab === 'DIARIO') {
+          btnMain.innerHTML = '🔒 Cerrar el Día y Guardar Acta';
+          btnMain.style.display = '';
+        } else if (tab === 'MENSUAL') {
+          btnMain.innerHTML = '🔒 Guardar Acta Mensual';
+          btnMain.style.display = '';
+        } else {
+          btnMain.innerHTML = '📄 Ver Resumen Anual';
+          btnMain.style.display = '';
+        }
+      }
+
       if (tab === 'DIARIO') renderCierrePage();
       else if (tab === 'MENSUAL') renderMonthlyPane();
       else if (tab === 'ANUAL') renderAnnualPane();
     }
 
+    function triggerCurrentCierreAction() {
+      if (currentCierreTab === 'DIARIO') {
+        openDailyClosureModal();
+      } else if (currentCierreTab === 'MENSUAL') {
+        saveMonthlyClosureAction();
+      } else if (currentCierreTab === 'ANUAL') {
+        openClosureReportModal('ANUAL');
+      }
+    }
+
     function setTodayFilter() {
       const inp = document.getElementById('dailyDateInput');
       if (inp) inp.value = new Date().toISOString().slice(0, 10);
+      countedDenoms = {};
       renderCierrePage();
     }
 
+    function onUnifiedDateChange() {
+      countedDenoms = {};
+      renderCierrePage();
+    }
+
+    /* ========================================================================
+       PASOS DEL CIERRE DIARIO (PASO 1, PASO 2, PASO 3)
+       ======================================================================== */
+    function switchCierreStep(step) {
+      currentCierreStep = step;
+      [1, 2, 3].forEach(s => {
+        const btn = document.getElementById('cierreStepBtn' + s);
+        const pane = document.getElementById('cierreStepPane' + s);
+        const isActive = (s === step);
+        if (btn) btn.classList.toggle('active', isActive);
+        if (pane) pane.classList.toggle('active', isActive);
+      });
+    }
+
+    /* ========================================================================
+       PESTAÑAS INTERNAS DE PASO 3 (VENTAS, ACTAS, PUNTOS, PAGOS MÓVILES, GASTOS)
+       ======================================================================== */
+    function switchStep3Tab(tabKey) {
+      activeStep3Tab = tabKey;
+      const tabs = ['ventas', 'actas', 'puntos', 'pagos-moviles', 'gastos'];
+      const map = {
+        'ventas': { btn: 'subtabBtnVentas', pane: 'subpaneVentas' },
+        'actas': { btn: 'subtabBtnActas', pane: 'subpaneActas' },
+        'puntos': { btn: 'subtabBtnPuntos', pane: 'subpanePuntos' },
+        'pagos-moviles': { btn: 'subtabBtnPagosMoviles', pane: 'subpanePagosMoviles' },
+        'gastos': { btn: 'subtabBtnGastos', pane: 'subpaneGastos' }
+      };
+
+      tabs.forEach(t => {
+        const isCur = (t === tabKey);
+        const b = document.getElementById(map[t].btn);
+        const p = document.getElementById(map[t].pane);
+        if (b) b.classList.toggle('active', isCur);
+        if (p) p.classList.toggle('active', isCur);
+      });
+    }
+
+    /* ========================================================================
+       CONCILIACIÓN POR DENOMINACIÓN (USD Y BS)
+       ======================================================================== */
+    function countUsdBills(d, stats) {
+      if (!stats || !stats.sales) return 0;
+      let count = 0;
+
+      // 1. Pagos recibidos en USD
+      stats.sales.forEach(s => {
+        (s.payments || []).forEach(p => {
+          const isUsd = (p.method === 'Efectivo USD' || (p.method && p.method.includes('USD')));
+          if (!isUsd) return;
+
+          if (p.bill && p.bill !== 'Exacto') {
+            const num = Number(String(p.bill).replace(/[^0-9.]/g, ''));
+            if (num === d) count += 1;
+          } else {
+            // Descomposición greedy de montos directos
+            let rem = Math.floor(Number(p.amountUsd) || 0);
+            for (let i = 0; i < DENOM_USD.length; i++) {
+              const denom = DENOM_USD[i];
+              const n = Math.floor(rem / denom);
+              if (n > 0) {
+                if (denom === d) count += n;
+                rem -= n * denom;
+              }
+            }
+          }
+        });
+
+        // 2. Vueltos dados en efectivo USD (restan de la gaveta)
+        if (s.changeGiven && s.changeGiven.usdCashGiven > 0) {
+          let rem = Math.floor(Number(s.changeGiven.usdCashGiven) || 0);
+          for (let i = 0; i < DENOM_USD.length; i++) {
+            const denom = DENOM_USD[i];
+            const n = Math.floor(rem / denom);
+            if (n > 0) {
+              if (denom === d) count -= n;
+              rem -= n * denom;
+            }
+          }
+        }
+      });
+
+      // 3. Gastos pagados en efectivo USD
+      (stats.expenses || []).forEach(e => {
+        if (e.paymentSource === 'Efectivo USD') {
+          let rem = Math.floor(Number(e.amountUsd) || 0);
+          for (let i = 0; i < DENOM_USD.length; i++) {
+            const denom = DENOM_USD[i];
+            const n = Math.floor(rem / denom);
+            if (n > 0) {
+              if (denom === d) count -= n;
+              rem -= n * denom;
+            }
+          }
+        }
+      });
+
+      return Math.max(0, count);
+    }
+
+    function countBsCoins(d, stats) {
+      if (!stats || !stats.sales) return 0;
+      let count = 0;
+
+      // 1. Pagos recibidos en Bs
+      stats.sales.forEach(s => {
+        (s.payments || []).forEach(p => {
+          const isBs = (p.method === 'Efectivo Bs' || (p.method && p.method.includes('Efectivo') && p.amountBs > 0 && !p.method.includes('USD')));
+          if (!isBs) return;
+
+          if (p.bill && p.bill !== 'Exacto') {
+            const num = Number(String(p.bill).replace(/[^0-9.]/g, ''));
+            if (num === d) count += 1;
+          } else if (window.MTPChange && window.MTPChange.breakDownBs) {
+            const breakdown = window.MTPChange.breakDownBs(p.amountBs);
+            breakdown.forEach(b => {
+              if (b.denom === d) count += b.count;
+            });
+          }
+        });
+
+        // 2. Vueltos dados en Bs efectivo
+        if (s.changeGiven && s.changeGiven.bsCashGiven > 0 && window.MTPChange && window.MTPChange.breakDownBs) {
+          const breakdown = window.MTPChange.breakDownBs(s.changeGiven.bsCashGiven);
+          breakdown.forEach(b => {
+            if (b.denom === d) count -= b.count;
+          });
+        }
+      });
+
+      // 3. Gastos pagados en efectivo Bs
+      (stats.expenses || []).forEach(e => {
+        if (e.paymentSource === 'Efectivo Bs' && window.MTPChange && window.MTPChange.breakDownBs) {
+          const breakdown = window.MTPChange.breakDownBs(e.amountBs);
+          breakdown.forEach(b => {
+            if (b.denom === d) count -= b.count;
+          });
+        }
+      });
+
+      return Math.max(0, count);
+    }
+
+    function renderDenominations(stats) {
+      const tbody = document.querySelector('#tblDenominaciones tbody');
+      if (!tbody) return;
+      const rows = [];
+
+      let sysTotalUsd = 0;
+      DENOM_USD.forEach(d => {
+        const sys = countUsdBills(d, stats);
+        sysTotalUsd += (sys * d);
+        const key = 'USD:' + d;
+        const countedVal = (countedDenoms[key] !== undefined && countedDenoms[key] !== null) ? countedDenoms[key] : '';
+        rows.push(`<tr>
+          <td><span class="badge badge-green">US$</span></td>
+          <td><strong>$${d}</strong></td>
+          <td class="tabular-nums">${sys}</td>
+          <td>
+            <input class="input tabular-nums" type="number" min="0" data-denom="${key}"
+              value="${countedVal}" placeholder="0" style="width:90px;font-weight:700;font-size:14px"
+              oninput="onDenomInputChange(this, 'USD', ${d}, ${sys})">
+          </td>
+          <td class="denom-diff tabular-nums" data-for="${key}">—</td>
+        </tr>`);
+      });
+
+      let sysTotalBs = 0;
+      DENOM_BS.forEach(d => {
+        const sys = countBsCoins(d, stats);
+        sysTotalBs += (sys * d);
+        const key = 'BS:' + d;
+        const countedVal = (countedDenoms[key] !== undefined && countedDenoms[key] !== null) ? countedDenoms[key] : '';
+        rows.push(`<tr>
+          <td><span class="badge badge-yellow">Bs</span></td>
+          <td><strong>Bs ${d.toFixed(2)}</strong></td>
+          <td class="tabular-nums">${sys}</td>
+          <td>
+            <input class="input tabular-nums" type="number" min="0" step="${d < 1 ? '0.05' : '1'}" data-denom="${key}"
+              value="${countedVal}" placeholder="0" style="width:90px;font-weight:700;font-size:14px"
+              oninput="onDenomInputChange(this, 'BS', ${d}, ${sys})">
+          </td>
+          <td class="denom-diff tabular-nums" data-for="${key}">—</td>
+        </tr>`);
+      });
+
+      tbody.innerHTML = rows.join('');
+
+      const elSysUsd = document.getElementById('denomSysTotalUsd');
+      if (elSysUsd) elSysUsd.textContent = MTP.fmtUSD(stats.netDrawerUsd || sysTotalUsd);
+      const elSysBs = document.getElementById('denomSysTotalBs');
+      if (elSysBs) elSysBs.textContent = MTP.fmtBsRaw(stats.netDrawerBs || sysTotalBs);
+
+      // Si había valores previos, actualizar las celdas de diferencia
+      DENOM_USD.forEach(d => {
+        const key = 'USD:' + d;
+        const sys = countUsdBills(d, stats);
+        updateDenomDiffCell(key, 'USD', d, sys);
+      });
+      DENOM_BS.forEach(d => {
+        const key = 'BS:' + d;
+        const sys = countBsCoins(d, stats);
+        updateDenomDiffCell(key, 'BS', d, sys);
+      });
+
+      updateDenomSummary(stats);
+    }
+
+    function onDenomInputChange(input, currency, denom, sysCount) {
+      const key = currency + ':' + denom;
+      const valStr = input.value.trim();
+      if (valStr === '') {
+        delete countedDenoms[key];
+      } else {
+        countedDenoms[key] = parseFloat(valStr) || 0;
+      }
+      updateDenomDiffCell(key, currency, denom, sysCount);
+
+      const dateInp = document.getElementById('dailyDateInput');
+      const selectedDate = (dateInp && dateInp.value) ? dateInp.value : new Date().toISOString().slice(0, 10);
+      const stats = MTP.getPeriodAnalytics('DAY', selectedDate);
+      updateDenomSummary(stats);
+    }
+
+    function updateDenomDiffCell(key, currency, denom, sysCount) {
+      const cell = document.querySelector(`.denom-diff[data-for="${key}"]`);
+      if (!cell) return;
+      if (countedDenoms[key] === undefined) {
+        cell.textContent = '—';
+        cell.style.color = '';
+        return;
+      }
+      const counted = countedDenoms[key];
+      const diff = counted - sysCount;
+      if (Math.abs(diff) < 0.001) {
+        cell.innerHTML = '<span style="color:#059669;font-weight:800">✔ Exacto (0)</span>';
+      } else if (diff > 0) {
+        const moneyDiff = currency === 'USD' ? MTP.fmtUSD(diff * denom) : MTP.fmtBsRaw(diff * denom);
+        cell.innerHTML = `<span style="color:#2563eb;font-weight:800">+${diff} (${moneyDiff})</span>`;
+      } else {
+        const moneyDiff = currency === 'USD' ? MTP.fmtUSD(Math.abs(diff) * denom) : MTP.fmtBsRaw(Math.abs(diff) * denom);
+        cell.innerHTML = `<span style="color:#dc2626;font-weight:800">${diff} (-${moneyDiff})</span>`;
+      }
+    }
+
+    function updateDenomSummary(stats) {
+      let countedUsdTotal = 0;
+      let countedBsTotal = 0;
+      let hasCountedUsd = false;
+      let hasCountedBs = false;
+
+      DENOM_USD.forEach(d => {
+        const k = 'USD:' + d;
+        if (countedDenoms[k] !== undefined) {
+          hasCountedUsd = true;
+          countedUsdTotal += (countedDenoms[k] * d);
+        }
+      });
+
+      DENOM_BS.forEach(d => {
+        const k = 'BS:' + d;
+        if (countedDenoms[k] !== undefined) {
+          hasCountedBs = true;
+          countedBsTotal += (countedDenoms[k] * d);
+        }
+      });
+
+      const elCountedUsd = document.getElementById('denomCountedTotalUsd');
+      const elDiffUsd = document.getElementById('denomDiffTotalUsd');
+      const elCountedBs = document.getElementById('denomCountedTotalBs');
+      const elDiffBs = document.getElementById('denomDiffTotalBs');
+      const badge = document.getElementById('denomSummaryBadge');
+
+      const expectedUsd = stats.netDrawerUsd;
+      const expectedBs = stats.netDrawerBs;
+
+      if (elCountedUsd) elCountedUsd.textContent = hasCountedUsd ? MTP.fmtUSD(countedUsdTotal) : '—';
+      if (elCountedBs) elCountedBs.textContent = hasCountedBs ? MTP.fmtBsRaw(countedBsTotal) : '—';
+
+      const diffUsd = countedUsdTotal - expectedUsd;
+      const diffBs = countedBsTotal - expectedBs;
+
+      if (elDiffUsd) {
+        if (!hasCountedUsd) {
+          elDiffUsd.textContent = '—';
+          elDiffUsd.style.color = '';
+        } else if (Math.abs(diffUsd) < 0.05) {
+          elDiffUsd.innerHTML = '<span style="color:#059669;font-weight:800">✔ $0.00</span>';
+        } else {
+          const sign = diffUsd > 0 ? '+' : '';
+          elDiffUsd.innerHTML = `<span style="color:${diffUsd > 0 ? '#2563eb' : '#dc2626'};font-weight:800">${sign}${MTP.fmtUSD(diffUsd)}</span>`;
+        }
+      }
+
+      if (elDiffBs) {
+        if (!hasCountedBs) {
+          elDiffBs.textContent = '—';
+          elDiffBs.style.color = '';
+        } else if (Math.abs(diffBs) < 0.50) {
+          elDiffBs.innerHTML = '<span style="color:#059669;font-weight:800">✔ 0,00 Bs</span>';
+        } else {
+          const sign = diffBs > 0 ? '+' : '';
+          elDiffBs.innerHTML = `<span style="color:${diffBs > 0 ? '#2563eb' : '#dc2626'};font-weight:800">${sign}${MTP.fmtBsRaw(diffBs)}</span>`;
+        }
+      }
+
+      if (badge) {
+        if (!hasCountedUsd && !hasCountedBs) {
+          badge.className = 'badge badge-yellow';
+          badge.textContent = 'Sin contar';
+        } else {
+          const usdOk = !hasCountedUsd || Math.abs(diffUsd) < 0.05;
+          const bsOk = !hasCountedBs || Math.abs(diffBs) < 0.50;
+          if (usdOk && bsOk) {
+            badge.className = 'badge badge-green';
+            badge.textContent = '✔ Gaveta Cuadrada Exacta';
+          } else {
+            badge.className = 'badge badge-red';
+            const parts = [];
+            if (hasCountedUsd && Math.abs(diffUsd) >= 0.05) parts.push(`USD: ${diffUsd > 0 ? '+' : ''}${MTP.fmtUSD(diffUsd)}`);
+            if (hasCountedBs && Math.abs(diffBs) >= 0.50) parts.push(`Bs: ${diffBs > 0 ? '+' : ''}${MTP.fmtBsRaw(diffBs)}`);
+            badge.textContent = '⚠️ Diferencia: ' + parts.join(' · ');
+          }
+        }
+      }
+    }
+
+    /* ========================================================================
+       DESGLOSE DE COCINA VS TIENDA
+       ======================================================================== */
     function renderKitchenVsRetailCard(containerId, stats) {
       const el = document.getElementById(containerId);
       if (!el) return;
@@ -635,6 +1139,9 @@
       `;
     }
 
+    /* ========================================================================
+       RENDER PRINCIPAL DE LA PÁGINA (CIERRE DIARIO)
+       ======================================================================== */
     function renderCierrePage() {
       const dateInp = document.getElementById('dailyDateInput');
       if (dateInp && !dateInp.value) {
@@ -645,100 +1152,207 @@
       const fin = MTP.getFinancialAnalytics();
       const bcv = stats.bcv;
 
-      document.getElementById('cierreTotalsGrid').innerHTML = `
-        <div class="stat-card">
-          <div>
-            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(stats.grossSalesUsd)}</div>
-            <div class="stat-l">Total Cobrado (${stats.ordersCount} órdenes)</div>
-            <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(stats.grossSalesBs)}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-n tabular-nums" style="color:#b45309">${MTP.fmtUSD(stats.ivaUsd)}</div>
-            <div class="stat-l">IVA 16% del Día</div>
-            <div class="stat-sub tabular-nums">Base 16%: ${MTP.fmtUSD(stats.baseG16Usd)} · Exento: ${MTP.fmtUSD(stats.exentoUsd)}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-n tabular-nums money-out">-${MTP.fmtUSD(stats.totalExpensesUsd)}</div>
-            <div class="stat-l">Compras y Gastos del Día</div>
-            <div class="stat-sub tabular-nums">${stats.expenses.length} salidas registradas</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-n tabular-nums money-bs">+${MTP.fmtUSD(stats.netOperatingProfitUsd)}</div>
-            <div class="stat-l">Ganancia Neta Limpia (Sin IVA)</div>
-            <div class="stat-sub tabular-nums">+${MTP.fmtBsRaw(stats.netOperatingProfitUsd * bcv)}</div>
-          </div>
-        </div>
-      `;
+      // Actualizar píldora BCV
+      const pill = document.getElementById('topRatePill');
+      if (pill) pill.textContent = 'BCV: ' + bcv.toFixed(2) + ' Bs';
+
+      // ----------------------------------------------------------------------
+      // PASO 1: ¿Cuánto vendí? (4 tarjetas KPI + desglose cocina vs tienda)
+      // ----------------------------------------------------------------------
+      const totalsGrid = document.getElementById('cierreTotalsGrid');
+      if (totalsGrid) {
+        if (window.MTPUI && window.MTPUI.statCard) {
+          totalsGrid.innerHTML =
+            MTPUI.statCard({
+              label: 'Vendido (' + stats.ordersCount + ' órdenes)',
+              value: MTP.fmtUSD(stats.grossSalesUsd),
+              sub: MTP.fmtBsRaw(stats.grossSalesBs),
+              tone: 'in'
+            }) +
+            MTPUI.statCard({
+              label: 'IVA 16% del Día',
+              value: MTP.fmtUSD(stats.ivaUsd),
+              sub: 'Base: ' + MTP.fmtUSD(stats.baseG16Usd) + ' · Exento: ' + MTP.fmtUSD(stats.exentoUsd),
+              tone: 'cash'
+            }) +
+            MTPUI.statCard({
+              label: 'Compras y Gastos',
+              value: '-' + MTP.fmtUSD(stats.totalExpensesUsd),
+              sub: stats.expenses.length + ' salidas registradas',
+              tone: 'out'
+            }) +
+            MTPUI.statCard({
+              label: 'Ganancia Limpia (Sin IVA)',
+              value: '+' + MTP.fmtUSD(stats.netOperatingProfitUsd),
+              sub: '+' + MTP.fmtBsRaw(stats.netOperatingProfitUsd * bcv),
+              tone: 'in'
+            });
+        } else {
+          totalsGrid.innerHTML = `
+            <div class="stat-card tone-in">
+              <span class="stat-l">Vendido (${stats.ordersCount} órdenes)</span>
+              <strong class="stat-n tabular-nums money-in">${MTP.fmtUSD(stats.grossSalesUsd)}</strong>
+              <span class="stat-sub tabular-nums">${MTP.fmtBsRaw(stats.grossSalesBs)}</span>
+            </div>
+            <div class="stat-card tone-cash">
+              <span class="stat-l">IVA 16% del Día</span>
+              <strong class="stat-n tabular-nums" style="color:#b45309">${MTP.fmtUSD(stats.ivaUsd)}</strong>
+              <span class="stat-sub tabular-nums">Base: ${MTP.fmtUSD(stats.baseG16Usd)} · Exento: ${MTP.fmtUSD(stats.exentoUsd)}</span>
+            </div>
+            <div class="stat-card tone-out">
+              <span class="stat-l">Compras y Gastos</span>
+              <strong class="stat-n tabular-nums money-out">-${MTP.fmtUSD(stats.totalExpensesUsd)}</strong>
+              <span class="stat-sub tabular-nums">${stats.expenses.length} salidas registradas</span>
+            </div>
+            <div class="stat-card tone-in">
+              <span class="stat-l">Ganancia Limpia (Sin IVA)</span>
+              <strong class="stat-n tabular-nums money-bs">+${MTP.fmtUSD(stats.netOperatingProfitUsd)}</strong>
+              <span class="stat-sub tabular-nums">+${MTP.fmtBsRaw(stats.netOperatingProfitUsd * bcv)}</span>
+            </div>
+          `;
+        }
+      }
 
       renderKitchenVsRetailCard('dailyKitchenVsRetailBox', stats);
 
-      document.getElementById('netDrawerGrid').innerHTML = `
-        <div class="stat-card" style="border-left:3px solid var(--money-in)">
-          <div>
-            <div class="stat-l" style="color:var(--money-in)">EFECTIVO USD EN GAVETA</div>
-            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(stats.netDrawerUsd)}</div>
-            <div class="stat-sub tabular-nums">Entró: $${stats.inUsdCash.toFixed(2)} − Vueltos: $${stats.outChangeUsdCash.toFixed(2)} − Gastos: $${stats.expUsdCash.toFixed(2)}</div>
-          </div>
-        </div>
-        <div class="stat-card" style="border-left:3px solid var(--info)">
-          <div>
-            <div class="stat-l" style="color:var(--info)">SALDO NETO PAGO MÓVIL (BS)</div>
-            <div class="stat-n tabular-nums money-bs">${MTP.fmtBsRaw(stats.netBankPmBs)}</div>
-            <div class="stat-sub tabular-nums">Entró: ${stats.inPmBs.toFixed(2)} Bs − Vuelto PM: ${stats.outChangePmBs.toFixed(2)} Bs</div>
-          </div>
-        </div>
-        <div class="stat-card" style="border-left:3px solid var(--purple)">
-          <div>
-            <div class="stat-l">PUNTO DE VENTA / BIOPAGO</div>
-            <div class="stat-n tabular-nums">${MTP.fmtBsRaw(stats.inPuntoBs)}</div>
-            <div class="stat-sub tabular-nums">Equiv: ${MTP.fmtUSD(bcv > 0 ? stats.inPuntoBs / bcv : 0)}</div>
-          </div>
-        </div>
-        <div class="stat-card" style="border-left:3px solid var(--action)">
-          <div>
-            <div class="stat-l">EFECTIVO BS EN GAVETA</div>
-            <div class="stat-n tabular-nums">${MTP.fmtBsRaw(stats.netDrawerBs)}</div>
-            <div class="stat-sub tabular-nums">Zelle: ${MTP.fmtUSD(stats.inZelleUsd)}</div>
-          </div>
-        </div>
-      `;
+      // ----------------------------------------------------------------------
+      // PASO 2: ¿Cuánto hay? (Dinero en mano + Conciliación de gaveta)
+      // ----------------------------------------------------------------------
+      const drawerGrid = document.getElementById('netDrawerGrid');
+      if (drawerGrid) {
+        if (window.MTPUI && window.MTPUI.statCard) {
+          drawerGrid.innerHTML =
+            MTPUI.statCard({
+              label: 'EFECTIVO USD EN GAVETA',
+              value: MTP.fmtUSD(stats.netDrawerUsd),
+              sub: 'Entró: $' + stats.inUsdCash.toFixed(2) + ' − Vueltos: $' + stats.outChangeUsdCash.toFixed(2) + ' − Gastos: $' + stats.expUsdCash.toFixed(2),
+              tone: 'in'
+            }) +
+            MTPUI.statCard({
+              label: 'EFECTIVO BS EN GAVETA',
+              value: MTP.fmtBsRaw(stats.netDrawerBs),
+              sub: 'Entró: ' + stats.inBsCash.toFixed(2) + ' Bs − Vueltos: ' + stats.outChangeBsCash.toFixed(2) + ' Bs',
+              tone: 'cash'
+            }) +
+            MTPUI.statCard({
+              label: 'SALDO NETO PAGO MÓVIL',
+              value: MTP.fmtBsRaw(stats.netBankPmBs),
+              sub: 'Entró: ' + stats.inPmBs.toFixed(2) + ' Bs − Vueltos PM: ' + stats.outChangePmBs.toFixed(2) + ' Bs',
+              tone: 'info'
+            }) +
+            MTPUI.statCard({
+              label: 'PUNTO DE VENTA / BIOPAGO',
+              value: MTP.fmtBsRaw(stats.inPuntoBs),
+              sub: 'Equiv: ' + MTP.fmtUSD(bcv > 0 ? stats.inPuntoBs / bcv : 0) + (stats.inZelleUsd > 0 ? ' · Zelle: ' + MTP.fmtUSD(stats.inZelleUsd) : ''),
+              tone: 'default'
+            });
+        } else {
+          drawerGrid.innerHTML = `
+            <div class="stat-card tone-in">
+              <span class="stat-l">EFECTIVO USD EN GAVETA</span>
+              <strong class="stat-n tabular-nums money-in">${MTP.fmtUSD(stats.netDrawerUsd)}</strong>
+              <span class="stat-sub tabular-nums">Entró: $${stats.inUsdCash.toFixed(2)} − Vueltos: $${stats.outChangeUsdCash.toFixed(2)} − Gastos: $${stats.expUsdCash.toFixed(2)}</span>
+            </div>
+            <div class="stat-card tone-cash">
+              <span class="stat-l">EFECTIVO BS EN GAVETA</span>
+              <strong class="stat-n tabular-nums money-bs">${MTP.fmtBsRaw(stats.netDrawerBs)}</strong>
+              <span class="stat-sub tabular-nums">Entró: ${stats.inBsCash.toFixed(2)} Bs − Vueltos: ${stats.outChangeBsCash.toFixed(2)} Bs</span>
+            </div>
+            <div class="stat-card tone-info">
+              <span class="stat-l">SALDO NETO PAGO MÓVIL</span>
+              <strong class="stat-n tabular-nums" style="color:var(--info)">${MTP.fmtBsRaw(stats.netBankPmBs)}</strong>
+              <span class="stat-sub tabular-nums">Entró: ${stats.inPmBs.toFixed(2)} Bs − Vueltos PM: ${stats.outChangePmBs.toFixed(2)} Bs</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-l">PUNTO DE VENTA / BIOPAGO</span>
+              <strong class="stat-n tabular-nums">${MTP.fmtBsRaw(stats.inPuntoBs)}</strong>
+              <span class="stat-sub tabular-nums">Equiv: ${MTP.fmtUSD(bcv > 0 ? stats.inPuntoBs / bcv : 0)}${stats.inZelleUsd > 0 ? ' · Zelle: ' + MTP.fmtUSD(stats.inZelleUsd) : ''}</span>
+            </div>
+          `;
+        }
+      }
 
-      // Historial de cierres diarios guardados
+      renderDenominations(stats);
+
+      // ----------------------------------------------------------------------
+      // PASO 3: ¿Cuadra? (Tablas en pestañas internas)
+      // ----------------------------------------------------------------------
+
+      // 1. Ventas del día
+      const salesTable = document.getElementById('cierreSalesTable');
+      if (salesTable) {
+        salesTable.innerHTML = stats.sales.length
+          ? stats.sales.map(s => {
+              const timeStr = new Date(s.createdAt).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+              const subUsd = s.subtotalUsd != null ? s.subtotalUsd : s.totalUsd;
+              const ivaUsd = s.ivaUsd || (s.fiscalData && s.fiscalData.ivaUsd) || 0;
+              return `
+                <tr>
+                  <td><span class="code-pill plu">#${s.orderNumber}</span></td>
+                  <td>
+                    <strong>${s.customer}</strong>
+                    <div style="font-size:11px;color:var(--txt-3)">${timeStr} · ${s.cashier}</div>
+                  </td>
+                  <td>
+                    ${(s.items || []).map(i => `<div>• <strong>${i.qty}x</strong> ${i.name} (${MTP.fmtUSD(i.subtotalUsd || i.qty * i.priceUsd)})</div>`).join('')}
+                  </td>
+                  <td class="tabular-nums">
+                    <div>Base: ${MTP.fmtUSD(subUsd)}</div>
+                    <div style="font-size:11.5px;color:#b45309">+IVA 16%: ${MTP.fmtUSD(ivaUsd)}</div>
+                  </td>
+                  <td>
+                    <div class="price-dual">
+                      <span class="price-usd tabular-nums">${MTP.fmtUSD(s.totalUsd)}</span>
+                      <span class="price-bs tabular-nums">${MTP.fmtBsRaw(s.totalBs)}</span>
+                    </div>
+                  </td>
+                  <td style="font-size:12px">
+                    ${(s.payments || []).map(p => `<div><strong>${p.method}:</strong> ${MTP.fmtUSD(p.amountUsd)}${p.bill ? ' (' + p.bill + ')' : ''}</div>`).join('')}
+                  </td>
+                  <td style="font-size:12px">
+                    <strong class="tabular-nums">${MTP.fmtUSD(s.changeGiven?.totalChangeUsd || 0)}</strong>
+                    <div style="color:var(--txt-2);font-size:11px">${s.changeGiven?.breakdown || 'Exacto'}</div>
+                  </td>
+                  <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(s.profitUsd)}</span></td>
+                </tr>
+              `;
+            }).join('')
+          : '<tr><td colspan="8" style="text-align:center;color:var(--txt-3);padding:14px">No hay ventas registradas en esta fecha</td></tr>';
+      }
+
+      // 2. Historial de cierres diarios guardados
       const dailyList = MTP.state.dailyClosures || [];
-      document.getElementById('savedDailyClosuresBody').innerHTML = dailyList.length
-        ? dailyList.map(c => `
-            <tr>
-              <td>
-                <strong>${c.date}</strong>
-                <div style="font-size:11px;color:var(--txt-3)">${c.id} · ${c.responsible}</div>
-              </td>
-              <td class="tabular-nums">${c.ordersCount}</td>
-              <td><span class="badge badge-yellow tabular-nums">${c.kitchenPreparedQty} platos (${MTP.fmtUSD(c.kitchenSalesUsd)})</span></td>
-              <td><span class="badge badge-blue tabular-nums">${c.retailSoldQty} und (${MTP.fmtUSD(c.retailSalesUsd)})</span></td>
-              <td class="tabular-nums">${MTP.fmtUSD(c.subtotalBaseUsd)} + ${MTP.fmtUSD(c.ivaUsd)} IVA</td>
-              <td><strong class="money-in tabular-nums">${MTP.fmtUSD(c.grossSalesUsd)}</strong></td>
-              <td><span class="money-out tabular-nums">-${MTP.fmtUSD(c.totalExpensesUsd)}</span></td>
-              <td class="tabular-nums">
-                Contado: <strong>${MTP.fmtUSD(c.countedDrawerUsd)}</strong>
-                <div style="font-size:11px;color:${Math.abs(c.diffDrawerUsd) < 0.05 ? 'var(--money-in)' : 'var(--money-out)'}">
-                  ${Math.abs(c.diffDrawerUsd) < 0.05 ? '✔ Cuadrado' : ('Dif: ' + MTP.fmtUSD(c.diffDrawerUsd))}
-                </div>
-              </td>
-              <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(c.netOperatingProfitUsd)}</span></td>
-              <td>
-                <button class="btn btn-secondary btn-sm" onclick="openClosureReportModal('DIARIO', '${c.date}')">📄 Resumen</button>
-              </td>
-            </tr>
-          `).join('')
-        : '<tr><td colspan="10" style="text-align:center;padding:14px;color:var(--txt-3)">Aún no has guardado ningún cierre diario. Haz clic en "🔒 Ejecutar Cierre Diario y Guardar Acta".</td></tr>';
+      const savedClosuresBody = document.getElementById('savedDailyClosuresBody');
+      if (savedClosuresBody) {
+        savedClosuresBody.innerHTML = dailyList.length
+          ? dailyList.map(c => `
+              <tr>
+                <td>
+                  <strong>${c.date}</strong>
+                  <div style="font-size:11px;color:var(--txt-3)">${c.id} · ${c.responsible}</div>
+                </td>
+                <td class="tabular-nums">${c.ordersCount}</td>
+                <td><span class="badge badge-yellow tabular-nums">${c.kitchenPreparedQty} platos (${MTP.fmtUSD(c.kitchenSalesUsd)})</span></td>
+                <td><span class="badge badge-blue tabular-nums">${c.retailSoldQty} und (${MTP.fmtUSD(c.retailSalesUsd)})</span></td>
+                <td class="tabular-nums">${MTP.fmtUSD(c.subtotalBaseUsd)} + ${MTP.fmtUSD(c.ivaUsd)} IVA</td>
+                <td><strong class="money-in tabular-nums">${MTP.fmtUSD(c.grossSalesUsd)}</strong></td>
+                <td><span class="money-out tabular-nums">-${MTP.fmtUSD(c.totalExpensesUsd)}</span></td>
+                <td class="tabular-nums">
+                  Contado: <strong>${MTP.fmtUSD(c.countedDrawerUsd)}</strong>
+                  <div style="font-size:11px;color:${Math.abs(c.diffDrawerUsd) < 0.05 ? 'var(--money-in)' : 'var(--money-out)'}">
+                    ${Math.abs(c.diffDrawerUsd) < 0.05 ? '✔ Cuadrado' : ('Dif: ' + MTP.fmtUSD(c.diffDrawerUsd))}
+                  </div>
+                </td>
+                <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(c.netOperatingProfitUsd)}</span></td>
+                <td>
+                  <button class="btn btn-secondary btn-sm" onclick="openClosureReportModal('DIARIO', '${c.date}')">📄 Resumen</button>
+                </td>
+              </tr>
+            `).join('')
+          : '<tr><td colspan="10" style="text-align:center;padding:14px;color:var(--txt-3)">Aún no has guardado ningún cierre diario. Haz clic en "🔒 Cerrar el Día y Guardar Acta".</td></tr>';
+      }
 
-      // Terminales Punto de Venta
+      // 3. Terminales Punto de Venta
       const termGrid = document.getElementById('posTerminalsStatusGrid');
       const terminals = MTP.state.posTerminals || [];
       if (termGrid) {
@@ -762,7 +1376,7 @@
         }).join('');
       }
 
-      // Pagos Móviles del día
+      // 4. Pagos Móviles del día
       const pmRows = [];
       stats.sales.forEach(s => {
         (s.payments || []).forEach(p => {
@@ -784,76 +1398,43 @@
         });
       });
 
-      document.getElementById('pmVerificationTable').innerHTML = pmRows.length
-        ? pmRows.map(r => `
-            <tr>
-              <td><span class="code-pill plu">#${r.orderNumber}</span></td>
-              <td><strong>${r.customer}</strong> <span style="font-size:11px;color:var(--txt-3)">(${r.time})</span></td>
-              <td><span class="badge badge-blue">${r.destAccount}</span></td>
-              <td>${r.bank}</td>
-              <td>${r.phone}</td>
-              <td><span class="code-pill">#${r.ref}</span></td>
-              <td><strong class="money-bs tabular-nums">${MTP.fmtBsRaw(r.amountBs)}</strong></td>
-              <td><strong class="tabular-nums">${MTP.fmtUSD(r.amountUsd)}</strong></td>
-              <td><span class="badge badge-green">✔ Verificado</span></td>
-              <td>—</td>
-            </tr>
-          `).join('')
-        : '<tr><td colspan="10" style="text-align:center;color:var(--txt-3);padding:14px">Sin pagos móviles en esta fecha</td></tr>';
-
-      // Gastos del día
-      document.getElementById('cierreExpensesTable').innerHTML = stats.expenses.length
-        ? stats.expenses.map(e => `
-            <tr>
-              <td>${new Date(e.createdAt).toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'})}</td>
-              <td><span class="badge badge-yellow">${e.category}</span></td>
-              <td style="font-weight:var(--fw-semibold)">${e.description}</td>
-              <td><span class="badge badge-green">${e.paymentSource}</span></td>
-              <td><strong class="money-out tabular-nums">-${MTP.fmtUSD(e.amountUsd)}</strong></td>
-              <td><strong class="money-out tabular-nums">-${MTP.fmtBsRaw(e.amountBs)}</strong></td>
-              <td>${e.responsible}</td>
-            </tr>
-          `).join('')
-        : '<tr><td colspan="7" style="text-align:center;color:var(--txt-3);padding:14px">Sin compras ni gastos en esta fecha</td></tr>';
-
-      // Ventas del día
-      document.getElementById('cierreSalesTable').innerHTML = stats.sales.length
-        ? stats.sales.map(s => {
-            const timeStr = new Date(s.createdAt).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
-            const subUsd = s.subtotalUsd != null ? s.subtotalUsd : s.totalUsd;
-            const ivaUsd = s.ivaUsd || (s.fiscalData && s.fiscalData.ivaUsd) || 0;
-            return `
+      const pmTable = document.getElementById('pmVerificationTable');
+      if (pmTable) {
+        pmTable.innerHTML = pmRows.length
+          ? pmRows.map(r => `
               <tr>
-                <td><span class="code-pill plu">#${s.orderNumber}</span></td>
-                <td>
-                  <strong>${s.customer}</strong>
-                  <div style="font-size:11px;color:var(--txt-3)">${timeStr} · ${s.cashier}</div>
-                </td>
-                <td>
-                  ${(s.items || []).map(i => `<div>• <strong>${i.qty}x</strong> ${i.name} (${MTP.fmtUSD(i.subtotalUsd || i.qty * i.priceUsd)})</div>`).join('')}
-                </td>
-                <td class="tabular-nums">
-                  <div>Base: ${MTP.fmtUSD(subUsd)}</div>
-                  <div style="font-size:11.5px;color:#b45309">+IVA 16%: ${MTP.fmtUSD(ivaUsd)}</div>
-                </td>
-                <td>
-                  <div class="price-dual">
-                    <span class="price-usd tabular-nums">${MTP.fmtUSD(s.totalUsd)}</span>
-                    <span class="price-bs tabular-nums">${MTP.fmtBsRaw(s.totalBs)}</span>
-                  </div>
-                </td>
-                <td style="font-size:12px">
-                  ${(s.payments || []).map(p => `<div><strong>${p.method}:</strong> ${MTP.fmtUSD(p.amountUsd)}</div>`).join('')}
-                </td>
-                <td style="font-size:12px">
-                  <strong class="tabular-nums">${MTP.fmtUSD(s.changeGiven?.totalChangeUsd || 0)}</strong>
-                  <div style="color:var(--txt-2);font-size:11px">${s.changeGiven?.breakdown || 'Exacto'}</div>
-                </td>
-                <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(s.profitUsd)}</span></td>
+                <td><span class="code-pill plu">#${r.orderNumber}</span></td>
+                <td><strong>${r.customer}</strong> <span style="font-size:11px;color:var(--txt-3)">(${r.time})</span></td>
+                <td><span class="badge badge-blue">${r.destAccount}</span></td>
+                <td>${r.bank}</td>
+                <td>${r.phone}</td>
+                <td><span class="code-pill">#${r.ref}</span></td>
+                <td><strong class="money-bs tabular-nums">${MTP.fmtBsRaw(r.amountBs)}</strong></td>
+                <td><strong class="tabular-nums">${MTP.fmtUSD(r.amountUsd)}</strong></td>
+                <td><span class="badge badge-green">✔ Verificado</span></td>
+                <td>—</td>
               </tr>
-            `;
-          }).join('')
-        : '<tr><td colspan="8" style="text-align:center;color:var(--txt-3);padding:14px">No hay ventas registradas en esta fecha</td></tr>';
+            `).join('')
+          : '<tr><td colspan="10" style="text-align:center;color:var(--txt-3);padding:14px">Sin pagos móviles en esta fecha</td></tr>';
+      }
+
+      // 5. Gastos del día
+      const expTable = document.getElementById('cierreExpensesTable');
+      if (expTable) {
+        expTable.innerHTML = stats.expenses.length
+          ? stats.expenses.map(e => `
+              <tr>
+                <td>${new Date(e.createdAt).toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'})}</td>
+                <td><span class="badge badge-yellow">${e.category}</span></td>
+                <td style="font-weight:var(--fw-semibold)">${e.description}</td>
+                <td><span class="badge badge-green">${e.paymentSource}</span></td>
+                <td><strong class="money-out tabular-nums">-${MTP.fmtUSD(e.amountUsd)}</strong></td>
+                <td><strong class="money-out tabular-nums">-${MTP.fmtBsRaw(e.amountBs)}</strong></td>
+                <td>${e.responsible}</td>
+              </tr>
+            `).join('')
+          : '<tr><td colspan="7" style="text-align:center;color:var(--txt-3);padding:14px">Sin compras ni gastos en esta fecha</td></tr>';
+      }
     }
 
     /* ========================================================================
@@ -864,8 +1445,28 @@
       const selectedDate = (dateInp && dateInp.value) ? dateInp.value : new Date().toISOString().slice(0, 10);
       const stats = MTP.getPeriodAnalytics('DAY', selectedDate);
 
-      document.getElementById('dcCountedUsd').value = stats.netDrawerUsd.toFixed(2);
-      document.getElementById('dcCountedBs').value = stats.netDrawerBs.toFixed(2);
+      // Si el cajero contó usando la tabla de denominaciones, usar ese total contado
+      let countedUsdTotal = 0;
+      let hasCountedUsd = false;
+      DENOM_USD.forEach(d => {
+        if (countedDenoms['USD:' + d] !== undefined) {
+          hasCountedUsd = true;
+          countedUsdTotal += (countedDenoms['USD:' + d] * d);
+        }
+      });
+
+      let countedBsTotal = 0;
+      let hasCountedBs = false;
+      DENOM_BS.forEach(d => {
+        if (countedDenoms['BS:' + d] !== undefined) {
+          hasCountedBs = true;
+          countedBsTotal += (countedDenoms['BS:' + d] * d);
+        }
+      });
+
+      document.getElementById('dcCountedUsd').value = (hasCountedUsd ? countedUsdTotal : stats.netDrawerUsd).toFixed(2);
+      document.getElementById('dcCountedBs').value = (hasCountedBs ? countedBsTotal : stats.netDrawerBs).toFixed(2);
+
       document.getElementById('dailyModalSummaryBox').innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           <div>📅 Fecha a cerrar: <strong>${selectedDate}</strong></div>
@@ -915,71 +1516,100 @@
       const stats = MTP.getPeriodAnalytics('MONTH', selectedMonth);
       const bcv = stats.bcv;
 
-      document.getElementById('monthlyStatsGrid').innerHTML = `
-        <div class="stat-card">
-          <div>
-            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(stats.grossSalesUsd)}</div>
-            <div class="stat-l">Ventas Totales del Mes (${stats.ordersCount} órdenes)</div>
-            <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(stats.grossSalesBs)}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-n tabular-nums" style="color:#b45309">${MTP.fmtUSD(stats.ivaUsd)}</div>
-            <div class="stat-l">IVA 16% Acumulado del Mes</div>
-            <div class="stat-sub tabular-nums">Base Gravada: ${MTP.fmtUSD(stats.baseG16Usd)} · Exento: ${MTP.fmtUSD(stats.exentoUsd)}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-n tabular-nums money-out">-${MTP.fmtUSD(stats.totalExpensesUsd)}</div>
-            <div class="stat-l">Compras y Gastos del Mes</div>
-            <div class="stat-sub tabular-nums">Costo recetas + mercancía: ${MTP.fmtUSD(stats.totalCostOfGoodsUsd)}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-n tabular-nums money-bs">+${MTP.fmtUSD(stats.netOperatingProfitUsd)}</div>
-            <div class="stat-l">Ganancia Neta Limpia del Mes</div>
-            <div class="stat-sub tabular-nums">+${MTP.fmtBsRaw(stats.netOperatingProfitUsd * bcv)}</div>
-          </div>
-        </div>
-      `;
+      const monthlyGrid = document.getElementById('monthlyStatsGrid');
+      if (monthlyGrid) {
+        if (window.MTPUI && window.MTPUI.statCard) {
+          monthlyGrid.innerHTML =
+            MTPUI.statCard({
+              label: 'Ventas Totales del Mes (' + stats.ordersCount + ' órdenes)',
+              value: MTP.fmtUSD(stats.grossSalesUsd),
+              sub: MTP.fmtBsRaw(stats.grossSalesBs),
+              tone: 'in'
+            }) +
+            MTPUI.statCard({
+              label: 'IVA 16% Acumulado del Mes',
+              value: MTP.fmtUSD(stats.ivaUsd),
+              sub: 'Base: ' + MTP.fmtUSD(stats.baseG16Usd) + ' · Exento: ' + MTP.fmtUSD(stats.exentoUsd),
+              tone: 'cash'
+            }) +
+            MTPUI.statCard({
+              label: 'Compras y Gastos del Mes',
+              value: '-' + MTP.fmtUSD(stats.totalExpensesUsd),
+              sub: 'Costo mercancía + recetas: ' + MTP.fmtUSD(stats.totalCostOfGoodsUsd),
+              tone: 'out'
+            }) +
+            MTPUI.statCard({
+              label: 'Ganancia Neta Limpia del Mes',
+              value: '+' + MTP.fmtUSD(stats.netOperatingProfitUsd),
+              sub: '+' + MTP.fmtBsRaw(stats.netOperatingProfitUsd * bcv),
+              tone: 'in'
+            });
+        } else {
+          monthlyGrid.innerHTML = `
+            <div class="stat-card tone-in">
+              <span class="stat-l">Ventas Totales del Mes (${stats.ordersCount} órdenes)</span>
+              <strong class="stat-n tabular-nums money-in">${MTP.fmtUSD(stats.grossSalesUsd)}</strong>
+              <span class="stat-sub tabular-nums">${MTP.fmtBsRaw(stats.grossSalesBs)}</span>
+            </div>
+            <div class="stat-card tone-cash">
+              <span class="stat-l">IVA 16% Acumulado del Mes</span>
+              <strong class="stat-n tabular-nums" style="color:#b45309">${MTP.fmtUSD(stats.ivaUsd)}</strong>
+              <span class="stat-sub tabular-nums">Base: ${MTP.fmtUSD(stats.baseG16Usd)} · Exento: ${MTP.fmtUSD(stats.exentoUsd)}</span>
+            </div>
+            <div class="stat-card tone-out">
+              <span class="stat-l">Compras y Gastos del Mes</span>
+              <strong class="stat-n tabular-nums money-out">-${MTP.fmtUSD(stats.totalExpensesUsd)}</strong>
+              <span class="stat-sub tabular-nums">Costo mercancía + recetas: ${MTP.fmtUSD(stats.totalCostOfGoodsUsd)}</span>
+            </div>
+            <div class="stat-card tone-in">
+              <span class="stat-l">Ganancia Neta Limpia del Mes</span>
+              <strong class="stat-n tabular-nums money-bs">+${MTP.fmtUSD(stats.netOperatingProfitUsd)}</strong>
+              <span class="stat-sub tabular-nums">+${MTP.fmtBsRaw(stats.netOperatingProfitUsd * bcv)}</span>
+            </div>
+          `;
+        }
+      }
 
       renderKitchenVsRetailCard('monthlyKitchenVsRetailBox', stats);
 
-      document.getElementById('monthlyDaysTableBody').innerHTML = stats.daysList.length
-        ? stats.daysList.map(d => `
-            <tr>
-              <td><strong>${d.date}</strong></td>
-              <td class="tabular-nums">${d.ordersCount}</td>
-              <td><span class="badge badge-yellow tabular-nums">${d.kitchenPreparedQty} platos</span></td>
-              <td><span class="badge badge-blue tabular-nums">${d.retailSoldQty} und</span></td>
-              <td class="tabular-nums">${MTP.fmtUSD(d.subtotalBaseUsd)}</td>
-              <td class="tabular-nums" style="color:#b45309">${MTP.fmtUSD(d.ivaUsd)}</td>
-              <td><strong class="money-in tabular-nums">${MTP.fmtUSD(d.grossSalesUsd)}</strong></td>
-              <td><span class="money-out tabular-nums">-${MTP.fmtUSD(d.expensesUsd)}</span></td>
-              <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(d.netProfitUsd)}</span></td>
-            </tr>
-          `).join('')
-        : '<tr><td colspan="9" style="text-align:center;padding:16px;color:var(--txt-3)">No hay movimientos registrados en este mes.</td></tr>';
+      const daysTableBody = document.getElementById('monthlyDaysTableBody');
+      if (daysTableBody) {
+        daysTableBody.innerHTML = stats.daysList.length
+          ? stats.daysList.map(d => `
+              <tr>
+                <td><strong>${d.date}</strong></td>
+                <td class="tabular-nums">${d.ordersCount}</td>
+                <td><span class="badge badge-yellow tabular-nums">${d.kitchenPreparedQty} platos</span></td>
+                <td><span class="badge badge-blue tabular-nums">${d.retailSoldQty} und</span></td>
+                <td class="tabular-nums">${MTP.fmtUSD(d.subtotalBaseUsd)}</td>
+                <td class="tabular-nums" style="color:#b45309">${MTP.fmtUSD(d.ivaUsd)}</td>
+                <td><strong class="money-in tabular-nums">${MTP.fmtUSD(d.grossSalesUsd)}</strong></td>
+                <td><span class="money-out tabular-nums">-${MTP.fmtUSD(d.expensesUsd)}</span></td>
+                <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(d.netProfitUsd)}</span></td>
+              </tr>
+            `).join('')
+          : '<tr><td colspan="9" style="text-align:center;padding:16px;color:var(--txt-3)">No hay movimientos registrados en este mes.</td></tr>';
+      }
 
       const mClosures = MTP.state.monthlyClosures || [];
-      document.getElementById('savedMonthlyClosuresBody').innerHTML = mClosures.length
-        ? mClosures.map(c => `
-            <tr>
-              <td><strong>${c.month}</strong> <span style="font-size:11px;color:var(--txt-3)">(${c.id})</span></td>
-              <td class="tabular-nums">${c.daysWorked} días</td>
-              <td class="tabular-nums">${c.ordersCount}</td>
-              <td><span class="badge badge-yellow tabular-nums">${c.kitchenPreparedQty} platos (${MTP.fmtUSD(c.kitchenSalesUsd)})</span></td>
-              <td><span class="badge badge-blue tabular-nums">${c.retailSoldQty} und (${MTP.fmtUSD(c.retailSalesUsd)})</span></td>
-              <td class="tabular-nums">${MTP.fmtUSD(c.ivaUsd)}</td>
-              <td><strong class="money-in tabular-nums">${MTP.fmtUSD(c.grossSalesUsd)}</strong></td>
-              <td><span class="money-out tabular-nums">-${MTP.fmtUSD(c.totalExpensesUsd)}</span></td>
-              <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(c.netOperatingProfitUsd)}</span></td>
-            </tr>
-          `).join('')
-        : '<tr><td colspan="9" style="text-align:center;padding:14px;color:var(--txt-3)">Aún no se han guardado actas de cierre mensual.</td></tr>';
+      const savedMonthlyBody = document.getElementById('savedMonthlyClosuresBody');
+      if (savedMonthlyBody) {
+        savedMonthlyBody.innerHTML = mClosures.length
+          ? mClosures.map(c => `
+              <tr>
+                <td><strong>${c.month}</strong> <span style="font-size:11px;color:var(--txt-3)">(${c.id})</span></td>
+                <td class="tabular-nums">${c.daysWorked} días</td>
+                <td class="tabular-nums">${c.ordersCount}</td>
+                <td><span class="badge badge-yellow tabular-nums">${c.kitchenPreparedQty} platos (${MTP.fmtUSD(c.kitchenSalesUsd)})</span></td>
+                <td><span class="badge badge-blue tabular-nums">${c.retailSoldQty} und (${MTP.fmtUSD(c.retailSalesUsd)})</span></td>
+                <td class="tabular-nums">${MTP.fmtUSD(c.ivaUsd)}</td>
+                <td><strong class="money-in tabular-nums">${MTP.fmtUSD(c.grossSalesUsd)}</strong></td>
+                <td><span class="money-out tabular-nums">-${MTP.fmtUSD(c.totalExpensesUsd)}</span></td>
+                <td><span class="badge badge-green tabular-nums">+${MTP.fmtUSD(c.netOperatingProfitUsd)}</span></td>
+              </tr>
+            `).join('')
+          : '<tr><td colspan="9" style="text-align:center;padding:14px;color:var(--txt-3)">Aún no se han guardado actas de cierre mensual.</td></tr>';
+      }
     }
 
     function saveMonthlyClosureAction() {
@@ -1000,50 +1630,76 @@
       const stats = MTP.getPeriodAnalytics('YEAR', selectedYear);
       const bcv = stats.bcv;
 
-      document.getElementById('annualStatsGrid').innerHTML = `
-        <div class="stat-card">
-          <div>
-            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(stats.grossSalesUsd)}</div>
-            <div class="stat-l">Ventas Acumuladas Año ${selectedYear} (${stats.ordersCount} órdenes)</div>
-            <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(stats.grossSalesBs)}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-n tabular-nums" style="color:#b45309">${MTP.fmtUSD(stats.ivaUsd)}</div>
-            <div class="stat-l">IVA 16% Acumulado del Año</div>
-            <div class="stat-sub tabular-nums">Base Gravada: ${MTP.fmtUSD(stats.baseG16Usd)} · Exento: ${MTP.fmtUSD(stats.exentoUsd)}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-n tabular-nums" style="color:#d97706">${stats.kitchenPreparedQty} platos / ${stats.retailSoldQty} und</div>
-            <div class="stat-l">Producción Cocina vs. Mercancía Anual</div>
-            <div class="stat-sub tabular-nums">Cocina: ${MTP.fmtUSD(stats.kitchenSalesUsd)} · Tienda: ${MTP.fmtUSD(stats.retailSalesUsd)}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div>
-            <div class="stat-n tabular-nums money-bs">+${MTP.fmtUSD(stats.netOperatingProfitUsd)}</div>
-            <div class="stat-l">Ganancia Neta Anual (${selectedYear})</div>
-            <div class="stat-sub tabular-nums">Gastos descontados: -${MTP.fmtUSD(stats.totalExpensesUsd)}</div>
-          </div>
-        </div>
-      `;
+      const annualGrid = document.getElementById('annualStatsGrid');
+      if (annualGrid) {
+        if (window.MTPUI && window.MTPUI.statCard) {
+          annualGrid.innerHTML =
+            MTPUI.statCard({
+              label: 'Ventas Acumuladas Año ' + selectedYear + ' (' + stats.ordersCount + ' órdenes)',
+              value: MTP.fmtUSD(stats.grossSalesUsd),
+              sub: MTP.fmtBsRaw(stats.grossSalesBs),
+              tone: 'in'
+            }) +
+            MTPUI.statCard({
+              label: 'IVA 16% Acumulado del Año',
+              value: MTP.fmtUSD(stats.ivaUsd),
+              sub: 'Base: ' + MTP.fmtUSD(stats.baseG16Usd) + ' · Exento: ' + MTP.fmtUSD(stats.exentoUsd),
+              tone: 'cash'
+            }) +
+            MTPUI.statCard({
+              label: 'Producción Cocina vs Mercancía Anual',
+              value: stats.kitchenPreparedQty + ' platos / ' + stats.retailSoldQty + ' und',
+              sub: 'Cocina: ' + MTP.fmtUSD(stats.kitchenSalesUsd) + ' · Tienda: ' + MTP.fmtUSD(stats.retailSalesUsd),
+              tone: 'default'
+            }) +
+            MTPUI.statCard({
+              label: 'Ganancia Neta Anual (' + selectedYear + ')',
+              value: '+' + MTP.fmtUSD(stats.netOperatingProfitUsd),
+              sub: 'Gastos descontados: -' + MTP.fmtUSD(stats.totalExpensesUsd),
+              tone: 'in'
+            });
+        } else {
+          annualGrid.innerHTML = `
+            <div class="stat-card tone-in">
+              <span class="stat-l">Ventas Acumuladas Año ${selectedYear} (${stats.ordersCount} órdenes)</span>
+              <strong class="stat-n tabular-nums money-in">${MTP.fmtUSD(stats.grossSalesUsd)}</strong>
+              <span class="stat-sub tabular-nums">${MTP.fmtBsRaw(stats.grossSalesBs)}</span>
+            </div>
+            <div class="stat-card tone-cash">
+              <span class="stat-l">IVA 16% Acumulado del Año</span>
+              <strong class="stat-n tabular-nums" style="color:#b45309">${MTP.fmtUSD(stats.ivaUsd)}</strong>
+              <span class="stat-sub tabular-nums">Base: ${MTP.fmtUSD(stats.baseG16Usd)} · Exento: ${MTP.fmtUSD(stats.exentoUsd)}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-l">Producción Cocina vs Mercancía Anual</span>
+              <strong class="stat-n tabular-nums" style="color:#d97706">${stats.kitchenPreparedQty} platos / ${stats.retailSoldQty} und</strong>
+              <span class="stat-sub tabular-nums">Cocina: ${MTP.fmtUSD(stats.kitchenSalesUsd)} · Tienda: ${MTP.fmtUSD(stats.retailSalesUsd)}</span>
+            </div>
+            <div class="stat-card tone-in">
+              <span class="stat-l">Ganancia Neta Anual (${selectedYear})</span>
+              <strong class="stat-n tabular-nums money-bs">+${MTP.fmtUSD(stats.netOperatingProfitUsd)}</strong>
+              <span class="stat-sub tabular-nums">Gastos descontados: -${MTP.fmtUSD(stats.totalExpensesUsd)}</span>
+            </div>
+          `;
+        }
+      }
 
-      document.getElementById('annualMonthsTableBody').innerHTML = (stats.monthsList || []).map(m => `
-        <tr style="${m.ordersCount > 0 ? 'background:#ffffff' : 'color:var(--txt-3)'}">
-          <td><strong>${m.monthName} ${selectedYear}</strong></td>
-          <td class="tabular-nums">${m.ordersCount}</td>
-          <td><span class="badge badge-yellow tabular-nums">${m.kitchenPreparedQty} platos</span></td>
-          <td><span class="badge badge-blue tabular-nums">${m.retailSoldQty} und</span></td>
-          <td class="tabular-nums">${MTP.fmtUSD(m.subtotalBaseUsd)}</td>
-          <td class="tabular-nums" style="color:#b45309">${MTP.fmtUSD(m.ivaUsd)}</td>
-          <td><strong class="money-in tabular-nums">${MTP.fmtUSD(m.grossSalesUsd)}</strong></td>
-          <td><span class="money-out tabular-nums">-${MTP.fmtUSD(m.expensesUsd)}</span></td>
-          <td><span class="badge ${m.netProfitUsd >= 0 ? 'badge-green' : 'badge-red'} tabular-nums">${m.netProfitUsd >= 0 ? '+' : ''}${MTP.fmtUSD(m.netProfitUsd)}</span></td>
-        </tr>
-      `).join('');
+      const monthsTableBody = document.getElementById('annualMonthsTableBody');
+      if (monthsTableBody) {
+        monthsTableBody.innerHTML = (stats.monthsList || []).map(m => `
+          <tr style="${m.ordersCount > 0 ? 'background:#ffffff' : 'color:var(--txt-3)'}">
+            <td><strong>${m.monthName} ${selectedYear}</strong></td>
+            <td class="tabular-nums">${m.ordersCount}</td>
+            <td><span class="badge badge-yellow tabular-nums">${m.kitchenPreparedQty} platos</span></td>
+            <td><span class="badge badge-blue tabular-nums">${m.retailSoldQty} und</span></td>
+            <td class="tabular-nums">${MTP.fmtUSD(m.subtotalBaseUsd)}</td>
+            <td class="tabular-nums" style="color:#b45309">${MTP.fmtUSD(m.ivaUsd)}</td>
+            <td><strong class="money-in tabular-nums">${MTP.fmtUSD(m.grossSalesUsd)}</strong></td>
+            <td><span class="money-out tabular-nums">-${MTP.fmtUSD(m.expensesUsd)}</span></td>
+            <td><span class="badge ${m.netProfitUsd >= 0 ? 'badge-green' : 'badge-red'} tabular-nums">${m.netProfitUsd >= 0 ? '+' : ''}${MTP.fmtUSD(m.netProfitUsd)}</span></td>
+          </tr>
+        `).join('');
+      }
     }
 
     /* ========================================================================
@@ -1127,10 +1783,8 @@
       renderCierrePage();
     }
 
-
     /* ========================================================================
        GENERADOR DE ARCHIVO RESUMEN E IMPRESIÓN LIMPIA (DIARIO, MENSUAL, ANUAL)
-       - Imprime y descarga SOLO el documento contable resumido (Cero interfaz)
        ======================================================================== */
     let activeReportPeriodType = 'DIARIO';
     let activeReportFilterVal = '';
@@ -1576,7 +2230,7 @@
         '============================================================',
         data.storeName + ' - RIF: ' + data.storeRif,
         data.title + ' (' + data.periodLabel + ')',
-        'Emitido: ' + data.emittedAt + ' | Tasa BCV: ' + st.bcv.toFixed(2) + ' Bs/',
+        'Emitido: ' + data.emittedAt + ' | Tasa BCV: ' + st.bcv.toFixed(2) + ' Bs/$',
         '============================================================',
         '',
         '1. RESUMEN DE VENTAS E IMPUESTOS (IVA 16%):',
@@ -1618,8 +2272,10 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      populateYearSelect();
       renderCierrePage();
     });
+
     window.addEventListener('mtp:state-updated', () => {
       if (currentCierreTab === 'DIARIO') renderCierrePage();
       else if (currentCierreTab === 'MENSUAL') renderMonthlyPane();

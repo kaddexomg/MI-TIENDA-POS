@@ -4294,17 +4294,27 @@
   }
 
   function emitFiscalReportX() {
-    toast('Reporte X emitido a la Máquina Fiscal');
-    return { success: true, command: 'I0X', type: 'REPORTE_X', date: new Date().toISOString() };
+    const hasMachine = state.settings.fiscalData && state.settings.fiscalData.printerSerial && state.settings.fiscalConfig && state.settings.fiscalConfig.port;
+    if (hasMachine) {
+      toast('Reporte X emitido a la Máquina Fiscal (' + state.settings.fiscalConfig.port + ')');
+      return { success: true, command: 'I0X', type: 'REPORTE_X', simulated: false, date: new Date().toISOString() };
+    }
+    toast('Reporte X emitido (Simulado - sin máquina fiscal conectada)');
+    return { success: true, command: 'I0X', type: 'REPORTE_X', simulated: true, date: new Date().toISOString() };
   }
 
   function emitFiscalReportZ() {
     if (!state.settings.fiscalConfig) state.settings.fiscalConfig = {};
-    const curZ = (state.settings.fiscalConfig.lastReportZ || 142) + 1;
+    const hasMachine = state.settings.fiscalData && state.settings.fiscalData.printerSerial && state.settings.fiscalConfig.port;
+    const curZ = (state.settings.fiscalConfig.lastReportZ || 0) + 1;
     state.settings.fiscalConfig.lastReportZ = curZ;
     saveState(state);
-    toast(`¡Reporte Z Fiscal #${curZ} ejecutado exitosamente!`);
-    return { success: true, command: 'I0Z', type: 'REPORTE_Z', reportZNumber: curZ, date: new Date().toISOString() };
+    if (hasMachine) {
+      toast(`¡Reporte Z Fiscal #${curZ} ejecutado exitosamente!`);
+      return { success: true, command: 'I0Z', type: 'REPORTE_Z', reportZNumber: curZ, simulated: false, date: new Date().toISOString() };
+    }
+    toast(`Reporte Z Fiscal #${curZ} (Simulado - sin máquina fiscal conectada)`);
+    return { success: true, command: 'I0Z', type: 'REPORTE_Z', reportZNumber: curZ, simulated: true, date: new Date().toISOString() };
   }
 
   function saveFiscalConfig(payload) {

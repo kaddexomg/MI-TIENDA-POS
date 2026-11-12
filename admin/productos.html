@@ -19,18 +19,18 @@
     }
     .cat-tab-btn {
       padding: 6px 12px;
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--line);
       background: var(--surface);
       color: var(--txt);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
       white-space: nowrap;
-      transition: all 0.15s ease;
+      transition: all var(--dur-fast) var(--ease);
     }
     .cat-tab-btn:hover {
       background: var(--surface-2);
@@ -43,7 +43,7 @@
     }
     .product-box {
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: var(--radius);
       background: var(--surface);
       margin-bottom: 12px;
       overflow: hidden;
@@ -53,71 +53,64 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 12px;
+      padding: 10px 14px;
       background: var(--surface-2);
       border-bottom: 1px solid var(--line);
     }
     .product-box-hd .prod-info {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     .product-box-hd .prod-thumb {
       width: 44px;
       height: 44px;
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       object-fit: cover;
       border: 1px solid var(--line);
-      background: #e2e8f0;
+      background: var(--surface-2);
     }
     .variant-row:hover {
-      background: #f8fafc;
+      background: #FFFBEB;
     }
     .badge-mod {
       display: inline-block;
       padding: 2px 6px;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       background: #e0e7ff;
       color: #3730a3;
       border-radius: 4px;
       margin-right: 4px;
     }
-    .badge-cat-pill {
-      font-size: 10px;
-      font-weight: 800;
-      text-transform: uppercase;
-      padding: 2px 7px;
-      border-radius: 12px;
-      letter-spacing: 0.5px;
-    }
     .recipe-chip {
       display: inline-block;
-      font-size: 10px;
-      background: #f1f5f9;
-      color: #334155;
-      padding: 1px 5px;
-      border-radius: 3px;
+      font-size: 11px;
+      background: var(--surface-2);
+      color: var(--txt);
+      padding: 2px 6px;
+      border-radius: 4px;
       margin: 1px 2px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--line);
     }
     .view-toggle-wrap {
       display: flex;
       gap: 4px;
       background: var(--surface-2);
       padding: 3px;
-      border-radius: 6px;
+      border-radius: var(--radius);
       border: 1px solid var(--line);
     }
     .view-toggle-btn {
-      padding: 4px 10px;
-      font-size: 11px;
+      padding: 6px 14px;
+      font-size: 13px;
       font-weight: 700;
       border: none;
       background: transparent;
       color: var(--txt-2);
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
+      transition: all var(--dur-fast) var(--ease);
     }
     .view-toggle-btn.active {
       background: var(--surface);
@@ -142,13 +135,13 @@
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
           <div class="view-toggle-wrap">
-            <button class="view-toggle-btn active" id="btnViewHierarchy" onclick="switchMainView('hierarchy')">Catálogo v5</button>
-            <button class="view-toggle-btn" id="btnViewScanner" onclick="switchMainView('scanner')">Lector de Códigos</button>
+            <button class="view-toggle-btn active" id="btnViewHierarchy" onclick="switchMainView('hierarchy')">🍲 Platos de cocina</button>
+            <button class="view-toggle-btn" id="btnViewScanner" onclick="switchMainView('scanner')">🛒 Mercancía del mostrador</button>
           </div>
-          <button class="btn btn-sm btn-ghost" onclick="openNewProductModal()">+ Producto Padre</button>
-          <button class="btn btn-sm btn-p" onclick="openNewVariantModal()">+ Nueva Variante</button>
-          <button class="btn btn-sm btn-amber" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">Cámara</button>
-          <a href="pos.html" class="btn btn-sm btn-ghost">Ir a Caja</a>
+          <button class="btn btn-sm btn-secondary" onclick="openNewProductModal()">+ Producto Padre</button>
+          <button class="btn btn-sm btn-action" onclick="openNewVariantModal()">+ Nueva Variante</button>
+          <button class="btn btn-sm btn-secondary" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">📷 Cámara</button>
+          <a href="pos.html" class="btn btn-sm btn-secondary">Ir a Caja</a>
         </div>
       </header>
 
@@ -279,7 +272,7 @@
             </div>
             <div class="card-bd" style="padding:0">
               <div class="table-wrap">
-                <table>
+                <table class="data-table">
                   <thead>
                     <tr>
                       <th>Foto</th>
@@ -346,59 +339,70 @@
   <div class="modal-backdrop" id="variantModal">
     <div class="modal-box" style="max-width:640px">
       <div class="modal-hd">
-        <h3 id="variantModalTitle" style="font-size:13px">Configurar Sabor / Variante</h3>
-        <button class="btn btn-ghost btn-sm" onclick="closeVariantModal()">✕</button>
+        <h3 id="variantModalTitle" style="font-size:14px">Configurar Sabor / Variante</h3>
+        <button class="btn btn-secondary btn-sm" onclick="closeVariantModal()">✕</button>
       </div>
       <div class="modal-bd">
-        <input type="hidden" id="vModalId">
-        <div class="form-grid" style="margin-bottom:10px">
-          <div class="form-group">
-            <label>Producto Padre</label>
-            <select id="vModalProduct" class="select" onchange="onVariantProductChange()"></select>
-          </div>
-          <div class="form-group">
-            <label>Código PLU Rápido (#)</label>
-            <input type="text" id="vModalCode" class="input" required placeholder="Ej: 01">
-          </div>
-          <div class="form-group">
-            <label>Código de Barras EAN / Código Interno</label>
-            <input type="text" id="vModalBarcode" class="input" placeholder="Ej: 8800001" style="font-family:var(--font-mono)">
-          </div>
-          <div class="form-group">
-            <label>Tipo de IVA</label>
-            <select id="vModalIva" class="select">
-              <option value="E">Exento (Comida Básica / Alimentos)</option>
-              <option value="G">Gravado 16% (IVA General)</option>
-            </select>
-          </div>
-          <div class="form-group" style="grid-column:span 2">
-            <label>Nombre del Sabor / Variante</label>
-            <input type="text" id="vModalName" class="input" required placeholder="Ej: Carne Mechada Criolla">
-          </div>
-          <div class="form-group">
-            <label>Precio Venta USD ($)</label>
-            <input type="number" step="0.05" id="vModalPrice" class="input" style="font-weight:800;color:var(--money-in)" required value="1.30">
-          </div>
-          <div class="form-group">
-            <label>Costo Estimado Insumos</label>
-            <div id="vModalCostLabel" style="font-size:13px;font-weight:800;color:var(--txt);padding:7px 0">$0.00</div>
+        <!-- Pestañas internas del Modal -->
+        <div style="display:flex;gap:6px;margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:8px">
+          <button type="button" class="btn btn-action btn-sm" id="btnVarTabGeneral" onclick="switchVariantModalTab('general')">1. Datos Generales y PVP</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnVarTabRecipe" onclick="switchVariantModalTab('recipe')">2. Receta y Escandallo de Insumos</button>
+        </div>
+
+        <div id="varTabGeneralContent">
+          <input type="hidden" id="vModalId">
+          <div class="form-grid" style="margin-bottom:10px">
+            <div class="form-group">
+              <label>Producto Padre</label>
+              <select id="vModalProduct" class="select" onchange="onVariantProductChange()"></select>
+            </div>
+            <div class="form-group">
+              <label>Código PLU Rápido (#)</label>
+              <input type="text" id="vModalCode" class="input" required placeholder="Ej: 01">
+            </div>
+            <div class="form-group">
+              <label>Código de Barras EAN / Código Interno</label>
+              <input type="text" id="vModalBarcode" class="input" placeholder="Ej: 8800001" style="font-family:var(--font-mono)">
+            </div>
+            <div class="form-group">
+              <label>Tipo de IVA</label>
+              <select id="vModalIva" class="select">
+                <option value="G">Gravado 16% (IVA General - Comida Preparada)</option>
+                <option value="E">Exento (0% - Alimentos Básicos)</option>
+              </select>
+            </div>
+            <div class="form-group" style="grid-column:span 2">
+              <label>Nombre del Sabor / Variante</label>
+              <input type="text" id="vModalName" class="input" required placeholder="Ej: Carne Mechada Criolla">
+            </div>
+            <div class="form-group">
+              <label>Precio Venta USD ($)</label>
+              <input type="number" step="0.05" id="vModalPrice" class="input" style="font-weight:800;color:var(--money-in)" required value="1.30">
+            </div>
+            <div class="form-group">
+              <label>Costo Estimado Insumos</label>
+              <div id="vModalCostLabel" style="font-size:13px;font-weight:800;color:var(--txt);padding:7px 0">$0.00</div>
+            </div>
           </div>
         </div>
 
-        <!-- Receta de la Variante -->
-        <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:8px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-size:11.5px;font-weight:800;text-transform:uppercase;color:var(--txt-2)">
-              Escandallo de Insumos de Cocina (Gramos que descuenta al vender):
-            </span>
-            <button class="btn btn-ghost btn-sm" onclick="addRecipeRowInVariantModal()">+ Añadir Insumo</button>
+        <div id="varTabRecipeContent" style="display:none">
+          <!-- Receta de la Variante -->
+          <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div>
+                <strong style="font-size:12px;color:var(--txt)">Escandallo de Insumos de Cocina:</strong>
+                <p style="font-size:11px;color:var(--txt-3);margin:0">Gramos que descuenta del almacén al vender una unidad</p>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="addRecipeRowInVariantModal()">+ Añadir Insumo</button>
+            </div>
+            <div id="vModalRecipeList"></div>
           </div>
-          <div id="vModalRecipeList"></div>
         </div>
       </div>
       <div class="modal-ft">
-        <button class="btn btn-ghost" onclick="closeVariantModal()">Cancelar</button>
-        <button class="btn btn-p" onclick="saveVariantModal()">Guardar Sabor / Variante</button>
+        <button class="btn btn-secondary" onclick="closeVariantModal()">Cancelar</button>
+        <button class="btn btn-action" onclick="saveVariantModal()">Guardar Sabor / Variante</button>
       </div>
     </div>
   </div>
@@ -572,24 +576,21 @@
                 </div>
 
                 <div class="table-wrap">
-                  <table>
+                  <table class="data-table">
                     <thead>
                       <tr>
-                        <th style="width:50px">PLU</th>
-                        <th style="width:110px">Código EAN</th>
-                        <th>Sabor / Variante</th>
-                        <th>Escandallo (Insumos que descuenta)</th>
-                        <th>Costo Receta</th>
-                        <th>PVP ($ / Bs)</th>
-                        <th>Margen</th>
-                        <th style="text-align:right">Acciones</th>
+                        <th style="min-width:170px">Sabor / Variante</th>
+                        <th style="min-width:190px">Escandallo (Insumos)</th>
+                        <th style="width:85px">Costo</th>
+                        <th style="width:125px">PVP ($ / Bs)</th>
+                        <th style="width:145px;text-align:right">Margen / Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
             `;
 
             if (!variants.length) {
-              html += `<tr><td colspan="8" style="text-align:center;padding:12px;color:var(--txt-muted)">Sin sabores registrados. Pulsa "+ Añadir Sabor" para crear variantes.</td></tr>`;
+              html += `<tr><td colspan="5" style="text-align:center;padding:12px;color:var(--txt-muted)">Sin sabores registrados. Pulsa "+ Añadir Sabor" para crear variantes.</td></tr>`;
             } else {
               variants.forEach(v => {
                 totalVariantsCount++;
@@ -602,26 +603,28 @@
 
                 html += `
                   <tr class="variant-row">
-                    <td><span class="code-pill">#${v.code}</span></td>
-                    <td style="font-family:var(--font-mono);font-size:11px;font-weight:700">${v.barcode || '—'}</td>
                     <td>
-                      <strong style="font-size:12px">${v.name}</strong>
-                      <span style="font-size:10px;color:var(--txt-3);display:block">${v.ivaType === 'G' ? 'IVA 16%' : 'Exento'}</span>
+                      <div style="display:flex;align-items:center;gap:6px">
+                        <span class="code-pill">#${v.code}</span>
+                        <strong style="font-size:13px">${v.name}</strong>
+                      </div>
+                      <div style="font-size:10.5px;color:var(--txt-3);margin-top:2px">
+                        ${v.barcode ? '<span style="font-family:var(--font-mono)">' + v.barcode + '</span> · ' : ''}
+                        <span>${v.ivaType === 'G' ? 'IVA 16%' : 'Exento'}</span>
+                      </div>
                     </td>
-                    <td style="font-size:11px">${recipeChips || '<span style="color:var(--txt-muted)">Sin receta asignada</span>'}</td>
+                    <td style="font-size:11px">${recipeChips || '<span style="color:var(--txt-3);font-style:italic">Sin receta asignada</span>'}</td>
                     <td><span class="money-out" style="font-weight:700">${MTP.fmtUSD(cost)}</span></td>
                     <td>
                       <strong style="color:var(--money-in)">${MTP.fmtUSD(price)}</strong>
-                      <span style="font-size:10.5px;color:var(--info);display:block">${bsAmount} Bs</span>
-                    </td>
-                    <td>
-                      <span class="badge ${marginPct >= 35 ? 'badge-green' : 'badge-yellow'}" style="font-size:10px">
-                        ${marginPct}%
-                      </span>
+                      <span style="font-size:11px;color:var(--info);display:block">${bsAmount} Bs</span>
                     </td>
                     <td style="text-align:right">
-                      <button class="btn btn-ghost btn-sm" onclick="openEditVariantModal('${v.id}')">Editar</button>
-                      <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="confirmDeleteVariant('${v.id}', '${v.name}')">✕</button>
+                      <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
+                        <span class="badge ${marginPct >= 35 ? 'badge-green' : 'badge-yellow'}" style="font-size:11px;font-weight:700">${marginPct}%</span>
+                        <button class="btn btn-secondary btn-sm" onclick="openEditVariantModal('${v.id}')">Editar</button>
+                        <button class="btn btn-secondary btn-sm" style="color:var(--money-out)" onclick="confirmDeleteVariant('${v.id}', '${v.name}')" title="Eliminar">✕</button>
+                      </div>
                     </td>
                   </tr>
                 `;
@@ -641,7 +644,7 @@
         if (matchedRetail.length > 0) {
           html += `
             <div class="table-wrap" style="border:1px solid var(--line);border-radius:6px;overflow:hidden">
-              <table>
+              <table class="data-table">
                 <thead>
                   <tr>
                     <th style="width:40px">Foto</th>
@@ -796,13 +799,25 @@
     /* ==========================================================================
        GESTIÓN DE VARIANTES / SABORES
        ========================================================================== */
+    function switchVariantModalTab(tab) {
+      const isGen = tab === 'general';
+      const genEl = document.getElementById('varTabGeneralContent');
+      const recEl = document.getElementById('varTabRecipeContent');
+      const btnGen = document.getElementById('btnVarTabGeneral');
+      const btnRec = document.getElementById('btnVarTabRecipe');
+      if (genEl) genEl.style.display = isGen ? 'block' : 'none';
+      if (recEl) recEl.style.display = isGen ? 'none' : 'block';
+      if (btnGen) btnGen.className = isGen ? 'btn btn-action btn-sm' : 'btn btn-secondary btn-sm';
+      if (btnRec) btnRec.className = !isGen ? 'btn btn-action btn-sm' : 'btn btn-secondary btn-sm';
+    }
+
     function openNewVariantModal(defaultProdId) {
       document.getElementById('variantModalTitle').textContent = 'Nuevo Sabor / Variante';
       document.getElementById('vModalId').value = '';
       document.getElementById('vModalName').value = '';
       document.getElementById('vModalCode').value = String((MTP.state.variants || []).length + 1).padStart(2, '0');
       document.getElementById('vModalBarcode').value = '8800' + String((MTP.state.variants || []).length + 1).padStart(3, '0');
-      document.getElementById('vModalIva').value = 'E';
+      document.getElementById('vModalIva').value = 'G';
       document.getElementById('vModalPrice').value = '1.30';
 
       const prodSelect = document.getElementById('vModalProduct');
@@ -813,6 +828,7 @@
         { insumoId: 'ins-queso-cocina', qty: 0.050, label: '50 g Queso' }
       ];
 
+      switchVariantModalTab('general');
       renderVariantRecipeList();
       recalcVariantModalCost();
       document.getElementById('variantModal').classList.add('open');
@@ -826,13 +842,14 @@
       document.getElementById('vModalName').value = v.name;
       document.getElementById('vModalCode').value = v.code || '';
       document.getElementById('vModalBarcode').value = v.barcode || '';
-      document.getElementById('vModalIva').value = v.ivaType || 'E';
+      document.getElementById('vModalIva').value = v.ivaType || 'G';
       document.getElementById('vModalPrice').value = v.priceUsd || 0;
 
       const prodSelect = document.getElementById('vModalProduct');
       prodSelect.innerHTML = (MTP.state.products || []).map(p => `<option value="${p.id}" ${p.id === v.productId ? 'selected' : ''}>${p.name}</option>`).join('');
 
       variantModalRecipe = JSON.parse(JSON.stringify(v.recipe || v.ingredients || []));
+      switchVariantModalTab('general');
       renderVariantRecipeList();
       recalcVariantModalCost();
       document.getElementById('variantModal').classList.add('open');
@@ -923,11 +940,16 @@
     }
 
     function confirmDeleteVariant(variantId, name) {
-      if (confirm(`¿Eliminar la variante "${name}" del catálogo?`)) {
+      MTPUI.confirmDialog(`¿Deseas eliminar la variante "${name}" del catálogo?`, {
+        title: 'Eliminar Sabor / Variante',
+        danger: true,
+        okText: 'Sí, eliminar'
+      }).then(ok => {
+        if (!ok) return;
         MTP.deleteVariant(variantId);
         renderHierarchyView();
         MTP.toast(`Variante "${name}" eliminada`);
-      }
+      });
     }
 
     /* ==========================================================================

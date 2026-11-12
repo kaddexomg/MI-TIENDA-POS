@@ -16,6 +16,13 @@
 5. **Dashboard honesto y legible**: filtro de **Hoy / Semana / Mes** (antes decía "hoy" y mostraba el histórico), 4 cifras grandes (vendido, ganado, gaveta, **IVA 16%**), 4 preguntas con respuesta y un gráfico horario corregido.
 6. **Impresión real de 80 mm**: un ticket por página, comanda solo si hay platos, **detalle de pagos** en la nota y rótulo fiscal dinámico.
 7. **Sistema de diseño v7**: tokens de espaciado/tipografía/movimiento, tipografía mínima 12 px, foco visible en todo el sistema, `prefers-reduced-motion` y diálogos propios (fin de `prompt()`/`confirm()` nativos).
+8. **Pantallas administrativas v7**:
+   - `admin/cierres.html`: 3 pasos con **conciliación por denominación de billetes y monedas** (USD 1–100 / Bs 0,10–2.000) y selector dinámico de años.
+   - `admin/inventario.html`: 3 botones de acción principales (*Llegó mercancía*, *Gasto de cocina*, *Contar lo que hay*), 5 columnas clave y menú contextual `⋯`.
+   - `admin/productos.html` y `admin/recetas.html`: estructurados en pestañas claras y escandallo visible.
+   - `admin/facturas.html`: compras y gastos unificados en 3 pasos.
+   - `admin/precios.html`: tasas simplificadas con cálculo de brecha comercial real.
+9. **Hardware y pruebas v7**: guarda anti-foco en el lector de códigos de barras ([`assets/js/barcode-engine.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/barcode-engine.js)), reportes fiscales honestos y suite extendida con [`tests/fixtures.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/fixtures.js) y [`tests/ui.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/ui.test.js).
 
 ---
    - Cálculo en centavos enteros para evitar errores de coma flotante.
@@ -40,6 +47,6 @@
 4. **Catálogo Fotográfico Real 100% Offline (`assets/img/productos/`)**:
    - 47 fotografías reales descargadas de Wikimedia Commons y Open Food Facts, recortadas a `240x240` JPG (`<25 KB`) y documentadas en [`assets/img/productos/CREDITOS.md`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/img/productos/CREDITOS.md).
 
-5. **Suite Automatizada de Pruebas ([`tests/run.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/run.js), [`tests/tax.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/tax.test.js) y [`tests/pos.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/pos.test.js))**:
+5. **Suite Automatizada de Pruebas ([`tests/run.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/run.js), [`tests/tax.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/tax.test.js), [`tests/pos.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/pos.test.js) y [`tests/ui.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/ui.test.js))**:
    - Prueba todos los escenarios fiscales (A–F), ventas mixtas con vuelto en USD y Bs, descuento de ingredientes de cocina por receta, compras de cocina con impacto en gaveta, detector anti-fraude de Pago Móvil y migración `v5 -> v6`.
-   - **v7**: 12 casos del flujo de caja (total único con IGTF, base IGTF con vuelto mixto, tarjeta en USD vs. Bs, exentos Art. 18, comida preparada gravada, desglose del vuelto con denominación real).
+   - **v7**: 12 casos del flujo de caja (total único con IGTF, base IGTF con vuelto mixto, tarjeta en USD vs. Bs, exentos Art. 18, comida preparada gravada, desglose del vuelto con denominación real) + 9 casos de UI y helpers puros con `tests/fixtures.js`.

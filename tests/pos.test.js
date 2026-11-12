@@ -8,6 +8,7 @@
 const assert = require('assert');
 const MTPTax = require('../assets/js/tax.js');
 const MTPChange = require('../assets/js/change.js');
+const fixtures = require('./fixtures.js');
 
 let passed = 0;
 
@@ -26,15 +27,8 @@ function test(name, fn) {
 const SETTINGS_CE = { ivaMode: 'RECARGO', isContribuyenteEspecial: true, rateBcv: 40 };
 const SETTINGS_NO_CE = { ivaMode: 'RECARGO', isContribuyenteEspecial: false, rateBcv: 40 };
 
-const EMPANADAS = [
-  { refId: 'prod-empanada', name: 'Empanada Mechada', qty: 2, priceUsd: 1.30, isDish: true }
-];
-
-const CARRITO_MIXTO = [
-  { refId: 'prod-empanada', name: 'Empanada Mechada', qty: 2, priceUsd: 1.30, isDish: true },
-  { refId: 'prod-malta-polar', name: 'Malta Polar', qty: 1, priceUsd: 0.80 },
-  { refId: 'prod-harina-pan', name: 'Harina P.A.N.', qty: 1, priceUsd: 1.20 }
-];
+const EMPANADAS = fixtures.CARRT_2_EMPANADAS;
+const CARRITO_MIXTO = fixtures.CART_MIXTO;
 
 console.log('\n▶ Pruebas del flujo de caja (v7)\n');
 
