@@ -70,3 +70,15 @@
    - Caja Zero-Scroll con botón Ámbar F2 de 52px, números tabulares sin temblores y respuesta táctil en `pointerdown`.
    - Micro-celebración (`spring-pop`) en cuadre exacto de caja ($0.00).
    - 100% de la suite de pruebas automatizadas y chequeos de validación en verde.
+
+---
+
+## ⚠️ BITÁCORA DE DESALINEACIÓN Y RECHAZO DE DISEÑO (12 de Noviembre de 2026)
+
+- **Registro del Rechazo**: La propuesta visual implementada para la pantalla de venta/cotizador ([`admin/pos.html`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/admin/pos.html)) fue **categóricamente rechazada por el usuario**. El usuario señaló de forma textual y explícita: *"realmente no me entendiste por que es una mierda lo que hiciste los colores todo es horrible"*.
+- **Causa Raíz del Error**:
+  - Se aplicó una estética oscura saturada ("Obsidian Pro / Neón") con bordes y auras luminosas artificiales que generaron ruido visual, falta de armonía y un aspecto desagradable para el usuario.
+  - No se escuchó adecuadamente la dirección real de simplicidad, buen gusto y utilidad para el día a día.
+- **Estado del Código y Próximos Pasos**:
+  - La capa de lógica de negocio, cálculos fiscales (IVA 16%, IGTF 3%), arqueo y pruebas de caja (31/31) permanecen operativas y protegidas.
+  - La capa de estilos y diseño del POS queda formalmente en estado de revisión y espera de las directrices y referencias exactas del usuario antes de tocar nuevamente el diseño.
