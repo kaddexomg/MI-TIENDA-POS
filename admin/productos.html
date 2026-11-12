@@ -139,6 +139,7 @@
             <button class="view-toggle-btn" id="btnViewScanner" onclick="switchMainView('scanner')">🛒 Mercancía del mostrador</button>
           </div>
           <button class="btn btn-sm btn-action" onclick="window.MTPProductDrawer && window.MTPProductDrawer.open({ mode: 'create', onSaved: () => renderHierarchyView() })" title="Crear plato o producto en 5 segundos">⚡ + Producto Rápido</button>
+          <button class="btn btn-sm btn-secondary" onclick="window.MTPBarcodePrinter && window.MTPBarcodePrinter.open()" title="Imprimir códigos de barra y etiquetas de control térmicas">🏷️ Imprimir Etiquetas</button>
           <button class="btn btn-sm btn-secondary" onclick="openNewProductModal()">+ Producto Padre</button>
           <button class="btn btn-sm btn-secondary" onclick="openNewVariantModal()">+ Nueva Variante</button>
           <button class="btn btn-sm btn-secondary" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">📷 Cámara</button>
@@ -437,6 +438,8 @@
   <script src="../assets/js/ui.js"></script>
   <script src="../assets/js/keys.js"></script>
   <script src="../assets/js/sidenav.js"></script>
+  <script src="../assets/js/code-structure.js"></script>
+  <script src="../assets/js/barcode-printer.js"></script>
   <script src="../assets/js/product-drawer.js"></script>
   <script>
     let activeFamilyFilter = 'all';
@@ -624,6 +627,7 @@
                     <td style="text-align:right">
                       <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
                         <span class="badge ${marginPct >= 35 ? 'badge-green' : 'badge-yellow'}" style="font-size:11px;font-weight:700">${marginPct}%</span>
+                        <button class="btn btn-secondary btn-sm" onclick="window.MTPBarcodePrinter && window.MTPBarcodePrinter.open({ itemId: '${v.id}' })" title="Imprimir etiqueta con código de barras">🏷️</button>
                         <button class="btn btn-secondary btn-sm" onclick="window.MTPProductDrawer ? window.MTPProductDrawer.open({ mode: 'edit', id: '${v.id}', onSaved: () => renderHierarchyView(), onDeleted: () => renderHierarchyView() }) : openEditVariantModal('${v.id}')">Editar</button>
                         <button class="btn btn-secondary btn-sm" style="color:var(--money-out)" onclick="confirmDeleteVariant('${v.id}', '${v.name}')" title="Eliminar">✕</button>
                       </div>
@@ -693,7 +697,10 @@
                 </td>
                 <td><span class="badge ${marginPct >= 30 ? 'badge-green' : 'badge-yellow'}" style="font-size:10px">${marginPct}%</span></td>
                 <td style="text-align:right">
-                  <button class="btn btn-secondary btn-sm" onclick="window.MTPProductDrawer ? window.MTPProductDrawer.open({ mode: 'edit', id: '${it.id}', onSaved: () => renderHierarchyView(), onDeleted: () => renderHierarchyView() }) : (loadProductIntoForm('${it.id}'), switchMainView('scanner'))">Editar</button>
+                  <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
+                    <button class="btn btn-secondary btn-sm" onclick="window.MTPBarcodePrinter && window.MTPBarcodePrinter.open({ itemId: '${it.id}' })" title="Imprimir etiqueta con código de barras">🏷️</button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.MTPProductDrawer ? window.MTPProductDrawer.open({ mode: 'edit', id: '${it.id}', onSaved: () => renderHierarchyView(), onDeleted: () => renderHierarchyView() }) : (loadProductIntoForm('${it.id}'), switchMainView('scanner'))">Editar</button>
+                  </div>
                 </td>
               </tr>
             `;
@@ -1137,6 +1144,7 @@
           <td>
             <button class="btn btn-action btn-sm" onclick="quickAddStock('${it.id}', 6)">+6</button>
             <button class="btn btn-ghost btn-sm" onclick="loadProductIntoForm('${it.id}')">Editar</button>
+            <button class="btn btn-secondary btn-sm" onclick="window.MTPBarcodePrinter && window.MTPBarcodePrinter.open({ itemId: '${it.id}' })" title="Imprimir etiqueta">🏷️</button>
           </td>
         </tr>
       `).join('');

@@ -361,9 +361,10 @@ assert.strictEqual(MTP.getItemById(newDish.item.id), null, 'Ya no debe existir e
 console.log('✅ [Integración 8] Creación rápida, pausado y eliminación en 1 clic verificados.\n');
 
 // ============================================================================
-// SUITE v7 — Pruebas de UI, Helpers Puros y Flujo de Caja
+// SUITE v7 — Pruebas de UI, Helpers Puros, Códigos/Etiquetas y Flujo de Caja
 // ============================================================================
+require('./barcode.test.js');
 require('./ui.test.js');
 require('./pos.test.js');
 
-console.log('🎉 TODAS LAS PRUEBAS AUTOMATIZADAS (FISCALES, INTEGRACIÓN V6, UI Y CAJA v7) PASARON AL 100%.');
+console.log('🎉 TODAS LAS PRUEBAS AUTOMATIZADAS (FISCALES, INTEGRACIÓN V6, CÓDIGOS, ETIQUETAS, UI Y CAJA v7) PASARON AL 100%.');

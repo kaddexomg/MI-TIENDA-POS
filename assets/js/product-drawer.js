@@ -270,6 +270,9 @@
               <button type="button" class="btn btn-secondary btn-sm" id="btnDrawerPause" style="display:none" title="Pausar o reanudar">
                 ⏸️ Pausar
               </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnDrawerPrintLabel" style="display:none" title="Imprimir etiqueta y código de barras">
+                🏷️ Etiqueta
+              </button>
             </div>
             <div style="display:flex;gap:8px">
               <button type="button" class="btn btn-secondary" id="btnDrawerCancel">Cancelar</button>
@@ -421,10 +424,39 @@
       });
     });
 
+    const printLabelBtn = backdrop.querySelector('#btnDrawerPrintLabel');
+    if (printLabelBtn) {
+      printLabelBtn.addEventListener('click', () => {
+        if (!activeItem) return;
+        if (root.MTPBarcodePrinter) {
+          root.MTPBarcodePrinter.open({ item: activeItem });
+        }
+      });
+    }
+
     genBarcodeBtn.addEventListener('click', () => {
-      const randomCode = Math.floor(100 + Math.random() * 900);
-      backdrop.querySelector('#drawerCode').value = randomCode;
-      backdrop.querySelector('#drawerBarcode').value = '759000' + randomCode;
+      const name = backdrop.querySelector('#drawerProdName').value;
+      if (root.MTPCodes && root.MTPCodes.suggestNextCode) {
+        const suggestion = root.MTPCodes.suggestNextCode(selectedFamilyId, name);
+        backdrop.querySelector('#drawerCode').value = suggestion.formattedCode;
+        backdrop.querySelector('#drawerBarcode').value = root.MTPCodes.generateStandardBarcode(suggestion.number, selectedFamilyId);
+      } else {
+        const randomCode = Math.floor(100 + Math.random() * 900);
+        backdrop.querySelector('#drawerCode').value = randomCode;
+        backdrop.querySelector('#drawerBarcode').value = '759000' + randomCode;
+      }
+    });
+
+    const prodNameInput = backdrop.querySelector('#drawerProdName');
+    prodNameInput.addEventListener('blur', () => {
+      if (!activeItem && root.MTPCodes && root.MTPCodes.suggestNextCode) {
+        const curCode = backdrop.querySelector('#drawerCode').value.trim();
+        if (!curCode) {
+          const suggestion = root.MTPCodes.suggestNextCode(selectedFamilyId, prodNameInput.value);
+          backdrop.querySelector('#drawerCode').value = suggestion.formattedCode;
+          backdrop.querySelector('#drawerBarcode').value = root.MTPCodes.generateStandardBarcode(suggestion.number, selectedFamilyId);
+        }
+      }
     });
 
     activeToggle.addEventListener('change', () => {
@@ -657,6 +689,7 @@
       backdrop.querySelector('#btnDrawerDelete').style.display = 'inline-flex';
       backdrop.querySelector('#btnDrawerPause').style.display = 'inline-flex';
       backdrop.querySelector('#btnDrawerPause').textContent = isAct ? '⏸️ Pausar' : '▶️ Reanudar';
+      backdrop.querySelector('#btnDrawerPrintLabel').style.display = 'inline-flex';
 
       handlers.setType(selectedType);
       handlers.setFamily(selectedFamilyId);
@@ -668,6 +701,12 @@
       handlers.setType(selectedType);
       handlers.setFamily(selectedFamilyId);
       handlers.setTaxType(selectedTaxType);
+
+      if (root.MTPCodes && root.MTPCodes.suggestNextCode) {
+        const suggestion = root.MTPCodes.suggestNextCode(selectedFamilyId);
+        backdrop.querySelector('#drawerCode').value = suggestion.formattedCode;
+        backdrop.querySelector('#drawerBarcode').value = root.MTPCodes.generateStandardBarcode(suggestion.number, selectedFamilyId);
+      }
     }
 
     // Animación suave de entrada (WWDC spring)

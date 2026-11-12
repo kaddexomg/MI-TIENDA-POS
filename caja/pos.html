@@ -73,6 +73,13 @@
                 + Producto
               </button>
 
+              <button type="button" class="btn btn-secondary" id="btnPosPrintLabel"
+                onclick="window.MTPBarcodePrinter && window.MTPBarcodePrinter.open()"
+                title="Imprimir etiquetas de códigos de barra o control de tandas"
+                style="height:36px;padding:0 10px;font-size:12px;font-weight:700;gap:4px">
+                🏷️ Etiquetas
+              </button>
+
               <div class="pos-scanner-status" title="Presiona F1 para buscar o escanear">
                 <span class="pulse-dot"></span>
                 <span>F1</span>
@@ -291,6 +298,8 @@
   <script src="../assets/js/ui.js"></script>
   <script src="../assets/js/keys.js"></script>
   <script src="../assets/js/sidenav.js"></script>
+  <script src="../assets/js/code-structure.js"></script>
+  <script src="../assets/js/barcode-printer.js"></script>
   <script src="../assets/js/barcode-engine.js"></script>
   <script src="../assets/js/change.js"></script>
   <script src="../assets/js/product-drawer.js"></script>

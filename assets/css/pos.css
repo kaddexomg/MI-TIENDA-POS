@@ -1319,3 +1319,73 @@ body.pos-fullscreen-body .admin-content {
   border-radius: 8px;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
 }
+
+/* Familias con Colores Vivos Oficiales */
+.pos-family-nav-btn[data-family="fritos"]    { --fam-color: #F59E0B; }
+.pos-family-nav-btn[data-family="arepas"]    { --fam-color: #10B981; }
+.pos-family-nav-btn[data-family="almuerzos"] { --fam-color: #F97316; }
+.pos-family-nav-btn[data-family="viveres"]   { --fam-color: #0EA5E9; }
+.pos-family-nav-btn[data-family="bebidas"]   { --fam-color: #06B6D4; }
+.pos-family-nav-btn[data-family="cafeteria"] { --fam-color: #8B5CF6; }
+.pos-family-nav-btn[data-family="chucherias"]{ --fam-color: #EC4899; }
+.pos-family-nav-btn[data-family="cervezas"]  { --fam-color: #EAB308; }
+.pos-family-nav-btn[data-family="cigarros"]  { --fam-color: #64748B; }
+
+/* Transición suave entre secciones de catálogo (Apple Fluid) */
+.pos-products-container {
+  animation: appleCatalogFadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes appleCatalogFadeIn {
+  from {
+    opacity: 0.2;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Micro-feedback háptico en cards y botones */
+.pos-flavor-card:active,
+.pos-retail-card:active {
+  transform: scale(0.97);
+  transition: transform 70ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.pos-chip-btn:active,
+.pos-mult-btn:active,
+.pos-step-btn:active {
+  transform: scale(0.92);
+  transition: transform 70ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Estilos de Impresión Térmica de Etiquetas (100% Limpio y Sin Márgenes) */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #barcodePrintRoot, #barcodePrintRoot * {
+    visibility: visible;
+  }
+  #barcodePrintRoot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .barcode-print-label {
+    page-break-after: always;
+    break-after: page;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 auto !important;
+  }
+}

@@ -171,3 +171,23 @@
       - Integración en `admin/productos.html` y `admin/inventario.html` con actualización reactiva instantánea.
     - **Métodos Core en `MTP`**: `quickSaveItem(payload)`, `deleteProduct(id)`, `toggleProductAvailability(id)`, `getItemById(id)` y evento desacoplado `mtp:state-updated`.
     - **Suite de Pruebas 100% Pasando**: Pruebas fiscales, integración v6, UI v7, pruebas de caja y Test 8 de creación/edición/pausado rápido pasando limpiamente.
+
+11. **✅ ESTRUCTURA JERÁRQUICA DE CÓDIGOS, GENERADOR DE ETIQUETAS DE CÓDIGOS DE BARRA Y DESPLIEGUE FLUIDO DE NAVEGACIÓN**:
+    - **Corrección Definitiva del Plegado/Desplegado de la Barra Lateral**:
+      - Eliminada la regla que ocultaba el botón colapsador (`body.aside-collapsed .aside-collapse-btn { display: none !important; }`), reemplazándola por un botón circular luminoso de 28px con `▶` siempre accesible.
+      - Evento de clic en el encabezado de marca (`.aside-brand`) para expandir con 1 toque en modo colapsado, además del atajo global `Ctrl+B`.
+      - Identidad cromática única y vibrante por sección (`theme-pos`, `theme-inv`, `theme-gastos`, `theme-cierres`, `theme-precios`, `theme-productos`, `theme-cocina`, `theme-etiquetas`, `theme-usuarios`, `theme-ajustes`).
+    - **Estructura Inteligente de Códigos y Subformatos (`assets/js/code-structure.js`)**:
+      - Prefijos mnemotécnicos oficiales por subformato: `EMP-` (empanadas), `PAS-` (pastelitos), `TEQ-` (tequeños), `PAP-` (papas rellenas), `MAN-` (mandocas), `ARE-` (arepas), `ALM-` (almuerzos), `VIV-` (víveres), `BEB-` (bebidas), `CAF-` (cafetería), `CHU-` (chucherías), `CER-` (cervezas), `CIG-` (cigarros).
+      - Autonumeración incremental inteligente (`suggestNextCode`) y generación estándar de código de barras 759 (Venezuela).
+    - **Generador e Impresor Térmico de Códigos de Barras 100% Offline (`assets/js/barcode-printer.js`)**:
+      - Motor vectorial Code 128-B en SVG puro sin dependencias de fuentes externas ni CDN.
+      - Formatos compatibles: Térmica 50x30mm (adhesivos para vitrina y bandejas de cocina), 58mm/80mm ticketera y hoja completa.
+      - Información completa en etiqueta: Nombre del producto, código formateado, código de barras escaneable, precios en $ y Bs (tasa BCV), pastilla fiscal (`+IVA 16%` / `Exento Art. 18`), fecha/hora y control de tandas de cocina (`Tanda Mañana`, `Tanda Tarde`, `Tanda Noche`).
+    - **Acceso Directo Multi-Pantalla**:
+      - Botón `[🏷️ Etiquetas]` en la barra de herramientas de Caja (`admin/pos.html` y `caja/pos.html`).
+      - Botón `[🏷️ Imprimir Etiquetas]` en cabecera y en cada fila de variantes/productos de `admin/productos.html`.
+      - Botón `[🏷️ Etiquetas]` y opción en menú `⋯` de cada fila en `admin/inventario.html`.
+      - Botón `[🏷️ Etiqueta de Tanda]` para bandejas de producción en `admin/recetas.html`.
+      - Enlace `"🏷️ Imprimir Etiquetas"` con badge de novedad en el menú lateral.
+    - **Suite de Pruebas `tests/barcode.test.js` (8/8 OK)** integrada en `tests/run.js` (100% de pruebas automáticas pasando).

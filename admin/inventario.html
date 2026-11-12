@@ -84,6 +84,7 @@
             </div>
             <div style="display:flex;gap:8px;align-items:center">
               <input type="text" id="invSearchInput" class="input" style="max-width:280px;height:36px;font-size:var(--fs-md)" placeholder="Buscar artículo, código..." oninput="renderInventoryTable()">
+              <button class="btn btn-secondary btn-sm" onclick="window.MTPBarcodePrinter && window.MTPBarcodePrinter.open()" title="Imprimir códigos de barra y etiquetas de anaquel">🏷️ Etiquetas</button>
               <button class="btn btn-secondary btn-sm" onclick="openKardexModal('ALL')" title="Historial completo de movimientos">Historial</button>
             </div>
           </div>
@@ -510,6 +511,8 @@
   <script src="../assets/js/ui.js"></script>
   <script src="../assets/js/keys.js"></script>
   <script src="../assets/js/sidenav.js"></script>
+  <script src="../assets/js/code-structure.js"></script>
+  <script src="../assets/js/barcode-printer.js"></script>
   <script src="../assets/js/barcode-engine.js"></script>
   <script src="../assets/js/product-drawer.js"></script>
   <script>
@@ -737,6 +740,11 @@
       if (!item) return;
 
       MTPUI.menuDialog('Opciones para: ' + item.name, [
+        { label: '🏷️ Imprimir etiquetas de código de barras', run: function () {
+          if (window.MTPBarcodePrinter) {
+            window.MTPBarcodePrinter.open({ itemId: itemId });
+          }
+        }},
         { label: '📋 Ver movimientos (Kardex)', run: function () { openKardexModal(itemId); } },
         { label: '⚡ Editar datos en 5 segundos (Drawer)', run: function () {
           if (window.MTPProductDrawer) {

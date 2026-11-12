@@ -333,33 +333,35 @@
       return '';
     }
 
-    // 5 OPCIONES PRINCIPALES PARA EL DUEÑO
+    // 5 OPCIONES PRINCIPALES PARA EL DUEÑO (CON IDENTIDAD CROMÁTICA VIBRANTE)
     const ADMIN_MAIN_LINKS = [
-      { href: 'pos.html',        iconKey: 'pos',        label: 'Vender',                  badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? 'badge-amber' : 'badge-kbd' },
-      { href: 'inventario.html', iconKey: 'package',    label: 'Lo que hay en la tienda', badge: lowStockCount ? `${lowStockCount} bajo` : '', badgeClass: 'badge-red' },
-      { href: 'facturas.html',   iconKey: 'fileText',   label: 'Compras y gastos' },
-      { href: 'cierres.html',    iconKey: 'calculator', label: 'Cuadre del día' },
-      { href: 'precios.html',    iconKey: 'dollar',     label: 'Precios y tasa del dólar' }
+      { href: 'pos.html',        iconKey: 'pos',        theme: 'theme-pos',     label: 'Vender',                  badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? 'badge-amber' : 'badge-kbd' },
+      { href: 'inventario.html', iconKey: 'package',    theme: 'theme-inv',     label: 'Lo que hay en la tienda', badge: lowStockCount ? `${lowStockCount} bajo` : '', badgeClass: 'badge-red' },
+      { href: 'facturas.html',   iconKey: 'fileText',   theme: 'theme-gastos',  label: 'Compras y gastos' },
+      { href: 'cierres.html',    iconKey: 'calculator', theme: 'theme-cierres', label: 'Cuadre del día' },
+      { href: 'precios.html',    iconKey: 'dollar',     theme: 'theme-precios', label: 'Precios y tasa del dólar' }
     ];
 
     // OPCIONES AVANZADAS BAJO "MÁS OPCIONES"
     const ADMIN_MORE_LINKS = [
-      { href: 'productos.html',  iconKey: 'barcode',    label: 'Platos y productos' },
-      { href: 'recetas.html',    iconKey: 'kitchen',    label: 'Recetas de cocina' },
-      { href: 'usuarios.html',   iconKey: 'users',      label: 'Usuarios y claves' },
-      { href: 'ajustes.html',    iconKey: 'settings',   label: 'Ajustes y respaldos' }
+      { href: 'productos.html',  iconKey: 'barcode',    theme: 'theme-productos', label: 'Platos y productos' },
+      { href: 'recetas.html',    iconKey: 'kitchen',    theme: 'theme-cocina',    label: 'Recetas de cocina' },
+      { action: 'printLabels',   iconKey: 'barcode',    theme: 'theme-etiquetas', label: '🏷️ Imprimir Etiquetas', badge: 'Nuevo', badgeClass: 'badge-amber' },
+      { href: 'usuarios.html',   iconKey: 'users',      theme: 'theme-usuarios',  label: 'Usuarios y claves' },
+      { href: 'ajustes.html',    iconKey: 'settings',   theme: 'theme-ajustes',   label: 'Ajustes y respaldos' }
     ];
 
     const currentUser = window.MTPAuth ? window.MTPAuth.getCurrentUser() : null;
     const isSupervisorOrAdmin = !currentUser || currentUser.role === 'admin' || currentUser.role === 'encargado';
 
     const CAJA_LINKS = [
-      { href: 'pos.html',   iconKey: 'pos',      label: 'Vender en Caja',           badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? 'badge-amber' : 'badge-kbd' },
-      { href: 'index.html', iconKey: 'receipt',  label: 'Ventas y Cuadre del Turno' }
+      { href: 'pos.html',   iconKey: 'pos',      theme: 'theme-pos',     label: 'Vender en Caja',           badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? 'badge-amber' : 'badge-kbd' },
+      { href: 'index.html', iconKey: 'receipt',  theme: 'theme-cierres', label: 'Ventas y Cuadre del Turno' },
+      { action: 'printLabels', iconKey: 'barcode', theme: 'theme-etiquetas', label: '🏷️ Imprimir Etiquetas', badge: 'Nuevo', badgeClass: 'badge-amber' }
     ];
 
     if (isSupervisorOrAdmin) {
-      CAJA_LINKS.push({ href: '../admin/index.html', iconKey: 'settings', label: 'Ir a Administración' });
+      CAJA_LINKS.push({ href: '../admin/index.html', iconKey: 'settings', theme: 'theme-ajustes', label: 'Ir a Administración' });
     }
 
     const bcv = Number(MTP.state.settings.rateBcv || 42.85).toFixed(2);
@@ -368,16 +370,34 @@
     const gap = (((usdt / bcv) - 1) * 100).toFixed(1);
 
     function renderLinkItem(item) {
+      const icoHtml = getIco(item.iconKey || 'barcode') || '•';
+
+      if (item.action === 'printLabels') {
+        const badgeHtml = item.badge
+          ? `<span class="aside-badge ${item.badgeClass || ''}">${item.badge}</span>`
+          : '';
+        return `
+          <a href="#" class="aside-link ${item.theme || ''}" onclick="window.MTPBarcodePrinter && window.MTPBarcodePrinter.open(); return false;" title="${item.label}">
+            <span class="aside-link-left">
+              <span class="aside-ico-box">
+                ${icoHtml}
+              </span>
+              <span class="aside-link-label">${item.label}</span>
+            </span>
+            ${badgeHtml}
+          </a>
+        `;
+      }
+
       const targetFile = item.href.split('/').pop().toLowerCase();
       const isCross = item.href.startsWith('..');
       const isActive = !isCross && targetFile === currentFile;
       const badgeHtml = item.badge
         ? `<span class="aside-badge ${item.badgeClass || ''}">${item.badge}</span>`
         : '';
-      const icoHtml = getIco(item.iconKey);
 
       return `
-        <a href="${item.href}" class="aside-link ${isActive ? 'active' : ''}" title="${item.label}">
+        <a href="${item.href}" class="aside-link ${item.theme || ''} ${isActive ? 'active' : ''}" title="${item.label}">
           <span class="aside-link-left">
             <span class="aside-ico-box">
               ${icoHtml}
@@ -424,7 +444,7 @@
     const roleLabel = window.MTPPermissions ? window.MTPPermissions.getRoleLabel(userRole) : (userRole === 'admin' ? 'Administrador' : (userRole === 'encargado' ? 'Encargado' : 'Cajero'));
 
     aside.innerHTML = `
-      <div class="aside-brand">
+      <div class="aside-brand" ${isCollapsed ? 'onclick="window.MTPSidebar.toggleSidebarCollapse()"' : ''} title="${isCollapsed ? 'Clic para desplegar menú completo (Ctrl+B)' : ''}">
         <div class="aside-brand-left">
           <div class="aside-logo" title="MI-TIENDA-POS (100% Offline)">
             ${boltIco}
@@ -434,7 +454,7 @@
             <span>${isCaja ? 'TERMINAL DE CAJA' : 'RESTAURANTE & ABASTO'}</span>
           </div>
         </div>
-        <button class="aside-collapse-btn" onclick="window.MTPSidebar.toggleSidebarCollapse()" title="Mostrar/Ocultar Menú (Ctrl+B)">
+        <button type="button" class="aside-collapse-btn ${isCollapsed ? 'collapsed' : ''}" onclick="event.stopPropagation(); window.MTPSidebar.toggleSidebarCollapse()" title="${isCollapsed ? 'Desplegar Menú Completo (Ctrl+B)' : 'Plegar Menú (Ctrl+B)'}">
           ${isCollapsed ? '▶' : '◀'}
         </button>
       </div>
