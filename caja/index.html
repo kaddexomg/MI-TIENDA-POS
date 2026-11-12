@@ -24,14 +24,14 @@
         </div>
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
-          <a href="pos.html" class="btn btn-p">Volver a Cobrar (POS)</a>
+          <a href="pos.html" class="btn btn-action">Volver a Cobrar (POS)</a>
         </div>
       </header>
 
       <div class="admin-content">
-        <div class="stat-grid" id="cajaTurnStats"></div>
+        <div class="stat-grid" id="cajaTurnStats" style="margin-bottom:14px"></div>
 
-        <div class="card">
+        <div class="card card-interactive" data-section="dinero">
           <div class="card-hd">
             <h3>Tickets Recientes Emitidos por Caja</h3>
           </div>
@@ -76,14 +76,14 @@
       const refreshIco = window.MTPIcons ? MTPIcons.get('refresh', { size: 16 }) : '';
 
       document.getElementById('cajaTurnStats').innerHTML = `
-        <div class="stat-card">
+        <div class="stat-card tone-in">
           <div class="stat-ico green">${receiptIco}</div>
           <div>
             <div class="stat-n">${sales.length} tickets</div>
             <div class="stat-l">Órdenes Despachadas en Turno</div>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card tone-info">
           <div class="stat-ico blue">${cashIco}</div>
           <div>
             <div class="stat-n">${MTP.fmtUSD(totalUsd)}</div>
@@ -91,7 +91,7 @@
             <div class="stat-sub">${(totalUsd * bcv).toFixed(2)} Bs</div>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card tone-cash">
           <div class="stat-ico yellow">${refreshIco}</div>
           <div>
             <div class="stat-n">${MTP.fmtUSD(totalChangeUsd)}</div>

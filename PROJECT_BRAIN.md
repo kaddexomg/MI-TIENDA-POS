@@ -50,3 +50,10 @@
 5. **Suite Automatizada de Pruebas ([`tests/run.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/run.js), [`tests/tax.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/tax.test.js), [`tests/pos.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/pos.test.js) y [`tests/ui.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/ui.test.js))**:
    - Prueba todos los escenarios fiscales (A–F), ventas mixtas con vuelto en USD y Bs, descuento de ingredientes de cocina por receta, compras de cocina con impacto en gaveta, detector anti-fraude de Pago Móvil y migración `v5 -> v6`.
    - **v7**: 12 casos del flujo de caja (total único con IGTF, base IGTF con vuelto mixto, tarjeta en USD vs. Bs, exentos Art. 18, comida preparada gravada, desglose del vuelto con denominación real) + 9 casos de UI y helpers puros con `tests/fixtures.js`.
+
+6. **Rediseño Integral de Identidad Visual, UI/UX y Animaciones v7.1**:
+   - Paleta unificada Obsidian Navy & Emerald (`variables.css`), tarjetas elevadas con ribbons de módulo temáticos (`dinero`, `cocina`, `abasto`, `gastos`, `fiscal`), botones táctiles de alta jerarquía y cuadrículas responsivas.
+   - Micro-animaciones nativas aceleradas por GPU (`v7FadeIn`, `v7SlideUp`, `v7ScaleIn`, `v7PulseGlow`) 100% compatibles con Windows 7 y Chromium 109.
+   - Navegación limpia sin botones flotantes invasivos, barra lateral en 3 estados con colapso fluido (`Ctrl+B`) y barra superior sincronizada.
+   - Pantalla de inicio de sesión por PIN (`index.html`) con contenedor fintech moderno, puntitos de PIN animados y teclado numérico táctil.
+   - 100% de la suite de pruebas automatizadas y comprobaciones de integridad pasando con éxito.

@@ -1,16 +1,20 @@
 /* ==========================================================================
-   MI-TIENDA-POS — Navegación Lateral Sencilla + Compras de Insumos & Gastos Reales
-   - Navegación directa de 1 clic sin menús recargados
-   - Conexión real: compra de aliños, papas, carnes suma kilos a cocina y descuenta caja
+   MI-TIENDA-POS — Navegación Lateral Sencilla & Profesional v7
+   - Navegación directa, limpia y sin parches visuales
+   - Cero botones flotantes que tapen la vista
+   - Compras rápidas de insumos conectadas a cocina y gaveta
    ========================================================================== */
 (function () {
   const COLLAPSE_KEY = 'mtp_sidebar_collapsed';
+  const MORE_KEY = 'mtp_sidebar_more_open';
 
   function initSidebarState() {
     try {
       const saved = localStorage.getItem(COLLAPSE_KEY);
       if (saved === '1') {
         document.body.classList.add('aside-collapsed');
+      } else {
+        document.body.classList.remove('aside-collapsed');
       }
     } catch (_) {}
   }
@@ -23,37 +27,46 @@
     renderSidebar();
   }
 
-  /* MODAL INTELIGENTE DE COMPRAS REALES DE COCINA Y GASTOS OPERATIVOS */
+  function toggleMoreOptions() {
+    const wrap = document.getElementById('asideMoreLinksWrap');
+    const chevron = document.getElementById('asideMoreChevron');
+    const isOpening = wrap ? wrap.style.display === 'none' : false;
+    if (wrap) wrap.style.display = isOpening ? 'flex' : 'none';
+    if (chevron) chevron.textContent = isOpening ? '▾' : '▸';
+    try {
+      localStorage.setItem(MORE_KEY, isOpening ? '1' : '0');
+    } catch (_) {}
+  }
+
+  /* MODAL RÁPIDO DE COMPRAS DE COCINA Y GASTOS OPERATIVOS */
   function ensureQuickExpenseModal() {
     if (document.getElementById('globalExpenseModal')) return;
     const modal = document.createElement('div');
     modal.id = 'globalExpenseModal';
     modal.className = 'modal-backdrop';
     modal.innerHTML = `
-      <div class="modal-box" style="max-width:580px">
-        <div class="modal-hd" style="background:#065f46;color:#fff;border-radius:12px 12px 0 0;padding:8px 12px">
+      <div class="modal-box" style="max-width:560px">
+        <div class="modal-hd" style="background:#065f46;color:#fff;border-radius:12px 12px 0 0;padding:10px 14px">
           <div>
-            <h3 style="color:#fff;margin:0;font-size:13.5px;display:flex;align-items:center;gap:6px">
-              ${window.MTPIcons ? window.MTPIcons.get('kitchen', { size: 16 }) : ''} Registrar Compra de Ingredientes o Gasto
+            <h3 style="color:#fff;margin:0;font-size:14px;display:flex;align-items:center;gap:6px">
+              ${window.MTPIcons ? window.MTPIcons.get('kitchen', { size: 16 }) : '🍲'} Registrar Compra de Ingredientes o Gasto
             </h3>
-            <p style="color:#a7f3d0;font-size:10.5px;margin:2px 0 0 0">Compras de aliños, papas o carnes suman los kilos a cocina y descuentan de la gaveta</p>
+            <p style="color:#a7f3d0;font-size:11.5px;margin:2px 0 0 0">Suma kilos a cocina y descuenta el pago de la gaveta de caja</p>
           </div>
-          <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none" onclick="window.MTPSidebar.closeExpenseModal()">✕ (ESC)</button>
+          <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.2)" onclick="window.MTPSidebar.closeExpenseModal()">✕</button>
         </div>
         <div class="modal-bd">
-          <!-- Botonera de Insumos y Gastos Reales del Día a Día -->
-          <div style="margin-bottom:8px">
-            <span style="font-size:10.5px;font-weight:800;color:var(--txt-sec);display:block;margin-bottom:4px">Compras frecuentes de cocina y gastos del día:</span>
-            <div style="display:flex;gap:4px;flex-wrap:wrap">
-              <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-alinos', 5, 12.00, 'Compra 5kg aliños frescos para guisos')">Aliños (5 kg · $12)</button>
-              <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-papa', 25, 33.75, 'Saco de papa 25kg para empanadas/comida')">Saco Papa (25 kg)</button>
-              <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-carne-mechada', 5, 34.00, '5kg carne para mechar/guisar')">Carne Res (5 kg · $34)</button>
-              <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-queso-cocina', 3, 16.20, '3kg queso blanco llanero para relleno')">Queso (3 kg)</button>
-              <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-pollo-cocina', 5, 18.00, '5kg pollo crudo para desmechar/broaster')">Pollo (5 kg)</button>
-              <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-aceite-cocina', 6, 12.90, '6 litros aceite vegetal de freír')">Aceite (6 L)</button>
-              <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPSidebar.fillServicePreset('Gas / Bombona', 'Recarga de bombona de gas para cocina', 10.00)">Gas ($10)</button>
-              <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPSidebar.fillServicePreset('Hielo / Bolsas', 'Bolsas de hielo para cavas y bolsas despacho', 3.00)">Hielo ($3)</button>
-              <button type="button" class="btn btn-ghost btn-sm" onclick="window.MTPSidebar.fillServicePreset('Flete / Motorizado', 'Pago carrera flete búsqueda de verduras', 2.50)">Flete ($2.50)</button>
+          <div style="margin-bottom:10px">
+            <span style="font-size:11px;font-weight:700;color:var(--txt-2);display:block;margin-bottom:5px">Acceso rápido a compras frecuentes:</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-alinos', 5, 12.00, 'Compra 5kg aliños frescos para guisos')">Aliños (5 kg · $12)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-papa', 25, 33.75, 'Saco de papa 25kg para empanadas/comida')">Saco Papa (25 kg)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-carne-mechada', 5, 34.00, '5kg carne para mechar/guisar')">Carne Res (5 kg · $34)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-queso-cocina', 3, 16.20, '3kg queso blanco llanero para relleno')">Queso (3 kg)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-pollo-cocina', 5, 18.00, '5kg pollo crudo para desmechar/broaster')">Pollo (5 kg)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillKitchenPreset('ins-aceite-cocina', 6, 12.90, '6 litros aceite vegetal de freír')">Aceite (6 L)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillServicePreset('Gas / Bombona', 'Recarga de bombona de gas para cocina', 10.00)">Gas ($10)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPSidebar.fillServicePreset('Hielo / Bolsas', 'Bolsas de hielo y bolsas despacho', 3.00)">Hielo ($3)</button>
             </div>
           </div>
 
@@ -61,7 +74,7 @@
             <div class="form-group" style="grid-column:1/-1">
               <label>1. ¿Qué se está comprando o pagando?</label>
               <select id="gExpItemSelect" class="select" onchange="window.MTPSidebar.onItemSelectChange()">
-                <optgroup label="Ingredientes que entran a la cocina (suman kilos o litros)">
+                <optgroup label="Ingredientes de Cocina (suman kilos o litros al stock)">
                   <option value="ins-alinos">Aliños Frescos (Cebolla, Ajo, Pimentón, Ají Dulce, Cilantro)</option>
                   <option value="ins-papa">Papa Cruda para Comida y Papas Rellenas</option>
                   <option value="ins-carne-mechada">Carne de Res Cruda (Mechar / Moler / Guisar)</option>
@@ -73,27 +86,26 @@
                   <option value="ins-ensalada">Plátanos para Tajadas y Vegetales</option>
                   <option value="ins-envase">Envases Térmicos y Servilletas</option>
                 </optgroup>
-                <optgroup label="Gastos y servicios del día (solo salida de dinero)">
+                <optgroup label="Servicios y gastos del día (salida de dinero)">
                   <option value="SERV_GAS">Recarga Bombona de Gas / Agua Potable</option>
-                  <option value="SERV_HIELO">Bolsas de Hielo para Cavas y Bolsas Plásticas</option>
+                  <option value="SERV_HIELO">Bolsas de Hielo para Cavas y Bolsas</option>
                   <option value="SERV_FLETE">Flete / Carrera de Motorizado para Compras</option>
-                  <option value="SERV_PERSONAL">Pago de Jornal / Turno a Cocinero o Ayudante</option>
+                  <option value="SERV_PERSONAL">Pago de Jornal / Turno a Ayudante</option>
                   <option value="SERV_OTRO">Retiro de Caja Chica / Otros Gastos</option>
                 </optgroup>
               </select>
             </div>
 
-            <!-- Si es insumo de cocina, pide los kilos comprados -->
             <div class="form-group" id="gExpQtyWrap">
               <label id="gExpQtyLabel">Cantidad Comprada (Kg o Litros)</label>
-              <input type="number" step="0.5" id="gExpQty" class="input" value="5" style="font-weight:900" oninput="window.MTPSidebar.recalcUnitCostNotice()">
+              <input type="number" step="0.5" id="gExpQty" class="input" value="5" style="font-weight:700" oninput="window.MTPSidebar.recalcUnitCostNotice()">
             </div>
 
             <div class="form-group">
               <label>¿De dónde salió el dinero?</label>
-              <select id="gExpSource" class="select" style="font-weight:800">
+              <select id="gExpSource" class="select" style="font-weight:700">
                 <option value="Efectivo USD">Efectivo USD ($) - Gaveta</option>
-                <option value="Pago Móvil">Pago Móvil - Cuenta Banco Bs</option>
+                <option value="Pago Móvil">Pago Móvil - Banco Bs</option>
                 <option value="Efectivo Bs">Efectivo Bolívares - Gaveta</option>
                 <option value="Caja Externa Admin">Dinero Propio del Dueño (No toca gaveta)</option>
               </select>
@@ -101,13 +113,13 @@
 
             <div class="form-group">
               <label>Total Pagado en Dólares ($)</label>
-              <input type="number" step="0.10" id="gExpUsd" class="input" placeholder="Ej: 12.00" style="font-weight:900;font-size:15px"
+              <input type="number" step="0.10" id="gExpUsd" class="input" placeholder="Ej: 12.00" style="font-weight:800;font-size:15px"
                 oninput="window.MTPSidebar.syncExpBs(this.value); window.MTPSidebar.recalcUnitCostNotice();">
             </div>
 
             <div class="form-group">
-              <label>Equivalente en Bolívares (Bs BCV)</label>
-              <input type="number" step="0.5" id="gExpBs" class="input" placeholder="Ej: 514.20" style="font-weight:800;font-size:14px"
+              <label>Equivalente en Bolívares (BCV)</label>
+              <input type="number" step="0.5" id="gExpBs" class="input" placeholder="Ej: 514.20" style="font-weight:700"
                 oninput="window.MTPSidebar.syncExpUsd(this.value); window.MTPSidebar.recalcUnitCostNotice();">
             </div>
 
@@ -117,11 +129,11 @@
             </div>
           </div>
 
-          <div id="gExpActionNotice" style="margin-top:8px;padding:8px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;font-size:11.5px;color:#065f46;font-weight:700"></div>
+          <div id="gExpActionNotice" style="margin-top:10px;padding:8px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;color:#065f46;font-weight:600"></div>
         </div>
         <div class="modal-ft">
-          <button class="btn btn-ghost" onclick="window.MTPSidebar.closeExpenseModal()">Cancelar</button>
-          <button class="btn btn-p" onclick="window.MTPSidebar.submitQuickExpense()">📥 Guardar Compra o Gasto</button>
+          <button class="btn btn-secondary" onclick="window.MTPSidebar.closeExpenseModal()">Cancelar</button>
+          <button class="btn btn-primary" onclick="window.MTPSidebar.submitQuickExpense()">📥 Guardar Compra o Gasto</button>
         </div>
       </div>
     `;
@@ -152,7 +164,7 @@
     const qtyLabel = document.getElementById('gExpQtyLabel');
     if (qtyWrap) qtyWrap.style.display = isService ? 'none' : 'block';
 
-    if (!isService && val) {
+    if (!isService && val && window.MTP) {
       const ins = MTP.getInsumoById(val);
       if (qtyLabel && ins) qtyLabel.textContent = `Cantidad Comprada (${ins.unit.toUpperCase()})`;
     }
@@ -161,7 +173,7 @@
 
   function fillKitchenPreset(insumoId, qty, usd, desc) {
     ensureQuickExpenseModal();
-    const bcv = MTP.state.settings.rateBcv || 42.85;
+    const bcv = window.MTP?.state?.settings?.rateBcv || 42.85;
     document.getElementById('gExpItemSelect').value = insumoId;
     document.getElementById('gExpQty').value = qty;
     document.getElementById('gExpUsd').value = Number(usd).toFixed(2);
@@ -172,7 +184,7 @@
 
   function fillServicePreset(cat, desc, usd) {
     ensureQuickExpenseModal();
-    const bcv = MTP.state.settings.rateBcv || 42.85;
+    const bcv = window.MTP?.state?.settings?.rateBcv || 42.85;
     let servVal = 'SERV_OTRO';
     if (cat.includes('Gas')) servVal = 'SERV_GAS';
     else if (cat.includes('Hielo')) servVal = 'SERV_HIELO';
@@ -190,7 +202,7 @@
     const val = document.getElementById('gExpItemSelect')?.value || '';
     const isService = val.startsWith('SERV_');
     const notice = document.getElementById('gExpActionNotice');
-    if (!notice) return;
+    if (!notice || !window.MTP) return;
 
     const usd = parseFloat(document.getElementById('gExpUsd')?.value) || 0;
     const source = document.getElementById('gExpSource')?.value || 'Efectivo USD';
@@ -207,18 +219,18 @@
       notice.style.background = '#f0fdf4';
       notice.style.borderColor = '#bbf7d0';
       notice.style.color = '#065f46';
-      notice.innerHTML = `📥 Sumará <strong style="font-size:12.5px">+${qty} ${ins ? ins.unit : 'kg'}</strong> al almacén de cocina de <em>"${ins ? ins.name : ''}"</em> (Costo: $${unitCost.toFixed(2)}/${ins ? ins.unit : 'kg'}) y restará <strong>${MTP.fmtUSD(usd)}</strong> de ${source}.`;
+      notice.innerHTML = `📥 Sumará <strong>+${qty} ${ins ? ins.unit : 'kg'}</strong> al almacén de cocina de <em>"${ins ? ins.name : ''}"</em> (Costo: $${unitCost.toFixed(2)}/${ins ? ins.unit : 'kg'}) y restará <strong>${MTP.fmtUSD(usd)}</strong> de ${source}.`;
     }
   }
 
   function syncExpBs(usdVal) {
-    const bcv = MTP.state.settings.rateBcv || 42.85;
+    const bcv = window.MTP?.state?.settings?.rateBcv || 42.85;
     const u = parseFloat(usdVal) || 0;
     document.getElementById('gExpBs').value = (u * bcv).toFixed(2);
   }
 
   function syncExpUsd(bsVal) {
-    const bcv = MTP.state.settings.rateBcv || 42.85;
+    const bcv = window.MTP?.state?.settings?.rateBcv || 42.85;
     const b = parseFloat(bsVal) || 0;
     document.getElementById('gExpUsd').value = (bcv > 0 ? b / bcv : 0).toFixed(2);
   }
@@ -291,82 +303,17 @@
     }
   }
 
-  /* ==========================================================================
-     ESTADO DE LA BARRA LATERAL: 3 MODOS (completo · íconos · oculto)
-     ========================================================================== */
-  const SIDEBAR_STATE_KEY = 'mtp_sidebar_state';
-
-  function getSidebarState() {
-    try { return localStorage.getItem(SIDEBAR_STATE_KEY) || 'expanded'; } catch (e) { return 'expanded'; }
+  /* LIMPIAR ARTEFACTOS INVASIVOS DE VERSIONES PREVIAS */
+  function cleanupArtifacts() {
+    const oldFab = document.getElementById('menuFab');
+    if (oldFab) oldFab.remove();
+    const oldHome = document.querySelector('.topbar-home-btn');
+    if (oldHome) oldHome.remove();
   }
 
-  function setSidebarState(state) {
-    const body = document.body;
-    body.classList.remove('aside-rail', 'aside-hidden', 'aside-collapsed');
-    if (state === 'rail') {
-      body.classList.add('aside-rail');
-      body.classList.add('aside-collapsed');   // compatibilidad con el layout existente
-    } else if (state === 'hidden') {
-      body.classList.add('aside-hidden');
-    }
-    try { localStorage.setItem(SIDEBAR_STATE_KEY, state); } catch (e) {}
-    updateMenuFab();
-    const aside = document.getElementById('adminAside');
-    if (aside) aside.classList.toggle('open', state !== 'hidden');
-  }
-
-  function cycleSidebar() {
-    const order = ['expanded', 'rail', 'hidden'];
-    const current = getSidebarState();
-    const next = order[(order.indexOf(current) + 1) % order.length];
-    setSidebarState(next);
-    const label = { expanded: 'Menú completo', rail: 'Menú en íconos', hidden: 'Menú oculto' };
-    if (window.MTP && window.MTP.toast) {
-      window.MTP.toast(label[next] + ' (Ctrl+B)', 'info');
-    }
-  }
-
-  /** Botón flotante siempre visible: muestra u oculta la barra lateral. */
-  function updateMenuFab() {
-    let fab = document.getElementById('menuFab');
-    if (!fab) {
-      fab = document.createElement('button');
-      fab.id = 'menuFab';
-      fab.className = 'menu-fab';
-      fab.type = 'button';
-      fab.title = 'Mostrar u ocultar el menú (Ctrl+B)';
-      fab.setAttribute('aria-label', 'Mostrar u ocultar el menú');
-      fab.addEventListener('click', function () { cycleSidebar(); });
-      document.body.appendChild(fab);
-    }
-    const state = getSidebarState();
-    fab.setAttribute('data-state', state);
-    fab.innerHTML = state === 'hidden'
-      ? '☰'
-      : (window.MTPIcons ? window.MTPIcons.get('menu', { size: 20, color: '#fff' }) || '☰' : '☰');
-    fab.style.display = 'flex';
-  }
-
-  /** Botón "Ver mi día" en la barra superior: la pantalla que más importa. */
-  function mountTopbarHome(isCaja) {
-    const bar = document.querySelector('.admin-topbar');
-    if (!bar) return;
-    let btn = bar.querySelector('.topbar-home-btn');
-    if (!btn) {
-      btn = document.createElement('button');
-      btn.className = 'btn btn-action btn-sm topbar-home-btn';
-      btn.type = 'button';
-      bar.insertBefore(btn, bar.firstChild);
-    }
-    btn.textContent = '🏠 Ver mi día';
-    btn.title = 'Resumen del día (Resumen del negocio)';
-    btn.onclick = function () {
-      location.href = isCaja ? '../admin/index.html' : 'index.html';
-    };
-  }
-
-  /* RENDERIZADO DE LA NAVEGACIÓN LATERAL DIRECTA Y SENCILLA */
+  /* RENDERIZADO DE LA NAVEGACIÓN LATERAL DIRECTA Y ELEGANTE */
   function renderSidebar() {
+    cleanupArtifacts();
     if (!window.MTP) return;
     const aside = document.getElementById('adminAside');
     if (!aside) return;
@@ -381,40 +328,38 @@
 
     function getIco(key) {
       if (window.MTPIcons && typeof window.MTPIcons.get === 'function') {
-        return window.MTPIcons.get(key, { size: 16 });
+        return window.MTPIcons.get(key, { size: 17 });
       }
       return '';
     }
 
-    // 5 OPCIONES PRINCIPALES CLARAS PARA EL DUEÑO
+    // 5 OPCIONES PRINCIPALES PARA EL DUEÑO
     const ADMIN_MAIN_LINKS = [
-      { href: 'pos.html',        iconKey: 'pos',        label: 'Vender',                  color: '#10B981', badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? '' : 'kbd' },
-      { href: 'inventario.html', iconKey: 'package',    label: 'Lo que hay en la tienda', color: '#0284C7', badge: lowStockCount ? `${lowStockCount} bajo` : '' },
-      { href: 'facturas.html',   iconKey: 'fileText',   label: 'Compras y gastos',        color: '#F59E0B' },
-      { href: 'cierres.html',    iconKey: 'calculator', label: 'Cuadre del día',          color: '#14B8A6' },
-      { href: 'precios.html',    iconKey: 'dollar',     label: 'Precios y tasa del dólar', color: '#EAB308' }
+      { href: 'pos.html',        iconKey: 'pos',        label: 'Vender',                  badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? 'badge-amber' : 'badge-kbd' },
+      { href: 'inventario.html', iconKey: 'package',    label: 'Lo que hay en la tienda', badge: lowStockCount ? `${lowStockCount} bajo` : '', badgeClass: 'badge-red' },
+      { href: 'facturas.html',   iconKey: 'fileText',   label: 'Compras y gastos' },
+      { href: 'cierres.html',    iconKey: 'calculator', label: 'Cuadre del día' },
+      { href: 'precios.html',    iconKey: 'dollar',     label: 'Precios y tasa del dólar' }
     ];
 
-    // OPCIONES AVANZADAS BAJO "MÁS OPCIONES" (Encargado / Administrador)
-    // NOTA: "Resumen del negocio" NO va aquí — vive en el botón "Ver mi día"
-    // de la barra superior, que es donde el dueño lo busca siempre.
+    // OPCIONES AVANZADAS BAJO "MÁS OPCIONES"
     const ADMIN_MORE_LINKS = [
-      { href: 'productos.html',  iconKey: 'barcode',    label: 'Platos y productos',      color: '#8B5CF6' },
-      { href: 'recetas.html',    iconKey: 'kitchen',    label: 'Recetas de cocina',       color: '#F97316' },
-      { href: 'usuarios.html',   iconKey: 'users',      label: 'Usuarios y claves',       color: '#A855F7' },
-      { href: 'ajustes.html',    iconKey: 'settings',   label: 'Ajustes y respaldos',     color: '#64748B' }
+      { href: 'productos.html',  iconKey: 'barcode',    label: 'Platos y productos' },
+      { href: 'recetas.html',    iconKey: 'kitchen',    label: 'Recetas de cocina' },
+      { href: 'usuarios.html',   iconKey: 'users',      label: 'Usuarios y claves' },
+      { href: 'ajustes.html',    iconKey: 'settings',   label: 'Ajustes y respaldos' }
     ];
 
     const currentUser = window.MTPAuth ? window.MTPAuth.getCurrentUser() : null;
     const isSupervisorOrAdmin = !currentUser || currentUser.role === 'admin' || currentUser.role === 'encargado';
 
     const CAJA_LINKS = [
-      { href: 'pos.html',   iconKey: 'pos',      label: 'Vender en Caja',           color: '#10B981', badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? '' : 'kbd' },
-      { href: 'index.html', iconKey: 'receipt',  label: 'Ventas y Cuadre del Turno', color: '#14B8A6' }
+      { href: 'pos.html',   iconKey: 'pos',      label: 'Vender en Caja',           badge: heldCount ? `${heldCount} esp` : 'F2', badgeClass: heldCount ? 'badge-amber' : 'badge-kbd' },
+      { href: 'index.html', iconKey: 'receipt',  label: 'Ventas y Cuadre del Turno' }
     ];
 
     if (isSupervisorOrAdmin) {
-      CAJA_LINKS.push({ href: '../admin/index.html', iconKey: 'settings', label: 'Ir a Administración', color: '#60A5FA' });
+      CAJA_LINKS.push({ href: '../admin/index.html', iconKey: 'settings', label: 'Ir a Administración' });
     }
 
     const bcv = Number(MTP.state.settings.rateBcv || 42.85).toFixed(2);
@@ -430,12 +375,11 @@
         ? `<span class="aside-badge ${item.badgeClass || ''}">${item.badge}</span>`
         : '';
       const icoHtml = getIco(item.iconKey);
-      const itemColor = item.color || '#10B981';
 
       return `
-        <a href="${item.href}" class="aside-link ${isActive ? 'active' : ''}" style="${isActive ? `border-left: 3px solid ${itemColor};` : ''}" title="${item.label}">
+        <a href="${item.href}" class="aside-link ${isActive ? 'active' : ''}" title="${item.label}">
           <span class="aside-link-left">
-            <span class="aside-ico-box" style="background:${itemColor}25; color:${itemColor}; border:1.5px solid ${itemColor}60;">
+            <span class="aside-ico-box">
               ${icoHtml}
             </span>
             <span class="aside-link-label">${item.label}</span>
@@ -446,7 +390,7 @@
     }
 
     const isOnMorePage = !isCaja && ADMIN_MORE_LINKS.some(m => m.href.toLowerCase() === currentFile);
-    const moreOpenSaved = localStorage.getItem('mtp_sidebar_more_open') === '1';
+    const moreOpenSaved = localStorage.getItem(MORE_KEY) === '1';
     const showMoreOpen = isOnMorePage || moreOpenSaved || isCollapsed;
 
     let linksHtml = '';
@@ -456,126 +400,118 @@
       linksHtml = ADMIN_MAIN_LINKS.map(renderLinkItem).join('');
       if (isSupervisorOrAdmin) {
         linksHtml += `
-          <button type="button" class="aside-group-btn" onclick="window.MTPSidebar.toggleMoreOptions()"
-            style="width:100%;margin-top:6px;padding:6px 8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#94a3b8;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:space-between;cursor:pointer">
-            <span>⚙️ Más opciones</span>
-            <span>${showMoreOpen ? '▾' : '▸'}</span>
+          <button type="button" class="aside-more-btn" onclick="window.MTPSidebar.toggleMoreOptions()">
+            <span class="aside-more-btn-label">
+              ${getIco('settings')}
+              <span>⚙️ Más opciones</span>
+            </span>
+            <span id="asideMoreChevron" class="aside-chevron">${showMoreOpen ? '▾' : '▸'}</span>
           </button>
-          <div id="asideMoreLinksWrap" style="display:${showMoreOpen ? 'flex' : 'none'};flex-direction:column;gap:2px;margin-top:3px">
+          <div id="asideMoreLinksWrap" class="aside-more-wrap" style="display:${showMoreOpen ? 'flex' : 'none'};">
             ${ADMIN_MORE_LINKS.map(renderLinkItem).join('')}
           </div>
         `;
       }
     }
 
-    const boltIco = window.MTPIcons ? window.MTPIcons.get('bolt', { size: 15, color: '#fbbf24' }) : '';
-    const plusIco = window.MTPIcons ? window.MTPIcons.get('plus', { size: 13, color: '#fff' }) : '+';
-
-    const userIco = getIco('user');
+    const boltIco = window.MTPIcons ? window.MTPIcons.get('bolt', { size: 16, color: '#f59e0b' }) : '⚡';
+    const plusIco = window.MTPIcons ? window.MTPIcons.get('plus', { size: 14, color: '#ffffff' }) : '+';
+    const userIco = getIco('user') || '👤';
     const logoutIco = getIco('logout') || '🔒';
+
     const userName = currentUser ? currentUser.name : (isCaja ? 'Cajero Turno' : 'Administrador');
     const userRole = currentUser ? currentUser.role : (isCaja ? 'cajero' : 'admin');
     const roleLabel = window.MTPPermissions ? window.MTPPermissions.getRoleLabel(userRole) : (userRole === 'admin' ? 'Administrador' : (userRole === 'encargado' ? 'Encargado' : 'Cajero'));
-    const roleColor = userRole === 'admin' ? '#f87171' : (userRole === 'encargado' ? '#60a5fa' : '#34d399');
 
     aside.innerHTML = `
       <div class="aside-brand">
         <div class="aside-brand-left">
-          <div class="aside-logo" style="display:flex;align-items:center;justify-content:center;background:#1e293b;border-radius:6px;width:24px;height:24px">${boltIco}</div>
+          <div class="aside-logo" title="MI-TIENDA-POS (100% Offline)">
+            ${boltIco}
+          </div>
           <div class="aside-brand-txt">
             <strong>MI TIENDA <em>POS</em></strong>
-            <span>${isCaja ? 'TERMINAL CAJA' : 'RESTAURANTE & ABASTO'}</span>
+            <span>${isCaja ? 'TERMINAL DE CAJA' : 'RESTAURANTE & ABASTO'}</span>
           </div>
         </div>
-        <button class="aside-collapse-btn" onclick="window.MTPSidebar.toggleSidebarCollapse()" title="Colapsar menú (Ctrl+B)">
+        <button class="aside-collapse-btn" onclick="window.MTPSidebar.toggleSidebarCollapse()" title="Mostrar/Ocultar Menú (Ctrl+B)">
           ${isCollapsed ? '▶' : '◀'}
         </button>
       </div>
 
-      <div class="aside-rates-box" onclick="window.MTPRates && window.MTPRates.openQuickRateModal()" title="Clic para ajustar tasas">
-        <div class="aside-rate-row">
-          <span>BCV USD:</span>
-          <strong>${bcv} Bs/$</strong>
+      <!-- Widget Compacto de Tasas Oficiales y Paralelo -->
+      <div class="aside-rates-card" onclick="window.MTPRates && window.MTPRates.openQuickRateModal()" title="Clic para actualizar tasas de cambio">
+        <div class="aside-rate-item">
+          <span class="aside-rate-lbl">BCV USD</span>
+          <strong class="aside-rate-val green">${bcv}</strong>
         </div>
-        <div class="aside-rate-row eur">
-          <span>Euro BCV:</span>
-          <strong>${eur} Bs/€</strong>
+        <div class="aside-rate-item">
+          <span class="aside-rate-lbl">EUR BCV</span>
+          <strong class="aside-rate-val blue">${eur}</strong>
         </div>
-        <div class="aside-rate-row usdt">
-          <span>USDT P2P:</span>
-          <strong>${usdt} (+${gap}%)</strong>
+        <div class="aside-rate-item">
+          <span class="aside-rate-lbl">USDT (+${gap}%)</span>
+          <strong class="aside-rate-val amber">${usdt}</strong>
         </div>
       </div>
 
-      <!-- Botón destacado de Compra de Insumos / Gastos Reales -->
-      <div style="padding:3px 6px">
-        <button class="btn btn-sm" style="width:100%;background:#065f46;color:#fff;border:none;font-weight:800;font-size:10.5px;padding:5px 6px;display:flex;align-items:center;justify-content:center;gap:4px"
-          onclick="window.MTPSidebar.openExpenseModal()" title="Registrar compra de aliños, papas, carnes o gastos">
-          <span>${plusIco}</span><span class="aside-expense-txt">Registrar compra o gasto</span>
+      <!-- Botón de Gasto / Compra Rápida de Cocina -->
+      <div class="aside-expense-action">
+        <button class="aside-expense-btn" onclick="window.MTPSidebar.openExpenseModal()" title="Registrar compras de mercado (aliños, papas, carnes) o salidas de dinero">
+          <span class="aside-expense-ico">${plusIco}</span>
+          <span class="aside-expense-label">Compra o gasto rápido</span>
         </button>
       </div>
 
-      <nav class="aside-nav" style="padding:2px 6px">
+      <!-- Navegación Principal -->
+      <nav class="aside-nav">
         ${linksHtml}
       </nav>
 
+      <!-- Pie de Navegación: Usuario Activo y Salir -->
       <div class="aside-ft">
-        <div class="aside-ft-row">
-          <div class="aside-user-wrap">
-            <span class="aside-user-avatar" style="background:${roleColor}25; border:1px solid ${roleColor}60; color:${roleColor};" title="${userName} (${roleLabel})">
-              ${userIco}
-            </span>
-            <div class="aside-ft-details">
-              <div class="aside-user-name" title="${userName}">
-                ${userName}
-              </div>
-              <div class="aside-user-role" style="color:${roleColor};">
-                <span class="aside-role-dot" style="background:${roleColor}"></span>
-                ${roleLabel}
-              </div>
-            </div>
+        <div class="aside-user-card">
+          <div class="aside-user-avatar" title="${userName} (${roleLabel})">
+            ${userIco}
           </div>
-          <button type="button" class="btn btn-ghost btn-sm aside-logout-btn" onclick="window.MTPAuth ? window.MTPAuth.logout() : window.location.href='../index.html'"
-            title="Bloquear / Cerrar Sesión">
+          <div class="aside-user-info">
+            <span class="aside-user-name">${userName}</span>
+            <span class="aside-user-badge role-${userRole}">${roleLabel}</span>
+          </div>
+          <button type="button" class="aside-logout-btn" onclick="window.MTPAuth ? window.MTPAuth.logout() : window.location.href='../index.html'" title="Bloquear / Cerrar Sesión">
             ${logoutIco}
           </button>
         </div>
-        ${currentUser && currentUser.isDefaultPin ? `
-          <a href="${isCaja ? '#' : 'usuarios.html'}" class="aside-pin-warn" title="PIN de fábrica activo. Te recomendamos cambiarlo en Usuarios.">
-            ⚠️ PIN por defecto activo
-          </a>
-        ` : ''}
-      </div>`;
+      </div>
+    `;
 
+    // Actualizar píldora de tasa en Topbar
     const topRateEl = document.getElementById('topRatePill');
     if (topRateEl) {
-      topRateEl.innerHTML = `BCV: <strong>${bcv}</strong> · EUR: <strong>${eur}</strong> · USDT: <strong>${usdt}</strong> <span style="opacity:0.7;font-size:10px">✎</span>`;
+      topRateEl.innerHTML = `<span class="top-dot green"></span> BCV: <strong>${bcv}</strong> · USDT: <strong>${usdt}</strong> <span class="top-edit">✎</span>`;
       topRateEl.onclick = () => window.MTPRates && window.MTPRates.openQuickRateModal();
     }
 
-    mountTopbarHome(isCaja);
-
+    // Vincular toggle de menú en pantallas móviles o compactas
     const menuBtn = document.getElementById('menuToggleBtn');
     if (menuBtn && !menuBtn._bound) {
       menuBtn._bound = true;
-      menuBtn.addEventListener('click', () => aside.classList.toggle('open'));
+      menuBtn.addEventListener('click', () => {
+        aside.classList.toggle('open');
+      });
     }
-
-    updateMenuFab();
   }
 
   document.addEventListener('keydown', function (e) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
       e.preventDefault();
-      cycleSidebar();
+      toggleSidebarCollapse();
     }
   });
 
   window.MTPSidebar = {
     toggleSidebarCollapse,
-    cycleSidebar,
-    getSidebarState,
-    setSidebarState,
+    toggleMoreOptions,
     openExpenseModal,
     closeExpenseModal,
     onItemSelectChange,
@@ -584,17 +520,16 @@
     recalcUnitCostNotice,
     syncExpBs,
     syncExpUsd,
-    submitQuickExpense
+    submitQuickExpense,
+    renderSidebar
   };
 
   initSidebarState();
-  setSidebarState(getSidebarState());
   document.addEventListener('DOMContentLoaded', function () {
     if (window.MTPAuth && typeof window.MTPAuth.guardCurrentPage === 'function') {
       window.MTPAuth.guardCurrentPage();
     }
     renderSidebar();
-    setSidebarState(getSidebarState());
   });
   window.addEventListener('mtp:state-updated', renderSidebar);
   window.addEventListener('mtp:auth-login', renderSidebar);

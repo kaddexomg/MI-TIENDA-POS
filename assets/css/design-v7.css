@@ -1,48 +1,12 @@
 /* ==========================================================================
-   MI-TIENDA-POS — design-v7.css
-   Sistema de diseño v7: tokens, paleta de comandos, barra lateral en 3
-   estados, tarjetas KPI, acordeón, foco visible y movimiento responsable.
-   Se carga DESPUÉS de components.css para poder sobrescribir con seguridad.
+   MI-TIENDA-POS — design-v7.css (Capa de Experiencia Visual y Micro-Interacciones)
+   - Paleta de comandos Ctrl+K estilo Spotlight
+   - Tarjetas interactivas y acordeones fluidos
+   - Cero botones flotantes molestos
    ========================================================================== */
 
 /* ==========================================================================
-   1. TOKENS v7
-   ========================================================================== */
-:root {
-  /* --- Espaciado (base 4px) --- */
-  --sp-1: 4px;   --sp-2: 8px;   --sp-3: 12px;
-  --sp-4: 16px;  --sp-5: 24px;  --sp-6: 32px;
-
-  /* --- Escala tipográfica --- */
-  --fs-xs: 12px;  /* etiquetas secundarias — mínimo absoluto */
-  --fs-sm: 13px;
-  --fs-md: 15px;
-  --fs-lg: 18px;
-  --fs-xl: 22px;
-  --fs-2xl: 30px;
-
-  /* --- Movimiento --- */
-  --dur-fast: 120ms;
-  --dur: 180ms;
-  --dur-slow: 260ms;
-  --ease: cubic-bezier(.2, .7, .3, 1);
-
-  /* --- Capas --- */
-  --z-nav: 1000;
-  --z-modal: 2000;
-  --z-toast: 5000;
-
-  /* --- Foco visible --- */
-  --focus-ring: 0 0 0 3px rgba(232, 163, 23, .55);
-
-  /* --- Estructura --- */
-  --row-h: 36px;
-  --content-max: 1400px;
-  --touch-min: 44px;
-}
-
-/* ==========================================================================
-   2. FOCO VISIBLE EN TODO EL SISTEMA
+   1. FOCO ACCESIBLE Y TRANSICIONES RESPONSABLES
    ========================================================================== */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: none;
@@ -50,121 +14,97 @@
   border-radius: var(--radius-sm);
 }
 
-.input:focus-visible,
-.select:focus-visible {
-  box-shadow: var(--focus-ring), 0 0 0 1px var(--action);
+.btn:active {
+  transform: translateY(1px) scale(0.99);
 }
 
-/* ==========================================================================
-   3. MOVIMIENTO CON CRITERIO
-   ========================================================================== */
-.btn {
-  transition: background-color var(--dur-fast) var(--ease),
-              border-color var(--dur-fast) var(--ease),
-              color var(--dur-fast) var(--ease),
-              transform var(--dur-fast) var(--ease),
-              box-shadow var(--dur-fast) var(--ease);
+@keyframes v7FadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.btn:active { transform: translateY(1px) scale(.985); }
-
-.card {
-  transition: box-shadow var(--dur) var(--ease),
-              border-color var(--dur) var(--ease),
-              transform var(--dur) var(--ease);
+@keyframes v7SlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes v7FadeUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: none; }
+@keyframes v7ScaleIn {
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.v7-enter { animation: v7FadeUp var(--dur) var(--ease) both; }
-
-@keyframes v7Pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, .55); }
-  50%      { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+@keyframes v7BadgePulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
 }
 
-.pulse-dot { animation: v7Pulse 2.4s var(--ease) infinite; }
+@keyframes v7Shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.v7-enter,
+.anim-fade-in {
+  animation: v7FadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.anim-slide-up {
+  animation: v7SlideUp 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.anim-scale-in {
+  animation: v7ScaleIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.pulse-badge {
+  animation: v7BadgePulse 2s ease-in-out infinite;
+}
+
+@keyframes v7PulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  50%      { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  display: inline-block;
+  animation: v7PulseGlow 2.2s infinite;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: .01ms !important;
+    animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
+    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }
 
 /* ==========================================================================
-   4. BARRA LATERAL EN 3 ESTADOS + BOTÓN FLOTANTE
-   ========================================================================== */
-.menu-fab {
-  position: fixed;
-  top: 8px;
-  left: 8px;
-  z-index: var(--z-nav);
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius);
-  background: var(--nav-bg);
-  color: #fff;
-  border: 1px solid var(--nav-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: var(--shadow-md);
-  transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
-}
-
-.menu-fab:hover { background: var(--nav-hover); transform: scale(1.06); }
-.menu-fab svg { width: 20px; height: 20px; }
-
-/* Estado oculto */
-body.aside-hidden .admin-aside { transform: translateX(-100%); }
-body.aside-hidden .admin-main { margin-left: 0 !important; max-width: 100vw !important; }
-body.aside-hidden .admin-topbar { padding-left: 54px; }
-
-/* Estado rail (solo íconos) */
-body.aside-rail .admin-aside { width: var(--aside-collapsed-w); }
-body.aside-rail .aside-link-label,
-body.aside-rail .aside-brand-text,
-body.aside-rail .aside-rates,
-body.aside-rail .aside-ft-details { display: none; }
-body.aside-rail .admin-main {
-  margin-left: var(--aside-collapsed-w) !important;
-  max-width: calc(100vw - var(--aside-collapsed-w)) !important;
-}
-
-/* El FAB se aparta cuando la barra está visible en escritorio */
-@media (min-width: 961px) {
-  body:not(.aside-hidden) .menu-fab { left: 6px; top: 6px; opacity: .55; }
-  body:not(.aside-hidden) .menu-fab:hover { opacity: 1; }
-  body.aside-rail .menu-fab { left: 8px; }
-}
-
-/* ==========================================================================
-   5. PALETA DE COMANDOS (Ctrl+K)
+   2. PALETA DE COMANDOS GLOBAL (Ctrl+K)
    ========================================================================== */
 .v7-palette-backdrop {
   position: fixed;
   inset: 0;
-  z-index: var(--z-modal);
-  background: rgba(15, 23, 42, .55);
+  z-index: 4000;
+  background: rgba(15, 23, 42, 0.55);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 12vh;
-  animation: v7FadeUp var(--dur-fast) var(--ease) both;
+  padding-top: 14vh;
+  animation: v7FadeIn 150ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .v7-palette {
-  width: min(620px, 92vw);
+  width: min(600px, 92vw);
   background: var(--surface);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.25);
   overflow: hidden;
   border: 1px solid var(--line);
 }
@@ -173,18 +113,20 @@ body.aside-rail .admin-main {
   width: 100%;
   border: 0;
   border-bottom: 1px solid var(--line);
-  padding: 16px 18px;
-  font-size: var(--fs-lg);
-  font-family: var(--font-sans);
+  padding: 14px 18px;
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: 500;
   outline: none;
   background: var(--surface);
+  color: var(--txt);
 }
 
 .v7-palette-list {
   list-style: none;
   margin: 0;
   padding: 6px;
-  max-height: 46vh;
+  max-height: 48vh;
   overflow-y: auto;
 }
 
@@ -193,278 +135,274 @@ body.aside-rail .admin-main {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 11px 12px;
-  border-radius: var(--radius);
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: var(--fs-md);
+  font-size: 13.5px;
+  transition: all var(--transition-fast);
 }
 
+.v7-palette-item:hover,
 .v7-palette-item.active {
   background: #FFFBEB;
-  outline: 2px solid var(--action);
-  outline-offset: -2px;
+  color: #92400E;
+  outline: 1.5px solid var(--action);
+  outline-offset: -1px;
 }
 
-.v7-palette-label { font-weight: 600; }
+.v7-palette-label {
+  font-weight: var(--fw-semibold);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 .v7-palette-label kbd {
   display: inline-block;
-  padding: 1px 6px;
-  margin-left: 6px;
-  font-size: var(--fs-xs);
+  padding: 1px 5px;
+  font-size: 10.5px;
   font-family: var(--font-mono);
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 4px;
-  color: var(--txt-2);
+  color: var(--txt-3);
 }
 
-.v7-palette-hint { font-size: var(--fs-xs); color: var(--txt-3); text-align: right; }
+.v7-palette-hint {
+  font-size: 11.5px;
+  color: var(--txt-3);
+  text-align: right;
+}
 
-.v7-palette-empty { padding: 18px; color: var(--txt-3); font-size: var(--fs-md); }
+.v7-palette-empty {
+  padding: 24px;
+  color: var(--txt-3);
+  font-size: 13.5px;
+  text-align: center;
+}
 
 .v7-palette-foot {
-  padding: 9px 14px;
-  font-size: var(--fs-xs);
+  padding: 8px 14px;
+  font-size: 11.5px;
   color: var(--txt-3);
   background: var(--surface-2);
   border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 /* ==========================================================================
-   5b. BARRA DE PERIODO Y PREGUNTAS DEL DASHBOARD
+   3. BARRA DE PERÍODO Y DASHBOARD EJECUTIVO
    ========================================================================== */
 .v7-period-bar {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: var(--sp-4);
+  margin-bottom: 14px;
 }
 
 .v7-period-label {
-  font-size: var(--fs-md);
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: var(--fw-bold);
   color: var(--txt-2);
 }
 
 .v7-period-btn {
-  height: 38px;
-  padding: 0 16px;
-  font-size: var(--fs-md);
-  font-weight: 700;
-  color: var(--txt-2);
+  padding: 6px 14px;
+  height: 32px;
   background: var(--surface);
-  border: 1.5px solid var(--line);
-  border-radius: 99px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: var(--fw-semibold);
   cursor: pointer;
-  transition: all var(--dur-fast) var(--ease);
+  color: var(--txt-2);
+  transition: all var(--transition-fast);
 }
 
-.v7-period-btn:hover { border-color: var(--action); background: #FFFBEB; }
-.v7-period-btn.active { background: var(--nav-bg); border-color: var(--nav-bg); color: #fff; }
-
-.v7-period-note {
-  font-size: var(--fs-sm);
-  color: var(--txt-3);
+.v7-period-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+  color: var(--txt);
 }
 
+.v7-period-btn.active {
+  background: var(--nav-bg);
+  color: #FFFFFF;
+  border-color: var(--nav-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Preguntas / Decisiones del Dashboard */
 .dash-questions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .dash-question {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: var(--sp-3) var(--sp-4);
+  gap: 3px;
+  padding: 12px 14px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   text-decoration: none;
   color: inherit;
-  transition: all var(--dur-fast) var(--ease);
+  box-shadow: var(--shadow-xs);
+  transition: all var(--transition-fast);
 }
 
 .dash-question:hover {
   border-color: var(--action);
-  box-shadow: var(--shadow-sm);
   transform: translateY(-2px);
-}
-
-.dash-q { font-size: var(--fs-sm); color: var(--txt-3); }
-.dash-a { font-size: var(--fs-lg); font-weight: 800; color: var(--txt); }
-.dash-h { font-size: var(--fs-xs); color: var(--txt-3); }
-
-/* ==========================================================================
-   6. TARJETAS DE CIFRA (KPI) — formato único para todo el sistema
-   ========================================================================== */
-.stat-grid {
-  display: grid;
-  gap: var(--sp-4);
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  padding: var(--sp-4) var(--sp-5);
   box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  text-decoration: none;
-  color: inherit;
 }
 
-.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-
-.stat-n {
-  font-size: var(--fs-2xl);
-  font-weight: 800;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
+.dash-q {
+  font-size: 11.5px;
+  color: var(--txt-3);
+  font-weight: var(--fw-semibold);
 }
 
-.stat-l { font-size: var(--fs-md); font-weight: 600; color: var(--txt-2); }
-.stat-sub { font-size: var(--fs-xs); color: var(--txt-3); }
+.dash-a {
+  font-size: 17px;
+  font-weight: var(--fw-extrabold);
+  color: var(--txt);
+  line-height: 1.2;
+}
 
-.stat-card.tone-in   { border-left: 5px solid var(--money-in); }
-.stat-card.tone-out  { border-left: 5px solid var(--money-out); }
-.stat-card.tone-cash { border-left: 5px solid var(--action); }
-.stat-card.tone-info { border-left: 5px solid var(--info); }
+.dash-h {
+  font-size: 11px;
+  color: var(--txt-3);
+}
+
+/* Gráficos del Dashboard */
+.dash-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
 
 /* ==========================================================================
-   7. ESTADO VACÍO Y ACORDEÓN
+   4. ACORDEONES FLUIDOS (.v7-accordion)
    ========================================================================== */
-.empty-state {
-  padding: var(--sp-6) var(--sp-4);
-  text-align: center;
-  color: var(--txt-3);
-  background: var(--surface-2);
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--radius-lg);
-  font-size: var(--fs-md);
-}
-
-.empty-state strong { display: block; font-size: var(--fs-lg); color: var(--txt-2); margin-bottom: var(--sp-1); }
-
 .v7-accordion {
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   overflow: hidden;
   background: var(--surface);
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-xs);
 }
 
 .v7-accordion > summary {
   cursor: pointer;
-  padding: var(--sp-3) var(--sp-4);
-  font-weight: 700;
-  font-size: var(--fs-md);
+  padding: 10px 14px;
+  font-weight: var(--fw-bold);
+  font-size: 13.5px;
   background: var(--surface-2);
   list-style: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  color: var(--txt);
+  user-select: none;
+  transition: background-color var(--transition-fast);
 }
 
-.v7-accordion > summary::-webkit-details-marker { display: none; }
-.v7-accordion > summary::after { content: '▾'; color: var(--txt-3); transition: transform var(--dur) var(--ease); }
-.v7-accordion[open] > summary::after { transform: rotate(180deg); }
-.v7-accordion-body { padding: var(--sp-4); }
+.v7-accordion > summary:hover {
+  background: #F1F5F9;
+}
+
+.v7-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.v7-accordion > summary::after {
+  content: '▾';
+  color: var(--txt-3);
+  font-size: 14px;
+  transition: transform var(--transition-fast);
+}
+
+.v7-accordion[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.v7-accordion-body {
+  padding: 14px;
+  border-top: 1px solid var(--line);
+}
 
 /* ==========================================================================
-   8. DIÁLOGOS PROPIOS (reemplazan prompt/confirm nativos)
+   5. DIÁLOGOS Y MODALES INTERACTIVOS (Reemplazan prompt / confirm nativos)
    ========================================================================== */
-.v7-dialog-box { max-width: 460px; }
+.v7-dialog-box {
+  max-width: 460px;
+}
 
-.v7-dialog-msg { font-size: var(--fs-md); line-height: 1.5; color: var(--txt-2); }
+.v7-dialog-msg {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--txt-2);
+  margin-bottom: 12px;
+}
 
-.v7-dialog-menu { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.v7-dialog-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
 
 .v7-dialog-item {
   text-align: left;
-  padding: 12px 14px;
-  font-size: var(--fs-md);
+  padding: 10px 14px;
+  font-size: 13.5px;
+  font-weight: var(--fw-medium);
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all var(--dur-fast) var(--ease);
+  transition: all var(--transition-fast);
+  color: var(--txt);
 }
 
-.v7-dialog-item:hover { background: #FFFBEB; border-color: var(--action); }
-
-/* ==========================================================================
-   9. UTILIDADES
-   ========================================================================== */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.topbar-home-btn { white-space: nowrap; }
-
-/* ==========================================================================
-   10. RESPONSIVE
-   ========================================================================== */
-@media (max-width: 1199px) {
-  .stat-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-  .stat-n { font-size: var(--fs-xl); }
-}
-
-@media (max-width: 900px) {
-  .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
-  .admin-aside { transform: translateX(-100%); }
-  body.aside-open .admin-aside { transform: none; }
-  body.aside-rail .admin-aside { transform: translateX(-100%); }
-  .admin-main { margin-left: 0 !important; max-width: 100vw !important; }
-}
-
-@media (max-width: 640px) {
-  .stat-grid { grid-template-columns: 1fr 1fr; }
-  .stat-n { font-size: var(--fs-xl); }
-  .btn, .btn-sm, .btn-lg { min-height: var(--touch-min); }
-  .modal-box { width: 96vw; max-height: 92vh; }
-  .modal-ft { flex-direction: column-reverse; }
-  .modal-ft .btn { width: 100%; }
-  .v7-palette-backdrop { padding-top: 6vh; }
+.v7-dialog-item:hover {
+  background: #FFFBEB;
+  border-color: var(--action);
+  color: #92400E;
 }
 
 /* ==========================================================================
-   11. BARRA DE ACCIONES PRINCIPALES (v7)
+   6. BARRA DE ACCIONES HERO (.action-bar & .action-btn)
    ========================================================================== */
 .action-bar {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-4);
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .action-btn {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: 12px;
   padding: 12px 16px;
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: all var(--dur-fast) var(--ease);
-  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-xs);
   color: inherit;
   text-decoration: none;
 }
@@ -473,7 +411,7 @@ body.aside-rail .admin-main {
   border-color: var(--action);
   background: #FFFBEB;
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .action-btn.action-primary {
@@ -492,6 +430,7 @@ body.aside-rail .admin-main {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .action-txt {
@@ -501,14 +440,67 @@ body.aside-rail .admin-main {
 }
 
 .action-txt strong {
-  font-size: var(--fs-md);
+  font-size: 13.5px;
+  font-weight: var(--fw-bold);
   color: var(--txt);
   line-height: 1.2;
 }
 
 .action-txt small {
-  font-size: var(--fs-xs);
+  font-size: 11.5px;
   color: var(--txt-3);
   line-height: 1.2;
 }
 
+/* ==========================================================================
+   7. PASOS Y PESTAÑAS DE CIERRE (.cierre-steps)
+   ========================================================================== */
+.cierre-steps {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.cierre-step {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--txt-2);
+  font-size: 13.5px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+
+.cierre-step:hover {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+
+.cierre-step.active {
+  background: var(--nav-bg);
+  color: #FFFFFF;
+  border-color: var(--nav-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Utilidad Accesible */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

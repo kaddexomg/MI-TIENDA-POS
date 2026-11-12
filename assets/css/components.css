@@ -1,59 +1,92 @@
 /* ==========================================================================
-   MI-TIENDA-POS — Componentes del Sistema Visual Base v5 (Chrome 109 / Win7)
-   - Contraste estricto, bordes limpios, franjas por sección y alta velocidad
-   - Cero textos ilegibles (mínimo 11px en toda la interfaz)
+   MI-TIENDA-POS — Librería de Componentes Maestros v7
+   - Botones táctiles y limpios, tarjetas elevadas, tablas profesionales
+   - Micro-interacciones suaves compatibles con Windows 7 y Chromium 109
    ========================================================================== */
 
 /* ==========================================================================
-   1. Botones de Acción (UN SOLO botón de acción principal por vista)
+   1. BOTONES DE ACCIÓN (Estándar Unificado)
    ========================================================================== */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 6px 12px;
-  height: 34px;
-  min-height: 34px;
+  gap: 6px;
+  padding: 0 14px;
+  height: 36px;
+  min-height: 36px;
   border-radius: var(--radius-sm);
   font-weight: var(--fw-semibold);
   font-size: 13.5px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.12s ease;
   user-select: none;
   white-space: nowrap;
   line-height: 1;
+  text-decoration: none;
+  transition: background-color var(--transition-fast),
+              border-color var(--transition-fast),
+              color var(--transition-fast),
+              transform var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn:active {
   transform: translateY(1px);
+  box-shadow: none;
 }
 
-/* Botón de Acción Principal (Ámbar) */
+/* 1.1 Botón Principal / Acción Ámbar (Para la acción más destacada) */
 .btn-action,
 .btn-amber {
   background: var(--action);
   color: var(--action-txt);
-  border-color: #D49514;
+  border-color: #D97706;
   font-weight: var(--fw-bold);
-  box-shadow: 0 1px 2px rgba(232, 163, 23, 0.25);
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.25);
 }
 
 .btn-action:hover,
 .btn-amber:hover {
   background: var(--action-hover);
   color: var(--action-txt);
-  border-color: #B57B0A;
+  border-color: #B45309;
+  box-shadow: 0 3px 8px rgba(245, 158, 11, 0.35);
 }
 
-/* Botón Secundario / Ghost */
+/* 1.2 Botón de Éxito / Cobrar / Confirmar (Esmeralda) */
+.btn-success,
+.btn-p,
+.btn-primary {
+  background: var(--money-in);
+  color: #FFFFFF;
+  border-color: #059669;
+  font-weight: var(--fw-bold);
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.25);
+}
+
+.btn-success:hover,
+.btn-p:hover,
+.btn-primary:hover {
+  background: var(--money-in-hover);
+  color: #FFFFFF;
+  border-color: #047857;
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.35);
+}
+
+/* 1.3 Botón Secundario (Blanco con Borde Nítido) */
 .btn-secondary,
 .btn-ghost {
   background: var(--surface);
   color: var(--txt);
   border: 1px solid var(--line);
   font-weight: var(--fw-semibold);
+  box-shadow: var(--shadow-xs);
 }
 
 .btn-secondary:hover,
@@ -63,44 +96,28 @@
   color: var(--txt);
 }
 
-/* Botón de Éxito / Cobro / Afirmativo */
-.btn-success,
-.btn-p {
-  background: var(--money-in);
-  color: #FFFFFF;
-  border-color: #126D34;
-  font-weight: var(--fw-semibold);
-  box-shadow: 0 1px 2px rgba(21, 128, 61, 0.2);
-}
-
-.btn-success:hover,
-.btn-p:hover {
-  background: var(--money-in-hover);
-  color: #FFFFFF;
-  border-color: #0F582A;
-}
-
-/* Botón de Peligro / Gastos / Anulación */
+/* 1.4 Botón Peligro / Gastos / Anular (Carmesí) */
 .btn-danger {
   background: var(--money-out);
   color: #FFFFFF;
-  border-color: #991B1B;
+  border-color: #DC2626;
   font-weight: var(--fw-semibold);
-  box-shadow: 0 1px 2px rgba(185, 28, 28, 0.2);
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.25);
 }
 
 .btn-danger:hover {
   background: var(--money-out-hover);
   color: #FFFFFF;
-  border-color: #7F1D1D;
+  border-color: #B91C1C;
+  box-shadow: 0 3px 8px rgba(239, 68, 68, 0.35);
 }
 
-/* Botón Informativo / Azul */
+/* 1.5 Botón Azul / Informativo */
 .btn-blue,
 .btn-info {
   background: var(--info);
   color: #FFFFFF;
-  border-color: #1A44BD;
+  border-color: #2563EB;
   font-weight: var(--fw-semibold);
 }
 
@@ -108,117 +125,30 @@
 .btn-info:hover {
   background: var(--info-hover);
   color: #FFFFFF;
-  border-color: #16369E;
+  border-color: #1D4ED8;
 }
 
 /* Modificadores de Tamaño */
 .btn-sm {
-  padding: 2px 8px;
-  height: 24px;
-  min-height: 24px;
-  font-size: 11px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
   border-radius: var(--radius-sm);
   gap: 4px;
 }
 
 .btn-lg {
-  padding: 7px 14px;
-  height: 34px;
-  min-height: 34px;
-  font-size: 13px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 15px;
   font-weight: var(--fw-bold);
   border-radius: var(--radius);
 }
 
 /* ==========================================================================
-   2. Toolbars Unificadas
-   ========================================================================== */
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-  padding: 2px 0;
-}
-
-.toolbar-primary {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.toolbar-secondary {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.toolbar-more {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* ==========================================================================
-   3. Secciones de Página (Page Section & Page Section Title)
-   ========================================================================== */
-.page-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.page-section-title {
-  font-size: 11px;
-  font-weight: var(--fw-bold);
-  color: var(--txt-2);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 2px;
-}
-
-.page-section-title::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-}
-
-/* ==========================================================================
-   4. Clases Semánticas de Dinero y Números (tabular-nums)
-   ========================================================================== */
-.money-in {
-  color: var(--money-in);
-  font-weight: var(--fw-bold);
-  font-variant-numeric: tabular-nums;
-}
-
-.money-out {
-  color: var(--money-out);
-  font-weight: var(--fw-bold);
-  font-variant-numeric: tabular-nums;
-}
-
-.money-bs {
-  color: var(--info);
-  font-weight: var(--fw-bold);
-  font-variant-numeric: tabular-nums;
-}
-
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
-}
-
-/* ==========================================================================
-   5. Tarjetas y Franjas de Sección (.card y .card-hd con data-section)
+   2. TARJETAS Y PANELES (.card)
    ========================================================================== */
 .card {
   background: var(--surface);
@@ -226,41 +156,47 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow-xs);
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card:hover {
+  border-color: #CBD5E1;
+  box-shadow: var(--shadow-sm);
 }
 
 .card-hd {
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
   background: var(--surface-2);
 }
 
 .card-hd h3 {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: var(--fw-bold);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   color: var(--txt);
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .card-hd p {
-  font-size: 12.5px;
-  color: var(--txt-2);
+  font-size: 12px;
+  color: var(--txt-3);
   margin-top: 2px;
 }
 
 .card-bd {
-  padding: 10px 12px;
+  padding: 12px 14px;
 }
 
-/* Franjas Laterales de 4px por Sección */
+/* Franjas Laterales Sutiles por Sección */
 .card[data-section="cocina"] .card-hd,
 .card-hd[data-section="cocina"] {
   border-left: 4px solid var(--sec-cocina);
@@ -287,13 +223,13 @@
 }
 
 /* ==========================================================================
-   6. KPI / Stat Cards Limpias y Legibles (Mínimo 11px)
+   3. TARJETAS KPI / MÉTRICAS HERO (.stat-grid & .stat-card)
    ========================================================================== */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .stat-card,
@@ -301,65 +237,55 @@
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 8px 12px;
+  padding: 14px 16px;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 4px;
   box-shadow: var(--shadow-xs);
-  transition: border-color 0.12s ease;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  text-decoration: none;
+  color: inherit;
 }
 
 .stat-card:hover,
 .kpi:hover {
-  border-color: var(--line-strong);
+  transform: translateY(-2px);
+  border-color: #CBD5E1;
+  box-shadow: var(--shadow-sm);
 }
 
-.stat-ico {
-  width: 34px;
-  height: 34px;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  flex-shrink: 0;
-}
-
-.stat-ico.green { background: var(--money-in-light); color: var(--money-in); }
-.stat-ico.yellow { background: #FEF3C7; color: #C98A0C; }
-.stat-ico.blue { background: var(--info-light); color: var(--info); }
-.stat-ico.red { background: var(--money-out-light); color: var(--money-out); }
-.stat-ico.purple { background: var(--purple-light); color: var(--purple); }
-
-.stat-n,
-.kpi-val {
-  font-size: 16px;
-  font-weight: var(--fw-bold);
-  color: var(--txt);
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
-}
+.stat-card.tone-in   { border-left: 4px solid var(--money-in); }
+.stat-card.tone-out  { border-left: 4px solid var(--money-out); }
+.stat-card.tone-cash { border-left: 4px solid var(--action); }
+.stat-card.tone-info { border-left: 4px solid var(--info); }
 
 .stat-l,
 .kpi-label {
-  font-size: 11px;
-  color: var(--txt-2);
+  font-size: 12.5px;
   font-weight: var(--fw-semibold);
-  margin-top: 2px;
+  color: var(--txt-2);
+}
+
+.stat-n,
+.kpi-val {
+  font-size: 24px;
+  font-weight: var(--fw-extrabold);
+  color: var(--txt);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-sub,
 .kpi-sub {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--txt-3);
-  margin-top: 1px;
-  font-weight: var(--fw-normal);
   font-variant-numeric: tabular-nums;
+  margin-top: 2px;
 }
 
 /* ==========================================================================
-   7. Tablas (.data-table) Legibles con Cabeceras var(--surface-2)
+   4. TABLAS DE DATOS (.data-table)
    ========================================================================== */
 .table-wrap {
   width: 100%;
@@ -367,6 +293,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
+  box-shadow: var(--shadow-xs);
 }
 
 table.data-table {
@@ -378,28 +305,29 @@ table.data-table {
 table.data-table th {
   background: var(--surface-2);
   color: var(--txt-2);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: var(--fw-bold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 7px 10px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 
 table.data-table td {
-  padding: 7px 10px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--line);
   font-size: 13.5px;
   vertical-align: middle;
   color: var(--txt);
+  transition: background-color var(--transition-fast);
 }
 
 table.data-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-table.data-table tbody tr:hover {
+table.data-table tbody tr:hover td {
   background: #F8FAFC;
 }
 
@@ -410,27 +338,27 @@ table.data-table th.num {
 }
 
 /* ==========================================================================
-   8. Badges y Pills de Identificación
+   5. BADGES Y PILLS
    ========================================================================== */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
-  border-radius: 99px;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
   font-size: 11px;
   font-weight: var(--fw-bold);
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
-.badge-green { background: var(--money-in-light); color: #065F46; }
-.badge-yellow { background: #FEF3C7; color: #92400E; }
-.badge-red { background: var(--money-out-light); color: #991B1B; }
-.badge-blue { background: var(--info-light); color: #1E40AF; }
-.badge-purple { background: var(--purple-light); color: #5B21B6; }
-.badge-dark { background: #1E293B; color: #F8FAFC; font-family: var(--font-mono); font-size: 11px; }
+.badge-green  { background: var(--money-in-light); color: var(--money-in-txt); }
+.badge-yellow { background: var(--action-light);   color: #92400E; }
+.badge-amber  { background: var(--action-light);   color: #92400E; }
+.badge-red    { background: var(--money-out-light); color: var(--money-out-txt); }
+.badge-blue   { background: var(--info-light);      color: var(--info-txt); }
+.badge-purple { background: var(--purple-light);    color: var(--purple-txt); }
+.badge-dark   { background: #1E293B; color: #F8FAFC; font-family: var(--font-mono); }
 
-/* Código Rápido / Barcode Pill */
 .code-pill {
   display: inline-flex;
   align-items: center;
@@ -442,7 +370,6 @@ table.data-table th.num {
   font-weight: var(--fw-bold);
   padding: 2px 6px;
   border-radius: 4px;
-  letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -452,81 +379,60 @@ table.data-table th.num {
 }
 
 /* ==========================================================================
-   9. Grids Multicolumna
+   6. INPUTS Y FORMULARIOS
    ========================================================================== */
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.grid-3 {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-}
-
-@media (max-width: 900px) {
-  .grid-2, .grid-3 {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ==========================================================================
-   10. Inputs y Formularios Compactos
-   ========================================================================== */
-.input, .select {
+.input, .select, .textarea {
   width: 100%;
-  padding: 5px 9px;
-  height: 34px;
+  padding: 6px 11px;
+  height: 36px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--txt);
   font-size: 13.5px;
-  font-weight: 500;
-  transition: border-color 0.12s, box-shadow 0.12s;
+  font-weight: var(--fw-medium);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.input:focus, .select:focus {
+.textarea {
+  height: auto;
+  min-height: 70px;
+}
+
+.input:focus, .select:focus, .textarea:focus {
   outline: none;
   border-color: var(--action);
-  box-shadow: 0 0 0 2px rgba(232, 163, 23, 0.2);
+  box-shadow: var(--focus-ring);
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 8px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 6px;
-  margin-bottom: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
 }
 
 .form-group label {
   display: block;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: var(--fw-semibold);
   color: var(--txt-2);
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 
 /* ==========================================================================
-   11. Modales Rápidos (Popups de Control y Autorización)
+   7. MODALES PROFESIONALES (.modal-backdrop)
    ========================================================================== */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.6);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   display: none;
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  padding: 10px;
+  padding: 14px;
 }
 
 .modal-backdrop.open {
@@ -537,22 +443,22 @@ table.data-table th.num {
   background: var(--surface);
   border-radius: var(--radius-lg);
   width: 100%;
-  max-width: 620px;
-  max-height: 94vh;
+  max-width: 640px;
+  max-height: 92vh;
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--line);
-  animation: modalPop 0.14s ease-out;
+  animation: modalScaleUp 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes modalPop {
-  from { opacity: 0; transform: scale(0.97) translateY(4px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+@keyframes modalScaleUp {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .modal-hd {
-  padding: 8px 12px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
@@ -562,61 +468,64 @@ table.data-table th.num {
 }
 
 .modal-hd h3 {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: var(--fw-bold);
   color: var(--txt);
 }
 
 .modal-bd {
-  padding: 10px 12px;
+  padding: 14px 16px;
   overflow-y: auto;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .modal-ft {
-  padding: 8px 12px;
+  padding: 10px 16px;
   border-top: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 8px;
   background: var(--surface-2);
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 /* ==========================================================================
-   12. Toast Notifications
+   8. TOAST NOTIFICATIONS
    ========================================================================== */
 #mtpToastContainer {
   position: fixed;
-  bottom: 14px;
-  right: 14px;
+  bottom: 18px;
+  right: 18px;
   z-index: 5000;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  pointer-events: none;
 }
 
 .mtp-toast {
   background: #0F172A;
   color: #FFFFFF;
-  padding: 7px 12px;
-  border-radius: 6px;
-  font-weight: var(--fw-bold);
-  font-size: 11.5px;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  font-weight: var(--fw-semibold);
+  font-size: 12.5px;
   box-shadow: var(--shadow-md);
   display: flex;
   align-items: center;
-  gap: 7px;
-  border-left: 3px solid var(--money-in);
-  animation: modalPop 0.14s ease-out;
+  gap: 8px;
+  border-left: 4px solid var(--money-in);
+  pointer-events: auto;
+  animation: modalScaleUp 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .mtp-toast.warn { border-left-color: var(--action); }
-.mtp-toast.err { border-left-color: var(--money-out); }
+.mtp-toast.err  { border-left-color: var(--money-out); }
+.mtp-toast.info { border-left-color: var(--info); }
 
 /* ==========================================================================
-   13. Precio Dual USD / Bs
+   9. PRECIO DUAL USD / BS (TABULAR NUMS)
    ========================================================================== */
 .price-dual {
   display: inline-flex;
@@ -627,13 +536,79 @@ table.data-table th.num {
 .price-usd {
   font-weight: var(--fw-bold);
   color: var(--txt);
-  font-size: 13px;
+  font-size: 13.5px;
   font-variant-numeric: tabular-nums;
 }
 
 .price-bs {
-  font-weight: var(--fw-bold);
+  font-weight: var(--fw-semibold);
   color: var(--info);
-  font-size: 11px;
+  font-size: 11.5px;
   font-variant-numeric: tabular-nums;
+}
+
+.money-in   { color: var(--money-in);  font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.money-out  { color: var(--money-out); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.money-bs   { color: var(--info);      font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* ==========================================================================
+   10. GRID UTILITIES, CARD ACCENT RIBBONS & MICRO-INTERACTIONS
+   ========================================================================== */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.grid-2-asym {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 12px;
+}
+
+.grid-2-asym-rev {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 12px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .grid-2,
+  .grid-2-asym,
+  .grid-2-asym-rev,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+/* Ribbons temáticos por tipo de módulo */
+.card[data-section="dinero"] { border-top: 3px solid var(--money-in); }
+.card[data-section="cocina"] { border-top: 3px solid var(--action); }
+.card[data-section="abasto"] { border-top: 3px solid var(--info); }
+.card[data-section="gastos"] { border-top: 3px solid var(--money-out); }
+.card[data-section="fiscal"] { border-top: 3px solid #8B5CF6; }
+
+.card-interactive {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--line-strong);
 }

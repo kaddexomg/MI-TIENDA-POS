@@ -50,48 +50,48 @@
         </div>
         <div class="topbar-right">
           <button class="btn btn-ghost btn-sm" onclick="openResetSeedModal()" title="Restablecer usuarios a valores de fábrica">Restablecer Semilla</button>
-          <button class="btn btn-p btn-sm" onclick="openCreateUserModal()">+ Nuevo Usuario</button>
+          <button class="btn btn-action btn-sm" onclick="openCreateUserModal()">+ Nuevo Usuario</button>
         </div>
       </header>
 
       <div class="admin-content">
         <!-- 4 Tarjetas de Estadísticas de Usuarios y Seguridad -->
-        <div class="stat-grid">
-          <div class="stat-card">
-            <div style="width:32px;height:32px;border-radius:8px;background:rgba(5,150,105,0.15);color:#059669;display:flex;align-items:center;justify-content:center" id="statIcoUsers"></div>
+        <div class="stat-grid" style="margin-bottom:14px">
+          <div class="stat-card tone-in">
+            <div class="stat-ico green" id="statIcoUsers"></div>
             <div>
-              <div style="font-size:10px;font-weight:800;color:var(--txt-sec);text-transform:uppercase">Total Usuarios</div>
-              <div style="font-size:18px;font-weight:900" id="statTotalUsers">0</div>
+              <div class="stat-l">Total Usuarios</div>
+              <div class="stat-n" id="statTotalUsers">0</div>
             </div>
           </div>
 
-          <div class="stat-card">
-            <div style="width:32px;height:32px;border-radius:8px;background:rgba(220,38,38,0.15);color:#dc2626;display:flex;align-items:center;justify-content:center" id="statIcoAdmin"></div>
+          <div class="stat-card tone-out">
+            <div class="stat-ico red" id="statIcoAdmin"></div>
             <div>
-              <div style="font-size:10px;font-weight:800;color:var(--txt-sec);text-transform:uppercase">Administradores</div>
-              <div style="font-size:18px;font-weight:900;color:#dc2626" id="statAdmins">0</div>
+              <div class="stat-l">Administradores</div>
+              <div class="stat-n money-out" id="statAdmins">0</div>
             </div>
           </div>
 
-          <div class="stat-card">
-            <div style="width:32px;height:32px;border-radius:8px;background:rgba(37,99,235,0.15);color:#2563eb;display:flex;align-items:center;justify-content:center" id="statIcoEncargado"></div>
+          <div class="stat-card tone-info">
+            <div class="stat-ico blue" id="statIcoEncargado"></div>
             <div>
-              <div style="font-size:10px;font-weight:800;color:var(--txt-sec);text-transform:uppercase">Encargados</div>
-              <div style="font-size:18px;font-weight:900;color:#2563eb" id="statEncargados">0</div>
+              <div class="stat-l">Encargados</div>
+              <div class="stat-n money-bs" id="statEncargados">0</div>
             </div>
           </div>
 
-          <div class="stat-card">
-            <div style="width:32px;height:32px;border-radius:8px;background:rgba(245,158,11,0.15);color:#d97706;display:flex;align-items:center;justify-content:center" id="statIcoSecurity"></div>
+          <div class="stat-card tone-cash">
+            <div class="stat-ico yellow" id="statIcoSecurity"></div>
             <div>
-              <div style="font-size:10px;font-weight:800;color:var(--txt-sec);text-transform:uppercase">Seguridad de PIN</div>
-              <div style="font-size:14px;font-weight:900" id="statSecurityAlert">Verificando...</div>
+              <div class="stat-l">Seguridad de PIN</div>
+              <div class="stat-n" style="font-size:16px" id="statSecurityAlert">Verificando...</div>
             </div>
           </div>
         </div>
 
         <!-- TABLA 1: DIRECTORIO DE USUARIOS -->
-        <div class="card" style="margin-bottom:12px">
+        <div class="card card-interactive" data-section="dinero" style="margin-bottom:12px">
           <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between">
             <div style="display:flex;align-items:center;gap:8px">
               <h3 style="margin:0;font-size:13px;font-weight:900">Directorio de Usuarios y Acceso</h3>
@@ -232,9 +232,9 @@
         <div id="userFormError" style="display:none;color:#dc2626;font-size:11px;font-weight:800;margin-top:8px"></div>
       </div>
 
-      <div class="modal-ft" style="padding:10px 14px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)">
-        <button class="btn btn-ghost" onclick="closeUserFormModal()">Cancelar</button>
-        <button class="btn btn-p" onclick="submitUserForm()">Guardar Usuario</button>
+      <div class="modal-ft">
+        <button class="btn btn-secondary" onclick="closeUserFormModal()">Cancelar</button>
+        <button class="btn btn-action" onclick="submitUserForm()">Guardar Usuario</button>
       </div>
     </div>
   </div>
@@ -242,33 +242,33 @@
   <!-- MODAL: CAMBIAR PIN -->
   <div class="modal-backdrop" id="changePinModal">
     <div class="modal-box" style="max-width:380px">
-      <div class="modal-hd" style="background:#0F2A3D;color:#fff;border-radius:12px 12px 0 0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+      <div class="modal-hd">
         <div>
-          <h3 style="color:#fff;margin:0;font-size:13.5px;font-weight:900">Cambiar PIN de Acceso</h3>
-          <p id="changePinTargetName" style="color:#94a3b8;font-size:11px;margin:2px 0 0 0">Usuario</p>
+          <h3>Cambiar PIN de Acceso</h3>
+          <p id="changePinTargetName" style="color:var(--txt-3);font-size:11px;margin:2px 0 0 0">Usuario</p>
         </div>
-        <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none" onclick="closeChangePinModal()">✕</button>
+        <button class="btn btn-secondary btn-sm" onclick="closeChangePinModal()">✕</button>
       </div>
 
-      <div class="modal-bd" style="padding:14px">
+      <div class="modal-bd">
         <input type="hidden" id="changePinUserId">
 
         <div class="form-group" style="margin-bottom:10px">
-          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Nuevo PIN Numérico:</label>
+          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-2);margin-bottom:4px">Nuevo PIN Numérico:</label>
           <input type="password" id="newPinInput" class="input" placeholder="••••" maxlength="6" inputmode="numeric" style="font-size:18px;font-weight:900;text-align:center;letter-spacing:6px">
         </div>
 
         <div class="form-group" style="margin-bottom:10px">
-          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Confirmar Nuevo PIN:</label>
+          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-2);margin-bottom:4px">Confirmar Nuevo PIN:</label>
           <input type="password" id="confirmPinInput" class="input" placeholder="••••" maxlength="6" inputmode="numeric" style="font-size:18px;font-weight:900;text-align:center;letter-spacing:6px">
         </div>
 
-        <div id="changePinError" style="display:none;color:#dc2626;font-size:11px;font-weight:800;margin-top:6px;text-align:center"></div>
+        <div id="changePinError" style="display:none;color:var(--money-out);font-size:11px;font-weight:800;margin-top:6px;text-align:center"></div>
       </div>
 
-      <div class="modal-ft" style="padding:10px 14px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border)">
-        <button class="btn btn-ghost" onclick="closeChangePinModal()">Cancelar</button>
-        <button class="btn btn-p" onclick="submitChangePin()">Actualizar PIN</button>
+      <div class="modal-ft">
+        <button class="btn btn-secondary" onclick="closeChangePinModal()">Cancelar</button>
+        <button class="btn btn-action" onclick="submitChangePin()">Actualizar PIN</button>
       </div>
     </div>
   </div>

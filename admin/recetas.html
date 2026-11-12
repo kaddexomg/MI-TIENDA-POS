@@ -86,8 +86,8 @@
         </div>
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
-          <button class="btn btn-amber btn-sm" onclick="openNewBatchModal()">+ Registrar Tanda de Cocina</button>
-          <button class="btn btn-p btn-sm" onclick="openNewVariantRecipeModal()">+ Nueva Receta / Sabor</button>
+          <button class="btn btn-secondary btn-sm" onclick="openNewBatchModal()">+ Registrar Tanda de Cocina</button>
+          <button class="btn btn-action btn-sm" onclick="openNewVariantRecipeModal()">+ Nueva Receta / Sabor</button>
           <a href="productos.html" class="btn btn-ghost btn-sm">Ver Catálogo</a>
         </div>
       </header>
@@ -247,8 +247,8 @@
         </div>
       </div>
       <div class="modal-ft">
-        <button class="btn btn-ghost" onclick="document.getElementById('newBatchModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-p" onclick="saveKitchenBatch()">Guardar Tanda y Descontar Insumos</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('newBatchModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-action" onclick="saveKitchenBatch()">Guardar Tanda y Descontar Insumos</button>
       </div>
     </div>
   </div>
@@ -258,7 +258,7 @@
     <div class="modal-box" style="max-width:640px">
       <div class="modal-hd">
         <h3 id="recipeModalTitle" style="font-size:13px">Configurar Escandallo de Receta</h3>
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('variantRecipeModal').classList.remove('open')">✕</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('variantRecipeModal').classList.remove('open')">✕</button>
       </div>
       <div class="modal-bd">
         <input type="hidden" id="editRecipeVariantId">
@@ -288,14 +288,14 @@
         <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
             <strong style="font-size:11.5px;color:var(--txt-2);text-transform:uppercase">Insumos que descuenta en gramos:</strong>
-            <button class="btn btn-ghost btn-sm" onclick="addRecipeModalIngredientRow()">+ Añadir Insumo</button>
+            <button class="btn btn-secondary btn-sm" onclick="addRecipeModalIngredientRow()">+ Añadir Insumo</button>
           </div>
           <div id="editRecipeIngredientsList"></div>
         </div>
       </div>
       <div class="modal-ft">
-        <button class="btn btn-ghost" onclick="document.getElementById('variantRecipeModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-p" onclick="saveVariantRecipeFromModal()">Guardar Receta</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('variantRecipeModal').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-action" onclick="saveVariantRecipeFromModal()">Guardar Receta</button>
       </div>
     </div>
   </div>

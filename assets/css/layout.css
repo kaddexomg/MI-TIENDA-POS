@@ -1,9 +1,8 @@
 /* ==========================================================================
-   MI-TIENDA-POS — Layout Optimizado para PC de Oficina (Windows 7 / Chrome 109)
-   - Sidebar Dark Unificado con --nav-bg (#0F2A3D)
-   - Contenedor Principal con fondo --page (#E9EDF1)
-   - Topbar Sticky con fondo --surface (#FFFFFF) y borde --line (#CBD5E1)
-   - Barra lateral colapsable (Ctrl+B) para monitores 1024x768 / 1366x768
+   MI-TIENDA-POS — Layout Maestro v7 (Windows 7 / Chromium 109 / 100% Offline)
+   - Shell Obsidian Navy + Main Surface Slate
+   - Colapso suave sin parches visuales
+   - Topbar sticky con alineación perfecta flexbox
    ========================================================================== */
 
 .admin-wrap {
@@ -12,10 +11,11 @@
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+  background: var(--page);
 }
 
 /* ==========================================================================
-   1. Barra Lateral (Sidebar)
+   1. BARRA LATERAL (SIDEBAR)
    ========================================================================== */
 .admin-aside {
   width: var(--aside-w);
@@ -30,38 +30,42 @@
   z-index: 1000;
   border-right: 1px solid var(--nav-border);
   user-select: none;
-  transition: width 0.15s ease;
+  transition: width var(--transition-fast) ease, transform var(--transition-fast) ease;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
 }
 
+/* Cabecera de la Barra Lateral */
 .aside-brand {
-  padding: 6px 10px;
+  height: 52px;
+  min-height: 52px;
+  padding: 0 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
   border-bottom: 1px solid var(--nav-border);
-  background: #0A1C29;
+  background: #070e17;
 }
 
 .aside-brand-left {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 9px;
   min-width: 0;
 }
 
 .aside-logo {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
   background: var(--action);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 900;
   color: var(--action-txt);
   flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
 }
 
 .aside-brand-txt {
@@ -72,10 +76,10 @@
 }
 
 .aside-brand-txt strong {
-  font-size: 12px;
-  font-weight: var(--fw-bold);
+  font-size: 12.5px;
+  font-weight: var(--fw-extrabold);
   color: #FFFFFF;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
@@ -85,184 +89,146 @@
 }
 
 .aside-brand-txt span {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--nav-txt-muted);
   font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
 .aside-collapse-btn {
-  background: var(--nav-hover);
-  border: 1px solid var(--nav-border);
-  color: #CBD5E1;
-  width: 22px;
-  height: 22px;
-  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 11px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.12s ease;
+  transition: all var(--transition-fast);
 }
 
 .aside-collapse-btn:hover {
-  background: #224D6D;
+  background: rgba(255, 255, 255, 0.14);
   color: #FFFFFF;
 }
 
-/* Widget Compacto de 3 Tasas Vivas en Sidebar */
-.aside-rates-box {
-  margin: 4px 6px 3px;
-  padding: 4px 7px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+/* Tarjeta Compacta de Tasas en Sidebar */
+.aside-rates-card {
+  margin: 8px 10px 4px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   cursor: pointer;
-  transition: border-color 0.12s ease;
+  transition: all var(--transition-fast);
 }
 
-.aside-rates-box:hover {
-  border-color: var(--action);
+.aside-rates-card:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.05);
 }
 
-.aside-rate-row {
+.aside-rate-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 11px;
 }
 
-.aside-rate-row span {
-  color: #CBD5E1;
-  font-weight: var(--fw-semibold);
+.aside-rate-lbl {
+  color: #94A3B8;
+  font-weight: var(--fw-medium);
 }
 
-.aside-rate-row strong {
-  color: #34D399;
-  font-weight: var(--fw-bold);
+.aside-rate-val {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-}
-
-.aside-rate-row.eur strong {
-  color: #60A5FA;
-}
-
-.aside-rate-row.usdt strong {
-  color: var(--action);
-}
-
-/* Acciones Rápidas Globales en Sidebar */
-.aside-quick-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5px;
-  padding: 4px 8px;
-}
-
-.aside-qbtn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #F8FAFC;
-  padding: 5px 6px;
-  border-radius: 6px;
-  font-size: 11px;
   font-weight: var(--fw-bold);
-  cursor: pointer;
+  font-size: 11.5px;
+}
+
+.aside-rate-val.green { color: #34D399; }
+.aside-rate-val.blue  { color: #60A5FA; }
+.aside-rate-val.amber { color: #FBBF24; }
+
+/* Botón de Compra / Gasto Rápido en Sidebar */
+.aside-expense-action {
+  padding: 6px 10px;
+}
+
+.aside-expense-btn {
+  width: 100%;
+  height: 34px;
+  background: #065F46;
+  border: 1px solid #059669;
+  border-radius: var(--radius-sm);
+  color: #FFFFFF;
+  font-size: 11.5px;
+  font-weight: var(--fw-bold);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  white-space: nowrap;
-  transition: all 0.12s ease;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all var(--transition-fast);
 }
 
-.aside-qbtn:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.25);
+.aside-expense-btn:hover {
+  background: #047857;
+  border-color: #10B981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
-.aside-qbtn.expense {
-  background: #7F1D1D;
-  border-color: #B91C1C;
-  color: #FECACA;
-}
-
-.aside-qbtn.expense:hover {
-  background: #991B1B;
-  color: #FFFFFF;
-}
-
-/* Navegación Lateral Estructurada */
+/* Enlaces de Navegación */
 .aside-nav {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 8px 8px;
+  padding: 4px 8px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-.aside-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.aside-group-btn {
-  width: 100%;
-  background: transparent;
-  border: none;
-  color: var(--nav-txt-muted);
-  font-size: 11px;
-  font-weight: var(--fw-bold);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 5px 6px 2px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  text-align: left;
-}
-
-.aside-group-btn:hover {
-  color: #E2E8F0;
-}
-
-.aside-group.collapsed .aside-group-items {
-  display: none;
-}
-
-.aside-group-items {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .aside-link {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 8px;
-  border-radius: 6px;
-  color: #CBD5E1;
-  font-weight: var(--fw-semibold);
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  color: #94A3B8;
+  font-weight: var(--fw-medium);
   font-size: 13px;
   text-decoration: none;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: all var(--transition-fast);
 }
 
 .aside-link-left {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 9px;
   min-width: 0;
+}
+
+.aside-ico-box {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #CBD5E1;
+  transition: all var(--transition-fast);
 }
 
 .aside-link-label {
@@ -271,89 +237,237 @@
   text-overflow: ellipsis;
 }
 
-.aside-ico {
-  font-size: 13px;
-  width: 18px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-
-.aside-ico-box {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
-.aside-link:hover .aside-ico-box {
-  transform: scale(1.12);
-}
-.aside-link.active .aside-ico-box {
-  box-shadow: 0 0 10px currentColor;
-}
-
 .aside-link:hover {
-  background: var(--nav-hover);
+  background: rgba(255, 255, 255, 0.06);
+  color: #F1F5F9;
+}
+
+.aside-link:hover .aside-ico-box {
+  background: rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
 }
 
 .aside-link.active {
-  background: var(--action);
-  color: var(--action-txt);
+  background: rgba(245, 158, 11, 0.14);
+  color: #FBBF24;
   font-weight: var(--fw-bold);
+  box-shadow: inset 3px 0 0 #F59E0B;
 }
 
+.aside-link.active .aside-ico-box {
+  background: #F59E0B;
+  color: #0F172A;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+/* Badges de Navegación */
 .aside-badge {
-  background: var(--money-out);
-  color: #FFFFFF;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: var(--fw-bold);
-  padding: 1px 5px;
-  border-radius: 99px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
   flex-shrink: 0;
+  line-height: 1.2;
 }
 
-.aside-badge.kbd {
-  background: rgba(255, 255, 255, 0.14);
-  color: #E2E8F0;
+.aside-badge.badge-amber {
+  background: #F59E0B;
+  color: #1A1A1A;
+}
+
+.aside-badge.badge-red {
+  background: #EF4444;
+  color: #FFFFFF;
+}
+
+.aside-badge.badge-kbd {
+  background: rgba(255, 255, 255, 0.12);
+  color: #CBD5E1;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
 }
 
-.aside-ft {
-  padding: 5px 8px;
-  border-top: 1px solid var(--nav-border);
-  background: #0A1C29;
+/* Sección Plegable "Más opciones" */
+.aside-more-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-sm);
+  color: #94A3B8;
+  font-size: 12px;
+  font-weight: var(--fw-bold);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 5px;
-  font-size: 11px;
-}
-
-.role-switch-btn {
-  background: rgba(255, 255, 255, 0.08);
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 3px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: var(--fw-bold);
   cursor: pointer;
-  text-decoration: none;
-  transition: background 0.12s ease;
+  transition: all var(--transition-fast);
 }
 
-.role-switch-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
+.aside-more-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #E2E8F0;
+}
+
+.aside-more-btn-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.aside-chevron {
+  font-size: 11px;
+  color: #64748B;
+}
+
+.aside-more-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 3px;
+  padding-left: 6px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Pie de Barra Lateral (Usuario y Cierre) */
+.aside-ft {
+  padding: 10px;
+  border-top: 1px solid var(--nav-border);
+  background: #070e17;
+}
+
+.aside-user-card {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.aside-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #F1F5F9;
+  flex-shrink: 0;
+}
+
+.aside-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.aside-user-name {
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  color: #F1F5F9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aside-user-badge {
+  font-size: 9.5px;
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 4px;
+  border-radius: 3px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.aside-user-badge.role-admin     { background: rgba(239, 68, 68, 0.2); color: #F87171; }
+.aside-user-badge.role-encargado { background: rgba(59, 130, 246, 0.2); color: #60A5FA; }
+.aside-user-badge.role-cajero    { background: rgba(16, 185, 129, 0.2); color: #34D399; }
+
+.aside-logout-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.aside-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #EF4444;
 }
 
 /* ==========================================================================
-   2. Contenedor Principal
+   2. MODO SIDEBAR COLAPSADO (Ctrl+B)
+   ========================================================================== */
+body.aside-collapsed .admin-aside {
+  width: var(--aside-collapsed-w);
+}
+
+body.aside-collapsed .aside-brand-txt,
+body.aside-collapsed .aside-rates-card,
+body.aside-collapsed .aside-expense-label,
+body.aside-collapsed .aside-link-label,
+body.aside-collapsed .aside-badge,
+body.aside-collapsed .aside-more-btn,
+body.aside-collapsed .aside-user-info,
+body.aside-collapsed .aside-logout-btn {
+  display: none !important;
+}
+
+body.aside-collapsed .aside-brand {
+  justify-content: center;
+  padding: 0 4px;
+}
+
+body.aside-collapsed .aside-brand-left {
+  justify-content: center;
+  width: 100%;
+}
+
+body.aside-collapsed .aside-collapse-btn {
+  display: none !important;
+}
+
+body.aside-collapsed .aside-expense-action {
+  padding: 6px 4px;
+}
+
+body.aside-collapsed .aside-expense-btn {
+  width: 38px;
+  height: 38px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+body.aside-collapsed .aside-link {
+  justify-content: center;
+  padding: 8px 0;
+}
+
+body.aside-collapsed .aside-link-left {
+  justify-content: center;
+}
+
+body.aside-collapsed .aside-user-card {
+  justify-content: center;
+}
+
+/* ==========================================================================
+   3. CONTENEDOR PRINCIPAL Y TOPBAR
    ========================================================================== */
 .admin-main {
   flex: 1;
@@ -363,139 +477,82 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 100vh;
   overflow-x: hidden;
   background: var(--page);
+  transition: margin-left var(--transition-fast) ease, width var(--transition-fast) ease;
 }
 
-/* Modo Barra Lateral Colapsada (Ctrl+B) */
-body.aside-collapsed .admin-aside {
-  width: var(--aside-collapsed-w);
-}
-
-/* Ocultar textos cuando el menú está colapsado */
-body.aside-collapsed .aside-brand-txt,
-body.aside-collapsed .aside-rates-box,
-body.aside-collapsed .aside-group-btn,
-body.aside-collapsed .aside-link-label,
-body.aside-collapsed .aside-badge,
-body.aside-collapsed .aside-ft-details,
-body.aside-collapsed .aside-pin-warn,
-body.aside-collapsed .aside-expense-txt,
-body.aside-collapsed .aside-logout-btn,
-body.aside-collapsed .aside-qbtn span.qtxt {
-  display: none !important;
-}
-
-body.aside-collapsed .aside-brand {
-  justify-content: center;
-  padding: 6px 3px;
-}
-
-body.aside-collapsed .aside-brand-left {
-  justify-content: center;
-  width: 100%;
-}
-
-/* Mantener el logo visible y centrado */
-body.aside-collapsed .aside-logo {
-  display: flex !important;
-  margin: 0 auto;
-}
-
-body.aside-collapsed .aside-collapse-btn {
-  display: none !important;
-}
-
-body.aside-collapsed .aside-expense-btn {
-  padding: 5px 0 !important;
-  justify-content: center !important;
-}
-
-body.aside-collapsed .aside-quick-actions {
-  grid-template-columns: 1fr;
-  padding: 3px 4px;
-}
-
-body.aside-collapsed .aside-link {
-  justify-content: center;
-  padding: 6px 2px;
-}
-
-body.aside-collapsed .aside-link-left {
-  justify-content: center;
-}
-
-body.aside-collapsed .aside-ft {
-  justify-content: center;
-  align-items: center;
-  padding: 6px 3px;
-}
-
-body.aside-collapsed .aside-ft-row {
-  justify-content: center;
-  width: 100%;
-}
-
-body.aside-collapsed .aside-user-wrap {
-  justify-content: center;
-}
-
-body.aside-collapsed .admin-main,
-body.pos-fullscreen-body.aside-collapsed .admin-main {
+body.aside-collapsed .admin-main {
   margin-left: var(--aside-collapsed-w);
   width: calc(100vw - var(--aside-collapsed-w));
   max-width: calc(100vw - var(--aside-collapsed-w));
 }
 
-/* ==========================================================================
-   3. Barra Superior Sticky (Topbar)
-   ========================================================================== */
+/* Topbar Sticky con Alineación Perfecta */
 .admin-topbar {
   height: var(--topbar-h);
+  min-height: var(--topbar-h);
   background: var(--surface);
   border-bottom: 1px solid var(--line);
-  padding: 0 10px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  position: sticky;
-  top: 0;
-  z-index: 900;
+  padding: 0 16px;
+  box-shadow: var(--shadow-xs);
 }
 
 .topbar-left {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
   min-width: 0;
 }
 
 .menu-toggle {
-  display: none;
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 5px;
-  width: 26px;
-  height: 26px;
-  font-size: 13px;
+  color: var(--txt);
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.menu-toggle:hover {
+  background: #E2E8F0;
+  border-color: var(--line-strong);
+}
+
+.topbar-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .topbar-title h2 {
   font-size: 15px;
   font-weight: var(--fw-bold);
   color: var(--txt);
-  line-height: 1.15;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .topbar-title p {
-  font-size: 12px;
-  color: var(--txt-2);
-  font-weight: 500;
+  font-size: 11.5px;
+  color: var(--txt-3);
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -504,87 +561,69 @@ body.pos-fullscreen-body.aside-collapsed .admin-main {
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
+/* Píldora de Tasas en Topbar */
 .topbar-rate-pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: #F0FDF4;
-  border: 1px solid #BBF7D0;
-  padding: 2.5px 7px;
-  border-radius: 99px;
-  font-size: 11px;
-  font-weight: var(--fw-bold);
-  color: var(--money-in);
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  color: var(--txt-2);
+  font-weight: var(--fw-medium);
   cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
-.topbar-rate-pill strong {
-  font-family: var(--font-mono);
+.topbar-rate-pill:hover {
+  border-color: var(--action);
+  background: #FFFBEB;
+}
+
+.top-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.top-dot.green { background: #10B981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.6); }
+
+.top-edit {
+  opacity: 0.6;
   font-size: 11px;
-  font-variant-numeric: tabular-nums;
 }
 
-/* ==========================================================================
-   4. Área de Contenido Principal
-   ========================================================================== */
+/* Área de Contenido */
 .admin-content {
-  padding: 8px 12px 16px;
+  padding: 16px 20px;
   flex: 1;
-  min-width: 0;
+  max-width: 1440px;
+  width: 100%;
 }
 
 /* ==========================================================================
-   5. Adaptación Responsive para Monitores Pequeños / Móvil
+   4. RESPONSIVE Y MÓVIL
    ========================================================================== */
-@media (max-width: 960px) {
+@media (max-width: 900px) {
   .admin-aside {
     transform: translateX(-100%);
   }
   .admin-aside.open {
     transform: translateX(0);
   }
-  .admin-main,
-  body.aside-collapsed .admin-main {
-    margin-left: 0;
-    width: 100vw;
-    max-width: 100vw;
-  }
-  .menu-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
-
-
-/* ==========================================================================
-   6. Reglas de Impresión Limpia (@media print) — Cero Interfaz del Sistema
-   ========================================================================== */
-@media print {
-  .admin-aside,
-  .admin-topbar,
-  .cierre-period-tabs,
-  .toolbar,
-  .btn,
-  button,
-  .no-print {
-    display: none !important;
-  }
-  .admin-main,
-  body.aside-collapsed .admin-main {
+  .admin-main {
     margin-left: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    background: #ffffff !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
   }
   .admin-content {
-    padding: 0 !important;
-  }
-  body {
-    background: #ffffff !important;
+    padding: 12px 14px;
   }
 }

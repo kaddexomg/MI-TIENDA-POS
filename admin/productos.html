@@ -188,8 +188,8 @@
                     <input type="text" id="liveBarcodeInput" class="input"
                       placeholder="Dispara el lector aquí o escribe..."
                       style="font-family:var(--font-mono);font-size:13px;font-weight:900;background:#1e293b;color:#fff;border-color:#334155;height:32px">
-                    <button class="btn btn-p btn-sm" onclick="handleScannedCode(document.getElementById('liveBarcodeInput').value)">Buscar</button>
-                    <button class="btn btn-amber btn-sm" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">Cámara</button>
+                    <button class="btn btn-action btn-sm" onclick="handleScannedCode(document.getElementById('liveBarcodeInput').value)">Buscar</button>
+                    <button class="btn btn-secondary btn-sm" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">Cámara</button>
                   </div>
                 </div>
 
@@ -253,7 +253,7 @@
                       <input type="number" step="0.01" id="bpPrice" class="input" required value="1.35">
                     </div>
                     <div class="form-group" style="display:flex;align-items:flex-end">
-                      <button type="submit" class="btn btn-p" style="width:100%;height:30px">Guardar Producto</button>
+                      <button type="submit" class="btn btn-action" style="width:100%;height:30px">Guardar Producto</button>
                     </div>
                   </div>
                 </form>
@@ -329,8 +329,8 @@
         </div>
       </div>
       <div class="modal-ft">
-        <button class="btn btn-ghost" onclick="closeProductModal()">Cancelar</button>
-        <button class="btn btn-p" onclick="saveProductModal()">Guardar Producto</button>
+        <button class="btn btn-secondary" onclick="closeProductModal()">Cancelar</button>
+        <button class="btn btn-action" onclick="saveProductModal()">Guardar Producto</button>
       </div>
     </div>
   </div>
@@ -570,8 +570,8 @@
                     </div>
                   </div>
                   <div style="display:flex;gap:6px">
-                    <button class="btn btn-p btn-sm" onclick="openNewVariantModal('${prod.id}')">+ Añadir Sabor</button>
-                    <button class="btn btn-ghost btn-sm" onclick="openEditProductModal('${prod.id}')">Editar</button>
+                    <button class="btn btn-action btn-sm" onclick="openNewVariantModal('${prod.id}')">+ Añadir Sabor</button>
+                    <button class="btn btn-secondary btn-sm" onclick="openEditProductModal('${prod.id}')">Editar</button>
                   </div>
                 </div>
 
@@ -680,8 +680,8 @@
                 <td>
                   <strong>${it.stock} ${it.unit || 'und'}</strong>
                   <div style="display:flex;gap:3px;margin-top:2px">
-                    <button class="btn btn-p btn-sm" style="padding:1px 5px;font-size:10px" onclick="quickAddStock('${it.id}', 1)">+1</button>
-                    <button class="btn btn-p btn-sm" style="padding:1px 5px;font-size:10px" onclick="quickAddStock('${it.id}', 12)">+12</button>
+                    <button class="btn btn-action btn-sm" style="padding:1px 5px;font-size:10px" onclick="quickAddStock('${it.id}', 1)">+1</button>
+                    <button class="btn btn-action btn-sm" style="padding:1px 5px;font-size:10px" onclick="quickAddStock('${it.id}', 12)">+12</button>
                   </div>
                 </td>
                 <td>${MTP.fmtUSD(cost)}</td>
@@ -1000,9 +1000,9 @@
               </div>
             </div>
             <div style="display:flex;gap:4px;flex-wrap:wrap">
-              <button class="btn btn-p btn-sm" onclick="quickAddStock('${it.id}', 1)">+1 Und</button>
-              <button class="btn btn-p btn-sm" onclick="quickAddStock('${it.id}', 12)">+12 Docena</button>
-              <button class="btn btn-amber btn-sm" onclick="quickAddStock('${it.id}', 24)">+24 Bulto</button>
+              <button class="btn btn-action btn-sm" onclick="quickAddStock('${it.id}', 1)">+1 Und</button>
+              <button class="btn btn-action btn-sm" onclick="quickAddStock('${it.id}', 12)">+12 Docena</button>
+              <button class="btn btn-secondary btn-sm" onclick="quickAddStock('${it.id}', 24)">+24 Bulto</button>
               <button class="btn btn-ghost btn-sm" onclick="loadProductIntoForm('${it.id}')">Editar</button>
             </div>
           </div>
@@ -1133,7 +1133,7 @@
           <td>${MTP.fmtUSD(it.costUsd)}</td>
           <td><strong>${MTP.fmtUSD(it.priceUsd)}</strong> <span style="font-size:10.5px;color:var(--info)">(${(it.priceUsd * bcv).toFixed(2)} Bs)</span></td>
           <td>
-            <button class="btn btn-p btn-sm" onclick="quickAddStock('${it.id}', 6)">+6</button>
+            <button class="btn btn-action btn-sm" onclick="quickAddStock('${it.id}', 6)">+6</button>
             <button class="btn btn-ghost btn-sm" onclick="loadProductIntoForm('${it.id}')">Editar</button>
           </td>
         </tr>

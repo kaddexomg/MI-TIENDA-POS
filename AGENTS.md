@@ -132,3 +132,16 @@
      - `tests/ui.test.js`: 9 pruebas unitarias exhaustivas para `MTPChange.breakDown()` (vuelto en billetes USD y resto en monedas Bs a 0,50), denominaciones Bs, formateadores y guardas de hardware.
      - `tests/pos.test.js`: 12 pruebas del flujo de caja (total único, IGTF con vuelto mixto, tarjeta en USD vs Bs, exentos, denominación).
      - `tests/run.js`: 100% de las pruebas automatizadas (fiscales, v6, UI v7 y caja v7) pasando con éxito.
+
+
+7. **✅ REDISEÑO GLOBAL DE IDENTIDAD VISUAL, NAVEGACIÓN Y COMPONENTES v7.1**:
+   - **Identidad Visual Unificada (Obsidian Navy & Emerald)**: Paleta profesional de tokens CSS (`assets/css/variables.css`) con fondo pizarra suave (`#F8FAFC`), barra de navegación en azul obsidiana profunda (`#0F172A`), bordes finos nítidos (`#E2E8F0`), acentos esmeralda (`#10B981`) para ingresos y ámbar cálido (`#F59E0B`) para llamados de acción.
+   - **Navegación Limpia y Sin Bugs (`assets/js/sidenav.js` y `assets/css/layout.css`)**: Eliminación total del botón flotante hackeado `#menuFab` y de la inyección invasiva en el topbar. Barra lateral semántica en 3 estados (completo, íconos y oculta en móvil), colapso fluido mediante atajo `Ctrl+B` o botón en cabecera, y sincronización perfecta del contenido principal sin saltos de scroll.
+   - **Sistema de Componentes y Botones Táctiles (`assets/css/components.css`)**: Botones con respuesta háptica (`transform: translateY(1px)` al pulsar, elevación sutil al hover), jerarquía nítida (`.btn-action`, `.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-ghost`), tarjetas elevadas con ribbons de categoría (`dinero`, `cocina`, `abasto`, `gastos`, `fiscal`), tarjetas de estadísticas KPI con variantes tonales (`tone-in`, `tone-out`, `tone-info`, `tone-cash`), y utilidades de cuadrícula responsivas (`.grid-2`, `.grid-2-asym`, `.grid-3`, `.grid-4`).
+   - **Micro-Animaciones Compatibles con Windows 7 y Chromium 109 (`assets/css/design-v7.css`)**: Transiciones aceleradas por hardware puro (`opacity`, `transform`) con curva `cubic-bezier(0.16, 1, 0.3, 1)`: `@keyframes v7FadeIn`, `@keyframes v7SlideUp`, `@keyframes v7ScaleIn`, `@keyframes v7PulseGlow` para escáner activo y `@keyframes v7BadgePulse` para alertas de inventario crítico.
+   - **Armonización de Todas las Pantallas**:
+     - `index.html`: Pantalla de acceso por PIN rediseñada con contenedor fintech oscuro, tarjetas de rol con indicador lumínico, puntitos de PIN con animación de relleno suave y teclado numérico con respuesta táctil.
+     - `admin/index.html`: Dashboard ejecutivo ordenado en tarjetas interactivas, métricas de periodo en tiempo real y gráficos SVG fluidos sin estilos en línea dispersos.
+     - `admin/pos.html` y `caja/pos.html`: Caja compacta Zero-Scroll a 3 columnas con miniaturas de 48px, botón F2 Ámbar gigante para cobro y modal de pago multimoneda con calculadora de denominaciones.
+     - `admin/cierres.html`, `admin/inventario.html`, `admin/productos.html`, `admin/recetas.html`, `admin/facturas.html`, `admin/precios.html`, `admin/usuarios.html`, `admin/ajustes.html` y `caja/index.html`: Modernizados con consistencia absoluta en botones, diálogos modales y tablas de datos con cabecera fija.
+   - **100% de Pruebas Automatizadas Pasando**: Fiscales, integración v6, UI v7, validación sintáctica de scripts y balanceo de etiquetas HTML.

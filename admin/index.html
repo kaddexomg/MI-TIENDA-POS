@@ -57,9 +57,9 @@
         <div class="dash-questions" id="dashQuestions"></div>
 
         <!-- GRÁFICOS INTERACTIVOS NATIVOS SVG (0% GPU / WINDOWS 7) -->
-        <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="grid-2-asym" style="margin-bottom:12px">
           <!-- Gráfico 1: Ventas por Hora / Flujo del Día -->
-          <div class="card" data-section="dinero">
+          <div class="card card-interactive" data-section="dinero">
             <div class="card-hd">
               <h3>
                 <span id="chartHourlyIcon"></span> Flujo de Ventas por Hora
@@ -78,7 +78,7 @@
           </div>
 
           <!-- Gráfico 2: Métodos de Pago y Cobranzas -->
-          <div class="card" data-section="dinero">
+          <div class="card card-interactive" data-section="dinero">
             <div class="card-hd">
               <h3>
                 <span id="chartPaymentsIcon"></span> Cobros por Método
@@ -91,9 +91,9 @@
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="grid-2" style="margin-bottom:12px">
           <!-- Gráfico 3: Cocina (Comida Preparada) vs. Abasto (Víveres/Bebidas) -->
-          <div class="card" data-section="cocina">
+          <div class="card card-interactive" data-section="cocina">
             <div class="card-hd">
               <h3>
                 <span id="chartProfitIcon"></span> Rentabilidad: Cocina vs. Abasto
@@ -106,7 +106,7 @@
           </div>
 
           <!-- Control de Arqueo Neto de Gaveta (Efectivo físico real) -->
-          <div class="card" data-section="dinero">
+          <div class="card card-interactive" data-section="dinero">
             <div class="card-hd">
               <h3>
                 <span id="drawerCashIcon"></span> Arqueo Neto en Mano
@@ -120,7 +120,7 @@
         </div>
 
         <!-- SECCIÓN 3: CONTROL DE GASTOS OPERATIVOS DEL DÍA / SALIDAS DE CAJA -->
-        <div class="card" data-section="gastos">
+        <div class="card" data-section="gastos" style="margin-bottom:12px">
           <div class="card-hd">
             <h3>
               <span id="expensesIcon"></span> Libro de Gastos Operativos y Salidas de Caja
@@ -147,7 +147,7 @@
         </div>
 
         <!-- SECCIÓN 4: TOP PRODUCTOS VENDIDOS Y ÚLTIMAS ÓRDENES -->
-        <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:12px">
+        <div class="grid-2-asym-rev">
           <div class="card" data-section="cocina">
             <div class="card-hd">
               <h3>

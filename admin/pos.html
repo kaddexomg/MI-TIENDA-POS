@@ -254,7 +254,7 @@
       </div>
       <div class="modal-ft">
         <button class="btn btn-secondary" onclick="document.getElementById('posCheckoutModal').classList.remove('open')">Cancelar (Esc)</button>
-        <button class="btn btn-p btn-lg" id="btnConfirmSale" onclick="window.MTPPos.finalizeSale()">✔ Confirmar Cobro (Enter)</button>
+        <button class="btn btn-primary btn-lg" id="btnConfirmSale" onclick="window.MTPPos.finalizeSale()">✔ Confirmar Cobro (Enter)</button>
       </div>
     </div>
   </div>
@@ -264,12 +264,12 @@
     <div class="modal-box" style="max-width:680px">
       <div class="modal-hd">
         <h3>Comanda de Cocina y Nota de Despacho (Control Interno)</h3>
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('posTicketPrintModal').classList.remove('open')">✕</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('posTicketPrintModal').classList.remove('open')">✕</button>
       </div>
       <div class="modal-bd" id="printModalContent"></div>
       <div class="modal-ft">
-        <button class="btn btn-ghost" onclick="document.getElementById('posTicketPrintModal').classList.remove('open')">Cerrar</button>
-        <button class="btn btn-p" onclick="window.print()">Imprimir Tickets</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('posTicketPrintModal').classList.remove('open')">Cerrar</button>
+        <button class="btn btn-action" onclick="window.print()">Imprimir Tickets</button>
       </div>
     </div>
   </div>
