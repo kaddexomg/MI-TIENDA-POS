@@ -1,13 +1,23 @@
 # 🧠 PROJECT_BRAIN.md — Cerebro Maestro, Índice Completo y Arquitectura de MI-TIENDA-POS
 
-> **Última actualización**: 1 de Noviembre de 2026 (`20:55 VET`) — **Versión 6 (Estabilizada y Verificada)**
+> **Última actualización**: 12 de Noviembre de 2026 — **Versión 7 (Rediseño de Experiencia, Dinero y Navegación)**
 > **Estado Operativo**: Arquitectura Local-First Blindada para Windows 7 (Chromium 109 / Sin GPU / 100% Offline) — Lista para uso en tienda física y preparada para futura sincronización con VPS / Vista Móvil del Dueño.
+> **Planes de implementación v7**: [`PLANES_V7/`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/PLANES_V7/00-INDICE-Y-ORDEN.md) · Maestro: [`PLAN_REDISEÑO_UX_V7.md`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/PLAN_REDISEÑO_UX_V7.md)
 
 ---
 
-## 1. 📋 RESUMEN EJECUTIVO DE LA ESTABILIZACIÓN V6
+## 1. 📋 RESUMEN EJECUTIVO DE LA ESTABILIZACIÓN v7
 
-1. **Motor Fiscal Venezolano Exacto ([`assets/js/tax.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/tax.js))**:
+0. **🐛 Corrección crítica**: `admin/cierres.html` tenía el JavaScript **corrupto** (un `</script>` incrustado dentro de una cadena cortaba el bloque y el resto se pintaba como texto en la página). **La pantalla "Cuadre del día" estaba muerta**. Corregido y verificado con `node --check`.
+1. **Un solo total (el dinero)**: `computeSaleTotals()` en `assets/js/pos-engine.js` es la **única fuente de verdad**. Antes el total se calculaba sin IGTF en pantalla y con IGTF al guardar: se podía cobrar un número y registrar otro.
+2. **Billetes que suman y vuelto con control**: los botones `$1…$100` **acumulan**, no borran lo que el cajero escribe, y el vuelto se propone con **denominaciones reales** (US$ 1-100 / Bs 0,10-2.000, resto en monedas de 0,50). Si la distribución no cuadra, **el cobro se bloquea**.
+3. **Fiscal más correcto**: el punto de venta solo genera IGTF si **la terminal liquida en USD**; el vuelto se reporta en sus tres componentes sin mezclar unidades.
+4. **Navegación nueva**: **paleta de comandos `Ctrl+K`**, barra lateral en **3 estados** (completo / íconos / oculta) con botón flotante, atajos globales reales (`F2`, `F6`, `F7`, `Esc`) y botón **"🏠 Ver mi día"**.
+5. **Dashboard honesto y legible**: filtro de **Hoy / Semana / Mes** (antes decía "hoy" y mostraba el histórico), 4 cifras grandes (vendido, ganado, gaveta, **IVA 16%**), 4 preguntas con respuesta y un gráfico horario corregido.
+6. **Impresión real de 80 mm**: un ticket por página, comanda solo si hay platos, **detalle de pagos** en la nota y rótulo fiscal dinámico.
+7. **Sistema de diseño v7**: tokens de espaciado/tipografía/movimiento, tipografía mínima 12 px, foco visible en todo el sistema, `prefers-reduced-motion` y diálogos propios (fin de `prompt()`/`confirm()` nativos).
+
+---
    - Cálculo en centavos enteros para evitar errores de coma flotante.
    - **IVA 16% (`G16`)** aplicado a toda la comida preparada (empanadas, arepas, pastelitos, tequeños, papas rellenas, almuerzos, cafetería) y mercancía gravada (refrescos, maltas, cervezas, snacks, cigarros, agua mineral).
    - **Exentos (`E`, 0% Art. 18 Ley de IVA)** para víveres básicos de la cesta venezolana (`Harina P.A.N. Blanca`, `Harina P.A.N. Amarilla`, `Espagueti`, `Arroz Blanco`, `Margarina Mavesa`).
@@ -24,11 +34,12 @@
      3. 🧾 **Compras y gastos**
      4. 💰 **Cuadre del día**
      5. 💵 **Precios y tasa del dólar**
-   - Opciones avanzadas agrupadas bajo el desplegable **"⚙️ Más opciones"** (*Platos y productos, Recetas de cocina, Resumen del negocio, Usuarios y claves, Ajustes y respaldos*).
+   - Opciones avanzadas agrupadas bajo el desplegable **"⚙️ Más opciones"** (*Platos y productos, Recetas de cocina, Usuarios y claves, Ajustes y respaldos*). El **Resumen del negocio (Dashboard)** salió de aquí y vive ahora en el botón **"🏠 Ver mi día"** de la barra superior.
    - Tipografía base aumentada a `15px` y botones táctiles con miniaturas fotográficas reales de `48x48px`.
 
 4. **Catálogo Fotográfico Real 100% Offline (`assets/img/productos/`)**:
    - 47 fotografías reales descargadas de Wikimedia Commons y Open Food Facts, recortadas a `240x240` JPG (`<25 KB`) y documentadas en [`assets/img/productos/CREDITOS.md`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/img/productos/CREDITOS.md).
 
-5. **Suite Automatizada de Pruebas ([`tests/run.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/run.js) y [`tests/tax.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/tax.test.js))**:
+5. **Suite Automatizada de Pruebas ([`tests/run.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/run.js), [`tests/tax.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/tax.test.js) y [`tests/pos.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/pos.test.js))**:
    - Prueba todos los escenarios fiscales (A–F), ventas mixtas con vuelto en USD y Bs, descuento de ingredientes de cocina por receta, compras de cocina con impacto en gaveta, detector anti-fraude de Pago Móvil y migración `v5 -> v6`.
+   - **v7**: 12 casos del flujo de caja (total único con IGTF, base IGTF con vuelto mixto, tarjeta en USD vs. Bs, exentos Art. 18, comida preparada gravada, desglose del vuelto con denominación real).

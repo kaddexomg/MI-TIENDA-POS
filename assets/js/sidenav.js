@@ -291,6 +291,80 @@
     }
   }
 
+  /* ==========================================================================
+     ESTADO DE LA BARRA LATERAL: 3 MODOS (completo · íconos · oculto)
+     ========================================================================== */
+  const SIDEBAR_STATE_KEY = 'mtp_sidebar_state';
+
+  function getSidebarState() {
+    try { return localStorage.getItem(SIDEBAR_STATE_KEY) || 'expanded'; } catch (e) { return 'expanded'; }
+  }
+
+  function setSidebarState(state) {
+    const body = document.body;
+    body.classList.remove('aside-rail', 'aside-hidden', 'aside-collapsed');
+    if (state === 'rail') {
+      body.classList.add('aside-rail');
+      body.classList.add('aside-collapsed');   // compatibilidad con el layout existente
+    } else if (state === 'hidden') {
+      body.classList.add('aside-hidden');
+    }
+    try { localStorage.setItem(SIDEBAR_STATE_KEY, state); } catch (e) {}
+    updateMenuFab();
+    const aside = document.getElementById('adminAside');
+    if (aside) aside.classList.toggle('open', state !== 'hidden');
+  }
+
+  function cycleSidebar() {
+    const order = ['expanded', 'rail', 'hidden'];
+    const current = getSidebarState();
+    const next = order[(order.indexOf(current) + 1) % order.length];
+    setSidebarState(next);
+    const label = { expanded: 'Menú completo', rail: 'Menú en íconos', hidden: 'Menú oculto' };
+    if (window.MTP && window.MTP.toast) {
+      window.MTP.toast(label[next] + ' (Ctrl+B)', 'info');
+    }
+  }
+
+  /** Botón flotante siempre visible: muestra u oculta la barra lateral. */
+  function updateMenuFab() {
+    let fab = document.getElementById('menuFab');
+    if (!fab) {
+      fab = document.createElement('button');
+      fab.id = 'menuFab';
+      fab.className = 'menu-fab';
+      fab.type = 'button';
+      fab.title = 'Mostrar u ocultar el menú (Ctrl+B)';
+      fab.setAttribute('aria-label', 'Mostrar u ocultar el menú');
+      fab.addEventListener('click', function () { cycleSidebar(); });
+      document.body.appendChild(fab);
+    }
+    const state = getSidebarState();
+    fab.setAttribute('data-state', state);
+    fab.innerHTML = state === 'hidden'
+      ? '☰'
+      : (window.MTPIcons ? window.MTPIcons.get('menu', { size: 20, color: '#fff' }) || '☰' : '☰');
+    fab.style.display = 'flex';
+  }
+
+  /** Botón "Ver mi día" en la barra superior: la pantalla que más importa. */
+  function mountTopbarHome(isCaja) {
+    const bar = document.querySelector('.admin-topbar');
+    if (!bar) return;
+    let btn = bar.querySelector('.topbar-home-btn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.className = 'btn btn-action btn-sm topbar-home-btn';
+      btn.type = 'button';
+      bar.insertBefore(btn, bar.firstChild);
+    }
+    btn.textContent = '🏠 Ver mi día';
+    btn.title = 'Resumen del día (Resumen del negocio)';
+    btn.onclick = function () {
+      location.href = isCaja ? '../admin/index.html' : 'index.html';
+    };
+  }
+
   /* RENDERIZADO DE LA NAVEGACIÓN LATERAL DIRECTA Y SENCILLA */
   function renderSidebar() {
     if (!window.MTP) return;
@@ -322,10 +396,11 @@
     ];
 
     // OPCIONES AVANZADAS BAJO "MÁS OPCIONES" (Encargado / Administrador)
+    // NOTA: "Resumen del negocio" NO va aquí — vive en el botón "Ver mi día"
+    // de la barra superior, que es donde el dueño lo busca siempre.
     const ADMIN_MORE_LINKS = [
       { href: 'productos.html',  iconKey: 'barcode',    label: 'Platos y productos',      color: '#8B5CF6' },
       { href: 'recetas.html',    iconKey: 'kitchen',    label: 'Recetas de cocina',       color: '#F97316' },
-      { href: 'index.html',      iconKey: 'chart',      label: 'Resumen del negocio',     color: '#EC4899' },
       { href: 'usuarios.html',   iconKey: 'users',      label: 'Usuarios y claves',       color: '#A855F7' },
       { href: 'ajustes.html',    iconKey: 'settings',   label: 'Ajustes y respaldos',     color: '#64748B' }
     ];
@@ -358,7 +433,7 @@
       const itemColor = item.color || '#10B981';
 
       return `
-        <a href="${item.href}" class="aside-link ${isActive ? 'active' : ''}" style="${isActive ? `border-left: 3px solid ${itemColor}; background: rgba(255,255,255,0.08);` : ''}" title="${item.label}">
+        <a href="${item.href}" class="aside-link ${isActive ? 'active' : ''}" style="${isActive ? `border-left: 3px solid ${itemColor};` : ''}" title="${item.label}">
           <span class="aside-link-left">
             <span class="aside-ico-box" style="background:${itemColor}25; color:${itemColor}; border:1.5px solid ${itemColor}60;">
               ${icoHtml}
@@ -478,22 +553,29 @@
       topRateEl.onclick = () => window.MTPRates && window.MTPRates.openQuickRateModal();
     }
 
+    mountTopbarHome(isCaja);
+
     const menuBtn = document.getElementById('menuToggleBtn');
     if (menuBtn && !menuBtn._bound) {
       menuBtn._bound = true;
       menuBtn.addEventListener('click', () => aside.classList.toggle('open'));
     }
+
+    updateMenuFab();
   }
 
   document.addEventListener('keydown', function (e) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
       e.preventDefault();
-      toggleSidebarCollapse();
+      cycleSidebar();
     }
   });
 
   window.MTPSidebar = {
     toggleSidebarCollapse,
+    cycleSidebar,
+    getSidebarState,
+    setSidebarState,
     openExpenseModal,
     closeExpenseModal,
     onItemSelectChange,
@@ -506,11 +588,13 @@
   };
 
   initSidebarState();
+  setSidebarState(getSidebarState());
   document.addEventListener('DOMContentLoaded', function () {
     if (window.MTPAuth && typeof window.MTPAuth.guardCurrentPage === 'function') {
       window.MTPAuth.guardCurrentPage();
     }
     renderSidebar();
+    setSidebarState(getSidebarState());
   });
   window.addEventListener('mtp:state-updated', renderSidebar);
   window.addEventListener('mtp:auth-login', renderSidebar);

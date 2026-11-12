@@ -2992,12 +2992,17 @@
     });
 
     const changeUsdCashGiven = Number(salePayload.changeGiven && salePayload.changeGiven.usdCashGiven) || 0;
+    const changeBsCashGiven = Number(salePayload.changeGiven && salePayload.changeGiven.bsCashGiven) || 0;
+    const changeBsPmGiven = Number(salePayload.changeGiven && salePayload.changeGiven.bsPmGiven) || 0;
 
     const taxResult = (window.MTPTax && window.MTPTax.computeTotals)
       ? window.MTPTax.computeTotals({
           lines: enrichedLines,
           payments: salePayload.payments || [],
-          changeUsdCashGiven,
+          changeUsdCashGiven: changeUsdCashGiven,
+          changeBsCashGiven: changeBsCashGiven,
+          changeBsPmGiven: changeBsPmGiven,
+          changeRate: Number(salePayload.changeGiven && salePayload.changeGiven.rateUsed) || bcvRate,
           rateBcv: bcvRate,
           settings: state.settings
         })
@@ -3028,6 +3033,13 @@
             totalBs: Number(((totBeforeIgtf * bcvRate) / 100).toFixed(2))
           };
         })();
+
+    // Verificación de coherencia: el total que se cobró en pantalla debe ser
+    // exactamente el que se registra. Si difieren, es un bug de cálculo.
+    if (typeof salePayload.totalUsd === 'number' && Math.abs(taxResult.totalUsd - salePayload.totalUsd) > 0.011) {
+      console.warn('[MI-TIENDA-POS] El total calculado difiere del cobrado:',
+        taxResult.totalUsd, 'vs', salePayload.totalUsd);
+    }
 
     const hasRealFiscalMachine = Boolean(
       fiscalCfg.enabled &&
@@ -3068,8 +3080,7 @@
       createdAt: new Date().toISOString(),
       cashier: salePayload.cashier || 'Caja Principal',
       customer: salePayload.customer || 'Mostrador Rápido',
-      customerRif: salePayload.customerRif || 'V-00000000',
-      fiscalData,
+      customerRif: salePayload.customerRif || 'V-00000000',      fiscalData,
       rateBcv: bcvRate,
       rateEur: state.settings.rateEur,
       rateUsdt: state.settings.rateUsdt,
@@ -3676,6 +3687,11 @@
     let targetMonth = currentMonthIso;
     let targetYear = currentYearIso;
 
+    // Periodo semanal: los últimos 7 días (incluye hoy)
+    const weekStart = new Date(now.getTime());
+    weekStart.setDate(weekStart.getDate() - 6);
+    const weekStartIso = weekStart.toISOString().slice(0, 10);
+
     if (pType === 'DAY' && filterValue) targetDate = String(filterValue).slice(0, 10);
     else if (pType === 'MONTH' && filterValue) targetMonth = String(filterValue).slice(0, 7);
     else if (pType === 'YEAR' && filterValue) targetYear = String(filterValue).slice(0, 4);
@@ -3688,6 +3704,7 @@
       const dStr = String(isoStr).slice(0, 10);
       if (pType === 'ALL') return true;
       if (pType === 'TODAY' || pType === 'DAY') return dStr === targetDate;
+      if (pType === 'WEEK') return dStr >= weekStartIso && dStr <= todayIso;
       if (pType === 'MONTH') return dStr.slice(0, 7) === targetMonth;
       if (pType === 'YEAR') return dStr.slice(0, 4) === targetYear;
       return true;

@@ -6,6 +6,7 @@
   <title>Cuadre del Día, Cierre Mensual y Cierre Anual | MI TIENDA POS</title>
   <link rel="stylesheet" href="../assets/css/variables.css">
   <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/design-v7.css">
   <link rel="stylesheet" href="../assets/css/layout.css">
   <style>
     .cierre-period-tabs {
@@ -549,6 +550,8 @@
   <script src="../assets/js/rates.js"></script>
   <script src="../assets/js/permissions.js"></script>
   <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/ui.js"></script>
+  <script src="../assets/js/keys.js"></script>
   <script src="../assets/js/sidenav.js"></script>
   <script>
     let currentCierreTab = 'DIARIO';
@@ -1573,17 +1576,7 @@
         '============================================================',
         data.storeName + ' - RIF: ' + data.storeRif,
         data.title + ' (' + data.periodLabel + ')',
-        'Emitido: ' + data.emittedAt + ' | Tasa BCV: ' + st.bcv.toFixed(2) + ' Bs/
-      renderCierrePage();
-    });
-    window.addEventListener('mtp:state-updated', () => {
-      if (currentCierreTab === 'DIARIO') renderCierrePage();
-      else if (currentCierreTab === 'MENSUAL') renderMonthlyPane();
-      else if (currentCierreTab === 'ANUAL') renderAnnualPane();
-    });
-  </script>
-</body>
-</html>,
+        'Emitido: ' + data.emittedAt + ' | Tasa BCV: ' + st.bcv.toFixed(2) + ' Bs/',
         '============================================================',
         '',
         '1. RESUMEN DE VENTAS E IMPUESTOS (IVA 16%):',

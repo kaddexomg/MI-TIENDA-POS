@@ -93,3 +93,27 @@
    - **Fase 4 (Menú Simplificado de 5 Opciones y Tipografía 15px)**: Barra lateral limpia con 5 opciones principales (*Vender, Lo que hay en la tienda, Compras y gastos, Cuadre del día, Precios y tasa del dólar*) y sección colapsable *Más opciones*.
    - **Fase 5 (47 Fotografías Reales Verificadas 100% Offline)**: Imágenes auténticas de cada variedad de empanada, arepa, pabellón, arroz chino, pollo broaster, tequeños, pastelitos, Harina P.A.N. blanca/amarilla, Arroz Primor, Mavesa, Frescolita, Malta Polar, Polar Pilsen, Zulia, Solera Verde, Pepito, Cheetos, Cheese Tris, Doritos y Samba.
    - **Fase 6 (Suite de Pruebas Automatizadas `tests/run.js`)**: Verificación automatizada de cálculos de IVA/IGTF, ventas mixtas, descuento de recetas, compras de cocina, detector anti-fraude de Pago Móvil y migración `v5 -> v6`.
+
+6. **✅ REDISEÑO v7 — Experiencia, Diseño y Fiabilidad** (planes completos en `PLANES_V7/`):
+   - **🐛 Corrección crítica**: `admin/cierres.html` tenía el JavaScript **corrupto** (error de sintaxis por un `</script>` incrustado dentro de una cadena). La pantalla **"Cuadre del día" estaba muerta**: todo su JavaScript no se ejecutaba y se mostraba texto basura en la página. **Corregido y verificado**.
+   - **Fase 04 — El dinero**:
+     - `assets/js/pos-engine.js`: nueva función **`computeSaleTotals()`** = **única fuente de verdad** del total. El modal de cobro, el ticket, el vuelto, la validación y el registro de la venta usan el mismo número (antes el IGTF se recalculaba **después** de cobrar y la venta guardada podía no coincidir con lo cobrado).
+     - **Los botones de billete ahora SUMAN** (`$20` y luego `$5` = $25) en vez de reemplazar el monto, y **no borran** lo que el cajero escribe a mano.
+     - `addPaymentLine()`: fuente única de pagos, con `bill`, `rateUsed`, terminal, voucher y **moneda de liquidación** de la tarjeta.
+     - `renderVueltoValidation()`: si la distribución del vuelto **no cuadra**, el botón de cobro se **deshabilita**.
+     - `rebalanceChangeDistribution('BS_CASH')` implementado (antes era código muerto).
+     - `assets/js/change.js` (nuevo): motor puro de vuelto con **denominaciones reales** (US$ 1-100 / Bs 0,10-2.000) y resto en Bs redondeado a **0,50** (no hay centavos).
+   - **Fase 04 — Motor fiscal** (`assets/js/tax.js`): `isForeignPayment()` (el punto de venta **solo** genera IGTF si la terminal liquida en USD), el vuelto se reporta en sus **tres componentes** sin mezclar unidades, y se devuelven `changeTotalUsd` / `changeTotalBs`.
+   - **Fase 01/02 — Diseño y navegación**:
+     - `assets/css/design-v7.css` (nuevo): tokens (espaciado, tipografía 12-30 px, movimiento, capas, foco), tarjetas KPI de cifra grande, acordeón "Muéstrame más", diálogos propios y **foco visible** en todo el sistema.
+     - `assets/js/ui.js` (nuevo): `statCard`, `confirmDialog`, `promptDialog`, `menuDialog`, `trapFocus`, `emptyState` (eliminan el `prompt()`/`confirm()` nativos).
+     - `assets/js/keys.js` (nuevo): **paleta de comandos `Ctrl+K`** (buscar pantalla, acción o producto) con `↑ ↓ Enter Esc`, y atajos **globales reales**: `F2` cobrar, `F6` registrar gasto (antes se anunciaba y no existía), `F7` cuadre, `Esc` cerrar modal, `Ctrl+B` menú.
+     - `assets/js/sidenav.js`: barra lateral en **3 estados** (completo / en íconos / oculta) con **botón flotante siempre visible**, estado persistente, y botón **"🏠 Ver mi día"** en la barra superior (el Dashboard sube de "Más opciones" a un clic).
+   - **Fase 03 — Dashboard "Mi día"** (`admin/index.html`):
+     - **Filtro de periodo** (Hoy / Esta semana / Este mes) — antes la tarjeta decía "hoy" y mostraba **todo el histórico** (`getFinancialAnalytics` sin filtro de fecha).
+     - 4 cifras claras: **"Hoy vendí" · "Hoy gané" · "Tengo en la gaveta" · "IVA 16%"** (el IVA no aparecía).
+     - **4 preguntas** con respuesta y enlace directo (cuánto gasté, qué se acaba, qué se vende más, cocina vs tienda).
+     - El gráfico horario ahora dibuja **todas** las horas con venta (antes las de fuera de 7-21 se sumaban al total pero no se veían), con etiquetas legibles.
+     - La barra "Cocina vs Tienda" compara **importes** (antes pintaba el % de margen junto a un texto en dólares).
+   - **Fase 05 — Impresión**: `assets/css/checkout.css` con `@page 80mm`, **un ticket por página**, comanda **solo si hay platos**, **detalle de pagos** en la nota de entrega y rótulo fiscal **dinámico**.
+   - **Pruebas**: `tests/pos.test.js` (nuevo) con **12 casos** del flujo de caja (total único, IGTF con vuelto mixto, tarjeta en USD vs Bs, exentos, denominación) integrado en `tests/run.js`.

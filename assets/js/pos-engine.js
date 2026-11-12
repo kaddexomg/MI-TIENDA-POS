@@ -20,7 +20,9 @@
   let changeRateMode = 'BCV'; // 'BCV' | 'EUR' | 'USDT' | 'CUSTOM'
   let customChangeRate = 0;
   let changeRemainderMode = 'PM'; // 'PM' (Pago Móvil Bs) | 'BS_CASH' (Efectivo Bs)
+  let changeRateManual = 0;     // tasa real negociada por el cajero en el momento
   let lastRenderedSale = null;
+  const BS_CHANGE_STEP = 0.50; // el vuelto en Bs se entrega en monedas de 0,50
 
   /* ==========================================================================
      INICIALIZACIÓN DEL POS
@@ -29,8 +31,19 @@
     const s = (MTP && MTP.state && MTP.state.settings) || {};
     if (changeRateMode === 'EUR') return Number(s.rateEur) || Number(s.rateBcv) || 42.85;
     if (changeRateMode === 'USDT') return Number(s.rateUsdt) || Number(s.rateBcv) || 42.85;
+    if (changeRateMode === 'CUSTOM' && changeRateManual > 0) return changeRateManual;
     if (changeRateMode === 'CUSTOM' && customChangeRate > 0) return customChangeRate;
     return Number(s.rateBcv) || 42.85;
+  }
+
+  /** Permite al cajero cambiar la tasa con la que se entrega el vuelto. */
+  function setChangeRateMode(mode, manualRate) {
+    changeRateMode = mode || 'BCV';
+    if (manualRate !== undefined && manualRate !== null && Number(manualRate) > 0) {
+      changeRateManual = Number(manualRate);
+      changeRateMode = 'CUSTOM';
+    }
+    renderPaymentsAndChange();
   }
 
   function initPOS() {
@@ -652,6 +665,15 @@
       cart.push(createCartLineFromRetail(item, qty));
     }
 
+    // Guarda de existencias: no se puede vender más de lo que hay en el anaquel.
+    const stock = Number(item.stock || 0);
+    const inCart = cart.filter(c => c.refId === item.id).reduce((a, c) => a + c.qty, 0);
+    if (stock > 0 && inCart > stock) {
+      MTP.toast(`Solo hay ${stock} de "${item.name}". Se ajustó la cantidad.`, 'err');
+      const line = cart.find(c => c.refId === item.id && !c.isDish && !c.note);
+      if (line) line.qty = stock;
+    }
+
     closeModifiersDrawer();
     renderTicket();
     renderProductsCol();
@@ -966,35 +988,66 @@
     MTP.toast('Ticket vaciado', 'warn');
   }
 
-  function getCartTaxSummary(paymentsOverride = null, changeUsdCashGiven = 0) {
+  /**
+   * ÚNICA fuente de verdad del total de la venta.
+   * El ticket, el modal de cobro, el vuelto, la validación y el registro
+   * usan TODOS esta misma función: por construcción el número que ve el
+   * cajero es exactamente el que se cobra y el que se guarda.
+   *
+   * @param {Array|null} paymentsOverride  pagos ya registrados
+   * @param {Object|null} changeOverride   { usdCash, bsCash, bsPm }
+   */
+  function computeSaleTotals(paymentsOverride, changeOverride) {
+    const payments = Array.isArray(paymentsOverride) ? paymentsOverride : currentPayments;
+    const chg = changeOverride || getChangeDistributionInputs();
     const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
-    const paymentsList = Array.isArray(paymentsOverride) ? paymentsOverride : currentPayments;
+
     if (window.MTPTax && window.MTPTax.computeTotals) {
       return window.MTPTax.computeTotals({
         lines: cart,
-        payments: paymentsList,
-        changeUsdCashGiven,
+        payments: payments,
+        changeUsdCashGiven: chg.usdCash,
+        changeBsCashGiven: chg.bsCash,
+        changeBsPmGiven: chg.bsPm,
+        changeRate: getActiveChangeRate(),
         rateBcv: bcv,
         settings: MTP.state.settings
       });
     }
+
+    // Respaldo si el motor fiscal no está cargado (debe ser imposible en producción)
     const sub = cart.reduce((acc, item) => acc + (item.qty * item.priceUsd), 0);
+    const total = Number((sub * 1.16).toFixed(2));
     return {
-      ivaMode: 'RECARGO',
       subtotalBaseUsd: Number(sub.toFixed(2)),
       exentoUsd: 0,
       baseG16Usd: Number(sub.toFixed(2)),
       totalIvaUsd: Number((sub * 0.16).toFixed(2)),
-      totalIvaBs: Number((sub * 0.16 * bcv).toFixed(2)),
       igtfUsd: 0,
-      igtfBs: 0,
-      totalUsd: Number((sub * 1.16).toFixed(2)),
-      totalBs: Number((sub * 1.16 * bcv).toFixed(2))
+      totalUsd: total,
+      totalBs: Number((total * bcv).toFixed(2)),
+      rateBcv: bcv
     };
   }
 
+  /** Lee la distribución del vuelto que escribió el cajero. */
+  function getChangeDistributionInputs() {
+    return {
+      usdCash: parseFloat(document.getElementById('vueltoDistUsd')?.value) || 0,
+      bsCash: parseFloat(document.getElementById('vueltoDistBsCash')?.value) || 0,
+      bsPm: parseFloat(document.getElementById('vueltoDistBsPm')?.value) || 0
+    };
+  }
+
+  function getCartTaxSummary(paymentsOverride = null, changeUsdCashGiven = 0) {
+    const chg = changeUsdCashGiven
+      ? { usdCash: changeUsdCashGiven, bsCash: 0, bsPm: 0 }
+      : getChangeDistributionInputs();
+    return computeSaleTotals(paymentsOverride, chg);
+  }
+
   function getCartTotalUsd() {
-    return getCartTaxSummary().totalUsd;
+    return computeSaleTotals().totalUsd;
   }
 
   /* ==========================================================================
@@ -1321,22 +1374,22 @@
       return;
     }
 
-    const tax = getCartTaxSummary([]);
-    const totalUsd = tax.totalUsd;
-    const totalBs = tax.totalBs;
-
-    document.getElementById('chkTotalUsd').textContent = MTP.fmtUSD(totalUsd);
-    document.getElementById('chkTotalBs').textContent = MTP.fmtBsRaw(totalBs);
-    const chkTaxSummaryEl = document.getElementById('chkTaxSummary');
-    if (chkTaxSummaryEl) {
-      chkTaxSummaryEl.innerHTML = `Subtotal: <strong>${MTP.fmtUSD(tax.subtotalBaseUsd)}</strong> (Exento: ${MTP.fmtUSD(tax.exentoUsd)} · Base 16%: ${MTP.fmtUSD(tax.baseG16Usd)}) + <strong>IVA 16%: ${MTP.fmtUSD(tax.totalIvaUsd)} (${tax.totalIvaBs.toFixed(2)} Bs)</strong>${tax.igtfUsd > 0 ? ` + <strong>IGTF 3%: ${MTP.fmtUSD(tax.igtfUsd)}</strong>` : ''}`;
-    }
-
     currentPayments = [];
+
+    // Se previsualiza el total CON el IGTF estimado del método activo para que
+    // el cajero vea desde el primer instante el número exacto que va a cobrar.
+    const method = document.getElementById('payMethodSelect')?.value || 'Efectivo USD';
+    const baseTax = computeSaleTotals([]);
+    const previewTax = computeSaleTotals([{
+      id: 'p-preview', method: method, amountUsd: baseTax.totalUsd,
+      amountBs: baseTax.totalBs, ref: 'estimado', verified: false
+    }]);
+    renderCheckoutTotals(previewTax);
+
     const payUsdInput = document.getElementById('payAmountUsd');
     const payBsInput = document.getElementById('payAmountBs');
-    if (payUsdInput) payUsdInput.value = totalUsd.toFixed(2);
-    if (payBsInput) payBsInput.value = totalBs.toFixed(2);
+    if (payUsdInput) payUsdInput.value = previewTax.totalUsd.toFixed(2);
+    if (payBsInput) payBsInput.value = previewTax.totalBs.toFixed(2);
 
     const refInput = document.getElementById('payRefInput');
     if (refInput) refInput.value = '';
@@ -1346,6 +1399,31 @@
 
     const modal = document.getElementById('posCheckoutModal');
     if (modal) modal.classList.add('open');
+    const amountInput = document.getElementById('payAmountUsd');
+    if (amountInput) amountInput.focus();
+  }
+
+  /**
+   * Un solo lugar que pinta el total y el desglose fiscal del modal.
+   * Evita que el ticket y el modal muestren números distintos.
+   */
+  function renderCheckoutTotals(tax) {
+    const usdEl = document.getElementById('chkTotalUsd');
+    const bsEl = document.getElementById('chkTotalBs');
+    const sumEl = document.getElementById('chkTaxSummary');
+    if (usdEl) usdEl.textContent = MTP.fmtUSD(tax.totalUsd);
+    if (bsEl) bsEl.textContent = MTP.fmtBsRaw(tax.totalBs);
+    if (sumEl) {
+      sumEl.innerHTML =
+        `Subtotal <strong>${MTP.fmtUSD(tax.subtotalBaseUsd)}</strong>` +
+        ` · Exento <strong>${MTP.fmtUSD(tax.exentoUsd)}</strong>` +
+        ` · Base 16% <strong>${MTP.fmtUSD(tax.baseG16Usd)}</strong>` +
+        ` · IVA 16% <strong>${MTP.fmtUSD(tax.totalIvaUsd)}</strong>` +
+        (tax.igtfUsd > 0 ? ` · IGTF 3% <strong>${MTP.fmtUSD(tax.igtfUsd)}</strong>` : '') +
+        (tax.igtfUsd > 0
+          ? `<div class="chk-igtf-note">IGTF aplicado: el negocio es Contribuyente Especial y parte del pago es en divisas.</div>`
+          : '');
+    }
   }
 
   function selectPayMethod(method) {
@@ -1369,22 +1447,28 @@
     }
   }
 
+  /**
+   * Botón de billete: SUMA, no reemplaza.
+   * Cada pulsación agrega una línea de pago etiquetada con el billete,
+   * de modo que el cajero puede dar $20 y después $5 sin que se pierda nada.
+   */
   function quickAddBillUsd(val) {
-    const totalUsd = getCartTotalUsd();
+    const method = document.getElementById('payMethodSelect')?.value || 'Efectivo USD';
     const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
-    const inputUsd = document.getElementById('payAmountUsd');
-    const inputBs = document.getElementById('payAmountBs');
-    if (!inputUsd || !inputBs) return;
 
     if (val === 'EXACT') {
-      inputUsd.value = totalUsd.toFixed(2);
-      inputBs.value = (totalUsd * bcv).toFixed(2);
-    } else {
-      const num = Number(val);
-      inputUsd.value = num.toFixed(2);
-      inputBs.value = (num * bcv).toFixed(2);
+      const pending = Math.max(0, computeSaleTotals().totalUsd - getPaidTotalUsd());
+      if (pending <= 0.009) {
+        MTP.toast('La cuenta ya está cobrada por completo.', 'warn');
+        return;
+      }
+      addPaymentLine({ method, amountUsd: pending, amountBs: pending * bcv, bill: 'Exacto' });
+      return;
     }
-    renderPaymentsAndChange();
+
+    const amount = Number(val) || 0;
+    if (amount <= 0) return;
+    addPaymentLine({ method, amountUsd: amount, amountBs: amount * bcv, bill: '$' + amount });
   }
 
   function syncPayInputsFromUsd(val) {
@@ -1422,40 +1506,62 @@
     }
   }
 
+  /**
+   * Fuente ÚNICA de líneas de pago. Todo (billete, pago móvil, tarjeta,
+   * efectivo) entra por aquí para que el total, el vuelto y el registro
+   *receban exactamente la misma información.
+   */
+  function addPaymentLine(opts) {
+    opts = opts || {};
+    const method = opts.method || 'Efectivo USD';
+    const amountUsd = Number(opts.amountUsd) || 0;
+    const amountBs = Number(opts.amountBs) || 0;
+
+    if (amountUsd <= 0 && amountBs <= 0) {
+      MTP.toast('Ingresa un monto válido a registrar', 'warn');
+      return false;
+    }
+
+    const refInput = document.getElementById('payRefInput');
+    const ref = (refInput && refInput.value.trim()) || opts.ref || 'Directo';
+
+    if (method === 'Pago Móvil' && ref.length >= 4 && MTP.isPagoMovilRefUsed && MTP.isPagoMovilRefUsed(ref)) {
+      MTP.toast('Esta referencia de Pago Móvil ya fue usada hoy.', 'err');
+      return false;
+    }
+
+    const terminalSel = document.getElementById('posTerminalSelect');
+    const liqOption = terminalSel && terminalSel.selectedOptions ? terminalSel.selectedOptions[0] : null;
+
+    currentPayments.push({
+      id: 'p-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      method: method,
+      amountUsd: Number(amountUsd.toFixed(2)),
+      amountBs: Number(amountBs.toFixed(2)),
+      rateUsed: Number(getActiveChangeRate().toFixed(4)),
+      ref: ref,
+      bill: opts.bill || '',
+      bank: method === 'Pago Móvil' ? (document.getElementById('pmBankSelect')?.value || '') : '',
+      phone: method === 'Pago Móvil' ? (document.getElementById('pmPhoneInput')?.value || '') : '',
+      terminalId: method === 'Punto de Venta' ? (terminalSel?.value || '') : '',
+      voucher: method === 'Punto de Venta' ? (document.getElementById('posVoucherInput')?.value || '') : '',
+      batchNumber: method === 'Punto de Venta' ? (document.getElementById('posBatchInput')?.value || '') : '',
+      liquidationCurrency: method === 'Punto de Venta'
+        ? (liqOption ? (liqOption.dataset.liquidation || 'VES') : 'VES')
+        : '',
+      verified: true
+    });
+
+    if (refInput) refInput.value = '';
+    renderPaymentsAndChange();
+    return true;
+  }
+
   function addCurrentPaymentLine() {
     const method = document.getElementById('payMethodSelect')?.value || 'Efectivo USD';
     const amountUsd = parseFloat(document.getElementById('payAmountUsd')?.value) || 0;
     const amountBs = parseFloat(document.getElementById('payAmountBs')?.value) || 0;
-    let ref = document.getElementById('payRefInput')?.value.trim() || '';
-
-    if (amountUsd <= 0 && amountBs <= 0) {
-      MTP.toast('Ingresa un monto válido a registrar', 'warn');
-      return;
-    }
-
-    if (method === 'Pago Móvil' && ref.length >= 4) {
-      const isUsed = MTP.isPagoMovilRefUsed ? MTP.isPagoMovilRefUsed(ref) : false;
-      if (isUsed) {
-        MTP.toast('Esta referencia de Pago Móvil ya fue usada hoy.', 'err');
-        return;
-      }
-    }
-
-    currentPayments.push({
-      id: 'p-' + Date.now(),
-      method,
-      amountUsd,
-      amountBs,
-      ref: ref || 'Directo',
-      bank: (method === 'Pago Móvil') ? document.getElementById('pmBankSelect')?.value : '',
-      phone: (method === 'Pago Móvil') ? document.getElementById('pmPhoneInput')?.value : '',
-      verified: true
-    });
-
-    // Resetear campos
-    const refInput = document.getElementById('payRefInput');
-    if (refInput) refInput.value = '';
-    renderPaymentsAndChange();
+    return addPaymentLine({ method, amountUsd, amountBs });
   }
 
   function removePaymentLine(payId) {
@@ -1467,39 +1573,83 @@
     return currentPayments.reduce((acc, p) => acc + p.amountUsd, 0);
   }
 
+  /**
+   * Propone cómo entregar el vuelto con DENOMINACIONES REALES:
+   * billetes US$ enteros + resto en Bolívares redondeado a monedas de 0,50.
+   */
+  function suggestChangeBreakdown(changeUsd) {
+    const rate = getActiveChangeRate();
+    if (window.MTPChange && window.MTPChange.breakDown) {
+      return window.MTPChange.breakDown(changeUsd, rate, BS_CHANGE_STEP);
+    }
+    const usd = Math.max(0, Number(changeUsd) || 0);
+    const wholeUsd = Math.floor(usd + 0.001);
+    let remBs = (usd - wholeUsd) * rate;
+    remBs = Math.round(remBs / BS_CHANGE_STEP) * BS_CHANGE_STEP;
+    const bills = [];
+    let rest = wholeUsd;
+    [100, 50, 20, 10, 5, 2, 1].forEach(d => {
+      const n = Math.floor(rest / d);
+      if (n > 0) { bills.push({ denom: d, count: n, amount: n * d }); rest -= n * d; }
+    });
+    let text = bills.map(b => '$' + b.amount).join(' + ');
+    if (remBs > 0) text = text ? (text + ' + Bs ' + remBs.toFixed(2)) : ('Bs ' + remBs.toFixed(2));
+    return { usd: wholeUsd, bs: Number(remBs.toFixed(2)), bills: bills, text: text || 'Sin vuelto' };
+  }
+
+  /**
+   * Verifica que la distribución del vuelto entregado sea igual al vuelto
+   * debido. Si no cuadra, se avisa y se BLOQUEA el cobro.
+   * @returns {boolean} true si cuadra
+   */
+  function renderVueltoValidation() {
+    const tax = computeSaleTotals();
+    const paidUsd = getPaidTotalUsd();
+    const changeDueUsd = Math.max(0, paidUsd - tax.totalUsd);
+    const rate = getActiveChangeRate();
+    const chg = getChangeDistributionInputs();
+    const deliveredUsd = chg.usdCash + (chg.bsCash / rate) + (chg.bsPm / rate);
+    const diff = Math.abs(deliveredUsd - changeDueUsd);
+    const ok = changeDueUsd <= 0.009 || diff <= 0.011;
+
+    const el = document.getElementById('vueltoValidation');
+    if (el) {
+      el.textContent = ok
+        ? '✔ El vuelto cuadra'
+        : `⚠ El vuelto no cuadra: entregaste ${MTP.fmtUSD(deliveredUsd)} y debes entregar ${MTP.fmtUSD(changeDueUsd)}`;
+      el.className = ok ? 'chk-ok' : 'chk-error';
+    }
+    const btn = document.getElementById('btnConfirmSale');
+    if (btn) btn.disabled = !ok;
+    return ok;
+  }
+
   function renderPaymentsAndChange() {
-    const tax = getCartTaxSummary(currentPayments);
+    const tax = computeSaleTotals();
     const totalUsd = tax.totalUsd;
     const totalBs = tax.totalBs;
     const paidUsd = getPaidTotalUsd();
     const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
     const chgRate = getActiveChangeRate();
 
-    const chkTotUsdEl = document.getElementById('chkTotalUsd');
-    const chkTotBsEl = document.getElementById('chkTotalBs');
-    if (chkTotUsdEl) chkTotUsdEl.textContent = MTP.fmtUSD(totalUsd);
-    if (chkTotBsEl) chkTotBsEl.textContent = MTP.fmtBsRaw(totalBs);
-    const chkTaxSummaryEl = document.getElementById('chkTaxSummary');
-    if (chkTaxSummaryEl) {
-      chkTaxSummaryEl.innerHTML = `Subtotal: <strong>${MTP.fmtUSD(tax.subtotalBaseUsd)}</strong> (Exento: ${MTP.fmtUSD(tax.exentoUsd)} · Base 16%: ${MTP.fmtUSD(tax.baseG16Usd)}) + <strong>IVA 16%: ${MTP.fmtUSD(tax.totalIvaUsd)} (${tax.totalIvaBs.toFixed(2)} Bs)</strong>${tax.igtfUsd > 0 ? ` + <strong>IGTF 3%: ${MTP.fmtUSD(tax.igtfUsd)}</strong>` : ''}`;
-    }
+    renderCheckoutTotals(tax);
 
     // Lista de pagos sumados
     const listEl = document.getElementById('chkPaymentsList');
     if (listEl) {
       if (!currentPayments.length) {
-        listEl.innerHTML = `<div style="padding:6px;color:var(--txt-sec);font-size:11.5px;text-align:center;background:#fff;border:1px dashed var(--border);border-radius:6px">Toca un billete ($5, $10, $20, $50, Exacto) o suma un método de pago.</div>`;
+        listEl.innerHTML = `<div class="chk-empty">Toca un billete ($5, $10, $20, $50) o suma un método de pago.</div>`;
       } else {
         listEl.innerHTML = currentPayments.map(p => `
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:#fff;border:1px solid var(--border);border-radius:6px;margin-bottom:3px;font-size:11.5px">
-            <div>
-              <strong>${p.method}</strong>
-              <span style="color:#64748b;font-size:11px">(${p.ref})</span>
+          <div class="chk-pay-row">
+            <div class="chk-pay-name">
+              <strong>${p.method}${p.bill ? ' · ' + p.bill : ''}</strong>
+              <span class="chk-pay-ref">${p.ref}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:6px">
+            <div class="chk-pay-amount">
               <strong>${MTP.fmtUSD(p.amountUsd)}</strong>
-              <span style="font-size:10.5px;color:#059669;font-weight:700">(${p.amountBs.toFixed(2)} Bs)</span>
-              <button type="button" class="btn btn-ghost btn-sm" style="color:var(--danger);padding:0 4px" onclick="window.MTPPos.removePaymentLine('${p.id}')">✕</button>
+              <span>${p.amountBs.toFixed(2)} Bs</span>
+              <button type="button" class="chk-pay-del" title="Quitar este pago" onclick="window.MTPPos.removePaymentLine('${p.id}')">✕</button>
             </div>
           </div>
         `).join('');
@@ -1509,8 +1659,11 @@
     const remUsd = Math.max(0, totalUsd - paidUsd);
     const payUsdInput = document.getElementById('payAmountUsd');
     const payBsInput = document.getElementById('payAmountBs');
-    if (payUsdInput && remUsd > 0.009) payUsdInput.value = remUsd.toFixed(2);
-    if (payBsInput && remUsd > 0.009) payBsInput.value = (remUsd * bcv).toFixed(2);
+    // NO se sobrescribe lo que el cajero escribió: solo se rellena si está vacío.
+    if (payUsdInput && !payUsdInput.value && remUsd > 0.009) {
+      payUsdInput.value = remUsd.toFixed(2);
+      if (payBsInput && !payBsInput.value) payBsInput.value = (remUsd * bcv).toFixed(2);
+    }
 
     const diffUsd = paidUsd - totalUsd;
     const statusLabel = document.getElementById('vueltoStatusLabel');
@@ -1539,91 +1692,117 @@
       if (cardUsd) cardUsd.classList.remove('faltante');
       if (cardBs) cardBs.classList.remove('faltante');
 
-      // Distribución por defecto venezolana: Billetes USD enteros + centavos por Pago Móvil en Bs
-      const wholeUsd = Math.floor(vueltoUsd + 0.001);
-      const remBs = Math.max(0, (vueltoUsd - wholeUsd) * chgRate);
+      // Distribución por defecto venezolana: billetes US$ reales + resto en Bs (0,50)
+      const suggestion = suggestChangeBreakdown(vueltoUsd);
       if (distUsd) {
-        distUsd.value = String(wholeUsd);
+        distUsd.value = String(suggestion.usd);
+        const bsVal = suggestion.bs.toFixed(2);
         if (changeRemainderMode === 'BS_CASH') {
-          distBsCash.value = remBs.toFixed(2);
+          distBsCash.value = bsVal;
           distBsPm.value = '0.00';
         } else {
-          distBsPm.value = remBs.toFixed(2);
+          distBsPm.value = bsVal;
           distBsCash.value = '0.00';
         }
       }
+      const hintEl = document.getElementById('vueltoSuggestion');
+      if (hintEl) hintEl.textContent = suggestion.text;
     } else {
       if (statusLabel) statusLabel.textContent = '✅ PAGO EXACTO (SIN VUELTO):';
-      if (chgUsdEl) chgUsdEl.textContent = '$0.00';
-      if (chgBsEl) chgBsEl.textContent = '0,00 Bs';
+      if (chgUsdEl) chgUsdEl.textContent = MTP.fmtUSD(0);
+      if (chgBsEl) chgBsEl.textContent = MTP.fmtBsRaw(0);
       if (cardUsd) cardUsd.classList.remove('faltante');
       if (cardBs) cardBs.classList.remove('faltante');
       if (distUsd) { distUsd.value = '0'; distBsCash.value = '0.00'; distBsPm.value = '0.00'; }
+      const hintEl = document.getElementById('vueltoSuggestion');
+      if (hintEl) hintEl.textContent = 'Sin vuelto';
     }
+
+    renderVueltoValidation();
   }
 
   function rebalanceChangeDistribution(mode) {
-    const totalUsd = getCartTotalUsd();
+    const totalUsd = computeSaleTotals().totalUsd;
     const paidUsd = getPaidTotalUsd();
-    const chgRate = getActiveChangeRate();
+    const rate = getActiveChangeRate();
     const totalChangeUsd = Math.max(0, paidUsd - totalUsd);
-
     const distUsdEl = document.getElementById('vueltoDistUsd');
     const distBsCashEl = document.getElementById('vueltoDistBsCash');
     const distBsPmEl = document.getElementById('vueltoDistBsPm');
     if (!distUsdEl || !distBsCashEl || !distBsPmEl) return;
 
+    const suggestion = suggestChangeBreakdown(totalChangeUsd);
+
     if (mode === 'ALL_USD') {
-      distUsdEl.value = Math.floor(totalChangeUsd).toString();
-      const rem = (totalChangeUsd - Math.floor(totalChangeUsd)) * chgRate;
-      distBsPmEl.value = rem.toFixed(2);
+      distUsdEl.value = String(suggestion.usd);
       distBsCashEl.value = '0.00';
+      distBsPmEl.value = suggestion.bs.toFixed(2);
+    } else if (mode === 'ALL_BS') {
+      distUsdEl.value = '0';
+      distBsCashEl.value = (totalChangeUsd * rate).toFixed(2);
+      distBsPmEl.value = '0.00';
     } else if (mode === 'ALL_PM') {
       distUsdEl.value = '0';
       distBsCashEl.value = '0.00';
-      distBsPmEl.value = (totalChangeUsd * chgRate).toFixed(2);
+      distBsPmEl.value = (totalChangeUsd * rate).toFixed(2);
     } else if (mode === 'USD') {
+      // El cajero fijó el efectivo en US$: el resto se calcula en Bs.
       const usdGiven = Math.min(totalChangeUsd, Math.max(0, parseFloat(distUsdEl.value) || 0));
-      const remBs = Math.max(0, (totalChangeUsd - usdGiven) * chgRate);
-      distBsPmEl.value = remBs.toFixed(2);
+      const remBs = Math.max(0, (totalChangeUsd - usdGiven) * rate);
+      const remRound = Math.round(remBs / BS_CHANGE_STEP) * BS_CHANGE_STEP;
+      distBsPmEl.value = remRound.toFixed(2);
       distBsCashEl.value = '0.00';
+    } else if (mode === 'BS_CASH') {
+      // El cajero fijó el efectivo en Bs: se descuenta del resto.
+      const bsGiven = Math.max(0, parseFloat(distBsCashEl.value) || 0);
+      const usdGiven = Math.max(0, totalChangeUsd - (bsGiven / rate));
+      distUsdEl.value = String(Math.floor(usdGiven + 0.001));
+      distBsPmEl.value = '0.00';
     }
+    renderVueltoValidation();
   }
 
   function finalizeSale() {
-    const totalUsd = getCartTotalUsd();
     const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
     const chgRate = getActiveChangeRate();
 
-    // Si no sumó pagos a la lista, asume el método activo con el monto del input
+    // 1) Si el cajero no sumó pagos a la lista, se toma el método y el monto
+    //    que escribió en los campos (el importe exacto, no el saldo pendiente).
     if (!currentPayments.length) {
       const method = document.getElementById('payMethodSelect')?.value || 'Efectivo USD';
-      const enteredUsd = parseFloat(document.getElementById('payAmountUsd')?.value) || totalUsd;
-      const ref = document.getElementById('payRefInput')?.value.trim() || 'Pago Directo';
-
-      currentPayments.push({
-        id: 'p-direct',
+      const enteredUsd = parseFloat(document.getElementById('payAmountUsd')?.value) || 0;
+      const enteredBs = parseFloat(document.getElementById('payAmountBs')?.value) || 0;
+      const ok = addPaymentLine({
         method,
-        amountUsd: enteredUsd,
-        amountBs: enteredUsd * bcv,
-        ref,
-        bank: (method === 'Pago Móvil') ? document.getElementById('pmBankSelect')?.value : '',
-        phone: (method === 'Pago Móvil') ? document.getElementById('pmPhoneInput')?.value : '',
-        verified: true
+        amountUsd: enteredUsd > 0 ? enteredUsd : computeSaleTotals().totalUsd,
+        amountBs: enteredBs > 0 ? enteredBs : 0,
+        ref: document.getElementById('payRefInput')?.value.trim() || 'Pago Directo'
       });
+      if (!ok) return;
     }
 
+    // 2) TOTAL ÚNICO: el mismo número que se le mostró al cajero al abrir
+    //    el modal es el que se valida, el que genera el vuelto y el que se
+    //    guarda en la venta (antes estos tres eran cálculos distintos).
+    const tax = computeSaleTotals();
+    const totalUsd = tax.totalUsd;
+    const totalBs = tax.totalBs;
+
     const paidUsd = getPaidTotalUsd();
-    if (paidUsd + 0.01 < totalUsd) {
+    if (paidUsd + 0.009 < totalUsd) {
       MTP.toast(`Falta cobrar ${MTP.fmtUSD(totalUsd - paidUsd)} (${((totalUsd - paidUsd) * bcv).toFixed(2)} Bs)`, 'err');
+      return;
+    }
+
+    // 3) Validación dura de la distribución del vuelto: si no cuadra, no se cobra.
+    if (!renderVueltoValidation()) {
+      MTP.toast('Revisa la distribución del vuelto antes de cobrar.', 'err');
       return;
     }
 
     const changeUsd = Math.max(0, paidUsd - totalUsd);
     const changeBs = changeUsd * chgRate;
-    const usdCashGiven = parseFloat(document.getElementById('vueltoDistUsd')?.value) || 0;
-    const bsCashGiven = parseFloat(document.getElementById('vueltoDistBsCash')?.value) || 0;
-    const bsPmGiven = parseFloat(document.getElementById('vueltoDistBsPm')?.value) || 0;
+    const chg = getChangeDistributionInputs();
 
     const customerInput = document.getElementById('posCustomerInput');
     const customer = (customerInput && customerInput.value.trim()) || 'Mostrador Rápido';
@@ -1632,6 +1811,7 @@
       customer,
       cashier: location.pathname.includes('/caja/') ? 'Cajero Turno' : 'Admin / Caja',
       totalUsd,
+      totalBs,
       items: cart.map(c => ({
         refId: c.refId,
         variantId: c.variantId || c.refId,
@@ -1652,10 +1832,10 @@
         totalChangeUsd: Number(changeUsd.toFixed(2)),
         totalChangeBs: Number(changeBs.toFixed(2)),
         rateUsed: chgRate,
-        usdCashGiven: Number(usdCashGiven.toFixed(2)),
-        bsCashGiven: Number(bsCashGiven.toFixed(2)),
-        bsPmGiven: Number(bsPmGiven.toFixed(2)),
-        breakdown: `$${usdCashGiven.toFixed(2)} $ + ${bsPmGiven.toFixed(2)} Bs PM`
+        usdCashGiven: Number(chg.usdCash.toFixed(2)),
+        bsCashGiven: Number(chg.bsCash.toFixed(2)),
+        bsPmGiven: Number(chg.bsPm.toFixed(2)),
+        breakdown: `US$ ${chg.usdCash.toFixed(2)} + Bs ${chg.bsCash.toFixed(2)} efectivo + Bs ${chg.bsPm.toFixed(2)} pago móvil`
       }
     });
 
@@ -1680,15 +1860,26 @@
       return;
     }
     const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
-    const totalUsd = getCartTotalUsd();
+    // Se usa el total ÚNICO para que la vista previa muestre los mismos
+    // números (exento, base 16%, IVA) que se cobrarán y no $0.00.
+    const tax = computeSaleTotals();
+    const totalUsd = tax.totalUsd;
+    const totalBs = tax.totalBs;
     const customerInput = document.getElementById('posCustomerInput');
     const previewOrder = {
       orderNumber: MTP.state.settings.nextOrderNumber,
       createdAt: new Date().toISOString(),
       customer: (customerInput && customerInput.value.trim()) || 'Orden / Cotización',
       rateBcv: bcv,
+      subtotalUsd: tax.subtotalBaseUsd,
+      exentoUsd: tax.exentoUsd,
+      baseG16Usd: tax.baseG16Usd,
+      ivaUsd: tax.totalIvaUsd,
+      ivaBs: tax.totalIvaBs,
+      igtfUsd: tax.igtfUsd,
+      igtfBs: tax.igtfBs,
       totalUsd,
-      totalBs: totalUsd * bcv,
+      totalBs,
       items: cart.map(c => ({
         code: c.code,
         name: c.name,
@@ -1700,7 +1891,8 @@
         selectedModifiers: c.selectedModifiers || [],
         note: c.note
       })),
-      payments: [{ method: 'Por Cobrar', amountUsd: totalUsd, amountBs: totalUsd * bcv }],
+      payments: currentPayments.length ? currentPayments
+        : [{ method: 'Por Cobrar', amountUsd: totalUsd, amountBs: totalBs }],
       changeGiven: { totalChangeUsd: 0, totalChangeBs: 0, breakdown: '—' }
     };
     showPrintedTicketsModal(previewOrder);
@@ -1712,10 +1904,11 @@
     if (!modal || !content) return;
 
     const dishesOnly = sale.items.filter(i => i.isDish);
+    const hasDishes = dishesOnly.length > 0;
     const dateStr = new Date(sale.createdAt).toLocaleString('es-VE');
+    const fd = sale.fiscalData || {};
 
-    const kitchenHtml = dishesOnly.length
-      ? dishesOnly.map(d => {
+    const kitchenHtml = dishesOnly.map(d => {
           const modStr = (d.selectedModifiers && d.selectedModifiers.length) ? ` (${d.selectedModifiers.map(m => m.name).join(', ')})` : '';
           return `
             <div style="padding:4px 0;border-bottom:1px dashed #000">
@@ -1723,8 +1916,7 @@
               ${d.note ? `<div style="font-size:11px;font-weight:bold;background:#000;color:#fff;padding:1px 4px;margin-top:2px;display:inline-block">NOTA: ${d.note}</div>` : ''}
             </div>
           `;
-        }).join('')
-      : `<div style="padding:8px 0;text-align:center;color:#64748b">Solo productos de minimercado (despacho directo de mostrador)</div>`;
+    }).join('');
 
     const itemsHtml = sale.items.map(i => {
       const modStr = (i.selectedModifiers && i.selectedModifiers.length) ? ` [${i.selectedModifiers.map(m => m.name).join(', ')}]` : '';
@@ -1736,9 +1928,27 @@
       `;
     }).join('');
 
-    content.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <!-- TICKET 1: COMANDA DE COCINA -->
+    // Detalle de pagos (imprescindible para el cuadre del día y para evidenciar
+    // la base del IGTF).
+    const paymentsHtml = (sale.payments || []).map(p => {
+      let label = p.method || '';
+      if (p.bill) label += ` (${p.bill})`;
+      if (p.bank) label += ` ${p.bank}`;
+      if (p.ref && p.ref !== 'Directo') label += ` Ref ${p.ref}`;
+      return `
+        <div style="display:flex;justify-content:space-between;font-size:11px">
+          <span>${label}</span>
+          <span style="font-family:monospace">${MTP.fmtUSD(p.amountUsd)}</span>
+        </div>`;
+    }).join('');
+
+    // Rótulo fiscal DINÁMICO según el estado real de la máquina
+    const fiscalLabel = fd.isFiscalValid
+      ? 'COMPROBANTE FISCAL HOMOLOGADO'
+      : 'NOTA DE ENTREGA · CONTROL INTERNO · NO ES FACTURA FISCAL';
+
+    // La comanda de cocina SOLO se imprime si la venta tiene platos.
+    const kitchenTicket = hasDishes ? `
         <div class="thermal-ticket">
           <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:6px">
             <h4 style="margin:0;font-size:15px;font-weight:900">🍳 COMANDA DE COCINA</h4>
@@ -1749,13 +1959,18 @@
           <div>${kitchenHtml}</div>
           <div style="text-align:center;font-size:10.5px;margin-top:8px;font-weight:bold">*** DESPACHAR CALIENTE ***</div>
         </div>
+    ` : '';
 
-        <!-- TICKET 2: NOTA DE ENTREGA / CONTROL INTERNO -->
+    content.innerHTML = `
+      <div class="print-root">
+        ${kitchenTicket}
         <div class="thermal-ticket">
           <div style="text-align:center;border-bottom:1px dashed #000;padding-bottom:5px;margin-bottom:6px">
-            <h4 style="margin:0;font-size:14px;font-weight:bold">MI TIENDA POS</h4>
-            <div style="font-size:10px;color:#333">NOTA DE ENTREGA · CONTROL INTERNO</div>
-            <div style="font-size:9.5px;color:#666">(SIN VALIDEZ DE CRÉDITO FISCAL)</div>
+            <h4 style="margin:0;font-size:14px;font-weight:bold">${fd.storeName || 'MI TIENDA POS'}</h4>
+            <div style="font-size:10px;color:#333">${fd.storeAddress || ''}</div>
+            <div style="font-size:10px;color:#333">RIF: ${fd.storeRif || ''}</div>
+            ${fd.serialNumber ? `<div style="font-size:10px;color:#333">Serial: ${fd.serialNumber} · Comprobante: ${fd.fiscalInvoiceNumber} · Control: ${fd.controlNumber}</div>` : ''}
+            <div style="font-size:10px;color:#333">${fiscalLabel}</div>
             <div style="font-size:11px;font-weight:bold;margin-top:3px">ORDEN #${sale.orderNumber} · ${sale.customer}</div>
             <div style="font-size:10px">${dateStr}</div>
           </div>
@@ -1793,6 +2008,10 @@
               </div>
             ` : ''}
           </div>
+          ${paymentsHtml ? `<div style="padding-top:4px;border-bottom:1px dashed #000;padding-bottom:4px">
+            <div style="font-size:11px;font-weight:900">PAGOS:</div>
+            ${paymentsHtml}
+          </div>` : ''}
           <div style="text-align:center;font-size:10px;margin-top:6px">
             ¡Gracias por su compra! Vuelva pronto.
           </div>
@@ -1841,12 +2060,18 @@
     syncPayInputsFromUsd,
     syncPayInputsFromBs,
     addCurrentPaymentLine,
+    addPaymentLine,
     removePaymentLine,
     checkPagoMovilRefLive,
     rebalanceChangeDistribution,
+    renderVueltoValidation,
+    suggestChangeBreakdown,
+    setChangeRateMode,
     finalizeSale,
     getCartTaxSummary,
     getCartTotalUsd,
+    computeSaleTotals,
+    showPrintedTicketsModal,
 
     // Métodos legados para compatibilidad
     addOrReplaceDish: (id, qty) => addVariantQuick(id, qty),

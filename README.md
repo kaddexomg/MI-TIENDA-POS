@@ -1,6 +1,6 @@
 # MI-TIENDA-POS — Sistema POS Híbrido, Kardex Inmutable y Control Operativo
 
-> **Versión**: 4.0 Stable  
+> **Versión**: 7.0 (Rediseño de Experiencia, Dinero y Navegación)
 > **Compatibilidad**: Windows 7 (32/64 bit), Windows 10, Windows 11, Linux, macOS  
 > **Requisitos Mínimos**: 2 GB de RAM, Procesador Dual-Core, Pantalla 1024×768 o superior  
 > **Entorno**: 100% Offline-Ready (Sin servidores locales pesados, sin Node.js o Python en ejecución, Modo `--app` de Chromium/Chrome/Edge)
@@ -145,15 +145,21 @@ Diseñado para despachar filas de clientes en segundos utilizando exclusivamente
 
 | Tecla | Acción en el Sistema |
 |---|---|
+| **Ctrl + K** | **Abrir la paleta de comandos** (ir a cualquier pantalla o acción escribiendo) |
+| **Ctrl + B** | Mostrar / ocultar el menú lateral (completo → en íconos → oculto) |
 | **F1** | Enfocar el cursor en el buscador / escáner de códigos de barras |
 | **F2** | Abrir la ventana de Cobro y cálculo de Vueltos |
 | **F3** | Poner la cuenta actual en **Espera** (Multicuenta para atender al siguiente) |
 | **F4** | Vista previa e impresión de Comanda de Cocina |
-| **F6** | Registro rápido de gastos operativos o compras menores de insumos |
-| **Ctrl + B** | Colapsar / expandir la barra lateral de navegación |
+| **F6** | Registrar rápido de gastos operativos o compras menores de insumos |
+| **F7** | Ir al Cuadre del día |
+| **Esc** | Cerrar cualquier ventana emergente o cancelar modo reemplazo |
 | **1 al 9, 0** | Abrir la familia correspondiente o seleccionar variedad en el modal |
 | **+ / -** | Incrementar o disminuir la cantidad del último ítem añadido |
-| **ESC** | Cerrar cualquier ventana emergente o cancelar modo reemplazo |
+
+> **En la Caja**, los botones de billete **suman** (pulsar `$20` y luego `$5` = $25) y el sistema
+> propone el vuelto con **denominaciones reales** (US$ 1-100 y Bs 0,10-2.000). Si la distribución
+> del vuelto no cuadra, el botón **Confirmar Cobro se deshabilita**.
 
 ---
 

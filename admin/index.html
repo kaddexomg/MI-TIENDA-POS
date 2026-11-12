@@ -6,6 +6,7 @@
   <title>Análisis Financiero, Ingresos, Gastos y Dashboard | MI TIENDA POS</title>
   <link rel="stylesheet" href="../assets/css/variables.css">
   <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/design-v7.css">
   <link rel="stylesheet" href="../assets/css/layout.css">
   <style>
     .svg-chart-wrap {
@@ -28,20 +29,32 @@
         <div class="topbar-left">
           <button class="menu-toggle" id="menuToggleBtn">☰</button>
           <div class="topbar-title">
-            <h2>Análisis Financiero · Ingresos, Gastos, Gaveta y Rentabilidad</h2>
-            <p>Control de ventas, costo de recetas, gastos operativos, flujo de caja por método de pago y arqueo neto</p>
+            <h2>Mi día — cómo va el negocio</h2>
+            <p>Lo que vendiste, lo que ganaste, lo que hay en la gaveta y qué se está acabando</p>
           </div>
         </div>
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
-          <button class="btn btn-secondary btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Registrar Gasto (F6)</button>
-          <a href="pos.html" class="btn btn-action btn-sm">POS a Caja (F2)</a>
+          <button class="btn btn-secondary btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Gasto (F6)</button>
+          <a href="pos.html" class="btn btn-action btn-sm">Caja (F2)</a>
         </div>
       </header>
 
       <div class="admin-content">
-        <!-- KPIS PRINCIPALES: INGRESOS, COSTO, GASTOS, GANANCIA NETA -->
+        <!-- FILTRO DE PERIODO: el dueño siempre quiere saber cómo va HOY -->
+        <div class="v7-period-bar">
+          <span class="v7-period-label">¿Desde cuándo quieres ver?</span>
+          <button class="v7-period-btn active" data-period="TODAY">Hoy</button>
+          <button class="v7-period-btn" data-period="WEEK">Esta semana</button>
+          <button class="v7-period-btn" data-period="MONTH">Este mes</button>
+          <span class="v7-period-note" id="periodNote">Los números de abajo son de hoy.</span>
+        </div>
+
+        <!-- LAS 3 CIFRAS QUE IMPORTAN + IVA -->
         <div class="stat-grid" id="mainFinancialKpis"></div>
+
+        <!-- 4 PREGUNTAS CON RESPUESTA Y BOTÓN DE DETALLE -->
+        <div class="dash-questions" id="dashQuestions"></div>
 
         <!-- GRÁFICOS INTERACTIVOS NATIVOS SVG (0% GPU / WINDOWS 7) -->
         <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:12px;margin-bottom:12px">
@@ -177,6 +190,8 @@
   <script src="../assets/js/rates.js"></script>
   <script src="../assets/js/permissions.js"></script>
   <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/ui.js"></script>
+  <script src="../assets/js/keys.js"></script>
   <script src="../assets/js/sidenav.js"></script>
   <script>
     function setupHeaderIcons() {
@@ -194,56 +209,86 @@
       setIco('recentSalesIcon', 'receipt');
     }
 
+    let dashboardPeriod = 'TODAY';
+
+    function periodLabel() {
+      if (dashboardPeriod === 'WEEK') return 'Esta semana';
+      if (dashboardPeriod === 'MONTH') return 'Este mes';
+      return 'Hoy';
+    }
+
+    function setupPeriodBar() {
+      const bar = document.querySelector('.v7-period-bar');
+      if (!bar) return;
+      bar.querySelectorAll('.v7-period-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          dashboardPeriod = btn.getAttribute('data-period');
+          bar.querySelectorAll('.v7-period-btn').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          const note = document.getElementById('periodNote');
+          if (note) note.textContent = 'Los números de abajo son de ' + periodLabel().toLowerCase() + '.';
+          renderDashboardAnalytics();
+        });
+      });
+    }
+
     function renderDashboardAnalytics() {
       setupHeaderIcons();
-      const fin = MTP.getFinancialAnalytics();
-      const bcv = fin.bcv;
+      const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
 
-      // 1. Tarjetas de KPIs Principales (Con tipografía tabular y clases semánticas)
+      // 1) EL DASHBOARD MUESTRA EL PERIODO ELEGIDO (por defecto: HOY).
+      //    Antes se usaba getFinancialAnalytics(), que mezclaba TODO el
+      //    histórico y lo etiquetaba como "hoy": información engañosa.
+      const stats = MTP.getPeriodAnalytics(dashboardPeriod);
+      const fin = stats;
+
       const cashIco = window.MTPIcons ? MTPIcons.get('cash', { size: 16 }) : '';
       const kitchenIco = window.MTPIcons ? MTPIcons.get('kitchen', { size: 16 }) : '';
       const wasteIco = window.MTPIcons ? MTPIcons.get('waste', { size: 16 }) : '';
       const chartIco = window.MTPIcons ? MTPIcons.get('chart', { size: 16 }) : '';
 
-      document.getElementById('mainFinancialKpis').innerHTML = `
-        <div class="stat-card">
-          <div class="stat-ico green">${cashIco}</div>
-          <div>
-            <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(fin.grossSalesUsd)}</div>
-            <div class="stat-l">Ingresos Brutos en Ventas</div>
-            <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(fin.grossSalesUsd * bcv)}</div>
+      const kpiEl = document.getElementById('mainFinancialKpis');
+      if (kpiEl) {
+        kpiEl.innerHTML = `
+          <div class="stat-card tone-in">
+            <div class="stat-ico green">${cashIco}</div>
+            <div>
+              <div class="stat-l">${periodLabel()} vendí</div>
+              <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(fin.grossSalesUsd)}</div>
+              <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(fin.grossSalesUsd * bcv)} · ${fin.ordersCount} ventas</div>
+            </div>
           </div>
-        </div>
 
-        <div class="stat-card">
-          <div class="stat-ico yellow">${kitchenIco}</div>
-          <div>
-            <div class="stat-n tabular-nums" style="color:var(--sec-cocina)">${MTP.fmtUSD(fin.totalCostOfGoodsUsd)}</div>
-            <div class="stat-l">Costo Mercancía e Insumos</div>
-            <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(fin.totalCostOfGoodsUsd * bcv)}</div>
+          <div class="stat-card tone-cash">
+            <div class="stat-ico yellow">${kitchenIco}</div>
+            <div>
+              <div class="stat-l">${periodLabel()} gané</div>
+              <div class="stat-n tabular-nums money-bs">${fin.netOperatingProfitUsd >= 0 ? '+' : ''}${MTP.fmtUSD(fin.netOperatingProfitUsd)}</div>
+              <div class="stat-sub tabular-nums">después del costo y de los gastos</div>
+            </div>
           </div>
-        </div>
 
-        <div class="stat-card">
-          <div class="stat-ico red">${wasteIco}</div>
-          <div>
-            <div class="stat-n tabular-nums money-out">-${MTP.fmtUSD(fin.totalExpensesUsd)}</div>
-            <div class="stat-l">Gastos Operativos Registrados</div>
-            <div class="stat-sub tabular-nums">${(MTP.state.expenses || []).length} salidas registradas</div>
+          <div class="stat-card tone-info">
+            <div class="stat-ico blue">${chartIco}</div>
+            <div>
+              <div class="stat-l">Tengo en la gaveta</div>
+              <div class="stat-n tabular-nums">${MTP.fmtUSD(fin.netDrawerUsd)}</div>
+              <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(fin.netDrawerBs)} · pago móvil ${MTP.fmtBsRaw(fin.netBankPmBs)}</div>
+            </div>
           </div>
-        </div>
 
-        <div class="stat-card">
-          <div class="stat-ico blue">${chartIco}</div>
-          <div>
-            <div class="stat-n tabular-nums money-bs">${fin.netOperatingProfitUsd >= 0 ? '+' : ''}${MTP.fmtUSD(fin.netOperatingProfitUsd)}</div>
-            <div class="stat-l">Ganancia Neta Limpia Real</div>
-            <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(fin.netOperatingProfitUsd * bcv)} (≈${MTP.fmtUSD(fin.realUsdtProfit)} USDT)</div>
+          <div class="stat-card tone-out">
+            <div class="stat-ico red">${wasteIco}</div>
+            <div>
+              <div class="stat-l">IVA que se pagó de 16%</div>
+              <div class="stat-n tabular-nums money-out">${MTP.fmtUSD(fin.ivaUsd || 0)}</div>
+              <div class="stat-sub tabular-nums">${MTP.fmtBsRaw((fin.ivaUsd || 0) * bcv)}${fin.igtfUsd > 0 ? ' · IGTF ' + MTP.fmtUSD(fin.igtfUsd) : ''}</div>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
 
-      // 2. Gráficos y secciones
+      renderDashboardQuestions(fin);
       renderHourlySvgChart();
       renderPaymentsSvgChart(fin);
       renderKitchenVsRetailCompare(fin);
@@ -251,6 +296,31 @@
       renderExpensesTable();
       renderTopItems(fin);
       renderRecentSales();
+    }
+
+    /** 4 preguntas con respuesta directa y un enlace a la pantalla de detalle. */
+    function renderDashboardQuestions(fin) {
+      const el = document.getElementById('dashQuestions');
+      if (!el) return;
+      const low = (MTP.state.inventory || []).filter(i => Number(i.stock) <= Number(i.minStock));
+      const topDish = (fin.kitchenDishesList || [])[0];
+      const topRetail = (fin.retailItemsList || [])[0];
+      const top = topDish || topRetail;
+
+      const items = [
+        { q: '¿Cuánto gasté?', a: MTP.fmtUSD(fin.totalExpensesUsd), h: 'en gastos del día', href: 'facturas.html' },
+        { q: '¿Qué se está acabando?', a: String(low.length), h: low.length ? low.slice(0, 3).map(i => i.name).join(', ') : 'todo bien de stock', href: 'inventario.html' },
+        { q: '¿Qué se vende más?', a: top ? top.name : '—', h: top ? (top.qty + ' unidades') : '', href: 'productos.html' },
+        { q: '¿Cómo va la cocina vs la tienda?', a: MTP.fmtUSD(fin.kitchenSalesUsd), h: 'cocina · tienda ' + MTP.fmtUSD(fin.retailSalesUsd), href: 'cierres.html' }
+      ];
+
+      el.innerHTML = items.map(function (i) {
+        return '<a class="dash-question" href="' + i.href + '">' +
+          '<span class="dash-q">' + i.q + '</span>' +
+          '<strong class="dash-a">' + i.a + '</strong>' +
+          '<span class="dash-h">' + (i.h || '') + '</span>' +
+          '</a>';
+      }).join('');
     }
 
     function renderDrawerCashBreakdown(fin) {
@@ -278,34 +348,43 @@
     }
 
     function renderHourlySvgChart() {
-      const sales = MTP.state.sales || [];
+      // Se dibujan SOLO las ventas del periodo elegido, y se dibujan TODAS
+      // las horas con venta (antes las de fuera de 7:00-21:00 se sumaban al
+      // total pero no se veían: los números no cuadraban).
+      const sales = (window.MTP && window.MTP.getPeriodAnalytics)
+        ? (MTP.getPeriodAnalytics(dashboardPeriod).sales || [])
+        : (MTP.state.sales || []);
       const hourlyMap = {};
-      for (let h = 7; h <= 21; h++) hourlyMap[h] = 0;
 
-      let maxVal = 10;
+      let maxVal = 1;
       let totalDay = 0;
       sales.forEach(s => {
-        const d = new Date(s.createdAt);
-        const h = d.getHours();
+        const h = new Date(s.createdAt).getHours();
         const amt = Number(s.totalUsd || 0);
         totalDay += amt;
-        if (hourlyMap[h] !== undefined) hourlyMap[h] += amt;
-        else hourlyMap[h] = (hourlyMap[h] || 0) + amt;
+        hourlyMap[h] = (hourlyMap[h] || 0) + amt;
         if (hourlyMap[h] > maxVal) maxVal = hourlyMap[h];
       });
 
-      document.getElementById('chartHourlyTotal').textContent = `${MTP.fmtUSD(totalDay)} (${sales.length} órdenes)`;
+      const totalEl = document.getElementById('chartHourlyTotal');
+      if (totalEl) totalEl.textContent = `${MTP.fmtUSD(totalDay)} (${sales.length} órdenes)`;
 
-      const hours = Object.keys(hourlyMap).map(Number).sort((a,b) => a-b);
+      const hours = Object.keys(hourlyMap).map(Number).sort((a, b) => a - b);
+      if (!hours.length) {
+        const wrap = document.getElementById('chartHourlyWrap');
+        if (wrap) wrap.innerHTML = '<div style="text-align:center;padding:40px 10px;color:var(--txt-3);font-size:13px">Sin ventas en este periodo</div>';
+        return;
+      }
+
       const chartW = 480;
-      const chartH = 170;
-      const barW = Math.max(14, (chartW - 40) / hours.length - 6);
+      const chartH = 210;
+      const barW = Math.max(16, (chartW - 40) / hours.length - 8);
 
       const barsSvg = hours.map((h, i) => {
         const val = hourlyMap[h];
-        const barHeight = Math.max(3, (val / maxVal) * (chartH - 40));
-        const x = 30 + i * (barW + 6);
-        const y = chartH - 24 - barHeight;
+        const barHeight = Math.max(3, (val / maxVal) * (chartH - 56));
+        const x = 30 + i * (barW + 8);
+        const y = chartH - 30 - barHeight;
         const color = val > 0 ? (val > maxVal * 0.6 ? '#15803D' : '#16A34A') : '#CBD5E1';
 
         return `
@@ -313,18 +392,23 @@
             <rect class="bar-rect" x="${x}" y="${y}" width="${barW}" height="${barHeight}" rx="3" fill="${color}">
               <title>${h}:00 hrs: $${val.toFixed(2)}</title>
             </rect>
-            <text x="${x + barW/2}" y="${chartH - 8}" font-size="10" text-anchor="middle" fill="#64748B" font-weight="700">${h}</text>
-            ${val > 0 ? `<text x="${x + barW/2}" y="${y - 4}" font-size="10" text-anchor="middle" fill="#0F172A" font-weight="700">$${Math.round(val)}</text>` : ''}
+            <text x="${x + barW / 2}" y="${chartH - 10}" font-size="12" text-anchor="middle" fill="#334155" font-weight="700">${h}h</text>
+            ${val > 0 ? `<text x="${x + barW / 2}" y="${y - 5}" font-size="12" text-anchor="middle" fill="#0F172A" font-weight="700">$${Math.round(val)}</text>` : ''}
           </g>
         `;
       }).join('');
 
-      document.getElementById('chartHourlyWrap').innerHTML = `
-        <svg viewBox="0 0 ${chartW} ${chartH}" style="width:100%;height:100%">
-          <line x1="25" y1="${chartH - 24}" x2="${chartW - 10}" y2="${chartH - 24}" stroke="#CBD5E1" stroke-width="1.5"/>
-          ${barsSvg}
-        </svg>
-      `;
+      const wrap = document.getElementById('chartHourlyWrap');
+      if (wrap) {
+        wrap.innerHTML = `
+          <svg viewBox="0 0 ${chartW} ${chartH}" style="width:100%;height:auto" role="img"
+               aria-label="Ventas por hora del periodo">
+            <title>Ventas por hora</title>
+            <line x1="25" y1="${chartH - 30}" x2="${chartW - 10}" y2="${chartH - 30}" stroke="#CBD5E1" stroke-width="1.5"/>
+            ${barsSvg}
+          </svg>
+        `;
+      }
     }
 
     function renderPaymentsSvgChart(fin) {
@@ -363,45 +447,60 @@
     }
 
     function renderKitchenVsRetailCompare(fin) {
-      const kSales = fin.kitchenSalesUsd;
-      const kProfit = fin.kitchenProfitUsd;
+      const kSales = fin.kitchenSalesUsd || 0;
+      const kProfit = fin.kitchenProfitUsd || 0;
       const kMargin = kSales > 0 ? ((kProfit / kSales) * 100).toFixed(0) : 0;
 
-      const rSales = fin.retailSalesUsd;
-      const rProfit = fin.retailProfitUsd;
+      const rSales = fin.retailSalesUsd || 0;
+      const rProfit = fin.retailProfitUsd || 0;
       const rMargin = rSales > 0 ? ((rProfit / rSales) * 100).toFixed(0) : 0;
 
-      document.getElementById('profitCompareBadge').textContent = `Cocina: ${kMargin}% · Abasto: ${rMargin}%`;
+      // La barra compara IMPORTES (lo que el dueño entiende a simple vista);
+      // el % de ganancia va como texto secundario. Antes la barra pintaba el
+      // margen y el texto mostraba dólares: dos medidas distintas en la misma
+      // fila, lo que hacía la gráfica incomprensible.
+      const maxSales = Math.max(kSales, rSales, 0.01);
+      const kPct = Math.max(2, Math.min(100, (kSales / maxSales) * 100));
+      const rPct = Math.max(2, Math.min(100, (rSales / maxSales) * 100));
 
-      document.getElementById('compareKitchenRetailBar').innerHTML = `
-        <div style="margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:var(--fw-semibold);margin-bottom:4px">
-            <span>Cocina & Menú (Empanadas, Platos, Cafés):</span>
-            <span class="money-in tabular-nums">${MTP.fmtUSD(kSales)} (Ganancia: +${MTP.fmtUSD(kProfit)} · ${kMargin}%)</span>
-          </div>
-          <div style="width:100%;height:10px;background:var(--surface-2);border-radius:99px;overflow:hidden;border:1px solid var(--line)">
-            <div style="width:${Math.min(100, kMargin)}%;height:100%;background:var(--sec-cocina);border-radius:99px"></div>
-          </div>
-        </div>
+      const badge = document.getElementById('profitCompareBadge');
+      if (badge) badge.textContent = `Cocina ${kMargin}% · Tienda ${rMargin}% de ganancia`;
 
-        <div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:var(--fw-semibold);margin-bottom:4px">
-            <span>Abasto & Bodegón (Víveres, Bebidas, Chucherías):</span>
-            <span class="money-bs tabular-nums">${MTP.fmtUSD(rSales)} (Ganancia: +${MTP.fmtUSD(rProfit)} · ${rMargin}%)</span>
+      const bar = document.getElementById('compareKitchenRetailBar');
+      if (bar) {
+        bar.innerHTML = `
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:var(--fw-semibold);margin-bottom:4px">
+              <span>🍳 Cocina y menú (empanadas, platos, café)</span>
+              <span class="money-in tabular-nums">${MTP.fmtUSD(kSales)} · ganancia ${MTP.fmtUSD(kProfit)} (${kMargin}%)</span>
+            </div>
+            <div style="width:100%;height:12px;background:var(--surface-2);border-radius:99px;overflow:hidden;border:1px solid var(--line)">
+              <div style="width:${kPct}%;height:100%;background:var(--sec-cocina);border-radius:99px"></div>
+            </div>
           </div>
-          <div style="width:100%;height:10px;background:var(--surface-2);border-radius:99px;overflow:hidden;border:1px solid var(--line)">
-            <div style="width:${Math.min(100, rMargin)}%;height:100%;background:var(--sec-abasto);border-radius:99px"></div>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:var(--fw-semibold);margin-bottom:4px">
+              <span>🏪 Tienda y abasto (víveres, bebidas, chucherías)</span>
+              <span class="money-bs tabular-nums">${MTP.fmtUSD(rSales)} · ganancia ${MTP.fmtUSD(rProfit)} (${rMargin}%)</span>
+            </div>
+            <div style="width:100%;height:12px;background:var(--surface-2);border-radius:99px;overflow:hidden;border:1px solid var(--line)">
+              <div style="width:${rPct}%;height:100%;background:var(--sec-abasto);border-radius:99px"></div>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
     }
 
     function renderExpensesTable() {
-      const expenses = MTP.state.expenses || [];
+      // Solo los gastos del periodo elegido (antes salían TODOS los gastos
+      // históricos bajo el título "No hay gastos registrados hoy").
+      const stats = MTP.getPeriodAnalytics(dashboardPeriod);
+      const expenses = stats.expenses || [];
       const tbody = document.getElementById('expensesTableBody');
 
       if (!expenses.length) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:18px;color:var(--txt-3);font-size:12px">No hay gastos registrados hoy. Pulsa "+ Registrar Gasto (F6)" para registrar compras de hielo, fletes o insumos.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:18px;color:var(--txt-3);font-size:13px">No hay gastos registrados en este periodo. Pulsa "+ Registrar Gasto (F6)" para registrar compras de hielo, fletes o insumos.</td></tr>`;
         return;
       }
 
@@ -418,17 +517,27 @@
           <td><strong class="money-out tabular-nums">-${MTP.fmtBsRaw(e.amountBs)}</strong></td>
           <td style="font-size:11px;color:var(--txt-2)">${e.responsible || 'Admin'}</td>
           <td>
-            <button class="btn btn-secondary btn-sm" style="color:var(--money-out);padding:2px 6px" onclick="if(confirm('¿Eliminar este gasto?')) { MTP.deleteExpense('${e.id}'); renderDashboardAnalytics(); }" title="Eliminar gasto">✕</button>
+            <button class="btn btn-secondary btn-sm" style="color:var(--money-out);padding:2px 6px" onclick="window.MTPUI.confirmDialog('¿Eliminar este gasto?', { danger: true, okText: 'Eliminar' }).then(function (ok) { if (ok) { MTP.deleteExpense('${e.id}'); renderDashboardAnalytics(); } })" title="Eliminar gasto">✕</button>
           </td>
         </tr>
       `).join('');
     }
 
     function renderTopItems(fin) {
-      const list = fin.topItems.slice(0, 5);
+      // El resumen de "lo que más se vende" se arma con las listas del
+      // análisis del periodo (platos de cocina + mercancía del mostrador).
+      const dishes = (fin.kitchenDishesList || []).map(function (d) {
+        return { name: d.name, qty: d.qty, revenueUsd: d.salesUsd || 0, profitUsd: (d.salesUsd || 0) - (d.costUsd || 0), isDish: true };
+      });
+      const retail = (fin.retailItemsList || []).map(function (r) {
+        return { name: r.name, qty: r.qty, revenueUsd: r.salesUsd || 0, profitUsd: (r.salesUsd || 0) - (r.costUsd || 0), isDish: false };
+      });
+      const list = dishes.concat(retail).sort(function (a, b) { return b.qty - a.qty; }).slice(0, 5);
+
       const container = document.getElementById('topItemsList');
+      if (!container) return;
       if (!list.length) {
-        container.innerHTML = `<div style="text-align:center;padding:18px;color:var(--txt-3);font-size:12px">Sin ventas hoy</div>`;
+        container.innerHTML = `<div style="text-align:center;padding:18px;color:var(--txt-3);font-size:13px">Sin ventas en este periodo</div>`;
         return;
       }
       container.innerHTML = list.map((it, idx) => `
@@ -436,12 +545,12 @@
           <div style="display:flex;align-items:center;gap:8px">
             <span class="code-pill ${it.isDish ? 'plu' : ''}" style="font-size:11px">#${idx+1}</span>
             <div>
-              <div style="font-weight:var(--fw-bold);font-size:12px">${it.name}</div>
-              <div style="font-size:11px;color:var(--txt-2)">${it.qty} unidades vendidas</div>
+              <div style="font-weight:var(--fw-bold);font-size:13px">${it.name}</div>
+              <div style="font-size:12px;color:var(--txt-2)">${it.qty} unidades vendidas</div>
             </div>
           </div>
           <div style="text-align:right">
-            <div class="tabular-nums" style="font-weight:var(--fw-bold);font-size:13px">${MTP.fmtUSD(it.revenueUsd)}</div>
+            <div class="tabular-nums" style="font-weight:var(--fw-bold);font-size:14px">${MTP.fmtUSD(it.revenueUsd)}</div>
             <span class="badge badge-green tabular-nums" style="font-size:11px">+${MTP.fmtUSD(it.profitUsd)} libre</span>
           </div>
         </div>
@@ -474,7 +583,10 @@
       `).join('');
     }
 
-    document.addEventListener('DOMContentLoaded', renderDashboardAnalytics);
+    document.addEventListener('DOMContentLoaded', function () {
+      setupPeriodBar();
+      renderDashboardAnalytics();
+    });
     window.addEventListener('mtp:state-updated', renderDashboardAnalytics);
   </script>
 </body>

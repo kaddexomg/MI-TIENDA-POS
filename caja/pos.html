@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="../assets/css/components.css">
   <link rel="stylesheet" href="../assets/css/layout.css">
   <link rel="stylesheet" href="../assets/css/pos.css">
+  <link rel="stylesheet" href="../assets/css/design-v7.css">
+  <link rel="stylesheet" href="../assets/css/checkout.css">
 </head>
 <body class="pos-fullscreen-body">
   <div class="admin-wrap">
@@ -140,28 +142,25 @@
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('posCheckoutModal').classList.remove('open')">✕</button>
       </div>
       <div class="modal-bd">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-          <div style="background:#f8faf9;border:1.5px solid var(--border);padding:8px 12px;border-radius:9px">
-            <span style="font-size:10.5px;font-weight:800;color:var(--txt-sec);text-transform:uppercase">Total Orden en USD</span>
-            <div id="chkTotalUsd" style="font-size:21px;font-weight:900;font-family:var(--font-mono)">$0.00</div>
+        <div class="chk-total-block">
+          <div class="chk-total-main">
+            <span class="chk-total-label">Total a cobrar</span>
+            <strong id="chkTotalUsd" class="chk-total-usd">$0.00</strong>
+            <span id="chkTotalBs" class="chk-total-bs">0,00 Bs</span>
           </div>
-          <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;padding:8px 12px;border-radius:9px">
-            <span style="font-size:10.5px;font-weight:800;color:#065f46;text-transform:uppercase">Total Orden en Bolívares (BCV)</span>
-            <div id="chkTotalBs" style="font-size:21px;font-weight:900;font-family:var(--font-mono);color:#059669">0,00 Bs</div>
-          </div>
+          <div id="chkTaxSummary" class="chk-tax-summary"></div>
         </div>
 
-        <div id="chkTaxSummary" style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:6px 10px;border-radius:7px;font-size:12.5px;margin-bottom:10px"></div>
-
-        <div style="margin-bottom:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span style="font-size:11.5px;font-weight:800;color:var(--txt-sec)">⚡ Billete Recibido:</span>
-          <button class="btn btn-p btn-sm" onclick="window.MTPPos.quickAddBillUsd('EXACT')">✅ Exacto</button>
-          <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.quickAddBillUsd(1)">💵 $1</button>
-          <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.quickAddBillUsd(5)">💵 $5</button>
-          <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.quickAddBillUsd(10)">💵 $10</button>
-          <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.quickAddBillUsd(20)">💵 $20</button>
-          <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.quickAddBillUsd(50)">💵 $50</button>
-          <button class="btn btn-ghost btn-sm" onclick="window.MTPPos.quickAddBillUsd(100)">💵 $100</button>
+        <div class="chk-bills" role="group" aria-label="Billetes recibidos">
+          <span class="chk-bills-label">💵 Billete recibido — toca para sumar (no reemplaza):</span>
+          <button class="chk-bill-btn chk-bill-exact" onclick="window.MTPPos.quickAddBillUsd('EXACT')">Exacto</button>
+          <button class="chk-bill-btn" onclick="window.MTPPos.quickAddBillUsd(1)">$1</button>
+          <button class="chk-bill-btn" onclick="window.MTPPos.quickAddBillUsd(2)">$2</button>
+          <button class="chk-bill-btn" onclick="window.MTPPos.quickAddBillUsd(5)">$5</button>
+          <button class="chk-bill-btn" onclick="window.MTPPos.quickAddBillUsd(10)">$10</button>
+          <button class="chk-bill-btn" onclick="window.MTPPos.quickAddBillUsd(20)">$20</button>
+          <button class="chk-bill-btn" onclick="window.MTPPos.quickAddBillUsd(50)">$50</button>
+          <button class="chk-bill-btn" onclick="window.MTPPos.quickAddBillUsd(100)">$100</button>
         </div>
 
         <div class="pay-methods-grid">
@@ -218,48 +217,45 @@
         <div id="chkPaymentsList" style="margin-bottom:8px"></div>
 
         <div class="vuelto-panel">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div id="vueltoStatusLabel" style="font-size:11.5px;font-weight:800;color:#a7f3d0">VUELTO A ENTREGAR:</div>
-            <div style="display:flex;gap:5px">
-              <button class="btn btn-ghost btn-sm" style="padding:2px 7px;font-size:10.5px;background:rgba(255,255,255,0.12);color:#fff;border:none" onclick="window.MTPPos.rebalanceChangeDistribution('ALL_USD')">Todo en $ Efectivo</button>
-              <button class="btn btn-ghost btn-sm" style="padding:2px 7px;font-size:10.5px;background:rgba(255,255,255,0.12);color:#fff;border:none" onclick="window.MTPPos.rebalanceChangeDistribution('ALL_PM')">Todo por Pago Móvil Bs</button>
-            </div>
+          <div class="vuelto-head">
+            <span id="vueltoStatusLabel" class="vuelto-label">VUELTO A ENTREGAR AL CLIENTE:</span>
+            <span id="vueltoValidation" class="chk-ok">✔ El vuelto cuadra</span>
           </div>
           <div class="vuelto-grid">
             <div class="vuelto-card" id="vueltoCardUsd">
-              <span>Total Vuelto en USD ($)</span>
+              <span>Total del vuelto en $</span>
               <strong id="vueltoUsdAmount">$0.00</strong>
             </div>
             <div class="vuelto-card" id="vueltoCardBs">
-              <span>Total Vuelto en Bolívares (BCV)</span>
+              <span>Total del vuelto en Bs</span>
               <strong id="vueltoBsAmount">0,00 Bs</strong>
             </div>
           </div>
 
-          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,0.15)">
-            <label style="font-size:11px;color:#cbd5e1;font-weight:700;display:block;margin-bottom:5px">Distribución del vuelto entregado al cliente:</label>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-              <div>
-                <span style="font-size:10.5px;color:#94a3b8;display:block">Efectivo USD ($)</span>
-                <input type="number" step="1" id="vueltoDistUsd" class="input" style="padding:5px 8px;background:rgba(255,255,255,0.12);color:#34d399;font-weight:900;border-color:rgba(255,255,255,0.2)"
-                  oninput="window.MTPPos.rebalanceChangeDistribution('USD')">
-              </div>
-              <div>
-                <span style="font-size:10.5px;color:#94a3b8;display:block">Efectivo Bolívares (Bs)</span>
-                <input type="number" step="1" id="vueltoDistBsCash" class="input" style="padding:5px 8px;background:rgba(255,255,255,0.12);color:#fff;font-weight:900;border-color:rgba(255,255,255,0.2)"
-                  oninput="window.MTPPos.rebalanceChangeDistribution('BS_CASH')">
-              </div>
-              <div>
-                <span style="font-size:10.5px;color:#94a3b8;display:block">Pago Móvil Vuelto (Bs)</span>
-                <input type="number" step="0.1" id="vueltoDistBsPm" class="input" style="padding:5px 8px;background:rgba(255,255,255,0.12);color:#fbbf24;font-weight:900;border-color:rgba(255,255,255,0.2)">
-              </div>
-            </div>
+          <p class="vuelto-suggestion">Entrega sugerida: <strong id="vueltoSuggestion">—</strong></p>
+
+          <div class="vuelto-quick">
+            <button class="chk-bill-btn" onclick="window.MTPPos.rebalanceChangeDistribution('ALL_USD')">Todo en $ efectivo</button>
+            <button class="chk-bill-btn" onclick="window.MTPPos.rebalanceChangeDistribution('ALL_BS')">Todo en Bs efectivo</button>
+            <button class="chk-bill-btn" onclick="window.MTPPos.rebalanceChangeDistribution('ALL_PM')">Todo por pago móvil</button>
+          </div>
+
+          <label class="vuelto-dist-label">Distribución del vuelto entregado al cliente:</label>
+          <div class="vuelto-grid-3">
+            <label class="vuelto-field"><span>Efectivo US$</span>
+              <input type="number" step="1" id="vueltoDistUsd" class="input"
+                     oninput="window.MTPPos.rebalanceChangeDistribution('USD')"></label>
+            <label class="vuelto-field"><span>Efectivo Bs</span>
+              <input type="number" step="0.5" id="vueltoDistBsCash" class="input"
+                     oninput="window.MTPPos.rebalanceChangeDistribution('BS_CASH')"></label>
+            <label class="vuelto-field"><span>Pago Móvil Bs</span>
+              <input type="number" step="0.5" id="vueltoDistBsPm" class="input"></label>
           </div>
         </div>
       </div>
       <div class="modal-ft">
-        <button class="btn btn-ghost" onclick="document.getElementById('posCheckoutModal').classList.remove('open')">Cancelar</button>
-        <button class="btn btn-p btn-lg" onclick="window.MTPPos.finalizeSale()">Confirmar Cobro y Emitir Comanda / Nota</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('posCheckoutModal').classList.remove('open')">Cancelar (Esc)</button>
+        <button class="btn btn-p btn-lg" id="btnConfirmSale" onclick="window.MTPPos.finalizeSale()">✔ Confirmar Cobro (Enter)</button>
       </div>
     </div>
   </div>
@@ -285,8 +281,11 @@
   <script src="../assets/js/rates.js"></script>
   <script src="../assets/js/permissions.js"></script>
   <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/ui.js"></script>
+  <script src="../assets/js/keys.js"></script>
   <script src="../assets/js/sidenav.js"></script>
   <script src="../assets/js/barcode-engine.js"></script>
+  <script src="../assets/js/change.js"></script>
   <script src="../assets/js/pos-engine.js"></script>
 </body>
 </html>

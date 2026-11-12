@@ -59,6 +59,10 @@
     'Divisas'
   ]);
 
+  /* Denominaciones reales en circulación (Venezuela) — para el vuelto y el cuadre */
+  const USD_DENOMINATIONS = [1, 2, 5, 10, 20, 50, 100];
+  const BS_DENOMINATIONS = [0.10, 0.25, 0.50, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000];
+
   function toCents(amount) {
     const num = Number(amount);
     if (!Number.isFinite(num)) return 0;
@@ -131,6 +135,19 @@
     if (FOREIGN_CURRENCY_METHODS.has(m)) return true;
     const lower = m.toLowerCase();
     return lower.includes('usd') || lower.includes('zelle') || lower.includes('usdt') || lower.includes('divisa');
+  }
+
+  /**
+   * Un cobro con tarjeta (Punto de Venta) SOLO cuenta como pago en divisas
+   * cuando la terminal liquida en USD. Si liquida en bolívares no genera IGTF.
+   */
+  function isForeignPayment(payment) {
+    if (!payment) return false;
+    if (payment.method === 'Punto de Venta') {
+      const liq = String(payment.liquidationCurrency || '').toUpperCase();
+      return liq === 'USD' || liq === 'DIVISAS';
+    }
+    return isForeignPaymentMethod(payment.method);
   }
 
   /**
@@ -217,15 +234,28 @@
     const totalIvaCents = iva16Cents + iva8Cents;
     const totalBeforeIgtfCents = subtotalBaseCents + totalIvaCents;
 
-    // Cálculo de IGTF 3% sobre pagos en divisas (netos de vuelto entregado en divisas)
+    // Base IGTF 3%: solo la porción del pago en divisas, neta del vuelto
+    // entregado en efectivo USD. El vuelto en Bolívares NO es pago en divisas,
+    // por eso no resta de esta base (pero sí del total que el cliente debe).
     let foreignPaidCents = 0;
     payments.forEach(p => {
-      if (p && isForeignPaymentMethod(p.method)) {
-        foreignPaidCents += toCents(p.amountUsd);
-      }
+      if (p && isForeignPayment(p)) foreignPaidCents += toCents(p.amountUsd);
     });
 
-    const changeUsdCashCents = toCents(opts.changeUsdCashGiven || 0);
+    const changeUsdCashCents = toCents(opts.changeUsdCashGiven || 0);   // en USD
+    const changeBsCashCents = toCents(opts.changeBsCashGiven || 0);     // en Bs
+    const changeBsPmCents = toCents(opts.changeBsPmGiven || 0);         // en Bs
+    const changeRate = Number(opts.changeRate || rateBcv) || rateBcv;
+
+    // Total del vuelto: se unifican las tres monedas sin mezclar unidades.
+    //   changeTotalBsCents  → el vuelto completo expresado en Bs (centavos)
+    //   changeTotalUsdCents → el vuelto completo expresado en USD (centavos)
+    //   (changeUsdCashCents viene en centavos de USD; x tasa = centavos de Bs)
+    const changeTotalBsCents = changeBsCashCents + changeBsPmCents +
+      Math.round(changeUsdCashCents * changeRate);
+    const changeTotalUsdCents = Math.round(changeTotalBsCents / changeRate);
+    const changeTotalCents = changeTotalUsdCents;
+
     const netForeignPaidCents = Math.max(0, foreignPaidCents - changeUsdCashCents);
     const igtfBaseCents = applyIgtf ? Math.min(totalBeforeIgtfCents, netForeignPaidCents) : 0;
     const igtfCents = applyIgtf ? Math.round(igtfBaseCents * 0.03) : 0;
@@ -280,6 +310,14 @@
       igtfBs: centsToBs(igtfCents, rateBcv),
       totalBs: centsToBs(totalCents, rateBcv),
 
+      // Vuelto (para validar y para auditar el cuadre de gaveta)
+      changeUsdCashCents: changeUsdCashCents,
+      changeBsCashCents: changeBsCashCents,
+      changeBsPmCents: changeBsPmCents,
+      changeTotalCents: changeTotalCents,
+      changeTotalUsd: fromCents(changeTotalUsdCents),
+      changeTotalBs: fromCents(changeTotalBsCents),
+
       lines: classifiedLines
     };
   }
@@ -290,8 +328,11 @@
     centsToBs,
     classify,
     isForeignPaymentMethod,
+    isForeignPayment,
     computeTotals,
     EXEMPT_RETAIL_IDS,
-    PREPARED_FOOD_FAMILIES
+    PREPARED_FOOD_FAMILIES,
+    USD_DENOMINATIONS,
+    BS_DENOMINATIONS
   };
 });
