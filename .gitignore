@@ -7,10 +7,12 @@ desktop.ini
 
 # Compilaciones, dependencias y artefactos binarios
 build/
-dist/
+dist/*
+!dist/Instalar-MI-TIENDA-POS.exe
 node_modules/
 desktop/node_modules/
 *.exe
+!dist/Instalar-MI-TIENDA-POS.exe
 *.apk
 *.idsig
 *.jks
