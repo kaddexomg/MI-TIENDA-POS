@@ -6,8 +6,8 @@
 'use strict';
 
 const assert = require('assert');
-const MTPChange = require('../assets/js/change.js');
-const MTPBarcode = require('../assets/js/barcode-engine.js');
+const MTPChange = require('../assets/js/core/change.js');
+const MTPBarcode = require('../assets/js/modules/barcode-engine.js');
 const fixtures = require('./fixtures.js');
 
 let passed = 0;
@@ -217,7 +217,7 @@ test('UI-10: renderSidebar() se ejecuta sin lanzar excepciones y actualiza aside
       querySelectorAll: () => [],
       addEventListener: () => {}
     },
-    location: { pathname: '/admin/pos.html' },
+    location: { pathname: '/pos.html' },
     localStorage: {
       getItem: (k) => storageMap.get(k) || null,
       setItem: (k, v) => storageMap.set(k, String(v)),
@@ -238,7 +238,7 @@ test('UI-10: renderSidebar() se ejecuta sin lanzar excepciones y actualiza aside
   };
   sandbox.window = sandbox;
 
-  const sidenavCode = fs.readFileSync(path.join(__dirname, '../assets/js/sidenav.js'), 'utf8');
+  const sidenavCode = fs.readFileSync(path.join(__dirname, '../assets/js/ui/sidenav.js'), 'utf8');
   vm.createContext(sandbox);
   vm.runInContext(sidenavCode, sandbox);
 
@@ -270,7 +270,7 @@ test('UI-11: view-transitions.js define window.MTPNavigate de forma segura', () 
   };
   sandbox.window = sandbox;
 
-  const code = fs.readFileSync(path.join(__dirname, '../assets/js/view-transitions.js'), 'utf8');
+  const code = fs.readFileSync(path.join(__dirname, '../assets/js/ui/view-transitions.js'), 'utf8');
   vm.createContext(sandbox);
   vm.runInContext(code, sandbox);
 

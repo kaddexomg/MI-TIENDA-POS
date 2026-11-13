@@ -26,7 +26,7 @@ let lastAppliedSeq = 0;
  */
 function createDefaultState() {
   return {
-    version: '5.0.0',
+    version: '8.0.0',
     settings: {
       storeName: 'MI TIENDA POS · Restaurante & Abasto',
       rif: 'J-50128940-1',
@@ -35,10 +35,11 @@ function createDefaultState() {
       rateBcv: 42.85,
       rateEur: 46.60,
       rateUsdt: 51.40,
-      lastRateSync: new Date().toISOString(),
+      lastRateSync: '',
       fiscalMode: 'INTERNO'
     },
     inventory: [],
+    insumos: [],
     dishes: [],
     families: [],
     products: [],
@@ -48,9 +49,14 @@ function createDefaultState() {
     sales: [],
     expenses: [],
     purchases: [],
+    invoices: [],
+    kitchenBatches: [],
     wasteRecords: [],
     kardex: [],
     shifts: [],
+    dailyClosures: [],
+    monthlyClosures: [],
+    batchClosures: [],
     heldOrders: [],
     users: [],
     posTerminals: [],
@@ -58,6 +64,31 @@ function createDefaultState() {
     lastSeq: 0,
     updatedAt: new Date().toISOString()
   };
+}
+
+function syncUnifiedInventory(stateObj) {
+  if (!stateObj || !Array.isArray(stateObj.inventory)) return;
+  if (!Array.isArray(stateObj.insumos)) stateObj.insumos = [];
+  if (!Array.isArray(stateObj.retailItems)) stateObj.retailItems = [];
+  stateObj.insumos = stateObj.inventory.filter(function (i) {
+    return i && (i.type === 'insumo' || !i.sellable);
+  });
+  stateObj.retailItems = stateObj.inventory.filter(function (i) {
+    return i && (i.type === 'venta' || i.sellable === true);
+  });
+}
+
+function adjustServerStock(stateObj, itemId, deltaQty) {
+  if (!itemId || !stateObj || !Array.isArray(stateObj.inventory)) return null;
+  for (let j = 0; j < stateObj.inventory.length; j++) {
+    if (stateObj.inventory[j] && stateObj.inventory[j].id === itemId) {
+      const prev = Number(stateObj.inventory[j].stock || 0);
+      const next = Math.max(0, Number((prev + Number(deltaQty || 0)).toFixed(3)));
+      stateObj.inventory[j].stock = next;
+      return { item: stateObj.inventory[j], prev: prev, next: next, appliedDelta: Number((next - prev).toFixed(3)) };
+    }
+  }
+  return null;
 }
 
 /**
@@ -100,20 +131,79 @@ function applyEvent(event, isReplay) {
         currentState.sales.push(sale);
       }
 
-      // Descontar inventario si viene items
+      // Descontar inventario directo y recetas/modificadores de cocina de forma atómica
+      const stockDeductions = [];
       if (Array.isArray(sale.items)) {
         for (let i = 0; i < sale.items.length; i++) {
           const item = sale.items[i];
           const qty = Number(item.quantity || item.qty || 1);
-          const itemId = item.id || item.productId || item.retailItemId;
+          const isExplicitDish = Boolean(item.isDish || item.isVariant || item.kind === 'dish' || item.type === 'dish');
+          const isExplicitRetail = Boolean(item.retailItemId || item.kind === 'retail' || item.type === 'retail' || item.isDish === false);
+          const itemId = item.retailItemId || (!isExplicitDish ? (item.refId || item.id || item.productId) : null);
+          const variantId = item.variantId || (!isExplicitRetail ? (item.refId || item.id) : null);
 
-          // Descontar de retailItems o inventory si coincide
+          let deductedDirect = false;
           if (itemId) {
-            for (let j = 0; j < currentState.inventory.length; j++) {
-              if (currentState.inventory[j].id === itemId) {
-                const prev = Number(currentState.inventory[j].stock || 0);
-                currentState.inventory[j].stock = Math.max(0, prev - qty);
+            const adjDirect = adjustServerStock(currentState, itemId, -qty);
+            if (adjDirect) {
+              deductedDirect = true;
+              stockDeductions.push({ itemId: itemId, qty: Math.abs(adjDirect.appliedDelta) });
+            }
+          }
+
+          // Si es plato de cocina con receta (en item.recipe, item.ingredients o en variants)
+          let recipeList = Array.isArray(item.recipe) ? item.recipe : (Array.isArray(item.ingredients) ? item.ingredients : null);
+          if (!recipeList && variantId && Array.isArray(currentState.variants)) {
+            for (let vIdx = 0; vIdx < currentState.variants.length; vIdx++) {
+              if (currentState.variants[vIdx] && currentState.variants[vIdx].id === variantId) {
+                if (Array.isArray(currentState.variants[vIdx].recipe)) recipeList = currentState.variants[vIdx].recipe;
+                else if (Array.isArray(currentState.variants[vIdx].ingredients)) recipeList = currentState.variants[vIdx].ingredients;
                 break;
+              }
+            }
+          }
+          if (Array.isArray(recipeList)) {
+            for (let rIdx = 0; rIdx < recipeList.length; rIdx++) {
+              const rec = recipeList[rIdx];
+              const insId = rec && (rec.insumoId || rec.itemId);
+              const perUnit = Number(rec && rec.qty ? rec.qty : 0);
+              if (insId && perUnit > 0) {
+                const needQty = Number((perUnit * qty).toFixed(4));
+                const adjRec = adjustServerStock(currentState, insId, -needQty);
+                if (adjRec) {
+                  stockDeductions.push({ itemId: insId, qty: Math.abs(adjRec.appliedDelta) });
+                }
+              }
+            }
+          }
+
+          // Modificadores / extras (selectedModifiers o modifiers) con insumoId o recipe[]
+          const itemMods = [].concat(
+            Array.isArray(item.selectedModifiers) ? item.selectedModifiers : [],
+            Array.isArray(item.modifiers) ? item.modifiers : []
+          );
+          for (let mIdx = 0; mIdx < itemMods.length; mIdx++) {
+            const mod = itemMods[mIdx];
+            if (!mod) continue;
+            const modInsId = mod.insumoId;
+            const modQty = Number(mod.qty || 0);
+            if (modInsId && modQty > 0) {
+              const adjMod = adjustServerStock(currentState, modInsId, -(modQty * qty));
+              if (adjMod) {
+                stockDeductions.push({ itemId: modInsId, qty: Math.abs(adjMod.appliedDelta) });
+              }
+            }
+            if (Array.isArray(mod.recipe)) {
+              for (let mrIdx = 0; mrIdx < mod.recipe.length; mrIdx++) {
+                const mr = mod.recipe[mrIdx];
+                const mrInsId = mr && (mr.insumoId || mr.itemId);
+                const mrQty = Number(mr && mr.qty ? mr.qty : 0);
+                if (mrInsId && mrQty > 0) {
+                  const adjMr = adjustServerStock(currentState, mrInsId, -Number((mrQty * qty).toFixed(4)));
+                  if (adjMr) {
+                    stockDeductions.push({ itemId: mrInsId, qty: Math.abs(adjMr.appliedDelta) });
+                  }
+                }
               }
             }
           }
@@ -123,9 +213,9 @@ function applyEvent(event, isReplay) {
             id: 'kdx_' + event.seq + '_' + i,
             seq: event.seq,
             type: 'VENTA',
-            itemId: itemId || 'prod_desconocido',
+            itemId: itemId || variantId || 'prod_desconocido',
             itemName: item.name || 'Producto vendido',
-            qty: -qty,
+            qty: deductedDirect ? -qty : 0,
             unit: item.unit || 'und',
             docRef: sale.saleNumber || sale.id,
             user: eventUser,
@@ -133,17 +223,77 @@ function applyEvent(event, isReplay) {
           });
         }
       }
+      sale.stockDeductions = stockDeductions;
+      syncUnifiedInventory(currentState);
       break;
     }
 
     case 'SALE_VOIDED': {
       const saleId = payload.saleId || payload.id;
       for (let i = 0; i < currentState.sales.length; i++) {
-        if (currentState.sales[i].id === saleId) {
-          currentState.sales[i].voided = true;
-          currentState.sales[i].voidReason = payload.reason || 'Anulación de venta';
-          currentState.sales[i].voidedAt = eventTs;
-          currentState.sales[i].voidedBy = eventUser;
+        if (currentState.sales[i].id === saleId && !currentState.sales[i].voided) {
+          const targetSale = currentState.sales[i];
+          targetSale.voided = true;
+          targetSale.voidReason = payload.reason || 'Anulación de venta';
+          targetSale.voidedAt = eventTs;
+          targetSale.voidedBy = eventUser;
+
+          // Reversar exactamente el stock descontado (directo + receta + modificadores)
+          if (Array.isArray(targetSale.stockDeductions) && targetSale.stockDeductions.length > 0) {
+            for (let dIdx = 0; dIdx < targetSale.stockDeductions.length; dIdx++) {
+              const ded = targetSale.stockDeductions[dIdx];
+              adjustServerStock(currentState, ded.itemId, Number(ded.qty || 0));
+            }
+          } else if (Array.isArray(targetSale.items)) {
+            for (let k = 0; k < targetSale.items.length; k++) {
+              const it = targetSale.items[k];
+              const q = Number(it.quantity || it.qty || 1);
+              const isDishIt = Boolean(it.isDish || it.isVariant || it.kind === 'dish' || it.type === 'dish');
+              const isRetIt = Boolean(it.retailItemId || it.kind === 'retail' || it.type === 'retail' || it.isDish === false);
+              const iid = it.retailItemId || (!isDishIt ? (it.refId || it.id || it.productId) : null);
+              const vid = it.variantId || (!isRetIt ? (it.refId || it.id) : null);
+              if (iid) adjustServerStock(currentState, iid, q);
+
+              let recList = Array.isArray(it.recipe) ? it.recipe : (Array.isArray(it.ingredients) ? it.ingredients : null);
+              if (!recList && vid && Array.isArray(currentState.variants)) {
+                for (let vi = 0; vi < currentState.variants.length; vi++) {
+                  if (currentState.variants[vi] && currentState.variants[vi].id === vid) {
+                    recList = currentState.variants[vi].recipe || currentState.variants[vi].ingredients || null;
+                    break;
+                  }
+                }
+              }
+              if (Array.isArray(recList)) {
+                for (let ri = 0; ri < recList.length; ri++) {
+                  const rItem = recList[ri];
+                  const rId = rItem && (rItem.insumoId || rItem.itemId);
+                  const rQty = Number(rItem && rItem.qty ? rItem.qty : 0);
+                  if (rId && rQty > 0) adjustServerStock(currentState, rId, Number((rQty * q).toFixed(4)));
+                }
+              }
+
+              const voidMods = [].concat(
+                Array.isArray(it.selectedModifiers) ? it.selectedModifiers : [],
+                Array.isArray(it.modifiers) ? it.modifiers : []
+              );
+              for (let mi = 0; mi < voidMods.length; mi++) {
+                const vm = voidMods[mi];
+                if (!vm) continue;
+                if (vm.insumoId && Number(vm.qty || 0) > 0) {
+                  adjustServerStock(currentState, vm.insumoId, Number(vm.qty) * q);
+                }
+                if (Array.isArray(vm.recipe)) {
+                  for (let vmr = 0; vmr < vm.recipe.length; vmr++) {
+                    const mr = vm.recipe[vmr];
+                    const mrId = mr && (mr.insumoId || mr.itemId);
+                    const mrQ = Number(mr && mr.qty ? mr.qty : 0);
+                    if (mrId && mrQ > 0) adjustServerStock(currentState, mrId, Number((mrQ * q).toFixed(4)));
+                  }
+                }
+              }
+            }
+          }
+          syncUnifiedInventory(currentState);
 
           // Kardex de anulación
           currentState.kardex.push({
@@ -167,7 +317,17 @@ function applyEvent(event, isReplay) {
       expense.seq = event.seq;
       expense.ts = expense.ts || eventTs;
       expense.user = eventUser;
-      currentState.expenses.push(expense);
+      currentState.expenses.unshift(expense);
+      break;
+    }
+
+    case 'EXPENSE_DELETED': {
+      const expId = payload.id || payload.expId;
+      if (expId && Array.isArray(currentState.expenses)) {
+        currentState.expenses = currentState.expenses.filter(function (e) {
+          return e && e.id !== expId;
+        });
+      }
       break;
     }
 
@@ -177,20 +337,29 @@ function applyEvent(event, isReplay) {
       purchase.seq = event.seq;
       purchase.ts = purchase.ts || eventTs;
       purchase.user = eventUser;
-      currentState.purchases.push(purchase);
+      currentState.purchases.unshift(purchase);
 
-      // Si incluye renglones de mercancía, sumar al stock
+      // Si incluye renglones de mercancía, sumar al stock y actualizar costos
       if (Array.isArray(purchase.items)) {
         for (let i = 0; i < purchase.items.length; i++) {
           const item = purchase.items[i];
-          const qty = Number(item.quantity || item.qty || 0);
-          const itemId = item.id || item.productId;
+          const qty = Number(item.totalUnits || item.quantity || item.qty || 0);
+          const itemId = item.itemId || item.insumoId || item.id || item.productId;
+          const unitCost = Number(item.unitCostUsd || item.costUsd || 0);
+          const newPrice = Number(item.newSalePriceUsd || 0);
 
           if (itemId) {
             for (let j = 0; j < currentState.inventory.length; j++) {
-              if (currentState.inventory[j].id === itemId) {
+              if (currentState.inventory[j] && currentState.inventory[j].id === itemId) {
                 const prev = Number(currentState.inventory[j].stock || 0);
-                currentState.inventory[j].stock = prev + qty;
+                currentState.inventory[j].stock = Number((prev + qty).toFixed(3));
+                if (unitCost > 0) {
+                  currentState.inventory[j].prevCostUsd = currentState.inventory[j].costUsd;
+                  currentState.inventory[j].costUsd = Number(unitCost.toFixed(2));
+                }
+                if (currentState.inventory[j].sellable && newPrice > 0) {
+                  currentState.inventory[j].priceUsd = Number(newPrice.toFixed(2));
+                }
                 break;
               }
             }
@@ -204,11 +373,12 @@ function applyEvent(event, isReplay) {
             itemName: item.name || 'Compra a proveedor',
             qty: qty,
             unit: item.unit || 'und',
-            docRef: purchase.invoiceNo || purchase.id,
+            docRef: purchase.docNumber || purchase.invoiceNo || purchase.id,
             user: eventUser,
             ts: eventTs
           });
         }
+        syncUnifiedInventory(currentState);
       }
       break;
     }
@@ -219,17 +389,18 @@ function applyEvent(event, isReplay) {
       waste.seq = event.seq;
       waste.ts = waste.ts || eventTs;
       waste.user = eventUser;
-      currentState.wasteRecords.push(waste);
+      currentState.wasteRecords.unshift(waste);
 
       const wasteQty = Number(waste.quantity || waste.qty || 0);
       if (waste.itemId) {
         for (let j = 0; j < currentState.inventory.length; j++) {
-          if (currentState.inventory[j].id === waste.itemId) {
+          if (currentState.inventory[j] && currentState.inventory[j].id === waste.itemId) {
             const prev = Number(currentState.inventory[j].stock || 0);
-            currentState.inventory[j].stock = Math.max(0, prev - wasteQty);
+            currentState.inventory[j].stock = Math.max(0, Number((prev - wasteQty).toFixed(3)));
             break;
           }
         }
+        syncUnifiedInventory(currentState);
       }
 
       currentState.kardex.push({
@@ -254,26 +425,184 @@ function applyEvent(event, isReplay) {
       const diff = Number(adj.difference || 0);
 
       if (itemId) {
-        for (let j = 0; j < currentState.inventory.length; j++) {
-          if (currentState.inventory[j].id === itemId) {
-            currentState.inventory[j].stock = newStock;
-            break;
+        if (adj.newStock !== undefined || adj.stock !== undefined) {
+          for (let j = 0; j < currentState.inventory.length; j++) {
+            if (currentState.inventory[j].id === itemId) {
+              currentState.inventory[j].stock = Math.max(0, newStock);
+              break;
+            }
           }
+        } else if (adj.qty !== undefined) {
+          adjustServerStock(currentState, itemId, Number(adj.qty));
         }
+        syncUnifiedInventory(currentState);
       }
 
       currentState.kardex.push({
         id: 'kdx_audit_' + event.seq,
         seq: event.seq,
-        type: 'AJUSTE_AUDITORIA',
+        type: adj.action || 'AJUSTE_AUDITORIA',
         itemId: itemId,
         itemName: adj.itemName || 'Ajuste de inventario',
-        qty: diff,
+        qty: diff || Number(adj.qty || 0),
         unit: adj.unit || 'und',
-        reason: adj.justification || 'Auditoría física ciega',
+        reason: adj.justification || adj.reason || 'Auditoría física ciega',
         user: eventUser,
         ts: eventTs
       });
+      break;
+    }
+
+    case 'BATCH_RECORDED': {
+      if (!Array.isArray(currentState.kitchenBatches)) currentState.kitchenBatches = [];
+      const srcBatch = (payload && payload.batch && typeof payload.batch === 'object') ? payload.batch : payload;
+      if (srcBatch && (Array.isArray(srcBatch.insumosUsed) || srcBatch.dishName || srcBatch.date || srcBatch.id)) {
+        const batch = Object.assign({}, srcBatch);
+        batch.id = batch.id || ('TANDA-' + event.seq);
+        currentState.kitchenBatches.unshift(batch);
+        if (Array.isArray(batch.insumosUsed)) {
+          for (let bIdx = 0; bIdx < batch.insumosUsed.length; bIdx++) {
+            const u = batch.insumosUsed[bIdx];
+            const uId = u && (u.insumoId || u.itemId || u.id);
+            const uQty = Number(u && u.qty ? u.qty : 0);
+            if (uId && uQty > 0) {
+              adjustServerStock(currentState, uId, -uQty);
+              currentState.kardex.push({
+                id: 'kdx_tanda_' + event.seq + '_' + bIdx,
+                seq: event.seq,
+                type: 'TANDA_COCINA',
+                itemId: uId,
+                itemName: u.name || 'Insumo tanda',
+                qty: -uQty,
+                unit: u.unit || 'und',
+                docRef: batch.id,
+                user: eventUser,
+                ts: eventTs
+              });
+            }
+          }
+          syncUnifiedInventory(currentState);
+        }
+      }
+      break;
+    }
+
+    case 'INVOICE_PAID': {
+      if (!Array.isArray(currentState.invoices)) currentState.invoices = [];
+      const invId = payload.invoiceId || payload.id;
+      const amount = Number(payload.amountUsd || payload.amount || 0);
+      const payMethod = payload.method || payload.paymentSource || payload.paymentMethod || 'Efectivo USD';
+      for (let idx = 0; idx < currentState.invoices.length; idx++) {
+        const inv = currentState.invoices[idx];
+        if (inv && inv.id === invId) {
+          const total = Number(inv.totalUsd || 0);
+          if (payload.paidUsd !== undefined && amount <= 0) {
+            inv.paidUsd = Number(Number(payload.paidUsd).toFixed(2));
+          } else {
+            const nextPaid = Number(((Number(inv.paidUsd) || 0) + amount).toFixed(2));
+            inv.paidUsd = total > 0 ? Math.min(total, nextPaid) : nextPaid;
+          }
+          inv.status = inv.paidUsd >= total - 0.01 ? 'pagada' : 'parcial';
+          if (!Array.isArray(inv.payments)) inv.payments = [];
+          if (amount > 0) {
+            inv.payments.push({ amountUsd: amount, method: payMethod, ts: eventTs, user: eventUser });
+          }
+          break;
+        }
+      }
+      break;
+    }
+
+    case 'CLOSURE_SAVED': {
+      const scope = payload.scope || 'daily';
+      if (scope === 'monthly') {
+        if (!Array.isArray(currentState.monthlyClosures)) currentState.monthlyClosures = [];
+        currentState.monthlyClosures.unshift(Object.assign({}, payload.closure || payload));
+      } else if (scope === 'batch') {
+        if (!Array.isArray(currentState.batchClosures)) currentState.batchClosures = [];
+        const batchClosure = Object.assign({}, payload.closure || payload);
+        currentState.batchClosures.unshift(batchClosure);
+        const termId = payload.terminalId || batchClosure.terminalId;
+        if (termId) {
+          if (Array.isArray(currentState.sales)) {
+            for (let si = 0; si < currentState.sales.length; si++) {
+              const sObj = currentState.sales[si];
+              if (!sObj || sObj.voided || !Array.isArray(sObj.payments)) continue;
+              for (let pi = 0; pi < sObj.payments.length; pi++) {
+                const pObj = sObj.payments[pi];
+                if (pObj && pObj.method === 'Punto de Venta' && (pObj.terminalId === termId || !pObj.terminalId) && !pObj.batchClosed) {
+                  pObj.batchClosed = true;
+                  pObj.batchClosedId = 'LOTE-' + termId + '-' + (batchClosure.batchNumber || '0001');
+                }
+              }
+            }
+          }
+          if (payload.nextBatch && Array.isArray(currentState.posTerminals)) {
+            for (let ti = 0; ti < currentState.posTerminals.length; ti++) {
+              if (currentState.posTerminals[ti] && currentState.posTerminals[ti].id === termId) {
+                currentState.posTerminals[ti].currentBatch = payload.nextBatch;
+                break;
+              }
+            }
+          }
+        }
+      } else {
+        if (!Array.isArray(currentState.dailyClosures)) currentState.dailyClosures = [];
+        currentState.dailyClosures.unshift(Object.assign({}, payload.closure || payload));
+      }
+      break;
+    }
+
+    case 'ITEM_SAVED': {
+      const it = payload.item || payload;
+      if (it && it.id) {
+        if (it.kind === 'variant') {
+          let foundV = false;
+          for (let vi = 0; vi < currentState.variants.length; vi++) {
+            if (currentState.variants[vi].id === it.id) {
+              currentState.variants[vi] = Object.assign({}, currentState.variants[vi], it);
+              foundV = true;
+              break;
+            }
+          }
+          if (!foundV) currentState.variants.push(it);
+        } else {
+          let foundI = false;
+          for (let ii = 0; ii < currentState.inventory.length; ii++) {
+            if (currentState.inventory[ii].id === it.id) {
+              currentState.inventory[ii] = Object.assign({}, currentState.inventory[ii], it);
+              foundI = true;
+              break;
+            }
+          }
+          if (!foundI) currentState.inventory.push(it);
+          syncUnifiedInventory(currentState);
+        }
+      }
+      break;
+    }
+
+    case 'ITEM_DELETED': {
+      const delId = payload.id || payload.itemId;
+      if (delId) {
+        currentState.inventory = (currentState.inventory || []).filter(function (i) { return i && i.id !== delId; });
+        currentState.variants = (currentState.variants || []).filter(function (v) { return v && v.id !== delId; });
+        currentState.dishes = (currentState.dishes || []).filter(function (d) { return d && d.id !== delId; });
+        currentState.products = (currentState.products || []).filter(function (p) { return p && p.id !== delId; });
+        syncUnifiedInventory(currentState);
+      }
+      break;
+    }
+
+    case 'BACKUP_IMPORTED':
+    case 'STATE_SYNCED': {
+      if (payload && payload.state && typeof payload.state === 'object') {
+        const preservedSeq = lastAppliedSeq;
+        currentState = Object.assign(createDefaultState(), payload.state);
+        currentState.version = '8.0.0';
+        currentState.lastSeq = preservedSeq;
+        syncUnifiedInventory(currentState);
+      }
       break;
     }
 
@@ -311,7 +640,7 @@ function applyEvent(event, isReplay) {
     }
 
     case 'CATALOG_CHANGED': {
-      // Actualizar catálogos si vienen en el payload
+      // Actualizar catálogos completos o deltas de precios desde Precios / Catálogo
       if (Array.isArray(payload.families)) currentState.families = payload.families;
       if (Array.isArray(payload.products)) currentState.products = payload.products;
       if (Array.isArray(payload.variants)) currentState.variants = payload.variants;
@@ -319,12 +648,119 @@ function applyEvent(event, isReplay) {
       if (Array.isArray(payload.retailItems)) currentState.retailItems = payload.retailItems;
       if (Array.isArray(payload.inventory)) currentState.inventory = payload.inventory;
       if (Array.isArray(payload.dishes)) currentState.dishes = payload.dishes;
+
+      function applyVariantPriceDelta(vId, priceVal) {
+        if (!vId || priceVal === undefined) return;
+        const pNum = Number(priceVal);
+        if (!isFinite(pNum) || pNum < 0) return;
+        if (Array.isArray(currentState.variants)) {
+          for (let vi = 0; vi < currentState.variants.length; vi++) {
+            if (currentState.variants[vi] && currentState.variants[vi].id === vId) {
+              currentState.variants[vi].priceUsd = pNum;
+            }
+          }
+        }
+        if (Array.isArray(currentState.dishes)) {
+          for (let di = 0; di < currentState.dishes.length; di++) {
+            if (currentState.dishes[di] && currentState.dishes[di].id === vId) {
+              currentState.dishes[di].priceUsd = pNum;
+            }
+          }
+        }
+      }
+
+      function applyInventoryPriceDelta(iId, priceVal) {
+        if (!iId || priceVal === undefined) return;
+        const pNum = Number(priceVal);
+        if (!isFinite(pNum) || pNum < 0) return;
+        if (Array.isArray(currentState.inventory)) {
+          for (let ii = 0; ii < currentState.inventory.length; ii++) {
+            if (currentState.inventory[ii] && currentState.inventory[ii].id === iId) {
+              currentState.inventory[ii].priceUsd = pNum;
+            }
+          }
+        }
+      }
+
+      if (payload.kind === 'variant' && payload.id && payload.priceUsd !== undefined) {
+        applyVariantPriceDelta(payload.id, payload.priceUsd);
+      } else if (payload.kind === 'inventory' && payload.id && payload.priceUsd !== undefined) {
+        applyInventoryPriceDelta(payload.id, payload.priceUsd);
+      }
+      if (Array.isArray(payload.dishUpdates)) {
+        for (let du = 0; du < payload.dishUpdates.length; du++) {
+          const dUpd = payload.dishUpdates[du];
+          if (dUpd) applyVariantPriceDelta(dUpd.id || dUpd.variantId, dUpd.priceUsd);
+        }
+      }
+      if (Array.isArray(payload.invUpdates)) {
+        for (let iu = 0; iu < payload.invUpdates.length; iu++) {
+          const iUpd = payload.invUpdates[iu];
+          if (iUpd) applyInventoryPriceDelta(iUpd.id || iUpd.invId, iUpd.priceUsd);
+        }
+      }
+      syncUnifiedInventory(currentState);
       break;
     }
 
     case 'USER_CHANGED': {
       if (Array.isArray(payload.users)) {
         currentState.users = payload.users;
+      }
+      break;
+    }
+
+    case 'PAGO_MOVIL_STATUS_CHANGED': {
+      const targetSaleId = payload.saleId || payload.id;
+      const targetRef = payload.paymentRef !== undefined ? String(payload.paymentRef) : '';
+      const targetPayId = payload.paymentId ? String(payload.paymentId) : '';
+      const newStatus = payload.newStatus || payload.verifyStatus || 'CONCILIADO';
+      const reason = payload.reason || '';
+
+      if (targetSaleId && Array.isArray(currentState.sales)) {
+        for (let si = 0; si < currentState.sales.length; si++) {
+          const saleObj = currentState.sales[si];
+          if (!saleObj || saleObj.id !== targetSaleId || !Array.isArray(saleObj.payments)) continue;
+          for (let pi = 0; pi < saleObj.payments.length; pi++) {
+            const pObj = saleObj.payments[pi];
+            if (!pObj || pObj.method !== 'Pago Móvil') continue;
+            const refMatches = targetPayId
+              ? (pObj.id === targetPayId)
+              : (!targetRef || String(pObj.ref || '') === targetRef);
+            if (refMatches) {
+              pObj.verifyStatus = newStatus;
+              pObj.verified = (newStatus === 'CONCILIADO');
+              pObj.reviewNotes = reason;
+              pObj.reviewedAt = eventTs;
+              pObj.reviewedBy = eventUser;
+              if (!targetPayId && targetRef) break;
+            }
+          }
+          break;
+        }
+      }
+      break;
+    }
+
+    case 'SETTINGS_UPDATED': {
+      if (!currentState.settings || typeof currentState.settings !== 'object') {
+        currentState.settings = {};
+      }
+      if (payload && typeof payload === 'object') {
+        if (Array.isArray(payload.posTerminals)) {
+          currentState.posTerminals = payload.posTerminals;
+        }
+        if (Array.isArray(payload.pagoMovilAccounts)) {
+          currentState.pagoMovilAccounts = payload.pagoMovilAccounts;
+        }
+        const settingsDelta = Object.assign({}, payload);
+        delete settingsDelta.posTerminals;
+        delete settingsDelta.pagoMovilAccounts;
+        if (settingsDelta.fiscalConfig && typeof settingsDelta.fiscalConfig === 'object') {
+          currentState.settings.fiscalConfig = Object.assign({}, currentState.settings.fiscalConfig || {}, settingsDelta.fiscalConfig);
+          delete settingsDelta.fiscalConfig;
+        }
+        Object.assign(currentState.settings, settingsDelta);
       }
       break;
     }
@@ -381,7 +817,7 @@ function saveSnapshot() {
   const finalPath = path.join(dataDir, 'snapshot.json');
 
   const snapshotData = {
-    version: '5.0.0',
+    version: '8.0.0',
     lastSeq: lastAppliedSeq,
     timestamp: new Date().toISOString(),
     state: currentState

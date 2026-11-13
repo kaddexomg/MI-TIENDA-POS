@@ -4,16 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Usuarios, Roles, PINs y Seguridad | MI TIENDA POS</title>
-  <link rel="stylesheet" href="../assets/css/variables.css">
-  <link rel="stylesheet" href="../assets/css/components.css">
-  <link rel="stylesheet" href="../assets/css/design-v7.css">
-  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <link rel="stylesheet" href="../assets/css/app.css">
   <style>
     .role-pill {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 800;
       padding: 2px 7px;
       border-radius: 99px;
@@ -24,11 +22,11 @@
 
     .matrix-icon-ok { color: #059669; font-weight: 900; }
     .matrix-icon-key { color: #d97706; font-weight: 900; }
-    .matrix-icon-no { color: #94a3b8; font-weight: 900; }
+    .matrix-icon-no { color: #64748B; font-weight: 900; }
 
     .audit-badge {
       font-family: var(--font-mono, monospace);
-      font-size: 10.5px;
+      font-size: 12px;
       font-weight: 700;
       padding: 1px 5px;
       border-radius: 4px;
@@ -97,7 +95,7 @@
               <h3 style="margin:0;font-size:13px;font-weight:900">Directorio de Usuarios y Acceso</h3>
               <span class="badge badge-green">Cifrado SHA-256</span>
             </div>
-            <div style="font-size:11px;color:var(--txt-muted)">
+            <div style="font-size:12px;color:var(--txt-muted)">
               Autenticación rápida por PIN de 4 dígitos (Cajero/Encargado) o 6 dígitos (Admin)
             </div>
           </div>
@@ -126,7 +124,7 @@
           <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between">
             <div>
               <h3 style="margin:0;font-size:13px;font-weight:900">Tabla de Permisos: Quién puede hacer qué en el negocio</h3>
-              <p style="margin:2px 0 0 0;font-size:11px;color:var(--txt-sec)">
+              <p style="margin:2px 0 0 0;font-size:12px;color:var(--txt-sec)">
                 Leyenda: <strong class="matrix-icon-ok">✔ Directo</strong> · <strong class="matrix-icon-key">🔑 PIN Supervisor</strong> · <strong class="matrix-icon-no">✕ No Autorizado</strong>
               </p>
             </div>
@@ -156,7 +154,7 @@
           <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between">
             <div>
               <h3 style="margin:0;font-size:13px;font-weight:900">Registro de Auditoría de Sesiones y Autorizaciones</h3>
-              <p style="margin:2px 0 0 0;font-size:11px;color:var(--txt-sec)">Trazabilidad de inicios de sesión, cambios de PIN y autorizaciones de supervisor en caja</p>
+              <p style="margin:2px 0 0 0;font-size:12px;color:var(--txt-sec)">Trazabilidad de inicios de sesión, cambios de PIN y autorizaciones de supervisor en caja</p>
             </div>
             <button class="btn btn-ghost btn-sm" onclick="renderAuditTable()">Actualizar Registro</button>
           </div>
@@ -187,7 +185,7 @@
       <div class="modal-hd" style="background:#0F2A3D;color:#fff;border-radius:12px 12px 0 0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
         <div>
           <h3 id="userModalTitle" style="color:#fff;margin:0;font-size:13.5px;font-weight:900">Nuevo Usuario</h3>
-          <p style="color:#94a3b8;font-size:11px;margin:2px 0 0 0">Configure las credenciales de acceso y rol del personal</p>
+          <p style="color:#cbd5e1;font-size:12px;margin:2px 0 0 0">Configure las credenciales de acceso y rol del personal</p>
         </div>
         <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:#fff;border:none" onclick="closeUserFormModal()">✕</button>
       </div>
@@ -196,17 +194,17 @@
         <input type="hidden" id="editUserId">
 
         <div class="form-group" style="margin-bottom:10px">
-          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Nombre y Apellido Completo:</label>
+          <label style="display:block;font-size:12px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Nombre y Apellido Completo:</label>
           <input type="text" id="userNameInput" class="input" placeholder="Ej: María Rodríguez" style="font-weight:700">
         </div>
 
         <div class="form-group" style="margin-bottom:10px">
-          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Nombre de Usuario (Login corto):</label>
+          <label style="display:block;font-size:12px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Nombre de Usuario (Login corto):</label>
           <input type="text" id="userLoginInput" class="input" placeholder="Ej: maria" style="font-weight:700">
         </div>
 
         <div class="form-group" style="margin-bottom:10px">
-          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Rol y Nivel de Acceso:</label>
+          <label style="display:block;font-size:12px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">Rol y Nivel de Acceso:</label>
           <select id="userRoleSelect" class="select" onchange="updatePinRequirementsNotice()">
             <option value="cajero">Cajero (Caja rápida, ventas, cobros y vuelto)</option>
             <option value="encargado">Encargado de Turno (Caja + Supervisión, inventario y mermas)</option>
@@ -215,11 +213,11 @@
         </div>
 
         <div id="userPinWrap" class="form-group" style="margin-bottom:10px">
-          <label id="userPinLabel" style="display:block;font-size:11px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">
+          <label id="userPinLabel" style="display:block;font-size:12px;font-weight:800;color:var(--txt-sec);margin-bottom:4px">
             PIN de Acceso (4 dígitos):
           </label>
           <input type="password" id="userPinInput" class="input" placeholder="••••" maxlength="6" inputmode="numeric" style="font-weight:900;letter-spacing:4px">
-          <div id="pinNotice" style="font-size:10.5px;color:var(--txt-muted);margin-top:3px">
+          <div id="pinNotice" style="font-size:12px;color:var(--txt-muted);margin-top:3px">
             Mínimo 4 dígitos para cajero/encargado. 6 dígitos para administrador.
           </div>
         </div>
@@ -229,7 +227,7 @@
           <label for="userActiveCheck" style="font-size:12px;font-weight:700;color:var(--txt)">Usuario Activo (Permite inicio de sesión)</label>
         </div>
 
-        <div id="userFormError" style="display:none;color:#dc2626;font-size:11px;font-weight:800;margin-top:8px"></div>
+        <div id="userFormError" style="display:none;color:#dc2626;font-size:12px;font-weight:800;margin-top:8px"></div>
       </div>
 
       <div class="modal-ft">
@@ -245,7 +243,7 @@
       <div class="modal-hd">
         <div>
           <h3>Cambiar PIN de Acceso</h3>
-          <p id="changePinTargetName" style="color:var(--txt-3);font-size:11px;margin:2px 0 0 0">Usuario</p>
+          <p id="changePinTargetName" style="color:var(--txt-3);font-size:12px;margin:2px 0 0 0">Usuario</p>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeChangePinModal()">✕</button>
       </div>
@@ -254,16 +252,16 @@
         <input type="hidden" id="changePinUserId">
 
         <div class="form-group" style="margin-bottom:10px">
-          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-2);margin-bottom:4px">Nuevo PIN Numérico:</label>
+          <label style="display:block;font-size:12px;font-weight:800;color:var(--txt-2);margin-bottom:4px">Nuevo PIN Numérico:</label>
           <input type="password" id="newPinInput" class="input" placeholder="••••" maxlength="6" inputmode="numeric" style="font-size:18px;font-weight:900;text-align:center;letter-spacing:6px">
         </div>
 
         <div class="form-group" style="margin-bottom:10px">
-          <label style="display:block;font-size:11px;font-weight:800;color:var(--txt-2);margin-bottom:4px">Confirmar Nuevo PIN:</label>
+          <label style="display:block;font-size:12px;font-weight:800;color:var(--txt-2);margin-bottom:4px">Confirmar Nuevo PIN:</label>
           <input type="password" id="confirmPinInput" class="input" placeholder="••••" maxlength="6" inputmode="numeric" style="font-size:18px;font-weight:900;text-align:center;letter-spacing:6px">
         </div>
 
-        <div id="changePinError" style="display:none;color:var(--money-out);font-size:11px;font-weight:800;margin-top:6px;text-align:center"></div>
+        <div id="changePinError" style="display:none;color:var(--money-out);font-size:12px;font-weight:800;margin-top:6px;text-align:center"></div>
       </div>
 
       <div class="modal-ft">
@@ -274,19 +272,54 @@
   </div>
 
   <!-- Scripts Obligatorios del Sistema -->
-  <script src="../assets/js/icons.js"></script>
-  <script src="../assets/js/tax.js"></script>
-  <script src="../assets/js/config.js"></script>
-  <script src="../assets/js/rates.js"></script>
-  <script src="../assets/js/permissions.js"></script>
-  <script src="../assets/js/auth.js"></script>
-  <script src="../assets/js/ui.js"></script>
-  <script src="../assets/js/keys.js"></script>
-  <script src="../assets/js/sidenav.js"></script>
-  <script src="../assets/js/code-structure.js"></script>
-  <script src="../assets/js/barcode-printer.js"></script>
+  <script src="../assets/js/ui/icons.js"></script>
+  <script src="../assets/js/core/tax.js"></script>
+  <script src="../assets/js/core/config.js"></script>
+  <script src="../assets/js/core/api-client.js"></script>
+  <script src="../assets/js/core/rates.js"></script>
+  <script src="../assets/js/core/permissions.js"></script>
+  <script src="../assets/js/core/auth.js"></script>
+  <script src="../assets/js/ui/ui.js"></script>
+  <script src="../assets/js/ui/keys.js"></script>
+  <script src="../assets/js/ui/view-transitions.js"></script>
+  <script src="../assets/js/ui/sidenav.js"></script>
+  <script src="../assets/js/core/code-structure.js"></script>
+  <script src="../assets/js/modules/barcode-printer.js"></script>
 
   <script>
+    function esc(str) {
+      if (window.MTP && typeof MTP.escapeHtml === 'function') return MTP.escapeHtml(str);
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatVetDate(iso) {
+      try {
+        return new Date(iso || Date.now()).toLocaleDateString('es-VE', { timeZone: 'America/Caracas' });
+      } catch (_) {
+        return new Date(iso || Date.now()).toLocaleDateString('es-VE');
+      }
+    }
+
+    function formatVetDateTime(iso) {
+      try {
+        return new Date(iso).toLocaleString('es-VE', {
+          timeZone: 'America/Caracas',
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+      } catch (_) {
+        return new Date(iso).toLocaleString('es-VE', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+      }
+    }
+
     function initUserModuleIcons() {
       if (!window.MTPIcons) return;
       document.getElementById('statIcoUsers').innerHTML = MTPIcons.get('users', { size: 18, color: '#059669' });
@@ -338,27 +371,27 @@
           <tr>
             <td>
               <div style="font-weight:800;font-size:12px;display:flex;align-items:center;gap:6px">
-                <span style="font-family:var(--font-mono);background:#f1f5f9;padding:2px 5px;border-radius:4px;color:#334155">@${u.username}</span>
+                <span style="font-family:var(--font-mono);background:#f1f5f9;padding:2px 5px;border-radius:4px;color:#334155">@${esc(u.username)}</span>
               </div>
             </td>
             <td>
-              <div style="font-weight:800;font-size:12.5px">${u.name}</div>
-              <div style="font-size:10px;color:var(--txt-muted)">Registrado: ${new Date(u.createdAt || Date.now()).toLocaleDateString('es-VE')}</div>
+              <div style="font-weight:800;font-size:12.5px">${esc(u.name)}</div>
+              <div style="font-size:12px;color:var(--txt-muted)">Registrado: ${esc(formatVetDate(u.createdAt))}</div>
             </td>
             <td>
-              <span class="role-pill ${roleBadgeClass}">${roleLabel}</span>
+              <span class="role-pill ${esc(roleBadgeClass)}">${esc(roleLabel)}</span>
             </td>
             <td>${pinBadge}</td>
             <td>${statusBadge}</td>
             <td>
               <div style="display:flex;gap:4px;flex-wrap:wrap">
-                <button class="btn btn-ghost btn-sm" onclick="openChangePinModal('${u.id}', '${u.name}', '${u.role}')" title="Cambiar clave PIN">
+                <button type="button" class="btn btn-ghost btn-sm" data-user-action="pin" data-user-id="${esc(u.id)}" title="Cambiar clave PIN">
                   🔑 PIN
                 </button>
-                <button class="btn btn-ghost btn-sm" onclick="openEditUserModal('${u.id}')" title="Editar datos">
+                <button type="button" class="btn btn-ghost btn-sm" data-user-action="edit" data-user-id="${esc(u.id)}" title="Editar datos">
                   ✎ Editar
                 </button>
-                <button class="btn btn-ghost btn-sm" style="color:#dc2626" onclick="deleteUserPrompt('${u.id}', '${u.name}')" title="Eliminar usuario">
+                <button type="button" class="btn btn-ghost btn-sm" style="color:#dc2626" data-user-action="delete" data-user-id="${esc(u.id)}" title="Eliminar usuario">
                   ✕
                 </button>
               </div>
@@ -403,15 +436,15 @@
         rowsHtml += `
           <tr>
             <td>
-              <div style="font-weight:800;font-size:12px">${meta.label}</div>
-              <div style="font-size:10px;color:var(--txt-muted)">Grupo: ${meta.group}</div>
+              <div style="font-weight:800;font-size:12px">${esc(meta.label)}</div>
+              <div style="font-size:12px;color:var(--txt-muted)">Grupo: ${esc(meta.group)}</div>
             </td>
             <td>
-              <code style="font-size:11px;background:#f8fafc;padding:2px 5px;border-radius:4px;border:1px solid #e2e8f0">${actKey}</code>
+              <code style="font-size:12px;background:#f8fafc;padding:2px 5px;border-radius:4px;border:1px solid #e2e8f0">${esc(actKey)}</code>
             </td>
-            <td style="text-align:center;font-size:11.5px">${cajeroHtml}</td>
-            <td style="text-align:center;font-size:11.5px">${encHtml}</td>
-            <td style="text-align:center;font-size:11.5px">${adminHtml}</td>
+            <td style="text-align:center;font-size:12px">${cajeroHtml}</td>
+            <td style="text-align:center;font-size:12px">${encHtml}</td>
+            <td style="text-align:center;font-size:12px">${adminHtml}</td>
           </tr>
         `;
       });
@@ -431,16 +464,14 @@
       }
 
       tbody.innerHTML = log.slice(0, 25).map(function (ev) {
-        var actionBadge = ev.action.includes('SUCCESS')
-          ? '<span class="audit-badge" style="background:#d1fae5;color:#065f46">' + ev.action + '</span>'
-          : (ev.action.includes('SUPERVISOR')
-              ? '<span class="audit-badge" style="background:#fef3c7;color:#92400e">' + ev.action + '</span>'
-              : '<span class="audit-badge" style="background:#f1f5f9;color:#334155">' + ev.action + '</span>');
+        var actionText = esc(ev.action || '');
+        var actionBadge = String(ev.action || '').includes('SUCCESS')
+          ? '<span class="audit-badge" style="background:#d1fae5;color:#065f46">' + actionText + '</span>'
+          : (String(ev.action || '').includes('SUPERVISOR')
+              ? '<span class="audit-badge" style="background:#fef3c7;color:#92400e">' + actionText + '</span>'
+              : '<span class="audit-badge" style="background:#f1f5f9;color:#334155">' + actionText + '</span>');
 
-        var dateStr = new Date(ev.timestamp).toLocaleString('es-VE', {
-          day: '2-digit', month: '2-digit', year: 'numeric',
-          hour: '2-digit', minute: '2-digit', second: '2-digit'
-        });
+        var dateStr = formatVetDateTime(ev.timestamp);
 
         var detailsStr = '';
         try {
@@ -451,10 +482,10 @@
 
         return `
           <tr>
-            <td style="font-size:11px;color:var(--txt-sec)">${dateStr}</td>
+            <td style="font-size:12px;color:var(--txt-sec)">${esc(dateStr)}</td>
             <td>${actionBadge}</td>
-            <td><strong style="font-size:11.5px">${ev.actor || 'sistema'}</strong></td>
-            <td style="font-size:11px;color:var(--txt-sec)">${detailsStr || '—'}</td>
+            <td><strong style="font-size:12px">${esc(ev.actor || 'sistema')}</strong></td>
+            <td style="font-size:12px;color:var(--txt-sec)">${esc(detailsStr) || '—'}</td>
           </tr>
         `;
       }).join('');
@@ -591,27 +622,58 @@
     };
 
     window.deleteUserPrompt = function (id, name) {
-      if (!confirm('¿Está seguro de eliminar al usuario "' + name + '"?')) return;
-      var res = MTPAuth.deleteUser(id);
-      if (res.success) {
-        renderUsersTable();
-        renderAuditTable();
-        if (window.MTP) MTP.toast('Usuario eliminado');
-      } else {
-        alert(res.error || 'No se pudo eliminar el usuario');
+      if (window.MTPUI && MTPUI.confirmDialog) {
+        MTPUI.confirmDialog('¿Está seguro de eliminar al usuario "' + name + '"?', {
+          title: 'Eliminar Usuario',
+          okText: 'Sí, eliminar',
+          cancelText: 'Cancelar',
+          danger: true
+        }).then(function (ok) {
+          if (!ok) return;
+          var res = MTPAuth.deleteUser(id);
+          if (res.success) {
+            renderUsersTable();
+            renderAuditTable();
+            if (window.MTP) MTP.toast('Usuario eliminado');
+          } else {
+            if (window.MTP) MTP.toast(res.error || 'No se pudo eliminar el usuario', 'err');
+          }
+        });
       }
     };
 
     window.openResetSeedModal = function () {
-      if (confirm('¿Restablecer usuarios a la configuración inicial de fábrica?\n\n- admin: PIN 123456\n- cajero: PIN 1234\n- encargado: PIN 2244')) {
-        MTPAuth.resetToSeedUsers();
-        renderUsersTable();
-        renderAuditTable();
-        if (window.MTP) MTP.toast('Usuarios restablecidos a la semilla inicial');
+      if (window.MTPUI && MTPUI.confirmDialog) {
+        MTPUI.confirmDialog('¿Restablecer usuarios a la configuración inicial de fábrica? (admin: 123456 · encargado: 2244 · cajero: 1234)', {
+          title: 'Restablecer Usuarios',
+          okText: 'Sí, restablecer',
+          cancelText: 'Cancelar',
+          danger: true
+        }).then(function (ok) {
+          if (!ok) return;
+          MTPAuth.resetToSeedUsers();
+          renderUsersTable();
+          renderAuditTable();
+          if (window.MTP) MTP.toast('Usuarios restablecidos a la semilla inicial');
+        });
       }
     };
 
     document.addEventListener('DOMContentLoaded', function () {
+      var tbody = document.getElementById('usersTableBody');
+      if (tbody) {
+        tbody.addEventListener('click', function (e) {
+          var btn = e.target.closest('button[data-user-action]');
+          if (!btn) return;
+          var uid = btn.dataset.userId;
+          var action = btn.dataset.userAction;
+          var u = window.MTPAuth ? MTPAuth.getUserById(uid) : null;
+          if (!u) return;
+          if (action === 'pin') openChangePinModal(u.id, u.name, u.role);
+          else if (action === 'edit') openEditUserModal(u.id);
+          else if (action === 'delete') deleteUserPrompt(u.id, u.name);
+        });
+      }
       initUserModuleIcons();
       renderUsersTable();
       renderPermissionsMatrix();

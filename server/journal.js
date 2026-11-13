@@ -23,6 +23,7 @@ let resolvedDataDir = null;
 let journalPath = null;
 let currentSeq = 0;
 let journalFd = null;
+let idempotencyIndex = new Map();
 
 /**
  * Genera un UUID v4 seguro compatible con Node 13
@@ -48,6 +49,15 @@ function generateUuid() {
  * Resuelve y verifica el directorio de datos con permisos de escritura.
  */
 function resolveDataDir() {
+  const envDir = process.env.MTP_DATA_DIR ? path.resolve(String(process.env.MTP_DATA_DIR)) : '';
+  if (envDir) {
+    if (!fs.existsSync(envDir)) {
+      fs.mkdirSync(envDir, { recursive: true });
+    }
+    resolvedDataDir = envDir;
+    return resolvedDataDir;
+  }
+
   if (resolvedDataDir) {
     return resolvedDataDir;
   }
@@ -139,6 +149,7 @@ function init(customDataDir) {
 
   journalPath = path.join(resolvedDataDir, 'journal.ndjson');
   currentSeq = 0;
+  idempotencyIndex = new Map();
 
   // Asegurar que exista carpeta de respaldos
   const respaldosDir = path.join(resolvedDataDir, 'respaldos');
@@ -146,7 +157,7 @@ function init(customDataDir) {
     fs.mkdirSync(respaldosDir, { recursive: true });
   }
 
-  // Si existe journal.ndjson, escanear la secuencia máxima
+  // Si existe journal.ndjson, escanear la secuencia máxima y llaves de idempotencia
   if (fs.existsSync(journalPath)) {
     let rawContent = '';
     try {
@@ -164,6 +175,9 @@ function init(customDataDir) {
           const ev = JSON.parse(line);
           if (typeof ev.seq === 'number' && ev.seq > currentSeq) {
             currentSeq = ev.seq;
+          }
+          if (ev.idempotencyKey && typeof ev.idempotencyKey === 'string') {
+            idempotencyIndex.set(ev.idempotencyKey, ev);
           }
         } catch (parseErr) {
           console.warn('[Journal] Línea corrupta en journal (descartada) en pos ' + i + ':', line);
@@ -196,6 +210,13 @@ function appendEvent(eventData) {
     throw new Error('appendEvent requiere una propiedad "type" válida');
   }
 
+  const idemKey = eventData.idempotencyKey
+    || (eventData.payload && typeof eventData.payload === 'object' ? eventData.payload.idempotencyKey : null);
+  if (idemKey && typeof idemKey === 'string' && idempotencyIndex.has(idemKey)) {
+    const existing = idempotencyIndex.get(idemKey);
+    return Object.assign({}, existing, { deduplicated: true });
+  }
+
   currentSeq += 1;
 
   const eventRecord = {
@@ -208,6 +229,9 @@ function appendEvent(eventData) {
     payload: eventData.payload !== undefined ? eventData.payload : {},
     synced: eventData.synced === true
   };
+  if (idemKey && typeof idemKey === 'string') {
+    eventRecord.idempotencyKey = idemKey;
+  }
 
   const line = JSON.stringify(eventRecord) + '\n';
   const buffer = Buffer.from(line, 'utf8');
@@ -228,6 +252,10 @@ function appendEvent(eventData) {
       currentSeq -= 1; // revertir contador si falló la persistencia física
       throw new Error('Error crítico al escribir en journal con fsync: ' + retryErr.message);
     }
+  }
+
+  if (idemKey && typeof idemKey === 'string') {
+    idempotencyIndex.set(idemKey, eventRecord);
   }
 
   return eventRecord;

@@ -53,58 +53,126 @@ function testHttpServer(j, s, done) {
   });
 
   srv.listen(testPort, '127.0.0.1', function () {
-    // 1. GET /api/status
+    // 1. GET /api/v1/status (Público)
     httpRequest({
       hostname: '127.0.0.1',
       port: testPort,
-      path: '/api/status',
+      path: '/api/v1/status',
       method: 'GET'
     }, null, function (err, res, body) {
-      assert(!err && res.statusCode === 200, 'GET /api/status responde 200 OK');
+      assert(!err && res.statusCode === 200, 'GET /api/v1/status responde 200 OK');
       const statusObj = JSON.parse(body);
-      assert(statusObj.ok === true && statusObj.version === '5.0.0', 'statusObj contiene version 5.0.0 y ok=true');
+      assert(statusObj.ok === true && statusObj.version === '8.0.0', 'statusObj contiene version 8.0.0 y ok=true');
 
-      // 2. POST /api/events
-      const postPayload = JSON.stringify({
-        type: 'SALE_CREATED',
-        payload: { id: 'vta-http-999', totalUsd: 5.00 },
-        user: 'test-user'
-      });
+      // 2. Acceso sin token debe retornar 401
       httpRequest({
         hostname: '127.0.0.1',
         port: testPort,
-        path: '/api/events',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      }, postPayload, function (err2, res2, body2) {
-        assert(!err2 && res2.statusCode === 201, 'POST /api/events responde 201 Created');
-        const evResp = JSON.parse(body2);
-        assert(evResp.ok === true && evResp.seq > 0, 'Evento guardado por HTTP con seq válido');
+        path: '/api/v1/state',
+        method: 'GET'
+      }, null, function (errUnauth, resUnauth) {
+        assert(!errUnauth && resUnauth.statusCode === 401, 'GET /api/v1/state sin token responde 401 Unauthorized');
 
-        // 3. GET /api/events?sinceSeq=0
+        // 3. Login incorrecto retorna 401
         httpRequest({
           hostname: '127.0.0.1',
           port: testPort,
-          path: '/api/events?sinceSeq=0',
-          method: 'GET'
-        }, null, function (err3, res3, body3) {
-          assert(!err3 && res3.statusCode === 200, 'GET /api/events responde 200 OK');
-          const evList = JSON.parse(body3);
-          assert(evList.events.length >= 1, 'Eventos recuperados por GET /api/events');
+          path: '/api/v1/auth/login',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        }, JSON.stringify({ username: 'admin', pin: '000000' }), function (errBad, resBad) {
+          assert(!errBad && resBad.statusCode === 401, 'POST /api/v1/auth/login con PIN malo responde 401');
 
-          // 4. GET /api/state
+          // 4. Login como cajero y verificar RBAC 403 en backup
           httpRequest({
             hostname: '127.0.0.1',
             port: testPort,
-            path: '/api/state',
-            method: 'GET'
-          }, null, function (err4, res4, body4) {
-            assert(!err4 && res4.statusCode === 200, 'GET /api/state responde 200 OK');
-            const stateResp = JSON.parse(body4);
-            assert(stateResp.state && typeof stateResp.lastSeq === 'number', 'GET /api/state retorna estado materializado');
+            path: '/api/v1/auth/login',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          }, JSON.stringify({ username: 'cajero', pin: '1234' }), function (errCaj, resCaj, bodyCaj) {
+            assert(!errCaj && resCaj.statusCode === 200, 'Login de cajero responde 200 OK');
+            const cajeroTok = JSON.parse(bodyCaj).token;
 
-            srv.close(function () {
-              done();
+            httpRequest({
+              hostname: '127.0.0.1',
+              port: testPort,
+              path: '/api/v1/backup',
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + cajeroTok }
+            }, '{}', function (errRbac, resRbac) {
+              assert(!errRbac && resRbac.statusCode === 403, 'Cajero bloqueado con 403 al intentar POST /api/v1/backup');
+
+              // 5. Login como admin y operaciones autenticadas + idempotencyKey
+              httpRequest({
+                hostname: '127.0.0.1',
+                port: testPort,
+                path: '/api/v1/auth/login',
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+              }, JSON.stringify({ username: 'admin', pin: '123456' }), function (errAdm, resAdm, bodyAdm) {
+                assert(!errAdm && resAdm.statusCode === 200, 'Login de admin responde 200 OK');
+                const adminTok = JSON.parse(bodyAdm).token;
+                const authHdrs = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + adminTok };
+
+                const postPayload = JSON.stringify({
+                  type: 'SALE_CREATED',
+                  idempotencyKey: 'idem-http-test-999',
+                  payload: { id: 'vta-http-999', totalUsd: 5.00 },
+                  user: 'test-user'
+                });
+                httpRequest({
+                  hostname: '127.0.0.1',
+                  port: testPort,
+                  path: '/api/v1/events',
+                  method: 'POST',
+                  headers: authHdrs
+                }, postPayload, function (err2, res2, body2) {
+                  assert(!err2 && res2.statusCode === 201, 'POST /api/v1/events autenticado responde 201 Created');
+                  const evResp = JSON.parse(body2);
+                  assert(evResp.ok === true && evResp.seq > 0, 'Evento guardado por HTTP con seq válido');
+
+                  // Reenvío idempotente no debe incrementar seq
+                  httpRequest({
+                    hostname: '127.0.0.1',
+                    port: testPort,
+                    path: '/api/v1/events',
+                    method: 'POST',
+                    headers: authHdrs
+                  }, postPayload, function (errDup, resDup, bodyDup) {
+                    const dupResp = JSON.parse(bodyDup);
+                    assert(!errDup && dupResp.deduplicated === true && dupResp.seq === evResp.seq, 'IdempotencyKey deduplica evento repetido sin duplicar seq');
+
+                    httpRequest({
+                      hostname: '127.0.0.1',
+                      port: testPort,
+                      path: '/api/v1/events?sinceSeq=0',
+                      method: 'GET',
+                      headers: { 'Authorization': 'Bearer ' + adminTok }
+                    }, null, function (err3, res3, body3) {
+                      assert(!err3 && res3.statusCode === 200, 'GET /api/v1/events responde 200 OK');
+                      const evList = JSON.parse(body3);
+                      assert(evList.events.length >= 1, 'Eventos recuperados por GET /api/v1/events');
+
+                      httpRequest({
+                        hostname: '127.0.0.1',
+                        port: testPort,
+                        path: '/api/v1/state',
+                        method: 'GET',
+                        headers: { 'Authorization': 'Bearer ' + adminTok }
+                      }, null, function (err4, res4, body4) {
+                        assert(!err4 && res4.statusCode === 200, 'GET /api/v1/state responde 200 OK');
+                        const stateResp = JSON.parse(body4);
+                        assert(stateResp.state && stateResp.state.version === '8.0.0' && typeof stateResp.lastSeq === 'number', 'GET /api/v1/state retorna estado v8.0.0 materializado');
+
+                        srv.close(function () {
+                          done();
+                        });
+                      });
+                    });
+                  });
+                });
+              });
             });
           });
         });
@@ -221,13 +289,36 @@ function runTests() {
     });
     assert(evAfterCrash.seq === 4, 'Nuevo evento post-apagón continúa limpiamente en seq = 4');
 
-    // 5. Materialización de Estado en Memoria y Snapshot
-    console.log('\n[5/6] Probando materialización de estado y snapshots...');
+    // 5. Materialización de Estado en Memoria, Recetas, Reversión por Anulación y Snapshot
+    console.log('\n[5/6] Probando materialización de estado, descuento por receta y anulación...');
+    journal.appendEvent({
+      type: 'ITEM_SAVED',
+      payload: { id: 'ins-test-harina', name: 'Harina Test', type: 'insumo', sellable: false, unit: 'kg', stock: 10 },
+      user: 'admin'
+    });
+    journal.appendEvent({
+      type: 'SALE_CREATED',
+      payload: {
+        id: 'vta-rec-001',
+        totalUsd: 3.00,
+        items: [{ id: 'var-emp-test', name: 'Empanada Test', qty: 2, recipe: [{ insumoId: 'ins-test-harina', qty: 0.25 }] }]
+      },
+      user: 'cajero'
+    });
+    journal.appendEvent({
+      type: 'SALE_VOIDED',
+      payload: { saleId: 'vta-rec-001', reason: 'Prueba de reverso' },
+      user: 'admin'
+    });
+
     const state = stateManager.init(journal);
-    assert(state.lastSeq === 4, 'Estado reconstruido hasta última secuencia 4');
+    assert(state.version === '8.0.0', 'Estado materializado v8.0.0');
+    assert(state.lastSeq === 7, 'Estado reconstruido hasta última secuencia 7');
     assert(state.settings.rateBcv === 43.10, 'Tasa actualizada correctamente en estado');
-    assert(state.sales.length === 1, 'Venta vta-001 presente en estado materializado');
-    assert(state.kardex.length >= 1, 'Kardex materializado con movimiento de venta');
+    assert(state.sales.length === 2, 'Ambas ventas presentes en estado materializado');
+    const harinaAfterVoid = state.inventory.find(i => i.id === 'ins-test-harina');
+    assert(harinaAfterVoid && harinaAfterVoid.stock === 10, 'Descuento por receta y reversión tras SALE_VOIDED restauran stock exacto a 10');
+    assert(state.kardex.length >= 2, 'Kardex materializado con movimiento de venta y anulación');
 
     const snapResult = stateManager.saveSnapshot();
     assert(snapResult === true, 'Snapshot guardado exitosamente');

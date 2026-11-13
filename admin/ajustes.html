@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ajustes del Sistema y Base de Datos Local | MI TIENDA POS</title>
-  <link rel="stylesheet" href="../assets/css/variables.css">
-  <link rel="stylesheet" href="../assets/css/components.css">
-  <link rel="stylesheet" href="../assets/css/design-v7.css">
-  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <link rel="stylesheet" href="../assets/css/app.css">
 </head>
 <body>
   <div class="admin-wrap">
@@ -45,19 +43,19 @@
           <div class="card-bd">
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;background:var(--surface-2);padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--line)">
               <div>
-                <span style="font-size:11px;color:var(--txt-2);font-weight:var(--fw-semibold)">ÓRDENES COBRADAS</span>
+                <span style="font-size:12px;color:var(--txt-2);font-weight:var(--fw-semibold)">ÓRDENES COBRADAS</span>
                 <div class="tabular-nums" style="font-size:16px;font-weight:var(--fw-bold)" id="dbSalesCount">0</div>
               </div>
               <div>
-                <span style="font-size:11px;color:var(--txt-2);font-weight:var(--fw-semibold)">GASTOS OPERATIVOS</span>
+                <span style="font-size:12px;color:var(--txt-2);font-weight:var(--fw-semibold)">GASTOS OPERATIVOS</span>
                 <div class="tabular-nums" style="font-size:16px;font-weight:var(--fw-bold)" id="dbExpensesCount">0</div>
               </div>
               <div>
-                <span style="font-size:11px;color:var(--txt-2);font-weight:var(--fw-semibold)">ARTÍCULOS INVENTARIO</span>
+                <span style="font-size:12px;color:var(--txt-2);font-weight:var(--fw-semibold)">ARTÍCULOS INVENTARIO</span>
                 <div class="tabular-nums" style="font-size:16px;font-weight:var(--fw-bold)" id="dbInventoryCount">0</div>
               </div>
               <div>
-                <span style="font-size:11px;color:var(--txt-2);font-weight:var(--fw-semibold)">PLATOS Y RECETAS</span>
+                <span style="font-size:12px;color:var(--txt-2);font-weight:var(--fw-semibold)">PLATOS Y RECETAS</span>
                 <div class="tabular-nums" style="font-size:16px;font-weight:var(--fw-bold)" id="dbDishesCount">0</div>
               </div>
             </div>
@@ -117,7 +115,7 @@
               <button class="btn btn-action" onclick="saveSettingsForm()">
                 <span id="saveFormIcon"></span> Guardar Configuración General
               </button>
-              <button class="btn btn-secondary btn-sm" style="color:var(--money-out)" onclick="if(confirm('¿Restablecer datos iniciales de fábrica?')) MTP.resetDemoData()">Restablecer Datos Iniciales</button>
+              <button class="btn btn-secondary btn-sm" style="color:var(--money-out)" onclick="confirmResetDemoData()">Restablecer Datos Iniciales</button>
             </div>
           </div>
         </div>
@@ -140,6 +138,7 @@
                   <th>Nombre del Punto</th>
                   <th>Banco Adquirente</th>
                   <th>Modelo</th>
+                  <th>Moneda Liquidación</th>
                   <th>Lote Activo</th>
                   <th>Estado</th>
                   <th>Acción</th>
@@ -240,6 +239,13 @@
                 <label>Próximo N° de Comprobante / Factura</label>
                 <input type="number" id="fiscNextInvoiceInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)" min="1">
               </div>
+              <div class="form-group">
+                <label>Ancho del Papel (Impresora Térmica Normal)</label>
+                <select id="fiscThermalWidthSelect" class="select" style="font-weight:var(--fw-bold)">
+                  <option value="80mm">Rollo 80 mm (Estándar Comandas y Recibos)</option>
+                  <option value="58mm">Rollo 58 mm (Mini Impresora Térmica)</option>
+                </select>
+              </div>
               <div class="form-group" style="grid-column:1/-1">
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
                   <input type="checkbox" id="fiscApplyIgtfCheck">
@@ -247,8 +253,77 @@
                 </label>
               </div>
             </div>
+            <div style="background:#F8FAFC;border:1px solid #CBD5E1;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;line-height:1.5;color:#334155">
+              <strong style="color:#0F172A;display:block;margin-bottom:4px">⚖️ Guía Rápida Fiscal SENIAT (Venezuela)</strong>
+              <ul style="margin:0;padding-left:18px">
+                <li><strong>Exentos de IVA (0% — Art. 18 Ley de IVA):</strong> Harina de maíz/trigo (Harina P.A.N.), arroz, pasta/espagueti, pan, huevos, margarina, aceite vegetal comestible, leche, queso blanco, carnes y verduras sin procesar.</li>
+                <li><strong>Alícuota General (+16% IVA — Art. 27):</strong> Toda la comida preparada (empanadas, arepas, pastelitos, almuerzos, café servido), refrescos, maltas, chucherías, cervezas, cigarros y agua embotellada.</li>
+                <li><strong>IGTF (3% — Decreto 4.972):</strong> Solo aplica si el comercio es <strong>Sujeto Pasivo Especial</strong> y únicamente sobre el monto pagado en divisas (efectivo USD / Zelle); pagos en Bolívares llevan 0% IGTF.</li>
+                <li><strong>Impresora Actual vs. Máquina Fiscal:</strong> Hoy puedes imprimir comandas y notas de control interno en tu <strong>impresora térmica normal (58mm/80mm)</strong>; los drivers de impresora fiscal homologada (The Factory HKA / Bixolon / Aclas) se conectan cuando el equipo fiscal físico esté instalado.</li>
+              </ul>
+            </div>
             <div style="display:flex;justify-content:flex-end">
               <button class="btn btn-secondary btn-sm" onclick="saveFiscalConfigForm()">Guardar Configuración Fiscal</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP MÓVIL ADMIN Y SERVIDOR VPS -->
+        <div class="card" data-section="dinero" style="margin-bottom:12px">
+          <div class="card-hd">
+            <div>
+              <h3>
+                🌐 Base de Datos en la Nube (VPS) · Respaldo Local · App Móvil
+              </h3>
+              <p>Tu base de datos principal vive en el VPS; si se va el internet en la tienda, esta PC sigue vendiendo en local y sincroniza sola al volver</p>
+            </div>
+            <span class="badge badge-blue" id="mobileNetBadge">VPS + Local</span>
+          </div>
+          <div class="card-bd">
+            <div class="form-grid" style="margin-bottom:12px">
+              <div class="form-group" style="grid-column:1/-1">
+                <label>URL del Servidor Principal (VPS) — Recomendado HTTPS</label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <input type="url" id="cfgVpsUrl" class="input" style="flex:1;min-width:240px;font-family:var(--font-mono)" placeholder="Ej: https://pos.tudominio.com">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="testVpsConnection()">Probar VPS</button>
+                  <button type="button" class="btn btn-primary btn-sm" onclick="saveVpsConfig()">Guardar VPS</button>
+                </div>
+                <div id="vpsSyncStatusText" style="font-size:12px;color:var(--txt-2);margin-top:6px"></div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px">
+              <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px">
+                <div style="font-size:12px;font-weight:700;color:var(--txt-2);margin-bottom:4px">📶 RESPALDO LOCAL EN TIENDA (WI-FI / HOTSPOT)</div>
+                <div class="tabular-nums" style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--txt-1)" id="mobLanUrlText">Detectando IP local...</div>
+                <button type="button" class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="copyMobUrl('mobLanUrlText')">Copiar URL Local</button>
+              </div>
+              <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px">
+                <div style="font-size:12px;font-weight:700;color:var(--txt-2);margin-bottom:4px">🌐 ACCESO EXTERNO (VPS / TAILSCALE)</div>
+                <div class="tabular-nums" style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--txt-1)" id="mobTailscaleUrlText">Verificando...</div>
+                <button type="button" class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="copyMobUrl('mobTailscaleUrlText')">Copiar URL Externa</button>
+              </div>
+            </div>
+
+            <div class="form-grid" style="margin-bottom:10px">
+              <div class="form-group" style="grid-column:1/-1">
+                <label>URL Alterna / Túnel Móvil (Opcional si usas Tailscale o Cloudflare en vez de VPS)</label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <input type="url" id="cfgMobileTunnelUrl" class="input" style="flex:1;min-width:240px;font-family:var(--font-mono)" placeholder="Ej: https://mi-tienda.trycloudflare.com o http://100.x.x.x:7070">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="saveMobileTunnelConfig()">Guardar Alterna</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#F8FAFC;border:1px solid #CBD5E1;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;color:#334155;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+              <div>
+                <strong>Vista Móvil del Dueño (Sincronización Local / VPS)</strong>
+                <div>1) Abre la vista móvil en tu teléfono conectado a la misma red Wi-Fi o mediante el túnel remoto del VPS.</div>
+                <div>2) Si se corta internet en la tienda, la PC guarda todo en <code>C:\MI-TIENDA-DATOS</code> y lo sube automáticamente al VPS al reconectar.</div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <a href="../mobile/index.html" class="btn btn-secondary btn-sm">Probar Vista Móvil</a>
+              </div>
             </div>
           </div>
         </div>
@@ -268,7 +343,7 @@
             <ol style="padding-left:18px;margin-top:6px">
               <li>Haz clic derecho en el Escritorio de Windows 7 → <strong>Nuevo → Acceso directo</strong>.</li>
               <li>En la ruta del elemento, escribe:
-                <br><code style="background:var(--nav-bg);color:#34D399;padding:4px 8px;border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:11px;display:inline-block;margin:4px 0">"C:\Program Files\Google\Chrome\Application\chrome.exe" --app="file:///C:/Users/PC/Desktop/MI-TIENDA-POS/caja/pos.html"</code>
+                <br><code style="background:var(--nav-bg);color:#34D399;padding:4px 8px;border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:12px;display:inline-block;margin:4px 0">"C:\Program Files\Google\Chrome\Application\chrome.exe" --app="http://localhost:3080/pos.html"</code>
               </li>
               <li>Nómbralo <strong>MI TIENDA POS (Caja de Cobranzas)</strong> y dale Guardar.</li>
               <li>¡Listo! Al darle doble clic, se abre al instante en 1 segundo con consumo mínimo de memoria RAM.</li>
@@ -277,7 +352,7 @@
         </div>
 
         <!-- MODAL PUNTO DE VENTA (TERMINAL) -->
-        <div class="modal" id="modalPosTerminal">
+        <div class="modal-backdrop" id="modalPosTerminal">
           <div class="modal-box" style="max-width:480px">
             <div class="modal-hd">
               <h3 id="modalTermTitle" style="margin:0">Registrar Punto de Venta (POS)</h3>
@@ -310,23 +385,32 @@
                   <input type="text" id="termBatchInput" class="input tabular-nums" style="font-family:var(--font-mono);font-weight:var(--fw-bold)" placeholder="0001">
                 </div>
               </div>
-              <div class="form-group">
-                <label>Estado Operativo</label>
-                <select id="termStatusSelect" class="select">
-                  <option value="ACTIVO">ACTIVO (Disponible en Caja)</option>
-                  <option value="INACTIVO">INACTIVO (Fuera de Servicio)</option>
-                </select>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div class="form-group">
+                  <label>Moneda de Liquidación</label>
+                  <select id="termCurrencySelect" class="select">
+                    <option value="VES">Bolívares (VES — exento de IGTF 3%)</option>
+                    <option value="USD">Divisas (USD — aplica IGTF 3%)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Estado Operativo</label>
+                  <select id="termStatusSelect" class="select">
+                    <option value="ACTIVO">ACTIVO (Disponible en Caja)</option>
+                    <option value="INACTIVO">INACTIVO (Fuera de Servicio)</option>
+                  </select>
+                </div>
               </div>
             </div>
             <div class="modal-ft">
               <button class="btn btn-secondary" onclick="document.getElementById('modalPosTerminal').classList.remove('open')">Cancelar</button>
-              <button class="btn btn-secondary" onclick="saveTerminalModal()">Guardar Punto POS</button>
+              <button class="btn btn-action" onclick="saveTerminalModal()">Guardar Punto POS</button>
             </div>
           </div>
         </div>
 
         <!-- MODAL CUENTA DESTINO PAGO MÓVIL -->
-        <div class="modal" id="modalPmAccount">
+        <div class="modal-backdrop" id="modalPmAccount">
           <div class="modal-box" style="max-width:480px">
             <div class="modal-hd">
               <h3 id="modalPmTitle" style="margin:0">Registrar Cuenta Pago Móvil Destino</h3>
@@ -381,18 +465,38 @@
     </main>
   </div>
 
-  <script src="../assets/js/icons.js"></script>
-  <script src="../assets/js/tax.js"></script>
-  <script src="../assets/js/config.js"></script>
-  <script src="../assets/js/rates.js"></script>
-  <script src="../assets/js/permissions.js"></script>
-  <script src="../assets/js/auth.js"></script>
-  <script src="../assets/js/ui.js"></script>
-  <script src="../assets/js/keys.js"></script>
-  <script src="../assets/js/sidenav.js"></script>
-  <script src="../assets/js/code-structure.js"></script>
-  <script src="../assets/js/barcode-printer.js"></script>
+  <script src="../assets/js/ui/icons.js"></script>
+  <script src="../assets/js/core/tax.js"></script>
+  <script src="../assets/js/core/config.js"></script>
+  <script src="../assets/js/core/api-client.js"></script>
+  <script src="../assets/js/core/rates.js"></script>
+  <script src="../assets/js/core/permissions.js"></script>
+  <script src="../assets/js/core/auth.js"></script>
+  <script src="../assets/js/ui/ui.js"></script>
+  <script src="../assets/js/ui/keys.js"></script>
+  <script src="../assets/js/ui/view-transitions.js"></script>
+  <script src="../assets/js/ui/sidenav.js"></script>
+  <script src="../assets/js/core/code-structure.js"></script>
+  <script src="../assets/js/modules/barcode-printer.js"></script>
   <script>
+    function esc(str) {
+      if (window.MTP && typeof MTP.escapeHtml === 'function') return MTP.escapeHtml(str);
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function persistSettingsState(meta) {
+      if (window.MTP && typeof MTP.saveState === 'function') {
+        MTP.saveState(MTP.state, meta);
+      } else if (window.MTP && typeof MTP.save === 'function') {
+        MTP.save(meta);
+      }
+    }
+
     function setupIcons() {
       if (!window.MTPIcons) return;
       const setIco = (id, name) => {
@@ -423,7 +527,7 @@
       document.getElementById('dbSalesCount').textContent = (MTP.state.sales || []).length;
       document.getElementById('dbExpensesCount').textContent = (MTP.state.expenses || []).length;
       document.getElementById('dbInventoryCount').textContent = (MTP.state.inventory || []).length;
-      document.getElementById('dbDishesCount').textContent = (MTP.state.dishes || []).length;
+      document.getElementById('dbDishesCount').textContent = (MTP.state.variants || []).length;
 
       const fc = s.fiscalConfig || {};
       if (document.getElementById('fiscBrandSelect')) document.getElementById('fiscBrandSelect').value = fc.brand || 'THE_FACTORY_HKA';
@@ -433,21 +537,155 @@
       if (document.getElementById('fiscModeSelect')) document.getElementById('fiscModeSelect').value = fc.mode || 'INTERNO';
       if (document.getElementById('fiscReportZInput')) document.getElementById('fiscReportZInput').value = fc.lastReportZ || 0;
       if (document.getElementById('fiscNextInvoiceInput')) document.getElementById('fiscNextInvoiceInput').value = fc.currentInvoiceNumber || s.nextOrderNumber || 105;
+      if (document.getElementById('fiscThermalWidthSelect')) document.getElementById('fiscThermalWidthSelect').value = fc.thermalWidth || '80mm';
       if (document.getElementById('fiscApplyIgtfCheck')) document.getElementById('fiscApplyIgtfCheck').checked = Boolean(s.isContribuyenteEspecial);
 
+      const termsBody = document.getElementById('terminalsTableBody');
+      if (termsBody) {
+        termsBody.addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-edit-term]');
+          if (!btn) return;
+          openTerminalModal(btn.dataset.editTerm || '');
+        });
+      }
+      const pmBody = document.getElementById('pagoMovilAccountsTableBody');
+      if (pmBody) {
+        pmBody.addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-edit-pm]');
+          if (!btn) return;
+          openPagoMovilAccountModal(btn.dataset.editPm || '');
+        });
+      }
       renderTerminalsTable();
       renderPmAccountsTable();
+      loadMobileConnectionInfo();
     });
+
+    function loadMobileConnectionInfo() {
+      const vpsInput = document.getElementById('cfgVpsUrl');
+      const vpsStatusEl = document.getElementById('vpsSyncStatusText');
+      const savedVps = (MTP.state && MTP.state.settings && MTP.state.settings.vpsUrl)
+        || (window.MTPApiClient && window.MTPApiClient.getVpsUrl ? window.MTPApiClient.getVpsUrl() : '');
+      if (vpsInput) vpsInput.value = savedVps || '';
+
+      if (window.MTPApiClient && window.MTPApiClient.getSyncStatus && vpsStatusEl) {
+        const st = window.MTPApiClient.getSyncStatus();
+        if (st.vpsConfigured) {
+          vpsStatusEl.textContent = st.vpsOnline
+            ? ('🟢 Conectado al VPS (' + st.vpsUrl + ') · Respaldo local ' + (st.localOnline ? 'activo' : 'standby'))
+            : ('🟡 Sin conexión al VPS ahora — operando en Respaldo Local (' + st.pendingVps + ' eventos por subir)');
+        } else {
+          vpsStatusEl.textContent = 'Sin VPS configurado aún. Operando en motor local (' + st.localUrl + ').';
+        }
+      }
+
+      const tunInput = document.getElementById('cfgMobileTunnelUrl');
+      if (tunInput && MTP.state && MTP.state.settings) {
+        tunInput.value = MTP.state.settings.mobileTunnelUrl || '';
+      }
+      const lanEl = document.getElementById('mobLanUrlText');
+      const tsEl = document.getElementById('mobTailscaleUrlText');
+      if (!window.MTPApiClient || !window.MTPApiClient.getBaseUrl) return;
+      const base = window.MTPApiClient.getBaseUrl();
+      let tok = '';
+      try { tok = sessionStorage.getItem('mtp_api_token_v8') || localStorage.getItem('mtp_api_token_v8') || ''; } catch (_) {}
+      fetch(base + '/api/v1/network-info', {
+        headers: tok ? { 'Authorization': 'Bearer ' + tok } : {}
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data || !data.ok) {
+            if (lanEl) lanEl.textContent = base;
+            if (tsEl) tsEl.textContent = savedVps || 'Inicia servidor local para detectar';
+            return;
+          }
+          if (lanEl) lanEl.textContent = (data.lanUrls && data.lanUrls[0]) || base;
+          if (tsEl) tsEl.textContent = data.vpsUrl || (data.tailscaleUrls && data.tailscaleUrls[0]) || (data.remoteUrl || 'Sin VPS / Tailscale');
+        })
+        .catch(() => {
+          if (lanEl) lanEl.textContent = base;
+          if (tsEl) tsEl.textContent = savedVps || 'Servidor local apagado';
+        });
+    }
+
+    function testVpsConnection() {
+      const inp = document.getElementById('cfgVpsUrl');
+      const statusEl = document.getElementById('vpsSyncStatusText');
+      const val = (inp ? inp.value : '').trim().replace(/\/+$/, '');
+      if (!val) {
+        MTP.toast('Escribe la URL de tu VPS primero (ej: https://pos.tudominio.com).', 'warn');
+        return;
+      }
+      if (statusEl) statusEl.textContent = 'Probando conexión con ' + val + '...';
+      if (window.MTPApiClient && window.MTPApiClient.probeEndpoint) {
+        window.MTPApiClient.probeEndpoint(val).then(res => {
+          if (res && res.online) {
+            if (statusEl) statusEl.textContent = '🟢 VPS en línea y respondiendo: ' + val;
+            MTP.toast('VPS conectado correctamente.');
+          } else {
+            if (statusEl) statusEl.textContent = '🔴 No respondió el VPS (' + (res && res.error ? res.error : 'verifica DNS/HTTPS/puerto 7070') + ').';
+            MTP.toast('No se pudo contactar al VPS.', 'warn');
+          }
+        });
+      }
+    }
+
+    function saveVpsConfig() {
+      const inp = document.getElementById('cfgVpsUrl');
+      const val = (inp ? inp.value : '').trim().replace(/\/+$/, '');
+      MTP.state.settings.vpsUrl = val;
+      if (val && !MTP.state.settings.mobileTunnelUrl) {
+        MTP.state.settings.mobileTunnelUrl = val;
+      }
+      persistSettingsState({
+        eventType: 'SETTINGS_UPDATED',
+        eventPayload: { vpsUrl: val, mobileTunnelUrl: MTP.state.settings.mobileTunnelUrl || '' }
+      });
+      if (window.MTPApiClient && window.MTPApiClient.setVpsUrl) {
+        window.MTPApiClient.setVpsUrl(val).then(() => loadMobileConnectionInfo());
+      } else {
+        loadMobileConnectionInfo();
+      }
+      MTP.toast(val ? 'VPS guardado como base principal (con respaldo local offline).' : 'VPS desconectado. Usando solo motor local.');
+    }
+
+    function copyMobUrl(elId) {
+      const el = document.getElementById(elId);
+      const txt = el ? el.textContent.trim() : '';
+      if (!txt || txt.indexOf('http') !== 0) {
+        MTP.toast('No hay una URL lista para copiar aún.', 'warn');
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(() => MTP.toast('URL copiada: ' + txt));
+      } else {
+        MTP.toast(txt);
+      }
+    }
+
+    function saveMobileTunnelConfig() {
+      const el = document.getElementById('cfgMobileTunnelUrl');
+      const val = (el ? el.value : '').trim().replace(/\/+$/, '');
+      MTP.state.settings.mobileTunnelUrl = val;
+      persistSettingsState({
+        eventType: 'SETTINGS_UPDATED',
+        eventPayload: { mobileTunnelUrl: val }
+      });
+      MTP.toast(val ? 'URL remota para móvil guardada.' : 'URL remota limpiada.');
+      loadMobileConnectionInfo();
+    }
 
     function saveFiscalConfigForm() {
       const ivaMode = document.getElementById('fiscIvaModeSelect')?.value || 'RECARGO';
       const isContribEsp = Boolean(document.getElementById('fiscApplyIgtfCheck')?.checked);
       const serialNumber = document.getElementById('fiscSerialInput')?.value.trim() || '';
       const mode = document.getElementById('fiscModeSelect')?.value || 'INTERNO';
+      const widthEl = document.getElementById('fiscThermalWidthSelect');
       const fc = {
         brand: document.getElementById('fiscBrandSelect').value,
         port: document.getElementById('fiscPortSelect').value,
         ivaMode,
+        thermalWidth: widthEl ? widthEl.value : '80mm',
         isContribuyenteEspecial: isContribEsp,
         serialNumber,
         enabled: Boolean(serialNumber && mode !== 'INTERNO'),
@@ -463,32 +701,54 @@
       MTP.toast('Configuración de IVA y comprobantes guardada.');
     }
 
+    function confirmResetDemoData() {
+      MTPUI.confirmDialog('¿Restablecer todos los datos a la configuración inicial de fábrica? Se perderán las ventas y cambios actuales.', {
+        title: '⚠️ Restablecer Datos Iniciales',
+        okText: 'Sí, Restablecer',
+        danger: true
+      }).then(ok => {
+        if (ok) MTP.resetDemoData();
+      });
+    }
+
     function triggerFiscalReportX() {
       MTP.emitFiscalReportX();
     }
 
     function triggerFiscalReportZ() {
-      if (!confirm('¿Deseas emitir el REPORTE Z de Cierre Fiscal Diario? Esto incrementará el número de Reporte Z y cerrará la memoria fiscal del día.')) return;
-      const res = MTP.emitFiscalReportZ();
-      if (document.getElementById('fiscReportZInput')) document.getElementById('fiscReportZInput').value = res.reportZNumber;
+      MTPUI.confirmDialog('¿Deseas emitir el REPORTE Z de Cierre Fiscal Diario? Esto incrementará el número de Reporte Z y cerrará el período del día.', {
+        title: '🧾 Emitir Reporte Z',
+        okText: 'Emitir Reporte Z'
+      }).then(ok => {
+        if (!ok) return;
+        const res = MTP.emitFiscalReportZ();
+        if (document.getElementById('fiscReportZInput')) document.getElementById('fiscReportZInput').value = res.reportZNumber;
+      });
     }
 
     function renderTerminalsTable() {
       const terms = MTP.state.posTerminals || [];
       const tb = document.getElementById('terminalsTableBody');
       if (!tb) return;
-      tb.innerHTML = terms.map(t => `
+      tb.innerHTML = terms.map(t => {
+        const liq = t.liquidationCurrency === 'USD' ? 'USD' : 'VES';
+        const liqBadge = liq === 'USD'
+          ? '<span class="badge badge-yellow">USD (IGTF 3%)</span>'
+          : '<span class="badge badge-blue">VES (Bs)</span>';
+        return `
         <tr>
-          <td><strong>${t.name}</strong></td>
-          <td>${t.bank}</td>
-          <td>${t.model || 'POS'}</td>
-          <td><span class="code-pill">${t.currentBatch || '0001'}</span></td>
-          <td><span class="badge ${t.status === 'ACTIVO' ? 'badge-green' : 'badge-red'}">${t.status}</span></td>
+          <td><strong>${esc(t.name)}</strong></td>
+          <td>${esc(t.bank)}</td>
+          <td>${esc(t.model || 'POS')}</td>
+          <td>${liqBadge}</td>
+          <td><span class="code-pill">${esc(t.currentBatch || '0001')}</span></td>
+          <td><span class="badge ${t.status === 'ACTIVO' ? 'badge-green' : 'badge-red'}">${esc(t.status)}</span></td>
           <td>
-            <button class="btn btn-secondary btn-sm" onclick="openTerminalModal('${t.id}')">Editar</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-edit-term="${esc(t.id)}">Editar</button>
           </td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
     }
 
     function renderPmAccountsTable() {
@@ -497,13 +757,13 @@
       if (!tb) return;
       tb.innerHTML = accs.map(a => `
         <tr>
-          <td><strong>${a.name}</strong></td>
-          <td>${a.bank}</td>
-          <td><span class="code-pill tabular-nums">${a.phone}</span></td>
-          <td>${a.rif} · <span style="font-size:11px;color:var(--txt-2)">${a.holder || '—'}</span></td>
-          <td><span class="badge ${a.status === 'ACTIVO' ? 'badge-green' : 'badge-red'}">${a.status}</span></td>
+          <td><strong>${esc(a.name)}</strong></td>
+          <td>${esc(a.bank)}</td>
+          <td><span class="code-pill tabular-nums">${esc(a.phone)}</span></td>
+          <td>${esc(a.rif)} · <span style="font-size:12px;color:var(--txt-2)">${esc(a.holder || '—')}</span></td>
+          <td><span class="badge ${a.status === 'ACTIVO' ? 'badge-green' : 'badge-red'}">${esc(a.status)}</span></td>
           <td>
-            <button class="btn btn-secondary btn-sm" onclick="openPagoMovilAccountModal('${a.id}')">Editar</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-edit-pm="${esc(a.id)}">Editar</button>
           </td>
         </tr>
       `).join('');
@@ -512,6 +772,7 @@
     function openTerminalModal(termId) {
       const modal = document.getElementById('modalPosTerminal');
       const title = document.getElementById('modalTermTitle');
+      const currSel = document.getElementById('termCurrencySelect');
       if (termId) {
         const t = (MTP.state.posTerminals || []).find(item => item.id === termId);
         if (t) {
@@ -520,6 +781,7 @@
           document.getElementById('termBankSelect').value = t.bank;
           document.getElementById('termModelInput').value = t.model || '';
           document.getElementById('termBatchInput').value = t.currentBatch || '0001';
+          if (currSel) currSel.value = t.liquidationCurrency === 'USD' ? 'USD' : 'VES';
           document.getElementById('termStatusSelect').value = t.status || 'ACTIVO';
           if (title) title.textContent = 'Editar Punto de Venta (POS)';
         }
@@ -528,6 +790,7 @@
         document.getElementById('termNameInput').value = '';
         document.getElementById('termModelInput').value = '';
         document.getElementById('termBatchInput').value = '0001';
+        if (currSel) currSel.value = 'VES';
         document.getElementById('termStatusSelect').value = 'ACTIVO';
         if (title) title.textContent = 'Registrar Nuevo Punto de Venta (POS)';
       }
@@ -540,6 +803,7 @@
       const bank = document.getElementById('termBankSelect').value;
       const model = document.getElementById('termModelInput').value.trim();
       const currentBatch = document.getElementById('termBatchInput').value.trim() || '0001';
+      const liquidationCurrency = document.getElementById('termCurrencySelect')?.value || 'VES';
       const status = document.getElementById('termStatusSelect').value;
 
       if (!name) {
@@ -547,7 +811,7 @@
         return;
       }
 
-      MTP.saveTerminal({ id, name, bank, model, currentBatch, status });
+      MTP.saveTerminal({ id, name, bank, model, currentBatch, liquidationCurrency, status });
       document.getElementById('modalPosTerminal').classList.remove('open');
       renderTerminalsTable();
       MTP.toast(`Punto de Venta "${name}" guardado.`);
@@ -606,11 +870,24 @@
       s.rif = document.getElementById('cfgRif').value.trim();
       s.phone = document.getElementById('cfgPhone').value.trim();
       s.address = document.getElementById('cfgAddress').value.trim();
-      s.targetMarginPct = parseFloat(document.getElementById('cfgMargin').value) || 40;
-      s.nextOrderNumber = parseInt(document.getElementById('cfgNextOrder').value) || 100;
+      const parsedMargin = parseFloat(document.getElementById('cfgMargin').value);
+      s.targetMarginPct = Number.isFinite(parsedMargin) ? parsedMargin : 40;
+      const parsedNext = parseInt(document.getElementById('cfgNextOrder').value, 10);
+      s.nextOrderNumber = Number.isFinite(parsedNext) ? parsedNext : 100;
       s.legalNotice = document.getElementById('cfgLegalNotice').value.trim();
-      MTP.save();
-      MTP.toast('Configuración guardada en la base de datos local');
+      persistSettingsState({
+        eventType: 'SETTINGS_UPDATED',
+        eventPayload: {
+          storeName: s.storeName,
+          rif: s.rif,
+          phone: s.phone,
+          address: s.address,
+          targetMarginPct: s.targetMarginPct,
+          nextOrderNumber: s.nextOrderNumber,
+          legalNotice: s.legalNotice
+        }
+      });
+      MTP.toast('Configuración guardada y aplicada en todo el sistema');
     }
 
     function handleImportBackup(input) {
@@ -620,10 +897,10 @@
       reader.onload = function(e) {
         try {
           const parsed = JSON.parse(e.target.result);
-          if (parsed && parsed.inventory && parsed.settings) {
-            localStorage.setItem('mtp_store_v3', JSON.stringify(parsed));
-            MTP.toast('¡Base de datos restaurada con éxito!');
-            setTimeout(() => location.reload(), 600);
+          if (parsed && (parsed.inventory || parsed.insumos || parsed.retailItems) && parsed.settings) {
+            MTP.importFullBackup(parsed);
+            MTP.toast('¡Base de datos restaurada y migrada con éxito!');
+            setTimeout(() => location.reload(), 450);
           } else {
             MTP.toast('El archivo no parece ser un respaldo válido de MI TIENDA POS', 'err');
           }

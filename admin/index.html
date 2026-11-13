@@ -4,14 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Análisis Financiero, Ingresos, Gastos y Dashboard | MI TIENDA POS</title>
-  <link rel="stylesheet" href="../assets/css/variables.css">
-  <link rel="stylesheet" href="../assets/css/components.css">
-  <link rel="stylesheet" href="../assets/css/design-v7.css">
-  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <link rel="stylesheet" href="../assets/css/app.css">
   <style>
     .svg-chart-wrap {
       width: 100%;
-      height: 125px;
+      height: auto;
+      min-height: 175px;
       position: relative;
     }
     .bar-rect:hover {
@@ -29,14 +28,14 @@
         <div class="topbar-left">
           <button class="menu-toggle" id="menuToggleBtn">☰</button>
           <div class="topbar-title">
-            <h2>Mi día — cómo va el negocio</h2>
-            <p>Lo que vendiste, lo que ganaste, lo que hay en la gaveta y qué se está acabando</p>
+            <h2 id="dashStoreHeading">Mi día — cómo va el negocio</h2>
+            <p id="dashStoreSub">Lo que vendiste, lo que ganaste, lo que hay en la gaveta y qué se está acabando</p>
           </div>
         </div>
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
-          <button class="btn btn-secondary btn-sm" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Gasto (F6)</button>
-          <a href="pos.html" class="btn btn-action btn-sm">Caja (F2)</a>
+          <button class="btn btn-secondary" onclick="window.MTPSidebar && window.MTPSidebar.openExpenseModal()">+ Gasto (F6)</button>
+          <a href="../pos.html" class="btn btn-action">Ir a Caja (F2)</a>
         </div>
       </header>
 
@@ -56,6 +55,9 @@
         <!-- 4 PREGUNTAS CON RESPUESTA Y BOTÓN DE DETALLE -->
         <div class="dash-questions" id="dashQuestions"></div>
 
+        <!-- ALERTAS EN VIVO: PAGO MÓVIL POR VERIFICAR + ASISTENTE IA -->
+        <div id="dashLiveAlerts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px;margin-bottom:12px"></div>
+
         <!-- GRÁFICOS INTERACTIVOS NATIVOS SVG (0% GPU / WINDOWS 7) -->
         <div class="grid-2-asym" style="margin-bottom:12px">
           <!-- Gráfico 1: Ventas por Hora / Flujo del Día -->
@@ -68,11 +70,11 @@
             </div>
             <div class="card-bd">
               <div class="svg-chart-wrap" id="chartHourlyWrap"></div>
-              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt-2);margin-top:4px">
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--txt-2);margin-top:6px;flex-wrap:wrap;gap:6px">
                 <span>07:00 Desayunos</span>
                 <span>12:00 Almuerzos</span>
                 <span>16:00 Merienda</span>
-                <span>20:00 Cierre</span>
+                <span>21:00 Cierre</span>
               </div>
             </div>
           </div>
@@ -162,7 +164,7 @@
               <h3>
                 <span id="recentSalesIcon"></span> Últimas Órdenes y Vueltos Entregados
               </h3>
-              <a href="pos.html" class="btn btn-secondary btn-sm">Ir a Caja (F2)</a>
+              <a href="../pos.html" class="btn btn-secondary btn-sm">Ir a Caja (F2)</a>
             </div>
             <div class="table-wrap">
               <table class="data-table">
@@ -184,19 +186,28 @@
     </main>
   </div>
 
-  <script src="../assets/js/icons.js"></script>
-  <script src="../assets/js/tax.js"></script>
-  <script src="../assets/js/config.js"></script>
-  <script src="../assets/js/rates.js"></script>
-  <script src="../assets/js/permissions.js"></script>
-  <script src="../assets/js/auth.js"></script>
-  <script src="../assets/js/ui.js"></script>
-  <script src="../assets/js/keys.js"></script>
-  <script src="../assets/js/sidenav.js"></script>
-  <script src="../assets/js/code-structure.js"></script>
-  <script src="../assets/js/barcode-printer.js"></script>
-  <script src="../assets/js/view-transitions.js"></script>
+  <script src="../assets/js/ui/icons.js"></script>
+  <script src="../assets/js/core/tax.js"></script>
+  <script src="../assets/js/core/config.js"></script>
+  <script src="../assets/js/core/api-client.js"></script>
+  <script src="../assets/js/core/rates.js"></script>
+  <script src="../assets/js/core/permissions.js"></script>
+  <script src="../assets/js/core/auth.js"></script>
+  <script src="../assets/js/ui/ui.js"></script>
+  <script src="../assets/js/ui/keys.js"></script>
+  <script src="../assets/js/ui/sidenav.js"></script>
+  <script src="../assets/js/core/code-structure.js"></script>
+  <script src="../assets/js/modules/barcode-printer.js"></script>
+  <script src="../assets/js/ui/view-transitions.js"></script>
   <script>
+    function esc(s) {
+      if (window.MTP && typeof MTP.escapeHtml === 'function') return MTP.escapeHtml(s);
+      if (window.MTPUI && typeof MTPUI.escapeHtml === 'function') return MTPUI.escapeHtml(s);
+      return String(s === undefined || s === null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     function setupHeaderIcons() {
       if (!window.MTPIcons) return;
       const setIco = (id, name) => {
@@ -213,6 +224,7 @@
     }
 
     let dashboardPeriod = 'TODAY';
+    const kpiPrevValues = {};
 
     function periodLabel() {
       if (dashboardPeriod === 'WEEK') return 'Esta semana';
@@ -252,12 +264,17 @@
 
       const kpiEl = document.getElementById('mainFinancialKpis');
       if (kpiEl) {
+        const grossVal = Number(fin.grossSalesUsd) || 0;
+        const profitVal = Number(fin.netOperatingProfitUsd) || 0;
+        const drawerVal = Number(fin.netDrawerUsd) || 0;
+        const ivaVal = Number(fin.ivaUsd || 0) || 0;
+
         kpiEl.innerHTML = `
           <div class="stat-card tone-in">
             <div class="stat-ico green">${cashIco}</div>
             <div>
               <div class="stat-l">${periodLabel()} vendí</div>
-              <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(fin.grossSalesUsd)}</div>
+              <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(grossVal)}</div>
               <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(fin.grossSalesUsd * bcv)} · ${fin.ordersCount} ventas</div>
             </div>
           </div>
@@ -266,7 +283,7 @@
             <div class="stat-ico yellow">${kitchenIco}</div>
             <div>
               <div class="stat-l">${periodLabel()} gané</div>
-              <div class="stat-n tabular-nums money-bs">${fin.netOperatingProfitUsd >= 0 ? '+' : ''}${MTP.fmtUSD(fin.netOperatingProfitUsd)}</div>
+              <div class="stat-n tabular-nums money-bs">${profitVal >= 0 ? '+' : ''}${MTP.fmtUSD(profitVal)}</div>
               <div class="stat-sub tabular-nums">después del costo y de los gastos</div>
             </div>
           </div>
@@ -275,7 +292,7 @@
             <div class="stat-ico blue">${chartIco}</div>
             <div>
               <div class="stat-l">Tengo en la gaveta</div>
-              <div class="stat-n tabular-nums">${MTP.fmtUSD(fin.netDrawerUsd)}</div>
+              <div class="stat-n tabular-nums">${MTP.fmtUSD(drawerVal)}</div>
               <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(fin.netDrawerBs)} · pago móvil ${MTP.fmtBsRaw(fin.netBankPmBs)}</div>
             </div>
           </div>
@@ -284,7 +301,7 @@
             <div class="stat-ico red">${wasteIco}</div>
             <div>
               <div class="stat-l">IVA que se pagó de 16%</div>
-              <div class="stat-n tabular-nums money-out">${MTP.fmtUSD(fin.ivaUsd || 0)}</div>
+              <div class="stat-n tabular-nums money-out">${MTP.fmtUSD(ivaVal)}</div>
               <div class="stat-sub tabular-nums">${MTP.fmtBsRaw((fin.ivaUsd || 0) * bcv)}${fin.igtfUsd > 0 ? ' · IGTF ' + MTP.fmtUSD(fin.igtfUsd) : ''}</div>
             </div>
           </div>
@@ -292,6 +309,7 @@
       }
 
       renderDashboardQuestions(fin);
+      renderLivePmAndAiAlerts(fin);
       renderHourlySvgChart();
       renderPaymentsSvgChart(fin);
       renderKitchenVsRetailCompare(fin);
@@ -308,22 +326,125 @@
       const low = (MTP.state.inventory || []).filter(i => Number(i.stock) <= Number(i.minStock));
       const topDish = (fin.kitchenDishesList || [])[0];
       const topRetail = (fin.retailItemsList || [])[0];
-      const top = topDish || topRetail;
+      let top = null;
+      if (topDish && topRetail) {
+        const dq = Number(topDish.qty || 0);
+        const rq = Number(topRetail.qty || 0);
+        top = rq > dq ? topRetail : (dq > rq ? topDish : (Number(topRetail.salesUsd || 0) > Number(topDish.salesUsd || 0) ? topRetail : topDish));
+      } else {
+        top = topDish || topRetail;
+      }
 
       const items = [
-        { q: '¿Cuánto gasté?', a: MTP.fmtUSD(fin.totalExpensesUsd), h: 'en gastos del día', href: 'facturas.html' },
-        { q: '¿Qué se está acabando?', a: String(low.length), h: low.length ? low.slice(0, 3).map(i => i.name).join(', ') : 'todo bien de stock', href: 'inventario.html' },
-        { q: '¿Qué se vende más?', a: top ? top.name : '—', h: top ? (top.qty + ' unidades') : '', href: 'productos.html' },
-        { q: '¿Cómo va la cocina vs la tienda?', a: MTP.fmtUSD(fin.kitchenSalesUsd), h: 'cocina · tienda ' + MTP.fmtUSD(fin.retailSalesUsd), href: 'cierres.html' }
+        { q: '¿Cuánto gasté?', a: MTP.fmtUSD(fin.totalExpensesUsd), h: 'en gastos del periodo', href: 'facturas.html', icon: 'outflow' },
+        { q: '¿Qué se está acabando?', a: String(low.length), h: low.length ? low.slice(0, 3).map(i => i.name).join(', ') : 'todo bien de stock', href: 'inventario.html', icon: 'waste' },
+        { q: '¿Qué se vende más?', a: top ? top.name : '—', h: top ? (top.qty + ' unidades') : '', href: 'productos.html', icon: 'dish' },
+        { q: '¿Cómo va la cocina vs la tienda?', a: MTP.fmtUSD(fin.kitchenSalesUsd), h: 'cocina · tienda ' + MTP.fmtUSD(fin.retailSalesUsd), href: 'cierres.html', icon: 'kitchen' }
       ];
 
       el.innerHTML = items.map(function (i) {
-        return '<a class="dash-question" href="' + i.href + '">' +
-          '<span class="dash-q">' + i.q + '</span>' +
-          '<strong class="dash-a">' + i.a + '</strong>' +
-          '<span class="dash-h">' + (i.h || '') + '</span>' +
+        const icoHtml = window.MTPIcons ? MTPIcons.get(i.icon, { size: 15 }) : '';
+        return '<a class="dash-question" href="' + esc(i.href) + '">' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            (icoHtml ? '<span class="dash-q-ico">' + icoHtml + '</span>' : '') +
+            '<span class="dash-q">' + esc(i.q) + '</span>' +
+          '</div>' +
+          '<strong class="dash-a">' + esc(i.a) + '</strong>' +
+          '<span class="dash-h">' + esc(i.h || '') + '</span>' +
           '</a>';
       }).join('');
+    }
+
+    function renderLivePmAndAiAlerts(fin) {
+      const box = document.getElementById('dashLiveAlerts');
+      if (!box) return;
+
+      const pendingPm = [];
+      (MTP.state.sales || []).forEach(function (s) {
+        if (!s || s.voided) return;
+        (s.payments || []).forEach(function (p) {
+          if (p && p.method === 'Pago Móvil') {
+            const st = p.verifyStatus || (p.verified === false ? 'PENDIENTE' : 'CONCILIADO');
+            if (st === 'PENDIENTE') {
+              pendingPm.push({
+                saleId: s.id,
+                orderNumber: s.orderNumber,
+                ref: p.ref || '—',
+                amountBs: Number(p.amountBs || 0),
+                amountUsd: Number(p.amountUsd || 0),
+                bank: p.bank || 'Pago Móvil',
+                paymentId: p.id || ''
+              });
+            }
+          }
+        });
+      });
+
+      const pmHtml = pendingPm.length
+        ? `<div class="card" style="border-left:4px solid #F59E0B">
+            <div class="card-hd" style="padding:10px 14px">
+              <h3>📲 ${pendingPm.length} Pago(s) Móvil(es) por Verificar</h3>
+              <a href="cierres.html" class="btn btn-secondary btn-sm">Ver todos →</a>
+            </div>
+            <div class="card-bd" style="padding:10px 14px;display:flex;flex-direction:column;gap:8px" id="dashPendingPmList">
+              ${pendingPm.slice(0, 3).map(function (r) {
+                return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;background:var(--surface-2);border-radius:8px;border:1px solid var(--line)">
+                  <div style="font-size:12px">
+                    <strong>Orden #${esc(r.orderNumber)}</strong> · Ref <span class="code-pill">#${esc(r.ref)}</span>
+                    <div style="color:var(--txt-2)">${MTP.fmtBsRaw(r.amountBs)} (${MTP.fmtUSD(r.amountUsd)})</div>
+                  </div>
+                  <button type="button" class="btn btn-primary btn-sm js-dash-confirm-pm" data-sale="${esc(r.saleId)}" data-ref="${esc(r.ref)}" data-pid="${esc(r.paymentId)}">✔ Confirmar</button>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>`
+        : `<div class="card" style="border-left:4px solid #10B981">
+            <div class="card-bd" style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <div>
+                <strong style="font-size:13px">📲 Pago Móvil al día</strong>
+                <div style="font-size:12px;color:var(--txt-2)">Todas las transferencias registradas están verificadas.</div>
+              </div>
+              <a href="cierres.html" class="btn btn-secondary btn-sm">Conciliación</a>
+            </div>
+          </div>`;
+
+      const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
+      const usdt = Number(MTP.state.settings.rateUsdt) || bcv;
+      const gapPct = (((usdt / Math.max(1, bcv)) - 1) * 100);
+      const lowItems = (MTP.state.inventory || []).filter(function (i) { return Number(i.stock) <= Number(i.minStock || 5); });
+      const lowMarginCount = (MTP.state.inventory || []).filter(function (i) {
+        if (!i || (!i.sellable && i.type !== 'venta')) return false;
+        const c = Number(i.costUsd || 0);
+        const p = Number(i.priceUsd || 0);
+        if (c <= 0 || p <= 0) return false;
+        return ((p - c) / p) * 100 < (Number(MTP.state.settings.targetMarginPct) || 40) - 8;
+      }).length;
+
+      const aiHtml = `<div class="card" style="border-left:4px solid #3B82F6">
+        <div class="card-bd" style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div>
+            <strong style="font-size:13px">🤖 Radar IA de Costos e Inventario</strong>
+            <div style="font-size:12px;color:var(--txt-2)" id="dashAiSummaryText">
+              Brecha BCV/USDT: <strong>${gapPct.toFixed(1)}%</strong> · Stock crítico: <strong>${lowItems.length}</strong> · Precios por revisar: <strong>${lowMarginCount}</strong>
+            </div>
+          </div>
+          <a href="precios.html" class="btn btn-secondary btn-sm">Revisar Precios →</a>
+        </div>
+      </div>`;
+
+      box.innerHTML = pmHtml + aiHtml;
+      box.onclick = function (ev) {
+        const btn = ev.target.closest('.js-dash-confirm-pm');
+        if (!btn) return;
+        confirmDashPm(btn.getAttribute('data-sale'), btn.getAttribute('data-ref'), btn.getAttribute('data-pid'));
+      };
+    }
+
+    function confirmDashPm(saleId, ref, paymentId) {
+      if (window.MTP && MTP.updatePagoMovilStatus(saleId, ref, 'CONCILIADO', 'Confirmado desde Panel PC', paymentId)) {
+        MTP.toast('Pago Móvil verificado y sincronizado.');
+        renderDashboardAnalytics();
+      }
     }
 
     function renderDrawerCashBreakdown(fin) {
@@ -334,35 +455,39 @@
 
       el.innerHTML = `
         <div class="kpi" style="border-left:3px solid var(--money-in);display:block">
-          <div style="font-size:11px;color:var(--money-in);font-weight:var(--fw-bold);display:flex;align-items:center;gap:4px">
+          <div style="font-size:12px;color:var(--money-in);font-weight:var(--fw-bold);display:flex;align-items:center;gap:4px">
             ${cashIco} EFECTIVO USD EN GAVETA
           </div>
           <div class="money-in tabular-nums" style="font-size:18px;font-weight:var(--fw-bold);margin:3px 0">${MTP.fmtUSD(fin.netDrawerUsd)}</div>
-          <div class="tabular-nums" style="font-size:11px;color:var(--txt-3)">+$${fin.inUsdCash.toFixed(2)} in · -$${fin.outChangeUsdCash.toFixed(2)} vueltos · -$${fin.expUsdCash.toFixed(2)} gastos</div>
+          <div class="tabular-nums" style="font-size:12px;color:var(--txt-3)">+$${fin.inUsdCash.toFixed(2)} in · -$${fin.outChangeUsdCash.toFixed(2)} vueltos · -$${fin.expUsdCash.toFixed(2)} gastos</div>
         </div>
         <div class="kpi" style="border-left:3px solid var(--info);display:block">
-          <div style="font-size:11px;color:var(--info);font-weight:var(--fw-bold);display:flex;align-items:center;gap:4px">
+          <div style="font-size:12px;color:var(--info);font-weight:var(--fw-bold);display:flex;align-items:center;gap:4px">
             ${phoneIco} SALDO PAGO MÓVIL (BS)
           </div>
           <div class="money-bs tabular-nums" style="font-size:18px;font-weight:var(--fw-bold);margin:3px 0">${MTP.fmtBsRaw(fin.netBankPmBs)}</div>
-          <div class="tabular-nums" style="font-size:11px;color:var(--txt-3)">+${fin.inPmBs.toFixed(2)} Bs in · -${fin.outChangePmBs.toFixed(2)} vueltos · -${fin.expPmBs.toFixed(2)} gastos</div>
+          <div class="tabular-nums" style="font-size:12px;color:var(--txt-3)">+${fin.inPmBs.toFixed(2)} Bs in · -${fin.outChangePmBs.toFixed(2)} vueltos · -${fin.expPmBs.toFixed(2)} gastos</div>
         </div>
       `;
     }
 
+    function getVetHour(isoOrDate) {
+      const d = new Date(isoOrDate || Date.now());
+      if (isNaN(d.getTime())) return 0;
+      return new Date(d.getTime() - 4 * 3600000).getUTCHours();
+    }
+
     function renderHourlySvgChart() {
-      // Se dibujan SOLO las ventas del periodo elegido, y se dibujan TODAS
-      // las horas con venta (antes las de fuera de 7:00-21:00 se sumaban al
-      // total pero no se veían: los números no cuadraban).
       const sales = (window.MTP && window.MTP.getPeriodAnalytics)
         ? (MTP.getPeriodAnalytics(dashboardPeriod).sales || [])
-        : (MTP.state.sales || []);
+        : (MTP.state.sales || []).filter(s => s && !s.voided);
       const hourlyMap = {};
 
       let maxVal = 1;
       let totalDay = 0;
       sales.forEach(s => {
-        const h = new Date(s.createdAt).getHours();
+        if (!s || s.voided) return;
+        const h = getVetHour(s.createdAt);
         const amt = Number(s.totalUsd || 0);
         totalDay += amt;
         hourlyMap[h] = (hourlyMap[h] || 0) + amt;
@@ -379,24 +504,26 @@
         return;
       }
 
-      const chartW = 480;
+      const slotW = Math.max(36, Math.floor(430 / hours.length));
+      const chartW = Math.max(480, hours.length * slotW + 50);
       const chartH = 210;
-      const barW = Math.max(16, (chartW - 40) / hours.length - 8);
+      const barW = Math.min(44, Math.max(18, slotW - 10));
 
       const barsSvg = hours.map((h, i) => {
         const val = hourlyMap[h];
-        const barHeight = Math.max(3, (val / maxVal) * (chartH - 56));
-        const x = 30 + i * (barW + 8);
-        const y = chartH - 30 - barHeight;
+        const barHeight = Math.max(4, (val / maxVal) * (chartH - 58));
+        const x = 30 + i * slotW + (slotW - barW) / 2;
+        const y = chartH - 32 - barHeight;
         const color = val > 0 ? (val > maxVal * 0.6 ? '#15803D' : '#16A34A') : '#CBD5E1';
+        const lbl = String(h).padStart(2, '0') + 'h';
 
         return `
           <g>
             <rect class="bar-rect" x="${x}" y="${y}" width="${barW}" height="${barHeight}" rx="3" fill="${color}">
-              <title>${h}:00 hrs: $${val.toFixed(2)}</title>
+              <title>${String(h).padStart(2, '0')}:00 hrs: $${val.toFixed(2)}</title>
             </rect>
-            <text x="${x + barW / 2}" y="${chartH - 10}" font-size="12" text-anchor="middle" fill="#334155" font-weight="700">${h}h</text>
-            ${val > 0 ? `<text x="${x + barW / 2}" y="${y - 5}" font-size="12" text-anchor="middle" fill="#0F172A" font-weight="700">$${Math.round(val)}</text>` : ''}
+            <text x="${x + barW / 2}" y="${chartH - 10}" font-size="12" text-anchor="middle" fill="#334155" font-weight="700">${lbl}</text>
+            ${val > 0 ? `<text x="${x + barW / 2}" y="${y - 6}" font-size="12" text-anchor="middle" fill="#0F172A" font-weight="700">$${Math.round(val)}</text>` : ''}
           </g>
         `;
       }).join('');
@@ -404,10 +531,10 @@
       const wrap = document.getElementById('chartHourlyWrap');
       if (wrap) {
         wrap.innerHTML = `
-          <svg viewBox="0 0 ${chartW} ${chartH}" style="width:100%;height:auto" role="img"
+          <svg viewBox="0 0 ${chartW} ${chartH}" style="width:100%;height:auto;display:block" role="img"
                aria-label="Ventas por hora del periodo">
             <title>Ventas por hora</title>
-            <line x1="25" y1="${chartH - 30}" x2="${chartW - 10}" y2="${chartH - 30}" stroke="#CBD5E1" stroke-width="1.5"/>
+            <line x1="25" y1="${chartH - 32}" x2="${chartW - 10}" y2="${chartH - 32}" stroke="#CBD5E1" stroke-width="1.5"/>
             ${barsSvg}
           </svg>
         `;
@@ -435,8 +562,8 @@
         const iconSvg = window.MTPIcons ? MTPIcons.get(m.ico, { size: 14 }) : '';
         return `
           <div style="margin-bottom:8px">
-            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:var(--fw-semibold);margin-bottom:2px">
-              <span style="display:flex;align-items:center;gap:4px">${iconSvg} ${m.name}</span>
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:var(--fw-semibold);margin-bottom:2px">
+              <span style="display:flex;align-items:center;gap:4px">${iconSvg} ${esc(m.name)}</span>
               <span class="tabular-nums">${MTP.fmtUSD(m.val)} (${pct}%)</span>
             </div>
             <div style="width:100%;height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden;border:1px solid var(--line)">
@@ -507,35 +634,51 @@
         return;
       }
 
-      tbody.innerHTML = expenses.map(e => `
+      tbody.innerHTML = expenses.map(e => {
+        const d = new Date(e.createdAt);
+        const tStr = isNaN(d.getTime()) ? '—' : d.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Caracas' });
+        const dStr = (window.MTP && typeof MTP.toLocalDateIso === 'function')
+          ? MTP.toLocalDateIso(e.createdAt)
+          : (isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-VE'));
+        return `
         <tr>
           <td>
-            <div style="font-weight:var(--fw-semibold);font-size:12px">${new Date(e.createdAt).toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'})}</div>
-            <div style="font-size:11px;color:var(--txt-3)">${new Date(e.createdAt).toLocaleDateString('es-VE')}</div>
+            <div style="font-weight:var(--fw-semibold);font-size:12px">${esc(tStr)}</div>
+            <div style="font-size:12px;color:var(--txt-3)">${esc(dStr)}</div>
           </td>
-          <td><span class="badge badge-yellow">${e.category}</span></td>
-          <td style="font-weight:var(--fw-semibold)">${e.description}</td>
-          <td><span class="badge badge-green">${e.paymentSource}</span></td>
+          <td><span class="badge badge-yellow">${esc(e.category)}</span></td>
+          <td style="font-weight:var(--fw-semibold)">${esc(e.description)}</td>
+          <td><span class="badge badge-green">${esc(e.paymentSource)}</span></td>
           <td><strong class="money-out tabular-nums">-${MTP.fmtUSD(e.amountUsd)}</strong></td>
           <td><strong class="money-out tabular-nums">-${MTP.fmtBsRaw(e.amountBs)}</strong></td>
-          <td style="font-size:11px;color:var(--txt-2)">${e.responsible || 'Admin'}</td>
+          <td style="font-size:12px;color:var(--txt-2)">${esc(e.responsible || 'Admin')}</td>
           <td>
-            <button class="btn btn-secondary btn-sm" style="color:var(--money-out);padding:2px 6px" onclick="window.MTPUI.confirmDialog('¿Eliminar este gasto?', { danger: true, okText: 'Eliminar' }).then(function (ok) { if (ok) { MTP.deleteExpense('${e.id}'); renderDashboardAnalytics(); } })" title="Eliminar gasto">✕</button>
+            <button type="button" class="btn btn-secondary btn-sm js-del-expense" data-id="${esc(e.id)}" style="color:var(--money-out);padding:2px 6px" title="Eliminar gasto">✕</button>
           </td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
+
+      tbody.onclick = function (ev) {
+        const btn = ev.target.closest('.js-del-expense');
+        if (!btn) return;
+        const expId = btn.getAttribute('data-id');
+        window.MTPUI.confirmDialog('¿Eliminar este gasto?', { danger: true, okText: 'Eliminar' }).then(function (ok) {
+          if (ok) { MTP.deleteExpense(expId); renderDashboardAnalytics(); }
+        });
+      };
     }
 
     function renderTopItems(fin) {
-      // El resumen de "lo que más se vende" se arma con las listas del
-      // análisis del periodo (platos de cocina + mercancía del mostrador).
       const dishes = (fin.kitchenDishesList || []).map(function (d) {
         return { name: d.name, qty: d.qty, revenueUsd: d.salesUsd || 0, profitUsd: (d.salesUsd || 0) - (d.costUsd || 0), isDish: true };
       });
       const retail = (fin.retailItemsList || []).map(function (r) {
         return { name: r.name, qty: r.qty, revenueUsd: r.salesUsd || 0, profitUsd: (r.salesUsd || 0) - (r.costUsd || 0), isDish: false };
       });
-      const list = dishes.concat(retail).sort(function (a, b) { return b.qty - a.qty; }).slice(0, 5);
+      const list = dishes.concat(retail).sort(function (a, b) {
+        return (b.qty - a.qty) || (b.revenueUsd - a.revenueUsd);
+      }).slice(0, 5);
 
       const container = document.getElementById('topItemsList');
       if (!container) return;
@@ -546,29 +689,41 @@
       container.innerHTML = list.map((it, idx) => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line)">
           <div style="display:flex;align-items:center;gap:8px">
-            <span class="code-pill ${it.isDish ? 'plu' : ''}" style="font-size:11px">#${idx+1}</span>
+            <span class="code-pill ${it.isDish ? 'plu' : ''}" style="font-size:12px">#${idx+1}</span>
             <div>
-              <div style="font-weight:var(--fw-bold);font-size:13px">${it.name}</div>
+              <div style="font-weight:var(--fw-bold);font-size:13px">${esc(it.name)}</div>
               <div style="font-size:12px;color:var(--txt-2)">${it.qty} unidades vendidas</div>
             </div>
           </div>
           <div style="text-align:right">
             <div class="tabular-nums" style="font-weight:var(--fw-bold);font-size:14px">${MTP.fmtUSD(it.revenueUsd)}</div>
-            <span class="badge badge-green tabular-nums" style="font-size:11px">+${MTP.fmtUSD(it.profitUsd)} libre</span>
+            <span class="badge badge-green tabular-nums" style="font-size:12px">+${MTP.fmtUSD(it.profitUsd)} libre</span>
           </div>
         </div>
       `).join('');
     }
 
     function renderRecentSales() {
-      const sales = MTP.state.sales || [];
+      const periodSales = (window.MTP && typeof MTP.getPeriodAnalytics === 'function')
+        ? (MTP.getPeriodAnalytics(dashboardPeriod).sales || [])
+        : (MTP.state.sales || []);
+      const validSales = periodSales.filter(s => s && !s.voided);
       const tbody = document.getElementById('dashRecentSales');
-      tbody.innerHTML = sales.slice(0, 6).map(s => `
+      if (!tbody) return;
+      if (!validSales.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--txt-3);font-size:13px">Sin ventas en este periodo</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = validSales.slice(0, 6).map(s => {
+        const summary = (s.items || []).map(i => `${i.qty}x ${i.name}`).join(', ').slice(0, 45);
+        const payStr = (s.payments || []).map(p => `${p.method}${p.ref ? ' (' + p.ref + ')' : ''}`).join(' + ');
+        const chgStr = (s.changeGiven && s.changeGiven.breakdown) ? s.changeGiven.breakdown : 'Exacto';
+        return `
         <tr>
-          <td><span class="code-pill plu">#${s.orderNumber}</span></td>
+          <td><span class="code-pill plu">#${esc(s.orderNumber)}</span></td>
           <td>
-            <div style="font-weight:var(--fw-semibold);font-size:12px">${(s.items || []).map(i => `${i.qty}x ${i.name}`).join(', ').slice(0, 45)}...</div>
-            <div style="font-size:11px;color:var(--txt-3)">${s.customer}</div>
+            <div style="font-weight:var(--fw-semibold);font-size:12px">${esc(summary)}${summary.length >= 45 ? '...' : ''}</div>
+            <div style="font-size:12px;color:var(--txt-3)">${esc(s.customer || 'Mostrador')}</div>
           </td>
           <td>
             <div class="price-dual">
@@ -576,21 +731,58 @@
               <span class="price-bs tabular-nums">${MTP.fmtBsRaw(s.totalBs)}</span>
             </div>
           </td>
-          <td style="font-size:11px">
-            <strong>${(s.payments || []).map(p => `${p.method} (${p.ref || ''})`).join(' + ')}</strong>
+          <td style="font-size:12px">
+            <strong>${esc(payStr || '—')}</strong>
           </td>
-          <td style="font-size:11px">
-            ${s.changeGiven?.breakdown || 'Exacto'}
+          <td style="font-size:12px">
+            ${esc(chgStr)}
           </td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
+    }
+
+    function applyDashBusinessMeta() {
+      if (!window.MTP || !MTP.state || !MTP.state.settings) return;
+      const cfg = MTP.state.settings;
+      const storeName = (cfg.storeName || '').trim();
+      const rif = (cfg.rif || '').trim();
+      const hEl = document.getElementById('dashStoreHeading');
+      const sEl = document.getElementById('dashStoreSub');
+      if (hEl && storeName) {
+        hEl.textContent = storeName + ' — Mi día';
+        document.title = storeName + ' — Panel de Control | MI TIENDA POS';
+      }
+      if (sEl) {
+        sEl.textContent = (rif ? rif + ' • ' : '') + 'Lo que vendiste, lo que ganaste, lo que hay en la gaveta y qué se está acabando';
+      }
+    }
+
+    function checkDeniedNotice() {
+      const params = new URLSearchParams(window.location.search || '');
+      const denied = params.get('denied');
+      if (!denied) return;
+      if (window.MTP && typeof MTP.toast === 'function') {
+        const msg = denied === 'admin_only'
+          ? 'Acceso restringido: esa sección es exclusiva del Administrador.'
+          : 'No tienes permiso para entrar a esa sección.';
+        MTP.toast(msg, 'warn');
+      }
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
 
     document.addEventListener('DOMContentLoaded', function () {
       setupPeriodBar();
+      applyDashBusinessMeta();
+      renderDashboardAnalytics();
+      checkDeniedNotice();
+    });
+    window.addEventListener('mtp:state-updated', function () {
+      applyDashBusinessMeta();
       renderDashboardAnalytics();
     });
-    window.addEventListener('mtp:state-updated', renderDashboardAnalytics);
   </script>
 </body>
 </html>

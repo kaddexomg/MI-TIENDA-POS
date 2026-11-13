@@ -6,8 +6,8 @@
 'use strict';
 
 const assert = require('assert');
-const MTPTax = require('../assets/js/tax.js');
-const MTPChange = require('../assets/js/change.js');
+const MTPTax = require('../assets/js/core/tax.js');
+const MTPChange = require('../assets/js/core/change.js');
 const fixtures = require('./fixtures.js');
 
 let passed = 0;

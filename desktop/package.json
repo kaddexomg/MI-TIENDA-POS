@@ -1,0 +1,21 @@
+{
+  "name": "mi-tienda-pos",
+  "productName": "MI TIENDA POS",
+  "version": "8.0.0",
+  "description": "Sistema POS y Gestión Comercial 100% Offline para Windows 7 SP1 / 10 / 11",
+  "author": "MI TIENDA POS",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "postinstall": "node scripts/ensure-electron-binary.js",
+    "start": "electron .",
+    "start:pos": "electron . --start=pos",
+    "test": "node scripts/verify-desktop.js",
+    "pack:win7": "node scripts/pack-win7.js"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "22.3.27"
+  }
+}

@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Precios y Tasa del Dólar (BCV · USDT Binance · Euro) | MI TIENDA POS</title>
-  <link rel="stylesheet" href="../assets/css/variables.css">
-  <link rel="stylesheet" href="../assets/css/components.css">
-  <link rel="stylesheet" href="../assets/css/design-v7.css">
-  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <link rel="stylesheet" href="../assets/css/app.css">
 </head>
 <body>
   <div class="admin-wrap">
@@ -32,6 +30,23 @@
       <div class="admin-content">
         <!-- 3 TARJETAS DE TASAS + 1 TARJETA DESTACADA DE BRECHA -->
         <div class="stat-grid" id="ratesStatGrid" style="margin-bottom:var(--sp-4)"></div>
+
+        <!-- CONTROL DE MARGEN COMERCIAL (ELASTIC SLIDER) -->
+        <div class="card" style="margin-bottom:var(--sp-4);padding:14px 18px">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px">
+            <div style="min-width:220px">
+              <strong style="font-size:14px;color:var(--txt-1)">Simulador de Margen Comercial Objetivo</strong>
+              <p style="font-size:12px;color:var(--txt-3);margin:2px 0 0">Ajusta el porcentaje de ganancia deseado para previsualizar los precios sugeridos</p>
+            </div>
+            <div class="margin-slider-wrap" style="flex:1;min-width:260px;max-width:460px">
+              <span style="font-size:12px;font-weight:700;color:var(--txt-3)">15%</span>
+              <input type="range" id="marginElasticSlider" class="margin-range" min="15" max="60" step="1" value="40" aria-label="Margen comercial objetivo">
+              <span style="font-size:12px;font-weight:700;color:var(--txt-3)">60%</span>
+              <span id="marginElasticBadge" class="margin-badge">Estándar</span>
+            </div>
+            <button type="button" id="resetMarginPreviewBtn" class="btn btn-ghost btn-sm" style="display:none" onclick="resetMarginPreview()">Restablecer (45% / 34%)</button>
+          </div>
+        </div>
 
         <!-- TABLA 1: PLATOS DE COMIDA (COCINA) -->
         <div class="card card-interactive" data-section="cocina" style="margin-bottom:var(--sp-4)">
@@ -86,77 +101,102 @@
     </main>
   </div>
 
-  <script src="../assets/js/icons.js"></script>
-  <script src="../assets/js/tax.js"></script>
-  <script src="../assets/js/config.js"></script>
-  <script src="../assets/js/rates.js"></script>
-  <script src="../assets/js/permissions.js"></script>
-  <script src="../assets/js/auth.js"></script>
-  <script src="../assets/js/ui.js"></script>
-  <script src="../assets/js/keys.js"></script>
-  <script src="../assets/js/sidenav.js"></script>
-  <script src="../assets/js/code-structure.js"></script>
-  <script src="../assets/js/barcode-printer.js"></script>
+  <script src="../assets/js/ui/icons.js"></script>
+  <script src="../assets/js/core/tax.js"></script>
+  <script src="../assets/js/core/config.js"></script>
+  <script src="../assets/js/core/api-client.js"></script>
+  <script src="../assets/js/core/rates.js"></script>
+  <script src="../assets/js/core/permissions.js"></script>
+  <script src="../assets/js/core/auth.js"></script>
+  <script src="../assets/js/ui/ui.js"></script>
+  <script src="../assets/js/ui/keys.js"></script>
+  <script src="../assets/js/ui/sidenav.js"></script>
+  <script src="../assets/js/core/code-structure.js"></script>
+  <script src="../assets/js/modules/barcode-printer.js"></script>
+  <script src="../assets/js/ui/view-transitions.js"></script>
   <script>
-    function renderPricingPage() {
+    let previewMarginPct = null;
+
+    function esc(s) {
+      if (window.MTP && typeof MTP.escapeHtml === 'function') return MTP.escapeHtml(s);
+      if (window.MTPUI && typeof MTPUI.escapeHtml === 'function') return MTPUI.escapeHtml(s);
+      return String(s === undefined || s === null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function getRatesSnapshot() {
       const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
       const eur = Number(MTP.state.settings.rateEur) || Number((bcv * 1.088).toFixed(2));
       const usdt = Number(MTP.state.settings.rateUsdt) || (bcv * 1.20);
-
-      const gapBcvUsdt = (((usdt / bcv) - 1) * 100).toFixed(2);
+      const gapNum = Number((((usdt / bcv) - 1) * 100).toFixed(2));
       const factor = (usdt / bcv).toFixed(3);
+      return { bcv, eur, usdt, gapNum, factor };
+    }
+
+    function renderRateCards() {
+      const { bcv, eur, usdt, gapNum, factor } = getRatesSnapshot();
+      const gapBcvUsdt = gapNum.toFixed(2);
 
       const grid = document.getElementById('ratesStatGrid');
-      if (grid) {
-        grid.innerHTML =
-          MTPUI.statCard({
-            label: 'Tasa Oficial Dólar BCV',
-            tone: 'in',
-            value: bcv.toFixed(2) + ' Bs/$',
-            sub: 'Tasa legal para cobrar en bolívares en caja'
-          }) +
-          MTPUI.statCard({
-            label: 'Tasa Paralela (USDT Binance)',
-            tone: 'cash',
-            value: usdt.toFixed(2) + ' Bs/$',
-            sub: 'Costo real de reposición de mercancía en la calle'
-          }) +
-          MTPUI.statCard({
-            label: 'Tasa Oficial Euro BCV',
-            tone: 'info',
-            value: eur.toFixed(2) + ' Bs/€',
-            sub: 'Cotización oficial de referencia SENIAT'
-          }) +
-          MTPUI.statCard({
-            label: '¿Cuánto pierdo si compro al paralelo?',
-            tone: Number(gapBcvUsdt) > 0 ? 'out' : 'in',
-            value: (Number(gapBcvUsdt) > 0 ? '+' : '') + gapBcvUsdt + '%',
-            sub: 'Factor de reposición: ×' + factor + ' · Protege tu ganancia'
-          });
-      }
+      if (!grid) return;
 
-      // TABLA DE PLATOS (Sin columna confusa de Euro)
+      grid.innerHTML =
+        MTPUI.statCard({
+          label: 'Tasa Oficial Dólar BCV',
+          tone: 'in',
+          value: bcv.toFixed(2) + ' Bs/$',
+          sub: 'Tasa legal para cobrar en bolívares en caja'
+        }) +
+        MTPUI.statCard({
+          label: 'Tasa Paralela (USDT Binance)',
+          tone: 'cash',
+          value: usdt.toFixed(2) + ' Bs/$',
+          sub: 'Costo real de reposición de mercancía en la calle'
+        }) +
+        MTPUI.statCard({
+          label: 'Tasa Oficial Euro BCV',
+          tone: 'info',
+          value: eur.toFixed(2) + ' Bs/€',
+          sub: 'Cotización oficial de referencia SENIAT'
+        }) +
+        MTPUI.statCard({
+          label: '¿Cuánto pierdo si compro al paralelo?',
+          tone: gapNum > 0 ? 'out' : 'in',
+          value: (gapNum > 0 ? '+' : '') + gapBcvUsdt + '%',
+          sub: 'Factor de reposición: ×' + factor + ' · Protege tu ganancia'
+        });
+    }
+
+    function renderPricingTables() {
+      const { bcv } = getRatesSnapshot();
+      const dishMargin = previewMarginPct !== null ? previewMarginPct : 45;
+      const invMargin = previewMarginPct !== null ? previewMarginPct : 34;
+
+      // TABLA DE PLATOS (Fuente de verdad: MTP.state.variants, sin columna Euro)
       const dishTbody = document.getElementById('dishPricingTable');
       if (dishTbody) {
-        dishTbody.innerHTML = (MTP.state.dishes || []).map(d => {
+        const activeVariants = (MTP.state.variants || []).filter(v => v && v.active !== false);
+        dishTbody.innerHTML = activeVariants.map(d => {
           const cost = MTP.calcDishCost(d);
-          const recUsd = Number(MTP.calcRecommendedPriceUsd(cost, 45).toFixed(2));
-          const needsRaise = recUsd > d.priceUsd + 0.10;
+          const curPrice = Number(d.priceUsd || 0);
+          const recUsd = Number(MTP.calcRecommendedPriceUsd(cost, dishMargin).toFixed(2));
+          const needsRaise = recUsd > curPrice + 0.10;
 
           return `
             <tr>
               <td>
-                <span class="code-pill">#${d.code}</span>
-                <strong style="margin-left:6px">${d.name}</strong>
+                <span class="code-pill">#${esc(d.code)}</span>
+                <strong style="margin-left:6px">${esc(d.name)}</strong>
               </td>
               <td>
                 <strong style="color:var(--money-out)">${MTP.fmtUSD(cost)}</strong>
-                <span style="font-size:11px;color:var(--txt-3);margin-left:4px">(${(cost * bcv).toFixed(2)} Bs)</span>
+                <span style="font-size:12px;color:var(--txt-3);margin-left:4px">(${(cost * bcv).toFixed(2)} Bs)</span>
               </td>
               <td>
                 <div class="price-dual">
-                  <span class="price-usd tabular-nums">${MTP.fmtUSD(d.priceUsd)}</span>
-                  <span class="price-bs tabular-nums">${(d.priceUsd * bcv).toFixed(2)} Bs</span>
+                  <span class="price-usd tabular-nums">${MTP.fmtUSD(curPrice)}</span>
+                  <span class="price-bs tabular-nums">${(curPrice * bcv).toFixed(2)} Bs</span>
                 </div>
               </td>
               <td>
@@ -166,39 +206,47 @@
                 </div>
               </td>
               <td style="text-align:right">
-                <button class="btn ${needsRaise ? 'btn-action' : 'btn-secondary'} btn-sm" onclick="applyDishPrice('${d.id}', ${recUsd})">
+                <button type="button" class="btn ${needsRaise ? 'btn-action' : 'btn-secondary'} btn-sm js-apply-dish-price" data-id="${esc(d.id)}" data-price="${recUsd}">
                   Aplicar ${MTP.fmtUSD(recUsd)}
                 </button>
               </td>
             </tr>
           `;
         }).join('');
+
+        dishTbody.onclick = function (e) {
+          const btn = e.target.closest('.js-apply-dish-price');
+          if (!btn) return;
+          applyDishPrice(btn.getAttribute('data-id'), Number(btn.getAttribute('data-price')));
+        };
       }
 
       // TABLA DE MERCANCÍA DE VENTA DIRECTA
       const invTbody = document.getElementById('invPricingTable');
       if (invTbody) {
         invTbody.innerHTML = (MTP.state.inventory || [])
-          .filter(i => i.sellable)
+          .filter(i => i && i.sellable && i.active !== false)
           .map(i => {
-            const recUsd = Number(MTP.calcRecommendedPriceUsd(i.costUsd, 34).toFixed(2));
-            const isCostly = i.costUsd > (i.prevCostUsd || i.costUsd);
-            const needsRaise = recUsd > i.priceUsd + 0.05;
+            const cost = Number(i.costUsd || 0);
+            const curPrice = Number(i.priceUsd || 0);
+            const recUsd = Number(MTP.calcRecommendedPriceUsd(cost, invMargin).toFixed(2));
+            const isCostly = cost > (Number(i.prevCostUsd) || cost);
+            const needsRaise = recUsd > curPrice + 0.05;
 
             return `
               <tr style="${isCostly ? 'background:#fffbeb' : ''}">
                 <td>
-                  <span class="code-pill">#${i.code}</span>
-                  <strong style="margin-left:6px">${i.name}</strong>
+                  <span class="code-pill">#${esc(i.code)}</span>
+                  <strong style="margin-left:6px">${esc(i.name)}</strong>
                 </td>
                 <td>
-                  <strong>${MTP.fmtUSD(i.costUsd)}</strong>
+                  <strong>${MTP.fmtUSD(cost)}</strong>
                   ${isCostly ? `<span class="badge badge-red" style="margin-left:4px">Subió</span>` : ''}
                 </td>
                 <td>
                   <div class="price-dual">
-                    <span class="price-usd tabular-nums">${MTP.fmtUSD(i.priceUsd)}</span>
-                    <span class="price-bs tabular-nums">${(i.priceUsd * bcv).toFixed(2)} Bs</span>
+                    <span class="price-usd tabular-nums">${MTP.fmtUSD(curPrice)}</span>
+                    <span class="price-bs tabular-nums">${(curPrice * bcv).toFixed(2)} Bs</span>
                   </div>
                 </td>
                 <td>
@@ -208,33 +256,67 @@
                   </div>
                 </td>
                 <td style="text-align:right">
-                  <button class="btn ${needsRaise ? 'btn-action' : 'btn-secondary'} btn-sm" onclick="applyInvPrice('${i.id}', ${recUsd})">
+                  <button type="button" class="btn ${needsRaise ? 'btn-action' : 'btn-secondary'} btn-sm js-apply-inv-price" data-id="${esc(i.id)}" data-price="${recUsd}">
                     Aplicar ${MTP.fmtUSD(recUsd)}
                   </button>
                 </td>
               </tr>
             `;
           }).join('');
+
+        invTbody.onclick = function (e) {
+          const btn = e.target.closest('.js-apply-inv-price');
+          if (!btn) return;
+          applyInvPrice(btn.getAttribute('data-id'), Number(btn.getAttribute('data-price')));
+        };
       }
     }
 
-    function applyDishPrice(dishId, newPrice) {
-      const dish = (MTP.state.dishes || []).find(d => d.id === dishId);
-      if (!dish) return;
-      dish.priceUsd = Number(newPrice.toFixed(2));
-      MTP.save();
+    function renderPricingPage() {
+      renderRateCards();
+      renderPricingTables();
+    }
+
+    function resetMarginPreview() {
+      previewMarginPct = null;
+      const slider = document.getElementById('marginElasticSlider');
+      const badge = document.getElementById('marginElasticBadge');
+      const resetBtn = document.getElementById('resetMarginPreviewBtn');
+      if (slider) slider.value = '40';
+      if (badge) badge.textContent = 'Estándar';
+      if (resetBtn) resetBtn.style.display = 'none';
+      renderPricingTables();
+    }
+
+    function applyDishPrice(variantId, newPrice) {
+      const v = (MTP.state.variants || []).find(x => x.id === variantId);
+      if (!v) return;
+      const rounded = Number(Number(newPrice).toFixed(2));
+      if (typeof MTP.updateVariantPrice === 'function') {
+        MTP.updateVariantPrice(variantId, rounded);
+      } else {
+        v.priceUsd = rounded;
+        const dishMirror = (MTP.state.dishes || []).find(d => d.id === variantId);
+        if (dishMirror) dishMirror.priceUsd = rounded;
+        MTP.save({ eventType: 'CATALOG_CHANGED', eventPayload: { kind: 'variant', id: variantId, priceUsd: rounded } });
+      }
       renderPricingPage();
-      MTP.toast(`Precio actualizado: ${dish.name} -> ${MTP.fmtUSD(dish.priceUsd)}`);
+      MTP.toast(`Precio actualizado: ${v.name} -> ${MTP.fmtUSD(rounded)}`);
     }
 
     function applyInvPrice(invId, newPrice) {
       const item = MTP.getInsumoById(invId);
       if (!item) return;
-      item.priceUsd = Number(newPrice.toFixed(2));
-      item.prevCostUsd = item.costUsd;
-      MTP.save();
+      const rounded = Number(Number(newPrice).toFixed(2));
+      if (typeof MTP.updateInventoryPrice === 'function') {
+        MTP.updateInventoryPrice(invId, rounded);
+      } else {
+        item.priceUsd = rounded;
+        item.prevCostUsd = item.costUsd;
+        MTP.save({ eventType: 'CATALOG_CHANGED', eventPayload: { kind: 'inventory', id: invId, priceUsd: rounded } });
+      }
       renderPricingPage();
-      MTP.toast(`Precio actualizado: ${item.name} -> ${MTP.fmtUSD(item.priceUsd)}`);
+      MTP.toast(`Precio actualizado: ${item.name} -> ${MTP.fmtUSD(rounded)}`);
     }
 
     /* ==========================================================================
@@ -245,26 +327,31 @@
       let totalOldUsd = 0;
       let totalNewUsd = 0;
 
-      const dishesToUpdate = [];
-      (MTP.state.dishes || []).forEach(d => {
-        const cost = MTP.calcDishCost(d);
-        const recUsd = Number(MTP.calcRecommendedPriceUsd(cost, 45).toFixed(2));
-        if (Math.abs(recUsd - d.priceUsd) >= 0.05) {
+      const dishMargin = previewMarginPct !== null ? previewMarginPct : 45;
+      const invMargin = previewMarginPct !== null ? previewMarginPct : 34;
+
+      const variantsToUpdate = [];
+      (MTP.state.variants || []).filter(v => v && v.active !== false).forEach(v => {
+        const cost = MTP.calcDishCost(v);
+        const recUsd = Number(MTP.calcRecommendedPriceUsd(cost, dishMargin).toFixed(2));
+        const curPrice = Number(v.priceUsd || 0);
+        if (Math.abs(recUsd - curPrice) >= 0.05) {
           changesCount++;
-          totalOldUsd += d.priceUsd;
+          totalOldUsd += curPrice;
           totalNewUsd += recUsd;
-          dishesToUpdate.push({ dish: d, newPrice: recUsd });
+          variantsToUpdate.push({ id: v.id, variant: v, priceUsd: recUsd, newPrice: recUsd });
         }
       });
 
       const invToUpdate = [];
-      (MTP.state.inventory || []).filter(i => i.sellable).forEach(i => {
-        const recUsd = Number(MTP.calcRecommendedPriceUsd(i.costUsd, 34).toFixed(2));
-        if (Math.abs(recUsd - i.priceUsd) >= 0.05) {
+      (MTP.state.inventory || []).filter(i => i && i.sellable && i.active !== false).forEach(i => {
+        const recUsd = Number(MTP.calcRecommendedPriceUsd(i.costUsd, invMargin).toFixed(2));
+        const curPrice = Number(i.priceUsd || 0);
+        if (Math.abs(recUsd - curPrice) >= 0.05) {
           changesCount++;
-          totalOldUsd += i.priceUsd;
+          totalOldUsd += curPrice;
           totalNewUsd += recUsd;
-          invToUpdate.push({ item: i, newPrice: recUsd });
+          invToUpdate.push({ id: i.id, item: i, priceUsd: recUsd, newPrice: recUsd });
         }
       });
 
@@ -286,21 +373,43 @@
       ).then(ok => {
         if (!ok) return;
 
-        dishesToUpdate.forEach(u => {
-          u.dish.priceUsd = u.newPrice;
-        });
-        invToUpdate.forEach(u => {
-          u.item.priceUsd = u.newPrice;
-          u.item.prevCostUsd = u.item.costUsd;
-        });
+        if (typeof MTP.updateBulkPrices === 'function') {
+          MTP.updateBulkPrices(
+            variantsToUpdate.map(u => ({ id: u.id, priceUsd: u.priceUsd, newPrice: u.newPrice })),
+            invToUpdate.map(u => ({ id: u.id, priceUsd: u.priceUsd, newPrice: u.newPrice }))
+          );
+        } else {
+          variantsToUpdate.forEach(u => {
+            u.variant.priceUsd = u.priceUsd;
+            const dishMirror = (MTP.state.dishes || []).find(d => d.id === u.id);
+            if (dishMirror) dishMirror.priceUsd = u.priceUsd;
+          });
+          invToUpdate.forEach(u => {
+            u.item.priceUsd = u.priceUsd;
+            u.item.prevCostUsd = u.item.costUsd;
+          });
+          MTP.save({ eventType: 'CATALOG_CHANGED', eventPayload: { kind: 'bulk', count: changesCount } });
+        }
 
-        MTP.save();
         renderPricingPage();
         MTP.toast(`¡Precios protegidos aplicados con éxito a ${changesCount} artículos!`);
       });
     }
 
-    document.addEventListener('DOMContentLoaded', renderPricingPage);
+    document.addEventListener('DOMContentLoaded', function () {
+      const slider = document.getElementById('marginElasticSlider');
+      const badge = document.getElementById('marginElasticBadge');
+      const resetBtn = document.getElementById('resetMarginPreviewBtn');
+      if (slider) {
+        slider.addEventListener('input', function () {
+          previewMarginPct = Number(slider.value);
+          if (badge) badge.textContent = previewMarginPct + '%';
+          if (resetBtn) resetBtn.style.display = '';
+          renderPricingTables();
+        });
+      }
+      renderPricingPage();
+    });
     window.addEventListener('mtp:state-updated', renderPricingPage);
   </script>
 </body>

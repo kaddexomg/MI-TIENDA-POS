@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Administración de Inventario, Bultos/Cajas y Almacén Cocina | MI TIENDA POS</title>
-  <link rel="stylesheet" href="../assets/css/variables.css">
-  <link rel="stylesheet" href="../assets/css/components.css">
-  <link rel="stylesheet" href="../assets/css/design-v7.css">
-  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <link rel="stylesheet" href="../assets/css/app.css">
 </head>
 <body>
   <div class="admin-wrap">
@@ -186,7 +184,7 @@
             <select id="invEditGroup" class="select">
               <option value="viveres">Harina PAN y Víveres Empaquetados</option>
               <option value="chucherias">Pepitos, Cheetos y Chucherías</option>
-              <option value="refrescos">Refrescos y Maltas</option>
+              <option value="bebidas">Refrescos y Maltas</option>
               <option value="cervezas">Cervezas Bien Frías</option>
               <option value="cigarros">Cigarros (Detal y Cajetilla)</option>
             </select>
@@ -317,7 +315,7 @@
           <summary>🧮 Calculadora Rápida: Bulto / Saco → Unidad o Kg</summary>
           <div class="v7-accordion-body">
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
-              <span style="font-size:11px;font-weight:var(--fw-bold);color:var(--txt-2)">PREAJUSTES COMUNES:</span>
+              <span style="font-size:12px;font-weight:var(--fw-bold);color:var(--txt-2)">PREAJUSTES COMUNES:</span>
               <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkPreset('prod-harina-pan', 1, 20, 21.60)">Harina PAN (20u)</button>
               <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkPreset('prod-cerveza-polar', 1, 36, 25.90)">Cerveza Polar (36u)</button>
               <button type="button" class="btn btn-secondary btn-sm" onclick="applyBulkPreset('ins-papa', 1, 25, 33.75)">Papa Cocina (25kg)</button>
@@ -403,7 +401,7 @@
             <div style="font-size:12px;color:var(--money-in);font-weight:var(--fw-semibold)" id="mpPaymentNotice">Esta compra descontará dinero físico de la gaveta de caja para que el arqueo cuadre.</div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:11px;color:var(--money-in)">TOTAL DE LA FACTURA:</div>
+            <div style="font-size:12px;color:var(--money-in)">TOTAL DE LA FACTURA:</div>
             <div class="money-in tabular-nums" style="font-size:20px;font-weight:var(--fw-bold)" id="mpTotalUsdDisplay">$0.00 USD</div>
             <div class="money-bs tabular-nums" style="font-size:12px;font-weight:var(--fw-semibold)" id="mpTotalBsDisplay">0.00 Bs</div>
           </div>
@@ -509,23 +507,65 @@
     </div>
   </div>
 
-  <script src="../assets/js/icons.js"></script>
-  <script src="../assets/js/tax.js"></script>
-  <script src="../assets/js/config.js"></script>
-  <script src="../assets/js/rates.js"></script>
-  <script src="../assets/js/permissions.js"></script>
-  <script src="../assets/js/auth.js"></script>
-  <script src="../assets/js/ui.js"></script>
-  <script src="../assets/js/keys.js"></script>
-  <script src="../assets/js/sidenav.js"></script>
-  <script src="../assets/js/code-structure.js"></script>
-  <script src="../assets/js/barcode-printer.js"></script>
-  <script src="../assets/js/barcode-engine.js"></script>
-  <script src="../assets/js/product-drawer.js"></script>
+  <script src="../assets/js/ui/icons.js"></script>
+  <script src="../assets/js/core/tax.js"></script>
+  <script src="../assets/js/core/config.js"></script>
+  <script src="../assets/js/core/api-client.js"></script>
+  <script src="../assets/js/core/rates.js"></script>
+  <script src="../assets/js/core/permissions.js"></script>
+  <script src="../assets/js/core/auth.js"></script>
+  <script src="../assets/js/ui/ui.js"></script>
+  <script src="../assets/js/ui/keys.js"></script>
+  <script src="../assets/js/ui/view-transitions.js"></script>
+  <script src="../assets/js/ui/sidenav.js"></script>
+  <script src="../assets/js/core/code-structure.js"></script>
+  <script src="../assets/js/modules/barcode-printer.js"></script>
+  <script src="../assets/js/modules/barcode-engine.js"></script>
+  <script src="../assets/js/modules/product-drawer.js"></script>
   <script>
     let currentFilter = 'ALL';
 
+    function esc(str) {
+      if (window.MTP && typeof MTP.escapeHtml === 'function') return MTP.escapeHtml(str);
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getLocalDateIso(dateObj) {
+      if (window.MTP && typeof MTP.getLocalDateIso === 'function') return MTP.getLocalDateIso(dateObj);
+      const ms = dateObj instanceof Date ? dateObj.getTime() : Date.now();
+      return new Date(ms - 4 * 3600000).toISOString().slice(0, 10);
+    }
+
+    function persistInvState(meta) {
+      if (window.MTP && typeof MTP.saveState === 'function') {
+        MTP.saveState(MTP.state, meta);
+      } else if (window.MTP && typeof MTP.save === 'function') {
+        MTP.save(meta);
+      }
+    }
+
+    function bindInvTableEvents() {
+      const tbody = document.getElementById('invTableBody');
+      if (!tbody || tbody.dataset.bound) return;
+      tbody.dataset.bound = '1';
+      tbody.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-inv-action]');
+        if (!btn) return;
+        const id = btn.dataset.invId || '';
+        const action = btn.dataset.invAction;
+        if (action === 'in') quickAddStockRow(id);
+        else if (action === 'out') openWasteModal(id);
+        else if (action === 'menu') openRowMenu(id);
+      });
+    }
+
     function initInvPage() {
+      bindInvTableEvents();
       populateBulkSelect();
       populateQeSelect();
       renderInvStats();
@@ -596,9 +636,11 @@
       const packs = parseFloat(document.getElementById('bulkPacksCount')?.value) || 1;
       const unitsPerPack = parseFloat(document.getElementById('bulkUnitsPerPack')?.value) || 1;
       const packCost = parseFloat(document.getElementById('bulkPackCostUsd')?.value) || 0;
+      const rawPvp = parseFloat(document.getElementById('bulkNewSalePrice')?.value);
+      const newSalePriceUsd = Number.isFinite(rawPvp) && rawPvp > 0 ? rawPvp : 0;
       if (!itemId) return;
 
-      addPurchaseRow(itemId, packs, unitsPerPack, packCost);
+      addPurchaseRow(itemId, packs, unitsPerPack, packCost, newSalePriceUsd);
       MTP.toast('Renglón agregado a la factura', 'info');
     }
 
@@ -621,7 +663,7 @@
       const today = MTP.getPeriodAnalytics('TODAY');
       const famHtml = (today.kitchenByFamily || []).map(f => `
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px">
-          <span style="font-weight:700;font-size:13px;color:var(--txt)">${f.name}</span>
+          <span style="font-weight:700;font-size:13px;color:var(--txt)">${esc(f.name)}</span>
           <span class="badge badge-yellow tabular-nums" style="font-size:12px">${f.qty} preparados hoy (${MTP.fmtUSD(f.salesUsd)})</span>
         </div>
       `).join('');
@@ -629,7 +671,7 @@
       const ingUsedHtml = (today.kitchenIngredientsUsed || []).length
         ? today.kitchenIngredientsUsed.map(ing => `
             <span class="badge badge-green tabular-nums" style="font-size:12px;padding:3px 8px">
-              ${ing.name}: <strong>-${MTP.fmtWeight(ing.qtyUsed, ing.unit)}</strong> usados (Quedan: ${MTP.fmtWeight(ing.remainingStock, ing.unit)})
+              ${esc(ing.name)}: <strong>-${MTP.fmtWeight(ing.qtyUsed, ing.unit)}</strong> usados (Quedan: ${MTP.fmtWeight(ing.remainingStock, ing.unit)})
             </span>
           `).join(' ')
         : '<span style="color:var(--txt-3);font-size:12px">Aún no se han vendido platos preparados en el turno de hoy.</span>';
@@ -683,7 +725,12 @@
         if (currentFilter === 'LOW' && i.stock > i.minStock) return false;
         if (currentFilter === 'COCINA' && i.sellable) return false;
         if (currentFilter === 'VENTA' && !i.sellable) return false;
-        if (q && !i.name.toLowerCase().includes(q) && !i.code.toLowerCase().includes(q) && !(i.barcode || '').includes(q)) return false;
+        if (q) {
+          const nameHit = String(i.name || '').toLowerCase().includes(q);
+          const codeHit = String(i.code || '').toLowerCase().includes(q);
+          const barHit = String(i.barcode || '').toLowerCase().includes(q);
+          if (!nameHit && !codeHit && !barHit) return false;
+        }
         return true;
       });
 
@@ -701,13 +748,13 @@
           <tr>
             <td style="padding:8px 10px">
               <div style="display:flex;align-items:center;gap:10px">
-                <img src="${i.img || fallbackImg}" alt="${i.name}" onerror="this.onerror=null;this.src='${fallbackImg}'"
+                <img src="${esc(MTP.resolveImgPath ? MTP.resolveImgPath(i.img, fallbackImg) : (i.img || fallbackImg))}" alt="${esc(i.name)}" onerror="this.onerror=null;this.src='${esc(fallbackImg)}'"
                   style="width:36px;height:36px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--surface-2);flex-shrink:0">
                 <div>
-                  <div style="font-weight:var(--fw-bold);font-size:13px;color:var(--txt)">${i.name}</div>
-                  <div style="font-size:11px;color:var(--txt-3);display:flex;align-items:center;gap:6px;margin-top:2px">
-                    <span class="code-pill">#${i.code}</span>
-                    <span>${!i.sellable ? '🍲 Cocina' : '🛒 Tienda (' + (i.group || i.category) + ')'}</span>
+                  <div style="font-weight:var(--fw-bold);font-size:13px;color:var(--txt)">${esc(i.name)}</div>
+                  <div style="font-size:12px;color:var(--txt-3);display:flex;align-items:center;gap:6px;margin-top:2px">
+                    <span class="code-pill">#${esc(i.code)}</span>
+                    <span>${!i.sellable ? '🍲 Cocina' : '🛒 Tienda (' + esc(i.group || i.category) + ')'}</span>
                   </div>
                 </div>
               </div>
@@ -716,13 +763,13 @@
               <span class="badge ${isLow ? 'badge-red' : 'badge-green'} tabular-nums" style="font-size:12px;font-weight:700">
                 ${MTP.fmtWeight(i.stock, i.unit)}
               </span>
-              ${isLow ? '<div style="font-size:10.5px;color:var(--money-out);font-weight:700;margin-top:2px">¡Agotándose!</div>' : ''}
+              ${isLow ? '<div style="font-size:12px;color:var(--money-out);font-weight:700;margin-top:2px">¡Agotándose!</div>' : ''}
             </td>
             <td style="padding:8px 10px">
               ${i.sellable
                 ? `<div class="price-dual">
                      <span class="price-bs tabular-nums money-bs" style="font-size:13px;font-weight:800">${(i.priceUsd * bcv).toFixed(2)} Bs</span>
-                     <span class="price-usd tabular-nums" style="font-size:11px;color:var(--txt-3)">${MTP.fmtUSD(i.priceUsd)}</span>
+                     <span class="price-usd tabular-nums" style="font-size:12px;color:var(--txt-3)">${MTP.fmtUSD(i.priceUsd)}</span>
                    </div>`
                 : `<span style="font-size:12px;color:var(--txt-3);font-style:italic">Costo: ${MTP.fmtUSD(i.costUsd)}</span>`}
             </td>
@@ -733,9 +780,9 @@
             </td>
             <td style="padding:8px 10px;text-align:center">
               <div style="display:flex;align-items:center;justify-content:center;gap:4px">
-                <button class="btn btn-action btn-sm" style="padding:3px 7px;font-size:11px;font-weight:800;gap:3px" onclick="quickAddStockRow('${i.id}')" title="Registrar llegada de mercancía / comprar más">+ Entrada</button>
-                <button class="btn btn-secondary btn-sm" style="padding:3px 7px;font-size:11px;font-weight:700;color:var(--money-out);gap:3px" onclick="openWasteModal('${i.id}')" title="Registrar salida a cocina o lo que se dañó">- Salida</button>
-                <button class="btn btn-secondary btn-sm" style="font-size:16px;line-height:1;padding:3px 8px;font-weight:900" onclick="openRowMenu('${i.id}')" title="Más opciones">⋯</button>
+                <button type="button" class="btn btn-action btn-sm" style="padding:3px 7px;font-size:12px;font-weight:800;gap:3px" data-inv-action="in" data-inv-id="${esc(i.id)}" title="Registrar llegada de mercancía / comprar más">+ Entrada</button>
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:3px 7px;font-size:12px;font-weight:700;color:var(--money-out);gap:3px" data-inv-action="out" data-inv-id="${esc(i.id)}" title="Registrar salida a cocina o lo que se dañó">- Salida</button>
+                <button type="button" class="btn btn-secondary btn-sm" style="font-size:16px;line-height:1;padding:3px 8px;font-weight:900" data-inv-action="menu" data-inv-id="${esc(i.id)}" title="Más opciones">⋯</button>
               </div>
             </td>
           </tr>
@@ -754,16 +801,8 @@
         if (!val) return;
         const qty = parseFloat(val);
         if (isNaN(qty) || qty <= 0) return;
-        const oldStock = Number(item.stock) || 0;
-        item.stock = oldStock + qty;
-        MTP.saveState();
-        MTP.recordKardex({
-          insumoId: item.id,
-          type: 'IN',
-          qty: qty,
-          prevStock: oldStock,
-          newStock: item.stock,
-          unitCostUsd: item.costUsd || 0,
+        MTP.adjustItemStock(item.id, qty, {
+          action: 'ENTRADA_RAPIDA',
           reason: 'Entrada rápida de mercancía / compra',
           responsible: 'Administrador'
         });
@@ -807,7 +846,7 @@
       if (!sel) return;
       const insumos = MTP.state.inventory.filter(i => !i.sellable);
       sel.innerHTML = insumos.map(i =>
-        `<option value="${i.id}" data-cost="${i.costUsd}" data-unit="${i.unit}">[${i.code}] ${i.name} (Stock: ${i.stock} ${i.unit} · Costo: $${i.costUsd.toFixed(2)})</option>`
+        `<option value="${esc(i.id)}" data-cost="${Number(i.costUsd || 0)}" data-unit="${esc(i.unit)}">[${esc(i.code)}] ${esc(i.name)} (Stock: ${i.stock} ${esc(i.unit)} · Costo: $${Number(i.costUsd || 0).toFixed(2)})</option>`
       ).join('');
       onQeInsumoChange();
     }
@@ -840,8 +879,8 @@
 
       const unitCost = qty > 0 ? (totalCostUsd / qty) : 0;
       box.innerHTML = `
-        <div>Entrarán al almacén de cocina: <strong class="money-in tabular-nums">+${qty} ${item.unit}</strong> de "${item.name}" (Nuevo stock: ${(item.stock + qty).toFixed(2)} ${item.unit})</div>
-        <div style="margin-top:2px">Costo unitario resultante: <strong class="tabular-nums">$${unitCost.toFixed(2)} / ${item.unit}</strong> · Total en Bs: <strong class="tabular-nums">${(totalCostUsd * bcv).toFixed(2)} Bs</strong></div>
+        <div>Entrarán al almacén de cocina: <strong class="money-in tabular-nums">+${qty} ${esc(item.unit)}</strong> de "${esc(item.name)}" (Nuevo stock: ${(item.stock + qty).toFixed(2)} ${esc(item.unit)})</div>
+        <div style="margin-top:2px">Costo unitario resultante: <strong class="tabular-nums">$${unitCost.toFixed(2)} / ${esc(item.unit)}</strong> · Total en Bs: <strong class="tabular-nums">${(totalCostUsd * bcv).toFixed(2)} Bs</strong></div>
       `;
     }
 
@@ -881,7 +920,7 @@
       const sel = document.getElementById('kardexItemFilter');
       if (sel) {
         sel.innerHTML = `<option value="ALL">⚡ Todos los Artículos del Negocio</option>` +
-          MTP.state.inventory.map(i => `<option value="${i.id}">[${i.code}] ${i.name} (Stock: ${i.stock} ${i.unit})</option>`).join('');
+          MTP.state.inventory.map(i => `<option value="${esc(i.id)}">[${esc(i.code)}] ${esc(i.name)} (Stock: ${i.stock} ${esc(i.unit)})</option>`).join('');
         sel.value = filterItemId || 'ALL';
       }
       renderKardexTable();
@@ -928,35 +967,41 @@
 
       tbody.innerHTML = filtered.map(k => {
         const d = new Date(k.timestamp);
-        const dateStr = d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
-                        d.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+        let dateStr = '';
+        try {
+          dateStr = d.toLocaleDateString('es-VE', { timeZone: 'America/Caracas', day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+                    d.toLocaleTimeString('es-VE', { timeZone: 'America/Caracas', hour: '2-digit', minute: '2-digit' });
+        } catch (_) {
+          dateStr = d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+                    d.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+        }
         const isPos = k.qty > 0;
         const qtyStr = (isPos ? '+' : '') + k.qty + ' ' + (k.unit || 'und');
-        const badgeHtml = ACTION_BADGES[k.action] || `<span class="badge">${k.action}</span>`;
+        const badgeHtml = ACTION_BADGES[k.action] || `<span class="badge">${esc(k.action)}</span>`;
 
         return `
           <tr>
-            <td style="font-size:11px;color:var(--txt-2);white-space:nowrap">${dateStr}</td>
+            <td style="font-size:12px;color:var(--txt-2);white-space:nowrap">${esc(dateStr)}</td>
             <td>${badgeHtml}</td>
             <td>
-              <div style="font-weight:var(--fw-bold);font-size:12px">${k.itemName || '—'}</div>
-              <span class="code-pill">#${k.itemCode || '—'}</span>
+              <div style="font-weight:var(--fw-bold);font-size:12px">${esc(k.itemName || '—')}</div>
+              <span class="code-pill">#${esc(k.itemCode || '—')}</span>
             </td>
             <td>
-              <strong class="${isPos ? 'money-in' : 'money-out'} tabular-nums" style="font-size:12px">${qtyStr}</strong>
+              <strong class="${isPos ? 'money-in' : 'money-out'} tabular-nums" style="font-size:12px">${esc(qtyStr)}</strong>
             </td>
             <td>
               <span class="tabular-nums" style="font-weight:var(--fw-bold);background:var(--surface-2);padding:2px 6px;border-radius:var(--radius-sm);border:1px solid var(--line)">
-                ${k.nextStock} ${k.unit || 'und'}
+                ${k.nextStock} ${esc(k.unit || 'und')}
               </span>
-              <div style="font-size:11px;color:var(--txt-3)">Antes: ${k.prevStock}</div>
+              <div style="font-size:12px;color:var(--txt-3)">Antes: ${k.prevStock}</div>
             </td>
             <td style="font-weight:var(--fw-semibold);font-size:12px" class="tabular-nums">${MTP.fmtUSD(k.costUsd || 0)}</td>
             <td>
-              <span class="tabular-nums money-bs" style="font-family:var(--font-mono);font-size:11px;font-weight:var(--fw-bold)">${k.docRef || '—'}</span>
+              <span class="tabular-nums money-bs" style="font-family:var(--font-mono);font-size:12px;font-weight:var(--fw-bold)">${esc(k.docRef || '—')}</span>
             </td>
-            <td style="font-size:11px;color:var(--txt-2)">${k.responsible || '—'}</td>
-            <td style="font-size:11px;max-width:220px;color:var(--txt)">${k.notes || (k.supplier ? 'Prov: ' + k.supplier : '—')}</td>
+            <td style="font-size:12px;color:var(--txt-2)">${esc(k.responsible || '—')}</td>
+            <td style="font-size:12px;max-width:220px;color:var(--txt)">${esc(k.notes || (k.supplier ? 'Prov: ' + k.supplier : '—'))}</td>
           </tr>
         `;
       }).join('');
@@ -968,7 +1013,7 @@
     function openMultiPurchaseModal() {
       const dl = document.getElementById('suppliersList');
       if (dl) {
-        dl.innerHTML = (MTP.state.suppliers || []).map(s => `<option value="${s.name}">`).join('');
+        dl.innerHTML = (MTP.state.suppliers || []).map(s => `<option value="${esc(s.name)}">`).join('');
       }
       document.getElementById('mpDocNumber').value = 'FAC-' + Math.floor(1000 + Math.random() * 9000);
       document.getElementById('mpSupplier').value = (MTP.state.suppliers && MTP.state.suppliers[0]) ? MTP.state.suppliers[0].name : '';
@@ -985,20 +1030,23 @@
       document.getElementById('multiPurchaseModal').classList.add('open');
     }
 
-    function addPurchaseRow(defaultItemId = null, defaultPacks = 1, defaultUnitsPerPack = 20, defaultPackCost = 21.60) {
+    function addPurchaseRow(defaultItemId = null, defaultPacks = 1, defaultUnitsPerPack = 20, defaultPackCost = 21.60, defaultNewSalePrice = 0) {
       const tbody = document.getElementById('mpRowsBody');
       if (!tbody) return;
       const rowId = 'mpRow_' + Date.now() + '_' + Math.floor(Math.random() * 100);
       const tr = document.createElement('tr');
       tr.id = rowId;
+      if (defaultNewSalePrice > 0) {
+        tr.dataset.newSalePrice = String(defaultNewSalePrice);
+      }
 
       const optsHtml = MTP.state.inventory.map(i =>
-        `<option value="${i.id}" data-unit="${i.unit}" data-cost="${i.costUsd}" ${defaultItemId === i.id ? 'selected' : ''}>[${i.code}] ${i.name} (${i.unit})</option>`
+        `<option value="${esc(i.id)}" data-unit="${esc(i.unit)}" data-cost="${Number(i.costUsd || 0)}" ${defaultItemId === i.id ? 'selected' : ''}>[${esc(i.code)}] ${esc(i.name)} (${esc(i.unit)})</option>`
       ).join('');
 
       tr.innerHTML = `
         <td>
-          <select class="select mp-item-select" onchange="onMpItemChange('${rowId}')" style="font-size:11px;padding:4px">
+          <select class="select mp-item-select" onchange="onMpItemChange('${rowId}')" style="font-size:12px;padding:4px">
             ${optsHtml}
           </select>
         </td>
@@ -1039,7 +1087,8 @@
       const opt = sel.options[sel.selectedIndex];
       if (!opt) return;
       const unit = opt.getAttribute('data-unit') || 'und';
-      const cost = parseFloat(opt.getAttribute('data-cost')) || 1.0;
+      const rawCost = parseFloat(opt.getAttribute('data-cost'));
+      const cost = Number.isFinite(rawCost) && rawCost >= 0 ? rawCost : 0;
 
       const unitsInput = tr.querySelector('.mp-units-per-pack');
       const costInput = tr.querySelector('.mp-pack-cost');
@@ -1111,8 +1160,11 @@
         const packsCount = parseFloat(tr.querySelector('.mp-packs')?.value) || 1;
         const unitsPerPack = parseFloat(tr.querySelector('.mp-units-per-pack')?.value) || 1;
         const packCostUsd = parseFloat(tr.querySelector('.mp-pack-cost')?.value) || 0;
+        const newSalePriceUsd = parseFloat(tr.dataset.newSalePrice || '0') || 0;
         if (itemId && packCostUsd > 0) {
-          items.push({ itemId, packsCount, unitsPerPack, packCostUsd });
+          const line = { itemId, packsCount, unitsPerPack, packCostUsd };
+          if (newSalePriceUsd > 0) line.newSalePriceUsd = newSalePriceUsd;
+          items.push(line);
         }
       });
 
@@ -1136,6 +1188,28 @@
       });
 
       if (res) {
+        if (paymentMethod === 'Crédito / Cuentas por Pagar') {
+          if (!Array.isArray(MTP.state.invoices)) MTP.state.invoices = [];
+          const todayIso = getLocalDateIso();
+          const dueIso = getLocalDateIso(new Date(Date.now() + 7 * 86400000));
+          const itemsSummary = (res.items || []).map(p => `${p.totalUnits} ${p.unit} ${p.name}`).join(', ');
+          MTP.state.invoices.unshift({
+            id: 'FAC-' + Date.now(),
+            number: docNumber,
+            supplier,
+            rif: '',
+            date: todayIso,
+            dueDate: dueIso,
+            totalUsd: Number((res.totalUsd || 0).toFixed(2)),
+            paidUsd: 0,
+            status: 'pendiente',
+            itemsSummary
+          });
+          persistInvState({
+            eventType: 'INVOICE_CREATED',
+            eventPayload: { number: docNumber, supplier, totalUsd: Number((res.totalUsd || 0).toFixed(2)) }
+          });
+        }
         document.getElementById('multiPurchaseModal').classList.remove('open');
         initInvPage();
         MTP.toast(`¡Factura ${docNumber} procesada con éxito! +${res.itemsCount} productos entraron al stock y Kardex.`);
@@ -1149,7 +1223,7 @@
       const sel = document.getElementById('wasteItemSelect');
       if (sel) {
         sel.innerHTML = MTP.state.inventory.map(i =>
-          `<option value="${i.id}" data-cost="${i.costUsd}" data-unit="${i.unit}">[${i.code}] ${i.name} (Stock: ${i.stock} ${i.unit} · Costo $${i.costUsd.toFixed(2)})</option>`
+          `<option value="${esc(i.id)}" data-cost="${Number(i.costUsd || 0)}" data-unit="${esc(i.unit)}">[${esc(i.code)}] ${esc(i.name)} (Stock: ${i.stock} ${esc(i.unit)} · Costo $${Number(i.costUsd || 0).toFixed(2)})</option>`
         ).join('');
         if (itemId && MTP.getInsumoById(itemId)) sel.value = itemId;
       }
@@ -1173,8 +1247,8 @@
 
       notice.innerHTML = `
         <div>Pérdida Monetaria Valorizada: <strong class="tabular-nums">${MTP.fmtUSD(totalLossUsd)}</strong> (${totalLossBs.toFixed(2)} Bs)</div>
-        <div style="font-size:11px;font-weight:normal;color:var(--money-out);margin-top:2px">
-          El stock de "${item.name}" bajará de <strong>${item.stock} ${item.unit}</strong> a <strong>${remainingStock.toFixed(2)} ${item.unit}</strong>
+        <div style="font-size:12px;font-weight:normal;color:var(--money-out);margin-top:2px">
+          El stock de "${esc(item.name)}" bajará de <strong>${item.stock} ${esc(item.unit)}</strong> a <strong>${remainingStock.toFixed(2)} ${esc(item.unit)}</strong>
         </div>
       `;
     }
@@ -1322,6 +1396,7 @@
       const type = document.getElementById('invEditType').value;
       const sellable = type === 'venta';
       const group = sellable ? document.getElementById('invEditGroup').value : '';
+      const familyId = sellable ? group : '';
       const category = document.getElementById('invEditCategory').value;
       const code = document.getElementById('invEditCode').value.trim();
       const barcode = document.getElementById('invEditBarcode').value.trim();
@@ -1338,35 +1413,48 @@
         return;
       }
 
+      const isExempt = !sellable || group === 'viveres';
+      const iva = isExempt ? 'E' : 'G16';
+      const taxType = isExempt ? 'E' : 'G';
+      const taxExempt = isExempt;
+      const ivaType = iva;
+
+      const patch = {
+        type, sellable, group, familyId, category, code, barcode, name, img, unit,
+        stock, minStock, costUsd, priceUsd, iva, taxType, taxExempt, ivaType, active: true
+      };
+
+      let savedId = id;
       if (id) {
         const item = MTP.getInsumoById(id);
         if (item) {
           item.prevCostUsd = item.costUsd;
-          Object.assign(item, { type, sellable, group, category, code, barcode, name, img, unit, stock, minStock, costUsd, priceUsd });
+          Object.assign(item, patch);
+        }
+        if (sellable && Array.isArray(MTP.state.retailItems)) {
+          const rItem = MTP.state.retailItems.find(r => r.id === id);
+          if (rItem) Object.assign(rItem, patch);
+        } else if (!sellable && Array.isArray(MTP.state.insumos)) {
+          const insItem = MTP.state.insumos.find(ins => ins.id === id);
+          if (insItem) Object.assign(insItem, patch);
         }
       } else {
-        MTP.state.inventory.push({
-          id: 'inv-' + Date.now(),
-          code,
-          barcode,
+        savedId = 'inv-' + Date.now();
+        const newObj = Object.assign({
+          id: savedId,
           qrCode: 'QR-' + code,
-          group,
-          name,
-          category,
-          type,
-          sellable,
-          unit,
-          stock,
-          minStock,
-          costUsd,
           prevCostUsd: costUsd,
-          priceUsd,
-          emoji: sellable ? '🛒' : '🍲',
-          img
-        });
+          emoji: sellable ? '🛒' : '🍲'
+        }, patch);
+        MTP.state.inventory.push(newObj);
+        if (sellable && Array.isArray(MTP.state.retailItems)) {
+          MTP.state.retailItems.push(Object.assign({}, newObj));
+        } else if (!sellable && Array.isArray(MTP.state.insumos)) {
+          MTP.state.insumos.push(Object.assign({}, newObj));
+        }
       }
 
-      MTP.save();
+      persistInvState({ eventType: 'ITEM_SAVED', itemId: savedId });
       document.getElementById('invItemModal').classList.remove('open');
       initInvPage();
       MTP.toast('Artículo guardado en el inventario y sincronizado con Caja');

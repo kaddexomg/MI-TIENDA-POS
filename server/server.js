@@ -64,8 +64,13 @@ function serveStaticFile(req, res, pathname) {
   }
 
   // Redirecciones limpias para que las rutas relativas de CSS/JS funcionen siempre
-  if (decodedPath === '/caja' || decodedPath === '/caja/') {
-    res.writeHead(302, { 'Location': '/caja/pos.html' });
+  if (decodedPath === '/caja' || decodedPath === '/caja/' || decodedPath === '/caja/pos.html' || decodedPath === '/admin/pos.html' || decodedPath === '/admin/pos') {
+    res.writeHead(302, { 'Location': '/pos.html' });
+    res.end();
+    return;
+  }
+  if (decodedPath === '/caja/index.html') {
+    res.writeHead(302, { 'Location': '/pos.html?tickets=1' });
     res.end();
     return;
   }
@@ -165,11 +170,7 @@ function createServer() {
 
     // Manejo de peticiones preflight OPTIONS fuera de API si ocurriesen
     if (req.method === 'OPTIONS') {
-      res.writeHead(204, {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      });
+      res.writeHead(204, api.buildCorsHeaders(req, { 'Access-Control-Max-Age': '86400' }));
       res.end();
       return;
     }
@@ -192,7 +193,7 @@ function start(portToUse) {
     console.log('================================================================');
     console.log('  MI-TIENDA-POS v5.0.0 · Servidor Local + Journal Anti-Apagones');
     console.log('  Puerto de escucha : ' + port);
-    console.log('  Acceso local Caja : http://localhost:' + port + '/caja/pos.html');
+    console.log('  Acceso local Caja : http://localhost:' + port + '/pos.html');
     console.log('  Acceso local Admin: http://localhost:' + port + '/admin/index.html');
     console.log('  Acceso general    : http://localhost:' + port + '/index.html');
     console.log('  Directorio Datos  : ' + journal.getDataDir());

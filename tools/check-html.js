@@ -6,10 +6,11 @@ const path = require('path');
 
 const PAGES = [
   'index.html',
+  'pos.html',
   'admin/ajustes.html', 'admin/cierres.html', 'admin/facturas.html', 'admin/index.html',
-  'admin/inventario.html', 'admin/pos.html', 'admin/precios.html', 'admin/productos.html',
+  'admin/inventario.html', 'admin/precios.html', 'admin/productos.html',
   'admin/recetas.html', 'admin/usuarios.html',
-  'caja/index.html', 'caja/pos.html'
+  'mobile/index.html'
 ];
 
 let bad = 0;

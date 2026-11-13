@@ -5,11 +5,22 @@ desktop.ini
 *.tmp
 *.bak
 
+# Compilaciones, dependencias y artefactos binarios
+build/
+dist/
+node_modules/
+desktop/node_modules/
+*.exe
+*.apk
+*.idsig
+*.jks
+*.keystore
+
 # Logs y trazas de agentes
 .system_generated/
 *.log
 
-# Respaldos generados localmente
+# Respaldos generados localmente y capturas temporales
 respaldos/
 *.json.bak
 screenshot-*.png

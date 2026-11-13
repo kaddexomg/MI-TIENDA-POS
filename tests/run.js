@@ -59,14 +59,14 @@ function createPosSandbox(initialStorageObj = null) {
       body: { appendChild: () => {} },
       addEventListener: () => {}
     },
-    location: { pathname: '/admin/pos.html' }
+    location: { pathname: '/pos.html' }
   };
   sandbox.window = sandbox;
   sandbox.window.dispatchEvent = () => {};
   sandbox.window.addEventListener = () => {};
 
-  const taxCode = fs.readFileSync(path.join(__dirname, '../assets/js/tax.js'), 'utf8');
-  const configCode = fs.readFileSync(path.join(__dirname, '../assets/js/config.js'), 'utf8');
+  const taxCode = fs.readFileSync(path.join(__dirname, '../assets/js/core/tax.js'), 'utf8');
+  const configCode = fs.readFileSync(path.join(__dirname, '../assets/js/core/config.js'), 'utf8');
 
   vm.createContext(sandbox);
   vm.runInContext(taxCode, sandbox);
@@ -366,5 +366,10 @@ console.log('✅ [Integración 8] Creación rápida, pausado y eliminación en 1
 require('./barcode.test.js');
 require('./ui.test.js');
 require('./pos.test.js');
+require('./sync-integrity.test.js');
 
-console.log('🎉 TODAS LAS PRUEBAS AUTOMATIZADAS (FISCALES, INTEGRACIÓN V6, CÓDIGOS, ETIQUETAS, UI Y CAJA v7) PASARON AL 100%.');
+if (process.exitCode) {
+  console.error('❌ Algunas pruebas fallaron. Revisa el detalle arriba.');
+} else {
+  console.log('🎉 TODAS LAS PRUEBAS AUTOMATIZADAS (FISCALES, INTEGRACIÓN V6, SINCRONIZACIÓN, CÓDIGOS, ETIQUETAS, UI Y CAJA v7) PASARON AL 100%.');
+}

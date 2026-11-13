@@ -4,13 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Acceso Seguro por PIN | MI TIENDA POS</title>
-  <link rel="stylesheet" href="assets/css/variables.css">
-  <link rel="stylesheet" href="assets/css/components.css">
-  <link rel="stylesheet" href="assets/css/design-v7.css">
+  <link rel="icon" type="image/x-icon" href="assets/img/brand-icon.ico">
+  <link rel="icon" type="image/png" href="assets/img/brand-icon-64.png">
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/app.css">
   <style>
     body {
-      background: radial-gradient(circle at 50% 12%, #17243B 0%, #0B132B 45%, #050A18 100%);
-      color: #F8FAFC;
+      background: #F5F5F7;
+      color: #0F172A;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -23,19 +24,16 @@
 
     .login-container {
       width: 100%;
-      max-width: 460px;
-      background: rgba(11, 19, 43, 0.92);
-      -webkit-backdrop-filter: blur(20px);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-top: 1px solid rgba(255, 255, 255, 0.22);
-      border-radius: var(--radius-xl, 18px);
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(16, 185, 129, 0.08);
-      padding: 26px 24px;
+      max-width: 470px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 20px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+      padding: 28px 26px;
       display: flex;
       flex-direction: column;
       gap: 16px;
-      animation: v7ScaleIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation: v7ScaleIn 180ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
     }
 
     .login-hd {
@@ -43,16 +41,16 @@
     }
 
     .brand-logo-badge {
-      width: 52px;
-      height: 52px;
+      width: 54px;
+      height: 54px;
       margin: 0 auto 10px;
-      background: linear-gradient(135deg, #10b981, #059669);
+      background: #0F172A;
       border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
-      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.16);
+      color: #FFFFFF;
     }
 
     .login-hd h1 {
@@ -60,17 +58,18 @@
       font-weight: 900;
       letter-spacing: -0.02em;
       margin: 0;
-      color: #ffffff;
+      color: #0F172A;
     }
 
     .login-hd h1 em {
-      color: #34d399;
+      color: #059669;
       font-style: normal;
     }
 
     .login-hd p {
-      font-size: 12.5px;
-      color: #94a3b8;
+      font-size: 13px;
+      color: #475569;
+      font-weight: 500;
       margin: 4px 0 0 0;
     }
 
@@ -79,12 +78,14 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
       border-radius: 99px;
-      padding: 5px 14px;
-      font-size: 11.5px;
-      margin: 8px auto 0;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: #334155;
+      font-variant-numeric: tabular-nums;
+      margin: 10px auto 0;
     }
 
     .rates-bar span strong {
@@ -93,9 +94,9 @@
 
     /* Banners de estado */
     .status-alert {
-      padding: 9px 12px;
-      border-radius: 8px;
-      font-size: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 12.5px;
       font-weight: 700;
       display: flex;
       align-items: center;
@@ -103,17 +104,17 @@
       line-height: 1.35;
     }
     .status-locked {
-      background: rgba(239, 68, 68, 0.18);
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      color: #fca5a5;
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
+      color: #991B1B;
     }
     .status-logout {
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.35);
-      color: #a7f3d0;
+      background: #ECFDF5;
+      border: 1px solid #A7F3D0;
+      color: #065F46;
     }
 
-    /* Selector de Usuarios */
+    /* Selector de Usuarios (Targets grandes y legibles) */
     .user-select-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -121,46 +122,50 @@
     }
 
     .user-card-btn {
-      background: rgba(19, 30, 51, 0.7);
-      border: 1.5px solid rgba(255, 255, 255, 0.08);
-      border-radius: var(--radius, 10px);
-      padding: 10px 8px;
+      background: #F8FAFC;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 12px 8px;
+      min-height: 68px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 5px;
       cursor: pointer;
-      transition: transform var(--dur-fast) var(--ease-fluid), border-color var(--dur-fast) var(--ease-fluid), background-color var(--dur-fast) var(--ease-fluid);
-      color: #cbd5e1;
+      transition: transform var(--dur-fast, 140ms) var(--ease-fluid, cubic-bezier(0.16, 1, 0.3, 1)),
+                  border-color var(--dur-fast, 140ms) var(--ease-fluid, cubic-bezier(0.16, 1, 0.3, 1)),
+                  background-color var(--dur-fast, 140ms) var(--ease-fluid, cubic-bezier(0.16, 1, 0.3, 1));
+      color: #1E293B;
       text-align: center;
     }
     .user-card-btn:hover {
-      background: rgba(26, 41, 66, 0.9);
-      border-color: rgba(255, 255, 255, 0.22);
-      transform: translateY(-2px);
+      background: #F1F5F9;
+      border-color: #CBD5E1;
+      transform: translateY(-1px);
     }
     .user-card-btn:active {
       transform: scale(0.96);
-      transition: transform var(--dur-tap) var(--ease-out);
+      transition: transform var(--dur-tap, 80ms) var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
     }
     .user-card-btn.active {
-      background: rgba(30, 52, 84, 0.95);
-      border-color: #10B981;
-      color: #ffffff;
-      box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+      background: #ECFDF5;
+      border-color: #059669;
+      color: #064E3B;
+      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.14);
     }
 
     .user-role-badge {
-      font-size: 9.5px;
+      font-size: 12px;
       font-weight: 800;
       text-transform: uppercase;
-      padding: 1px 6px;
-      border-radius: 4px;
+      padding: 2px 7px;
+      border-radius: 5px;
       letter-spacing: 0.03em;
     }
-    .badge-cajero { background: rgba(16, 185, 129, 0.25); color: #34d399; }
-    .badge-encargado { background: rgba(59, 130, 246, 0.25); color: #60a5fa; }
-    .badge-admin { background: rgba(239, 68, 68, 0.25); color: #f87171; }
+    .badge-cajero { background: #D1FAE5; color: #065F46; }
+    .badge-encargado { background: #DBEAFE; color: #1E40AF; }
+    .badge-admin { background: #FEE2E2; color: #991B1B; }
 
     /* Indicador Visual de PIN (Puntitos) */
     .pin-display-wrap {
@@ -168,110 +173,110 @@
       flex-direction: column;
       align-items: center;
       gap: 6px;
-      margin: 4px 0;
+      margin: 2px 0;
     }
 
     .pin-dots-container {
       display: flex;
-      gap: 12px;
+      gap: 14px;
       align-items: center;
       justify-content: center;
-      height: 44px;
-      padding: 0 18px;
-      background: rgba(8, 22, 34, 0.85);
-      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      height: 48px;
+      padding: 0 20px;
+      background: #F8FAFC;
+      border: 1.5px solid #CBD5E1;
       border-radius: 12px;
-      min-width: 220px;
-      transition: border-color var(--dur-fast) var(--ease-fluid);
+      min-width: 240px;
+      transition: border-color var(--dur-fast, 140ms) var(--ease-fluid, cubic-bezier(0.16, 1, 0.3, 1));
     }
 
     .pin-dot {
       width: 14px;
       height: 14px;
       border-radius: 50%;
-      border: 2px solid #64748b;
+      border: 2px solid #94A3B8;
       background: transparent;
-      transition: transform var(--dur-fast) var(--ease-fluid), background-color var(--dur-fast) var(--ease-fluid), border-color var(--dur-fast) var(--ease-fluid);
+      transition: transform var(--dur-fast, 140ms) var(--ease-fluid, cubic-bezier(0.16, 1, 0.3, 1)),
+                  background-color var(--dur-fast, 140ms) var(--ease-fluid, cubic-bezier(0.16, 1, 0.3, 1)),
+                  border-color var(--dur-fast, 140ms) var(--ease-fluid, cubic-bezier(0.16, 1, 0.3, 1));
     }
     .pin-dot.filled {
-      background: #10B981;
-      border-color: #34D399;
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
-      transform: scale(1.15);
-      animation: springFill 140ms var(--ease-out) both;
+      background: #059669;
+      border-color: #047857;
+      animation: springFill 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
     }
 
     .pin-error-msg {
-      font-size: 11.5px;
+      font-size: 12.5px;
       font-weight: 800;
-      color: #f87171;
-      height: 16px;
+      color: #DC2626;
+      height: 18px;
       text-align: center;
     }
 
-    /* Teclado Numérico en Pantalla */
+    /* Teclado Numérico Táctil en Pantalla (56px alto para dedos y adultos mayores) */
     .keypad-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      gap: 9px;
     }
 
     .key-btn {
-      height: 52px;
-      min-height: 48px;
-      background: rgba(23, 36, 59, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: var(--radius, 10px);
-      font-size: 22px;
+      height: 56px;
+      min-height: 56px;
+      background: #F8FAFC;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 12px;
+      font-size: 24px;
       font-weight: 800;
-      color: #ffffff;
+      color: #0F172A;
+      font-variant-numeric: tabular-nums;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       user-select: none;
-      transition: transform var(--dur-tap) var(--ease-out), background-color var(--dur-fast) var(--ease-fluid), border-color var(--dur-fast) var(--ease-fluid);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      transition: transform var(--dur-tap, 80ms) var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)),
+                  background-color var(--dur-fast, 140ms) var(--ease-fluid, cubic-bezier(0.16, 1, 0.3, 1)),
+                  border-color var(--dur-fast, 140ms) var(--ease-fluid, cubic-bezier(0.16, 1, 0.3, 1));
     }
     .key-btn:hover {
-      background: rgba(35, 53, 84, 0.95);
-      border-color: rgba(255, 255, 255, 0.25);
-      transform: translateY(-1px);
+      background: #F1F5F9;
+      border-color: #CBD5E1;
     }
     .key-btn:active {
-      transform: scale(0.95) translateY(1px);
-      background: rgba(15, 23, 42, 0.95);
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+      transform: scale(0.95);
+      background: #E2E8F0;
     }
     .key-btn.action-clear {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 800;
-      background: rgba(239, 68, 68, 0.2);
-      border-color: rgba(239, 68, 68, 0.4);
-      color: #fca5a5;
+      background: #FEF2F2;
+      border-color: #FECACA;
+      color: #B91C1C;
     }
     .key-btn.action-clear:hover {
-      background: rgba(239, 68, 68, 0.32);
+      background: #FEE2E2;
     }
     .key-btn.action-enter {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 900;
       background: #059669;
-      border-color: #10B981;
-      color: #ffffff;
-      box-shadow: 0 2px 12px rgba(16, 185, 129, 0.35);
+      border-color: #047857;
+      color: #FFFFFF;
+      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
     }
     .key-btn.action-enter:hover {
       background: #047857;
-      border-color: #34D399;
     }
 
-    /* Modal de Selección de Destino para Admin / Encargado */
+    /* Modal de Selección de Destino para Admin / Encargado (Apple Light) */
     .destination-modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(3px);
+      background: rgba(15, 23, 42, 0.45);
       align-items: center;
       justify-content: center;
       padding: 20px;
@@ -281,14 +286,15 @@
       display: flex;
     }
     .destination-box {
-      background: #0f2230;
-      border: 1.5px solid #34d399;
-      border-radius: 16px;
-      padding: 22px;
-      max-width: 440px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 18px;
+      padding: 24px;
+      max-width: 460px;
       width: 100%;
-      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 20px 44px rgba(15, 23, 42, 0.16);
       text-align: center;
+      color: #0F172A;
     }
 
     .destination-grid {
@@ -298,23 +304,30 @@
       margin-top: 16px;
     }
     .dest-card {
-      background: #172d3d;
-      border: 1.5px solid rgba(255, 255, 255, 0.12);
-      border-radius: 12px;
-      padding: 16px 12px;
+      background: #F8FAFC;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 14px;
+      padding: 18px 14px;
+      min-height: 112px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 8px;
       cursor: pointer;
-      color: #ffffff;
+      color: #0F172A;
       text-decoration: none;
-      transition: all 0.15s ease;
+      transition: transform var(--dur-fast, 140ms) var(--ease-fluid, cubic-bezier(0.16, 1, 0.3, 1)),
+                  border-color var(--dur-fast, 140ms) var(--ease-fluid, cubic-bezier(0.16, 1, 0.3, 1)),
+                  background-color var(--dur-fast, 140ms) var(--ease-fluid, cubic-bezier(0.16, 1, 0.3, 1));
     }
     .dest-card:hover {
-      border-color: #34d399;
-      background: #1f3b50;
+      border-color: #059669;
+      background: #ECFDF5;
       transform: translateY(-2px);
+    }
+    .dest-card:active {
+      transform: scale(0.97);
     }
 
     .hidden-input {
@@ -332,16 +345,18 @@
 
   <div class="login-container">
     <div class="login-hd">
-      <div class="brand-logo-badge" id="brandLogoBox"></div>
+      <div class="brand-logo-badge" id="brandLogoBox" style="padding:0;overflow:hidden">
+        <img src="assets/img/brand-icon.png" alt="MI TIENDA POS" style="width:100%;height:100%;object-fit:cover;border-radius:14px;display:block">
+      </div>
       <h1>MI TIENDA <em>POS</em></h1>
       <p>Restaurante & Abasto · Acceso Rápido por PIN</p>
 
       <div class="rates-bar">
-        <span>BCV: <strong id="rateBcv" style="color:#34d399">—</strong></span>
+        <span>BCV: <strong id="rateBcv" style="color:#047857">—</strong></span>
         <span style="opacity:0.4">·</span>
-        <span>EUR: <strong id="rateEur" style="color:#60a5fa">—</strong></span>
+        <span>EUR: <strong id="rateEur" style="color:#1D4ED8">—</strong></span>
         <span style="opacity:0.4">·</span>
-        <span>USDT: <strong id="rateUsdt" style="color:#fbbf24">—</strong></span>
+        <span>USDT: <strong id="rateUsdt" style="color:#B45309">—</strong></span>
       </div>
     </div>
 
@@ -351,8 +366,8 @@
     <!-- 1. Selector Rápido de Usuario -->
     <div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em">Seleccionar Usuario o Ingresar PIN:</span>
-        <span id="selectedUserLabel" style="font-size:11px;font-weight:800;color:#34d399">Detección automática</span>
+        <span style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.04em">Seleccionar Usuario o Ingresar PIN:</span>
+        <span id="selectedUserLabel" style="font-size:12px;font-weight:800;color:#047857">Detección automática</span>
       </div>
       <div class="user-select-grid" id="userSelectGrid">
         <!-- Renderizado dinámicamente desde MTPAuth.getUsers() -->
@@ -388,7 +403,7 @@
       <button type="button" class="key-btn action-enter" id="keyEnter">ENTRAR ↵</button>
     </div>
 
-    <div style="text-align:center;font-size:11px;color:#64748b;margin-top:2px">
+    <div style="text-align:center;font-size:12px;color:#475569;margin-top:2px">
       Compatible con teclado físico, numpad y pantallas táctiles
     </div>
   </div>
@@ -397,20 +412,20 @@
   <div class="destination-modal" id="destinationModal">
     <div class="destination-box">
       <div style="font-size:32px;margin-bottom:6px">🔑</div>
-      <h3 style="margin:0;font-size:18px;font-weight:900;color:#ffffff" id="destGreeting">¡Bienvenido!</h3>
-      <p style="font-size:12.5px;color:#cbd5e1;margin:6px 0 0 0" id="destSub">Tienes acceso a todas las áreas del sistema. ¿A dónde deseas ingresar?</p>
+      <h3 style="margin:0;font-size:19px;font-weight:900;color:#0F172A" id="destGreeting">¡Bienvenido!</h3>
+      <p style="font-size:13px;color:#475569;margin:6px 0 0 0" id="destSub">Tienes acceso a todas las áreas del sistema. ¿A dónde deseas ingresar?</p>
 
       <div class="destination-grid">
-        <a href="caja/pos.html" class="dest-card" id="destCajaLink">
+        <a href="pos.html" class="dest-card" id="destCajaLink">
           <div id="destIcoCaja"></div>
-          <strong style="font-size:13px">Caja Mostrador</strong>
-          <span style="font-size:10.5px;color:#94a3b8">Facturar, pedidos y cobros</span>
+          <strong style="font-size:14px;color:#0F172A">Caja Mostrador</strong>
+          <span style="font-size:12px;color:#475569">Facturar, pedidos y cobros</span>
         </a>
 
-        <a href="admin/index.html" class="dest-card" id="destAdminLink" style="border-color:#fbbf24">
+        <a href="admin/index.html" class="dest-card" id="destAdminLink" style="border-color:#D97706;background:#FFFBEB">
           <div id="destIcoAdmin"></div>
-          <strong style="font-size:13px;color:#fbbf24">Panel Administrador</strong>
-          <span style="font-size:10.5px;color:#94a3b8">Inventario, finanzas y tasas</span>
+          <strong style="font-size:14px;color:#B45309">Panel Administrador</strong>
+          <span style="font-size:12px;color:#78350F">Inventario, finanzas y tasas</span>
         </a>
       </div>
 
@@ -421,14 +436,16 @@
   </div>
 
   <!-- Librerías del Sistema -->
-  <script src="assets/js/icons.js"></script>
-  <script src="assets/js/tax.js"></script>
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/rates.js"></script>
-  <script src="assets/js/permissions.js"></script>
-  <script src="assets/js/auth.js"></script>
-  <script src="assets/js/ui.js"></script>
-  <script src="assets/js/keys.js"></script>
+  <script src="assets/js/ui/icons.js"></script>
+  <script src="assets/js/core/tax.js"></script>
+  <script src="assets/js/core/config.js"></script>
+  <script src="assets/js/core/api-client.js"></script>
+  <script src="assets/js/core/rates.js"></script>
+  <script src="assets/js/core/permissions.js"></script>
+  <script src="assets/js/core/auth.js"></script>
+  <script src="assets/js/ui/ui.js"></script>
+  <script src="assets/js/ui/keys.js"></script>
+  <script src="assets/js/ui/view-transitions.js"></script>
 
   <script>
     (function () {
@@ -438,12 +455,20 @@
       var dotsEl = document.getElementById('pinDotsContainer');
       var errorEl = document.getElementById('pinErrorMsg');
       var destModal = document.getElementById('destinationModal');
+      var esc = (window.MTPUI && window.MTPUI.escapeHtml) ? window.MTPUI.escapeHtml : function (v) {
+        return String(v === undefined || v === null ? '' : v)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      };
 
       function initIcons() {
         if (!window.MTPIcons) return;
-        document.getElementById('brandLogoBox').innerHTML = MTPIcons.get('bolt', { size: 28, color: '#ffffff' });
-        document.getElementById('destIcoCaja').innerHTML = MTPIcons.get('pos', { size: 28, color: '#34d399' });
-        document.getElementById('destIcoAdmin').innerHTML = MTPIcons.get('settings', { size: 28, color: '#fbbf24' });
+        var hasBrandImg = document.querySelector('#brandLogoBox img');
+        if (!hasBrandImg) {
+          document.getElementById('brandLogoBox').innerHTML = MTPIcons.get('bolt', { size: 28, color: '#ffffff' });
+        }
+        document.getElementById('destIcoCaja').innerHTML = MTPIcons.get('pos', { size: 28, color: '#059669' });
+        document.getElementById('destIcoAdmin').innerHTML = MTPIcons.get('settings', { size: 28, color: '#B45309' });
       }
 
       function updateRatesDisplay() {
@@ -475,19 +500,24 @@
         if (!container) return;
 
         var html = users.map(function (u) {
-          var badgeCls = 'badge-' + u.role;
+          var badgeCls = 'badge-' + esc(u.role);
           var roleName = u.role === 'admin' ? 'Admin' : (u.role === 'encargado' ? 'Encargado' : 'Cajero');
           var isSel = selectedUserId === u.id;
           return `
-            <div class="user-card-btn ${isSel ? 'active' : ''}" data-user-id="${u.id}" onclick="window.selectUser('${u.id}')">
+            <div class="user-card-btn ${isSel ? 'active' : ''}" data-user-id="${esc(u.id)}" tabindex="0" role="button">
               <span class="user-role-badge ${badgeCls}">${roleName}</span>
-              <strong style="font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${u.name}</strong>
-              <span style="font-size:10px;color:#94a3b8">@${u.username}</span>
+              <strong style="font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${esc(u.name)}</strong>
+              <span style="font-size:12px;color:#475569">@${esc(u.username)}</span>
             </div>
           `;
         }).join('');
 
         container.innerHTML = html;
+        container.querySelectorAll('.user-card-btn').forEach(function (card) {
+          card.addEventListener('click', function () {
+            window.selectUser(card.getAttribute('data-user-id'));
+          });
+        });
       }
 
       window.selectUser = function (userId) {
@@ -555,50 +585,79 @@
         }
       }
 
-      function submitPin() {
+      var submitting = false;
+
+      function getSafeRedirectUrl() {
+        var params = new URLSearchParams(window.location.search);
+        var raw = params.get('redirect');
+        if (!raw) return '';
+        var trimmed = String(raw).trim();
+        if (!trimmed || /^\/\//.test(trimmed)) return '';
+        try {
+          var parsed = new URL(trimmed, window.location.origin);
+          if (
+            window.location.origin &&
+            window.location.origin !== 'null' &&
+            parsed.origin === window.location.origin &&
+            (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+          ) {
+            var curPath = window.location.pathname;
+            var isSameLogin = parsed.pathname === curPath ||
+              (curPath === '/' && parsed.pathname === '/index.html') ||
+              (curPath === '/index.html' && parsed.pathname === '/');
+            if (isSameLogin) return '';
+            return parsed.pathname + parsed.search + parsed.hash;
+          }
+        } catch (_) {}
+        return '';
+      }
+
+      async function submitPin() {
+        if (submitting) return;
         if (!currentPin) {
+          errorEl.style.color = '#DC2626';
           errorEl.textContent = 'Ingrese su PIN';
           return;
         }
 
-        var result = MTPAuth.loginByPin(currentPin, selectedUserId);
+        submitting = true;
+        try {
+          var result = (typeof MTPAuth.loginByPinAsync === 'function')
+            ? await MTPAuth.loginByPinAsync(currentPin, selectedUserId)
+            : MTPAuth.loginByPin(currentPin, selectedUserId);
 
-        if (result.success) {
-          var user = result.user;
-          errorEl.style.color = '#34d399';
-          errorEl.textContent = '¡Acceso concedido! Entrando...';
+          if (result && result.success) {
+            var user = result.user;
+            errorEl.style.color = '#047857';
+            errorEl.textContent = '¡Acceso concedido! Entrando...';
 
-          // Verificar si hay redirección pendiente
-          var params = new URLSearchParams(window.location.search);
-          var redirectUrl = params.get('redirect');
+            var safeRedirect = getSafeRedirectUrl();
 
-          if (user.role === 'cajero') {
-            // Cajero va directo a Caja Mostrador
-            setTimeout(function () {
-              window.location.href = redirectUrl && redirectUrl.includes('/caja/') ? redirectUrl : 'caja/pos.html';
-            }, 250);
-          } else {
-            // Admin o Encargado: si venía con redirect específico, ir a ese
-            if (redirectUrl) {
-              setTimeout(function () { window.location.href = redirectUrl; }, 250);
-              return;
+            if (user.role === 'cajero') {
+              // Cajero va directo a Caja Mostrador (nunca a /admin/)
+              window.location.href = (safeRedirect && safeRedirect.indexOf('/admin/') === -1) ? safeRedirect : 'pos.html';
+            } else if (safeRedirect) {
+              // Admin o Encargado: si venía con redirect válido del mismo origen (ej: --start=pos), ir directo
+              window.location.href = safeRedirect;
+            } else {
+              openDestModal(user);
             }
-            // Abrir modal de selección de destino
-            openDestModal(user);
-          }
-        } else {
-          errorEl.style.color = '#f87171';
-          errorEl.textContent = result.error || 'PIN incorrecto';
-          clearPin();
-          // Sacudida inercial con física de resorte (Apple/Emil spring damping 0.8)
-          dotsEl.classList.remove('spring-shake');
-          void dotsEl.offsetWidth; // Forzar reflow para reiniciar la animación
-          dotsEl.classList.add('spring-shake');
-          dotsEl.style.borderColor = '#f87171';
-          setTimeout(function () {
+          } else {
+            clearPin();
+            errorEl.style.color = '#DC2626';
+            errorEl.textContent = (result && result.error) || 'PIN incorrecto';
+            // Sacudida inercial con física de resorte
             dotsEl.classList.remove('spring-shake');
-            dotsEl.style.borderColor = 'rgba(255, 255, 255, 0.16)';
-          }, 450);
+            void dotsEl.offsetWidth;
+            dotsEl.classList.add('spring-shake');
+            dotsEl.style.borderColor = '#DC2626';
+            setTimeout(function () {
+              dotsEl.classList.remove('spring-shake');
+              dotsEl.style.borderColor = '#CBD5E1';
+            }, 360);
+          }
+        } finally {
+          submitting = false;
         }
       }
 
@@ -610,6 +669,8 @@
           document.getElementById('destSub').textContent = 'Rol Administrador: control total del restaurante, abasto y finanzas.';
         }
         destModal.classList.add('open');
+        var cajaLink = document.getElementById('destCajaLink');
+        if (cajaLink) setTimeout(function () { cajaLink.focus(); }, 30);
       }
 
       window.closeDestModal = function () {
@@ -638,23 +699,34 @@
 
       dotsEl.addEventListener('click', focusHiddenInput);
 
-      // Captura de Teclado Físico
+      if (hiddenInput) {
+        hiddenInput.addEventListener('input', function () {
+          var digits = String(hiddenInput.value || '').replace(/\D/g, '');
+          hiddenInput.value = '';
+          for (var i = 0; i < digits.length; i++) addDigit(digits[i]);
+        });
+      }
+
+      // Captura de Teclado Físico y Numpad
       document.addEventListener('keydown', function (e) {
         if (destModal.classList.contains('open')) {
           if (e.key === 'Escape') closeDestModal();
           return;
         }
 
-        if (e.key >= '0' && e.key <= '9') {
+        var numMatch = /^Numpad([0-9])$/.exec(e.code || '');
+        var digitKey = (e.key >= '0' && e.key <= '9') ? e.key : (numMatch ? numMatch[1] : null);
+
+        if (digitKey !== null) {
           e.preventDefault();
-          addDigit(e.key);
+          addDigit(digitKey);
         } else if (e.key === 'Backspace') {
           e.preventDefault();
           backspace();
         } else if (e.key === 'Escape' || e.key === 'Delete') {
           e.preventDefault();
           clearPin();
-        } else if (e.key === 'Enter') {
+        } else if (e.key === 'Enter' || e.code === 'NumpadEnter') {
           e.preventDefault();
           submitPin();
         }
@@ -668,11 +740,14 @@
         renderUserCards();
         focusHiddenInput();
 
-        // Si ya hay sesión activa válida, ofrecer continuar o cerrar
+        // Si ya hay sesión activa válida, ofrecer continuar o redirigir al destino pedido
         var cur = MTPAuth.getCurrentUser();
         if (cur) {
+          var safeRedirect = getSafeRedirectUrl();
           if (cur.role === 'cajero') {
-            window.location.href = 'caja/pos.html';
+            window.location.href = (safeRedirect && safeRedirect.indexOf('/admin/') === -1) ? safeRedirect : 'pos.html';
+          } else if (safeRedirect) {
+            window.location.href = safeRedirect;
           } else {
             openDestModal(cur);
           }

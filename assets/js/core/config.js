@@ -1,0 +1,5399 @@
+/* ==========================================================================
+   MI-TIENDA-POS — Base de Datos Central v3
+   - Separación Estricta: Insumos de Cocina (sellable: false) vs Venta al Público
+   - Familias Agrupadas (Empanadas, Pastelitos/Tequeños, Papas Rellenas, Almuerzos,
+     Cafetería, Chucherías/Pepitos, Refrescos, Cervezas, Cigarros, Víveres)
+   - Imágenes Locales Verificadas de Comida Venezolana y Productos Reales
+   ========================================================================== */
+(function () {
+  const STORAGE_KEY = 'mtp_store_v5';
+  const STORAGE_KEY_V3 = 'mtp_store_v3';
+
+  /* Familias Maestras para la Pantalla de Caja (Agrupación Limpia y Rápida) */
+  const POS_GROUPS = [
+    {
+      id: 'empanadas',
+      title: 'Empanadas Venezolanas',
+      subtitle: 'Queso · Molida · Mechada · Pollo · Jamón/Queso · Cazón · Pelúa · Chicharrón · Dominó',
+      kind: 'dish',
+      category: 'Empanadas & Desayunos',
+      emoji: '🥟',
+      img: '../assets/img/productos/empanadas.jpg'
+    },
+    {
+      id: 'pastelitos',
+      title: 'Pastelitos Andinos y Tequeños',
+      subtitle: 'Pastelito Queso · Carne · Pollo · Jamón y Queso · Ración de Tequeños',
+      kind: 'dish',
+      category: 'Empanadas & Desayunos',
+      emoji: '🥐',
+      img: '../assets/img/productos/pastelitos.jpg'
+    },
+    {
+      id: 'papas',
+      title: 'Papas Rellenas Crujientes',
+      subtitle: 'Papa Rellena con Carne y Queso · Papa Rellena de Pollo y Queso',
+      kind: 'dish',
+      category: 'Empanadas & Desayunos',
+      emoji: '🥔',
+      img: '../assets/img/productos/papa_rellena.jpg'
+    },
+    {
+      id: 'almuerzos',
+      title: 'Almuerzos y Platos Fuertes',
+      subtitle: 'Pabellón Criollo · Arroz Chino Venezolano · Arroz con Pollo · Pollo Frito con Arepa',
+      kind: 'dish',
+      category: 'Almuerzos & Platos',
+      emoji: '🍛',
+      img: '../assets/img/productos/pabellon.jpg'
+    },
+    {
+      id: 'viveres',
+      title: 'Víveres Empaquetados',
+      subtitle: 'Harina P.A.N. 1Kg · Espagueti 1Kg · Arroz 1Kg · Margarina Mavesa',
+      kind: 'inventory',
+      category: 'Víveres',
+      emoji: '🌽',
+      img: '../assets/img/productos/viveres.jpg'
+    },
+    {
+      id: 'refrescos',
+      title: 'Refrescos y Maltas',
+      subtitle: 'Frescolita · Coca-Cola · Pepsi · Chinotto · Golden · Malta Polar (Personal / 1.5L / 2L)',
+      kind: 'inventory',
+      category: 'Refrescos & Cervezas',
+      emoji: '🥤',
+      img: '../assets/img/productos/refrescos.jpg'
+    },
+    {
+      id: 'cafe',
+      title: 'Cafetería Recién Colada',
+      subtitle: 'Café Negro / Guayoyo · Café con Leche Pequeño · Café con Leche Grande',
+      kind: 'dish',
+      category: 'Cafetería',
+      emoji: '☕',
+      img: '../assets/img/productos/cafe.jpg'
+    },
+    {
+      id: 'chucherias',
+      title: 'Pepitos, Cheetos y Chucherías',
+      subtitle: 'Pepito · Cheetos · Chiskesitos · Cheese Tris · Doritos · Papitas · Galletas',
+      kind: 'inventory',
+      category: 'Chucherías',
+      emoji: '🧀',
+      img: '../assets/img/productos/pepito.jpg'
+    },
+    {
+      id: 'cervezas',
+      title: 'Cervezas Bien Frías',
+      subtitle: 'Polar Pilsen · Cerveza Zulia · Solera Verde · Solera Azul · Caja / Six-Pack',
+      kind: 'inventory',
+      category: 'Refrescos & Cervezas',
+      emoji: '🍻',
+      img: '../assets/img/productos/cervezas.jpg'
+    },
+    {
+      id: 'cigarros',
+      title: 'Cigarros (Detal y Cajetilla)',
+      subtitle: 'Cigarro Detallado (1 und) · Cajetilla Belmont 20 · Cajetilla Consul 20',
+      kind: 'inventory',
+      category: 'Cigarros',
+      emoji: '🚬',
+      img: '../assets/img/productos/cigarros.jpg'
+    }
+  ];
+
+  /* ==========================================================================
+     CATÁLOGO V5: Familias Maestras, Productos Padre, Variantes/Sabores,
+     Grupos de Modificadores/Extras, Insumos de Cocina y Mercancía Venta Directa
+     ========================================================================== */
+  const DEFAULT_FAMILIES = [
+    { id: 'fritos', name: 'Empanadas y Fritos', color: '#E8A317', key: '1', order: 1, icon: 'dish' },
+    { id: 'arepas', name: 'Arepas Venezolanas', color: '#F59E0B', key: '2', order: 2, icon: 'store' },
+    { id: 'almuerzos', name: 'Almuerzos y Platos', color: '#D97706', key: '3', order: 3, icon: 'kitchen' },
+    { id: 'viveres', name: 'Víveres', color: '#10B981', key: '4', order: 4, icon: 'cart' },
+    { id: 'bebidas', name: 'Refrescos y Maltas', color: '#2563EB', key: '5', order: 5, icon: 'glass' },
+    { id: 'cafeteria', name: 'Cafetería', color: '#8D5B4C', key: '6', order: 6, icon: 'coffee' },
+    { id: 'chucherias', name: 'Chucherías', color: '#EC4899', key: '7', order: 7, icon: 'package' },
+    { id: 'cervezas', name: 'Cervezas', color: '#D97706', key: '8', order: 8, icon: 'beer' },
+    { id: 'cigarros', name: 'Cigarros', color: '#64748B', key: '9', order: 9, icon: 'bolt' }
+  ];
+
+  const DEFAULT_PRODUCTS = [
+    {
+      id: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanadas Venezolanas',
+      subtitle: 'Crujientes de maíz recién fritas',
+      modifierGroupIds: [],
+      order: 1,
+      active: true,
+      img: '../assets/img/productos/empanadas.jpg',
+      emoji: '🥟'
+    },
+    {
+      id: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Pastelitos Andinos y Tequeños',
+      subtitle: 'Pastelitos de hojaldre y tequeños de queso',
+      modifierGroupIds: [],
+      order: 2,
+      active: true,
+      img: '../assets/img/productos/pastelitos.jpg',
+      emoji: '🥐'
+    },
+    {
+      id: 'prod-papas',
+      familyId: 'fritos',
+      name: 'Papas Rellenas Crujientes',
+      subtitle: 'Puré de papa rebosado relleno',
+      modifierGroupIds: [],
+      order: 3,
+      active: true,
+      img: '../assets/img/productos/papa_rellena.jpg',
+      emoji: '🥔'
+    },
+    {
+      id: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepas Tostadas Venezolanas',
+      subtitle: 'Asadas al budare y rellenas generosas',
+      modifierGroupIds: ['mg-masa', 'mg-extras'],
+      order: 1,
+      active: true,
+      img: '../assets/img/productos/arepa_reina.jpg',
+      emoji: '🫓'
+    },
+    {
+      id: 'prod-almuerzos',
+      familyId: 'almuerzos',
+      name: 'Almuerzos y Platos Fuertes',
+      subtitle: 'Comida casera venezolana completa',
+      modifierGroupIds: ['mg-empaque'],
+      order: 1,
+      active: true,
+      img: '../assets/img/productos/pabellon.jpg',
+      emoji: '🍛'
+    },
+    {
+      id: 'prod-cafe',
+      familyId: 'cafeteria',
+      name: 'Cafetería Recién Colada',
+      subtitle: 'Café venezolano colado al momento',
+      modifierGroupIds: [],
+      order: 1,
+      active: true,
+      img: '../assets/img/productos/cafe.jpg',
+      emoji: '☕'
+    }
+  ];
+
+  const DEFAULT_MODIFIER_GROUPS = [
+    {
+      id: 'mg-masa',
+      name: 'Tipo de Masa',
+      min: 1,
+      max: 1,
+      required: true,
+      options: [
+        { id: 'mod-masa-blanca', name: 'Masa Blanca', priceUsd: 0, recipe: [] },
+        { id: 'mod-masa-amarilla', name: 'Masa Amarilla', priceUsd: 0, recipe: [] }
+      ]
+    },
+    {
+      id: 'mg-extras',
+      name: 'Adicionales',
+      min: 0,
+      max: 4,
+      required: false,
+      options: [
+        {
+          id: 'mod-extra-queso',
+          name: '+ Queso Rallado',
+          priceUsd: 0.40,
+          recipe: [{ insumoId: 'ins-queso-cocina', qty: 0.030, label: '30 g Queso Rallado' }]
+        },
+        {
+          id: 'mod-extra-aguacate',
+          name: '+ Aguacate',
+          priceUsd: 0.50,
+          recipe: [{ insumoId: 'ins-ensalada', qty: 0.050, label: '50 g Aguacate' }]
+        },
+        {
+          id: 'mod-extra-huevo',
+          name: '+ Huevo Frito',
+          priceUsd: 0.40,
+          recipe: [{ insumoId: 'ins-aceite-cocina', qty: 0.010, label: '10 ml Aceite' }]
+        },
+        {
+          id: 'mod-extra-mantequilla',
+          name: '+ Mantequilla',
+          priceUsd: 0.20,
+          recipe: []
+        }
+      ]
+    },
+    {
+      id: 'mg-empaque',
+      name: 'Empaque y Servicio',
+      min: 1,
+      max: 1,
+      required: true,
+      options: [
+        { id: 'mod-empaque-aqui', name: 'Para Comer Aquí', priceUsd: 0, recipe: [] },
+        {
+          id: 'mod-empaque-llevar',
+          name: 'Para Llevar con Envase',
+          priceUsd: 0.30,
+          recipe: [{ insumoId: 'ins-envase', qty: 1, label: '1 Envase Térmico' }]
+        }
+      ]
+    }
+  ];
+
+  const DEFAULT_VARIANTS = [
+    // Empanadas ('prod-empanada')
+    {
+      id: 'var-emp-queso',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Queso',
+      code: 'EM01',
+      barcode: '8800001',
+      priceUsd: 1.10,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 1,
+      emoji: '🥟',
+      img: '../assets/img/productos/empanada_queso.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-queso-cocina', qty: 0.055, label: '55 g Queso Blanco' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-molida',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Molida',
+      code: 'EM02',
+      barcode: '8800002',
+      priceUsd: 1.20,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 2,
+      emoji: '🥟',
+      img: '../assets/img/productos/empanada_mechada.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-carne-mechada', qty: 0.045, label: '45 g Carne Molida' },
+        { insumoId: 'ins-papa', qty: 0.030, label: '30 g Papa picada' },
+        { insumoId: 'ins-alinos', qty: 0.015, label: '15 g Aliños sofrito' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-mechada',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Mechada',
+      code: 'EM03',
+      barcode: '8800003',
+      priceUsd: 1.30,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 3,
+      emoji: '🥟',
+      img: '../assets/img/productos/empanada_mechada.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.075, label: '75 g Harina Maíz' },
+        { insumoId: 'ins-carne-mechada', qty: 0.055, label: '55 g Carne Mechada' },
+        { insumoId: 'ins-alinos', qty: 0.020, label: '20 g Aliños guiso' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-pollo',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Pollo',
+      code: 'EM04',
+      barcode: '8800004',
+      priceUsd: 1.30,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 4,
+      emoji: '🥟',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.060, label: '60 g Pollo Desmechado' },
+        { insumoId: 'ins-papa', qty: 0.020, label: '20 g Papa guiso' },
+        { insumoId: 'ins-alinos', qty: 0.018, label: '18 g Aliños' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-jamon-queso',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Jamón y Queso',
+      code: 'EM05',
+      barcode: '8800005',
+      priceUsd: 1.40,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 5,
+      emoji: '🥟',
+      img: '../assets/img/productos/empanada_queso.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-jamon-cocina', qty: 0.035, label: '35 g Jamón' },
+        { insumoId: 'ins-queso-cocina', qty: 0.035, label: '35 g Queso' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-cazon',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Cazón',
+      code: 'EM06',
+      barcode: '8800006',
+      priceUsd: 1.50,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 6,
+      emoji: '🐟',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-cazon-cocina', qty: 0.060, label: '60 g Cazón guisado' },
+        { insumoId: 'ins-alinos', qty: 0.025, label: '25 g Aliños y Ají dulce' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-pelua',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada Pelúa',
+      code: 'EM07',
+      barcode: '8800007',
+      priceUsd: 1.50,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 7,
+      emoji: '🧀',
+      img: '../assets/img/productos/empanada_pelua.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.075, label: '75 g Harina Maíz' },
+        { insumoId: 'ins-carne-mechada', qty: 0.050, label: '50 g Carne Mechada' },
+        { insumoId: 'ins-queso-cocina', qty: 0.040, label: '40 g Queso Amarillo' },
+        { insumoId: 'ins-alinos', qty: 0.018, label: '18 g Aliños' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.020, label: '20 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-domino',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada Dominó',
+      code: 'EM08',
+      barcode: '8800008',
+      priceUsd: 1.30,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 8,
+      emoji: '🥟',
+      img: '../assets/img/productos/empanada_domino.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-chicharron-cocina', qty: 0.045, label: '45 g Caraotas refritas' },
+        { insumoId: 'ins-queso-cocina', qty: 0.040, label: '40 g Queso Blanco' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-pabellon',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada Pabellón',
+      code: 'EM09',
+      barcode: '8800009',
+      priceUsd: 1.60,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 9,
+      emoji: '🇻🇪',
+      img: '../assets/img/productos/empanada_pabellon.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.075, label: '75 g Harina Maíz' },
+        { insumoId: 'ins-carne-mechada', qty: 0.040, label: '40 g Carne Mechada' },
+        { insumoId: 'ins-chicharron-cocina', qty: 0.030, label: '30 g Caraotas' },
+        { insumoId: 'ins-queso-cocina', qty: 0.025, label: '25 g Queso Blanco' },
+        { insumoId: 'ins-ensalada', qty: 0.020, label: '20 g Tajadas' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.020, label: '20 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-emp-chicharron',
+      productId: 'prod-empanada',
+      familyId: 'fritos',
+      name: 'Empanada de Chicharrón',
+      code: 'EM10',
+      barcode: '8800010',
+      priceUsd: 1.40,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 10,
+      emoji: '🍖',
+      img: '../assets/img/productos/empanadas.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina Maíz' },
+        { insumoId: 'ins-chicharron-cocina', qty: 0.055, label: '55 g Chicharrón' },
+        { insumoId: 'ins-alinos', qty: 0.015, label: '15 g Aliños' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.018, label: '18 ml Aceite' }
+      ]
+    },
+
+    // Pastelitos y Tequeños ('prod-pastelito')
+    {
+      id: 'var-past-queso',
+      productId: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Pastelito Queso',
+      code: 'PAS01',
+      barcode: '8800011',
+      priceUsd: 1.00,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 11,
+      emoji: '🥐',
+      img: '../assets/img/productos/pastelitos.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.060, label: '60 g Harina Trigo' },
+        { insumoId: 'ins-queso-cocina', qty: 0.045, label: '45 g Queso' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.015, label: '15 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-past-carne',
+      productId: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Pastelito Carne',
+      code: 'PAS02',
+      barcode: '8800012',
+      priceUsd: 1.20,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 12,
+      emoji: '🥐',
+      img: '../assets/img/productos/pastelitos.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.060, label: '60 g Harina Trigo' },
+        { insumoId: 'ins-carne-mechada', qty: 0.040, label: '40 g Carne Molida' },
+        { insumoId: 'ins-papa', qty: 0.025, label: '25 g Papa pastelito' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.015, label: '15 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-past-pollo',
+      productId: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Pastelito Pollo',
+      code: 'PAS03',
+      barcode: '8800013',
+      priceUsd: 1.20,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 13,
+      emoji: '🥐',
+      img: '../assets/img/productos/pastelitos.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.060, label: '60 g Harina Trigo' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.045, label: '45 g Pollo' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.015, label: '15 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-past-jamon-queso',
+      productId: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Pastelito Jamón y Queso',
+      code: 'PAS04',
+      barcode: '8800014',
+      priceUsd: 1.30,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 14,
+      emoji: '🥐',
+      img: '../assets/img/productos/pastelitos.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.060, label: '60 g Harina Trigo' },
+        { insumoId: 'ins-jamon-cocina', qty: 0.030, label: '30 g Jamón' },
+        { insumoId: 'ins-queso-cocina', qty: 0.030, label: '30 g Queso' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.015, label: '15 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-tequenos-5',
+      productId: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Ración Tequeños 5 und',
+      code: 'TEQ01',
+      barcode: '8800015',
+      priceUsd: 2.00,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 15,
+      emoji: '🥖',
+      img: '../assets/img/productos/tequenos.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Trigo' },
+        { insumoId: 'ins-queso-cocina', qty: 0.100, label: '100 g Queso Blanco' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.025, label: '25 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-tequenos-10',
+      productId: 'prod-pastelito',
+      familyId: 'fritos',
+      name: 'Ración Tequeños 10 und',
+      code: 'TEQ02',
+      barcode: '8800016',
+      priceUsd: 3.50,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 16,
+      emoji: '🥖',
+      img: '../assets/img/productos/tequenos.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.220, label: '220 g Harina Trigo' },
+        { insumoId: 'ins-queso-cocina', qty: 0.200, label: '200 g Queso Blanco' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.045, label: '45 ml Aceite' }
+      ]
+    },
+
+    // Papas Rellenas ('prod-papas')
+    {
+      id: 'var-papa-carne-queso',
+      productId: 'prod-papas',
+      familyId: 'fritos',
+      name: 'Papa Rellena Carne y Queso',
+      code: 'PAP01',
+      barcode: '8800017',
+      priceUsd: 1.60,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 17,
+      emoji: '🥔',
+      img: '../assets/img/productos/papa_rellena.jpg',
+      recipe: [
+        { insumoId: 'ins-papa', qty: 0.160, label: '160 g Puré de Papa' },
+        { insumoId: 'ins-carne-mechada', qty: 0.055, label: '55 g Carne Guisada' },
+        { insumoId: 'ins-queso-cocina', qty: 0.025, label: '25 g Queso' },
+        { insumoId: 'ins-alinos', qty: 0.020, label: '20 g Aliños' },
+        { insumoId: 'ins-harina-cocina', qty: 0.025, label: '25 g Reboso' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.025, label: '25 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-papa-pollo-queso',
+      productId: 'prod-papas',
+      familyId: 'fritos',
+      name: 'Papa Rellena Pollo y Queso',
+      code: 'PAP02',
+      barcode: '8800018',
+      priceUsd: 1.60,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 18,
+      emoji: '🥔',
+      img: '../assets/img/productos/papa_rellena.jpg',
+      recipe: [
+        { insumoId: 'ins-papa', qty: 0.160, label: '160 g Puré de Papa' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.060, label: '60 g Pollo Guisado' },
+        { insumoId: 'ins-queso-cocina', qty: 0.025, label: '25 g Queso' },
+        { insumoId: 'ins-alinos', qty: 0.020, label: '20 g Aliños' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.025, label: '25 ml Aceite' }
+      ]
+    },
+
+    // Arepas Venezolanas ('prod-arepa')
+    {
+      id: 'var-arepa-reina',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Reina Pepiada',
+      code: 'AR01',
+      barcode: '8800019',
+      priceUsd: 3.00,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 19,
+      emoji: '🥑',
+      img: '../assets/img/productos/arepa_reina.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.090, label: '90 g Pollo desmechado' },
+        { insumoId: 'ins-ensalada', qty: 0.040, label: '40 g Aguacate/Mayonesa' },
+        { insumoId: 'ins-alinos', qty: 0.015, label: '15 g Aliños' }
+      ]
+    },
+    {
+      id: 'var-arepa-pelua',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Pelúa',
+      code: 'AR02',
+      barcode: '8800020',
+      priceUsd: 2.80,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 20,
+      emoji: '🧀',
+      img: '../assets/img/productos/arepa_pelua.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-carne-mechada', qty: 0.080, label: '80 g Carne Mechada' },
+        { insumoId: 'ins-queso-cocina', qty: 0.040, label: '40 g Queso Amarillo' }
+      ]
+    },
+    {
+      id: 'var-arepa-mechada',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Mechada',
+      code: 'AR03',
+      barcode: '8800021',
+      priceUsd: 2.80,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 21,
+      emoji: '🥩',
+      img: '../assets/img/productos/arepa_mechada.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-carne-mechada', qty: 0.090, label: '90 g Carne Mechada' },
+        { insumoId: 'ins-alinos', qty: 0.020, label: '20 g Aliños' }
+      ]
+    },
+    {
+      id: 'var-arepa-queso',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Queso Llanero',
+      code: 'AR04',
+      barcode: '8800022',
+      priceUsd: 2.00,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 22,
+      emoji: '🧀',
+      img: '../assets/img/productos/arepa_queso.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-queso-cocina', qty: 0.080, label: '80 g Queso Blanco' }
+      ]
+    },
+    {
+      id: 'var-arepa-jamon-queso',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Jamón y Queso',
+      code: 'AR05',
+      barcode: '8800023',
+      priceUsd: 2.20,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 23,
+      emoji: '🥓',
+      img: '../assets/img/productos/arepa_jamon_queso.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-jamon-cocina', qty: 0.045, label: '45 g Jamón' },
+        { insumoId: 'ins-queso-cocina', qty: 0.045, label: '45 g Queso' }
+      ]
+    },
+    {
+      id: 'var-arepa-domino',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Dominó',
+      code: 'AR06',
+      barcode: '8800024',
+      priceUsd: 2.20,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 24,
+      emoji: '🫓',
+      img: '../assets/img/productos/arepa_domino.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-chicharron-cocina', qty: 0.060, label: '60 g Caraotas' },
+        { insumoId: 'ins-queso-cocina', qty: 0.040, label: '40 g Queso Blanco' }
+      ]
+    },
+    {
+      id: 'var-arepa-catira',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Catira',
+      code: 'AR07',
+      barcode: '8800025',
+      priceUsd: 2.80,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 25,
+      emoji: '🍗',
+      img: '../assets/img/productos/arepa_catira.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.080, label: '80 g Pollo' },
+        { insumoId: 'ins-queso-cocina', qty: 0.040, label: '40 g Queso Amarillo' }
+      ]
+    },
+    {
+      id: 'var-arepa-viuda',
+      productId: 'prod-arepa',
+      familyId: 'arepas',
+      name: 'Arepa Viuda / Sola',
+      code: 'AR08',
+      barcode: '8800026',
+      priceUsd: 1.00,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 26,
+      emoji: '🫓',
+      img: '../assets/img/productos/arepa_viuda.jpg',
+      recipe: [
+        { insumoId: 'ins-harina-cocina', qty: 0.110, label: '110 g Harina Maíz' }
+      ]
+    },
+
+    // Almuerzos y Platos Fuertes ('prod-almuerzos')
+    {
+      id: 'var-alm-pabellon',
+      productId: 'prod-almuerzos',
+      familyId: 'almuerzos',
+      name: 'Pabellón Criollo',
+      code: 'AL01',
+      barcode: '8800027',
+      priceUsd: 5.00,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 27,
+      emoji: '🇻🇪',
+      img: '../assets/img/productos/pabellon.jpg',
+      recipe: [
+        { insumoId: 'ins-carne-mechada', qty: 0.160, label: '160 g Carne Mechada' },
+        { insumoId: 'ins-chicharron-cocina', qty: 0.120, label: '120 g Caraotas Negras' },
+        { insumoId: 'ins-arroz-cocina', qty: 0.140, label: '140 g Arroz Blanco' },
+        { insumoId: 'ins-ensalada', qty: 0.120, label: '120 g Tajadas' },
+        { insumoId: 'ins-queso-cocina', qty: 0.035, label: '35 g Queso Blanco' },
+        { insumoId: 'ins-alinos', qty: 0.045, label: '45 g Sofrito' }
+      ]
+    },
+    {
+      id: 'var-alm-arroz-chino',
+      productId: 'prod-almuerzos',
+      familyId: 'almuerzos',
+      name: 'Arroz Chino Venezolano',
+      code: 'AL02',
+      barcode: '8800028',
+      priceUsd: 4.50,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 28,
+      emoji: '🥡',
+      img: '../assets/img/productos/arroz_chino.jpg',
+      recipe: [
+        { insumoId: 'ins-arroz-cocina', qty: 0.170, label: '170 g Arroz Frito' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.220, label: '220 g Pollo Frito' },
+        { insumoId: 'ins-jamon-cocina', qty: 0.040, label: '40 g Jamón' },
+        { insumoId: 'ins-alinos', qty: 0.055, label: '55 g Cebollín/Brotes' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.030, label: '30 ml Aceite' }
+      ]
+    },
+    {
+      id: 'var-alm-arroz-pollo',
+      productId: 'prod-almuerzos',
+      familyId: 'almuerzos',
+      name: 'Arroz con Pollo Criollo',
+      code: 'AL03',
+      barcode: '8800029',
+      priceUsd: 4.00,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 29,
+      emoji: '🍛',
+      img: '../assets/img/productos/arroz_pollo.jpg',
+      recipe: [
+        { insumoId: 'ins-arroz-cocina', qty: 0.150, label: '150 g Arroz' },
+        { insumoId: 'ins-pollo-cocina', qty: 0.200, label: '200 g Pollo' },
+        { insumoId: 'ins-papa', qty: 0.080, label: '80 g Papa/Verdura' },
+        { insumoId: 'ins-alinos', qty: 0.050, label: '50 g Aliños' },
+        { insumoId: 'ins-ensalada', qty: 0.080, label: '80 g Ensalada' }
+      ]
+    },
+    {
+      id: 'var-alm-pollo-broaster',
+      productId: 'prod-almuerzos',
+      familyId: 'almuerzos',
+      name: 'Pollo Frito Broaster con Arepa',
+      code: 'AL04',
+      barcode: '8800030',
+      priceUsd: 4.50,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 30,
+      emoji: '🍗',
+      img: '../assets/img/productos/pollo_frito.jpg',
+      recipe: [
+        { insumoId: 'ins-pollo-cocina', qty: 0.260, label: '260 g Presas de Pollo' },
+        { insumoId: 'ins-harina-cocina', qty: 0.090, label: '90 g Harina arepa/rebozo' },
+        { insumoId: 'ins-papa', qty: 0.140, label: '140 g Papas Fritas' },
+        { insumoId: 'ins-ensalada', qty: 0.100, label: '100 g Ensalada' },
+        { insumoId: 'ins-alinos', qty: 0.025, label: '25 g Salsa/Aliños' },
+        { insumoId: 'ins-aceite-cocina', qty: 0.040, label: '40 ml Aceite' }
+      ]
+    },
+
+    // Cafetería ('prod-cafe')
+    {
+      id: 'var-cafe-guayoyo',
+      productId: 'prod-cafe',
+      familyId: 'cafeteria',
+      name: 'Café Guayoyo / Negro',
+      code: 'CA01',
+      barcode: '8800031',
+      priceUsd: 0.60,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 31,
+      emoji: '☕',
+      img: '../assets/img/productos/cafe.jpg',
+      recipe: [
+        { insumoId: 'ins-cafe-cocina', qty: 0.018, label: '18 g Café + Vaso' }
+      ]
+    },
+    {
+      id: 'var-cafe-leche-peq',
+      productId: 'prod-cafe',
+      familyId: 'cafeteria',
+      name: 'Con Leche Pequeño',
+      code: 'CA02',
+      barcode: '8800032',
+      priceUsd: 0.80,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 32,
+      emoji: '☕',
+      img: '../assets/img/productos/cafe_leche.jpg',
+      recipe: [
+        { insumoId: 'ins-cafe-cocina', qty: 0.024, label: '24 g Café + Leche' }
+      ]
+    },
+    {
+      id: 'var-cafe-leche-gra',
+      productId: 'prod-cafe',
+      familyId: 'cafeteria',
+      name: 'Con Leche Grande',
+      code: 'CA03',
+      barcode: '8800033',
+      priceUsd: 1.00,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 33,
+      emoji: '🥛',
+      img: '../assets/img/productos/cafe_leche.jpg',
+      recipe: [
+        { insumoId: 'ins-cafe-cocina', qty: 0.032, label: '32 g Café + Leche' }
+      ]
+    },
+    {
+      id: 'var-cafe-marron',
+      productId: 'prod-cafe',
+      familyId: 'cafeteria',
+      name: 'Marrón Oscuro',
+      code: 'CA04',
+      barcode: '8800034',
+      priceUsd: 0.80,
+      iva: 'G16',
+      ivaType: 'G',
+      taxExempt: false,
+      active: true,
+      order: 34,
+      emoji: '☕',
+      img: '../assets/img/productos/cafe_leche.jpg',
+      recipe: [
+        { insumoId: 'ins-cafe-cocina', qty: 0.024, label: '24 g Café + Leche' }
+      ]
+    }
+  ];
+
+  const DEFAULT_RETAIL_ITEMS = [
+    // Víveres
+    {
+      id: 'prod-harina-pan',
+      familyId: 'viveres',
+      group: 'viveres',
+      code: '101',
+      barcode: '7591001000015',
+      qrCode: 'QR-HARINA-PAN-1KG',
+      name: 'Harina P.A.N. Blanca 1Kg',
+      category: 'Víveres',
+      type: 'venta',
+      sellable: true,
+      iva: 'E',
+      taxExempt: true,
+      ivaType: 'E',
+      unit: 'und',
+      stock: 48,
+      minStock: 12,
+      costUsd: 1.08,
+      prevCostUsd: 1.02,
+      priceUsd: 1.55,
+      emoji: '🌽',
+      img: '../assets/img/productos/harina_pan_blanca.jpg'
+    },
+    {
+      id: 'prod-harina-pan-amarilla',
+      familyId: 'viveres',
+      group: 'viveres',
+      code: '102',
+      barcode: '7591001000022',
+      qrCode: 'QR-HARINA-PAN-AMARILLA',
+      name: 'Harina P.A.N. Amarilla 1Kg',
+      category: 'Víveres',
+      type: 'venta',
+      sellable: true,
+      iva: 'E',
+      taxExempt: true,
+      ivaType: 'E',
+      unit: 'und',
+      stock: 30,
+      minStock: 10,
+      costUsd: 1.10,
+      prevCostUsd: 1.05,
+      priceUsd: 1.65,
+      emoji: '🌽',
+      img: '../assets/img/productos/harina_pan_amarilla.jpg'
+    },
+    {
+      id: 'prod-espagueti',
+      familyId: 'viveres',
+      group: 'viveres',
+      code: '103',
+      barcode: '7591003000033',
+      qrCode: 'QR-ESPAGUETI-1KG',
+      name: 'Espagueti / Pasta Larga Capri 1Kg',
+      category: 'Víveres',
+      type: 'venta',
+      sellable: true,
+      iva: 'E',
+      taxExempt: true,
+      ivaType: 'E',
+      unit: 'und',
+      stock: 35,
+      minStock: 10,
+      costUsd: 0.85,
+      prevCostUsd: 0.80,
+      priceUsd: 1.25,
+      emoji: '🍝',
+      img: '../assets/img/productos/espagueti.jpg'
+    },
+    {
+      id: 'prod-arroz-empaque',
+      familyId: 'viveres',
+      group: 'viveres',
+      code: '105',
+      barcode: '7591002000029',
+      qrCode: 'QR-ARROZ-PRIMOR-1KG',
+      name: 'Arroz Blanco Primor 1Kg',
+      category: 'Víveres',
+      type: 'venta',
+      sellable: true,
+      iva: 'E',
+      taxExempt: true,
+      ivaType: 'E',
+      unit: 'und',
+      stock: 40,
+      minStock: 10,
+      costUsd: 0.85,
+      prevCostUsd: 0.80,
+      priceUsd: 1.20,
+      emoji: '🌾',
+      img: '../assets/img/productos/arroz_primor.jpg'
+    },
+    {
+      id: 'prod-mavesa',
+      familyId: 'viveres',
+      group: 'viveres',
+      code: '106',
+      barcode: '7591007000079',
+      qrCode: 'QR-MAVESA-500G',
+      name: 'Margarina Mavesa 500g',
+      category: 'Víveres',
+      type: 'venta',
+      sellable: true,
+      iva: 'E',
+      taxExempt: true,
+      ivaType: 'E',
+      unit: 'und',
+      stock: 22,
+      minStock: 6,
+      costUsd: 1.25,
+      prevCostUsd: 1.20,
+      priceUsd: 1.80,
+      emoji: '🧈',
+      img: '../assets/img/productos/margarina_mavesa.jpg'
+    },
+
+    // Bebidas y Refrescos
+    {
+      id: 'prod-frescolita-15l',
+      familyId: 'bebidas',
+      group: 'refrescos',
+      code: '302',
+      barcode: '7593001000211',
+      qrCode: 'QR-FRESCOLITA-15L',
+      name: 'Refresco Frescolita 1.5 Litros',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 24,
+      minStock: 8,
+      costUsd: 1.20,
+      prevCostUsd: 1.15,
+      priceUsd: 1.80,
+      emoji: '🥤',
+      img: '../assets/img/productos/frescolita.jpg'
+    },
+    {
+      id: 'prod-cocacola-15l',
+      familyId: 'bebidas',
+      group: 'refrescos',
+      code: '304',
+      barcode: '7593001000228',
+      qrCode: 'QR-COCACOLA-15L',
+      name: 'Coca-Cola Original 1.5 Litros',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 24,
+      minStock: 8,
+      costUsd: 1.35,
+      prevCostUsd: 1.30,
+      priceUsd: 2.00,
+      emoji: '🥤',
+      img: '../assets/img/productos/cocacola.jpg'
+    },
+    {
+      id: 'prod-malta-lata',
+      familyId: 'bebidas',
+      group: 'refrescos',
+      code: '306',
+      barcode: '7593001000235',
+      qrCode: 'QR-MALTA-POLAR-LATA',
+      name: 'Malta Polar 250ml (Lata / Botellita)',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 36,
+      minStock: 12,
+      costUsd: 0.65,
+      prevCostUsd: 0.60,
+      priceUsd: 1.00,
+      emoji: '🍺',
+      img: '../assets/img/productos/malta_personal.jpg'
+    },
+    {
+      id: 'prod-malta-15l',
+      familyId: 'bebidas',
+      group: 'refrescos',
+      code: '307',
+      barcode: '7593001000242',
+      qrCode: 'QR-MALTA-POLAR-15L',
+      name: 'Malta Polar Familiar 1.5 Litros',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 20,
+      minStock: 6,
+      costUsd: 1.45,
+      prevCostUsd: 1.40,
+      priceUsd: 2.20,
+      emoji: '🍺',
+      img: '../assets/img/productos/malta_familiar.jpg'
+    },
+    {
+      id: 'prod-agua-mineral',
+      familyId: 'bebidas',
+      group: 'refrescos',
+      code: '309',
+      barcode: '7593001000259',
+      qrCode: 'QR-AGUA-MINERAL',
+      name: 'Agua Mineral Nevada 500ml',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      pendingAccountantConfirmation: true,
+      unit: 'und',
+      stock: 40,
+      minStock: 12,
+      costUsd: 0.40,
+      prevCostUsd: 0.35,
+      priceUsd: 0.80,
+      emoji: '💧',
+      img: '../assets/img/productos/agua_nevada.jpg'
+    },
+
+    // Cervezas
+    {
+      id: 'prod-polar-pilsen',
+      familyId: 'cervezas',
+      group: 'cervezas',
+      code: '501',
+      barcode: '7594001000310',
+      qrCode: 'QR-POLAR-PILSEN',
+      name: 'Cerveza Polar Pilsen (Polarcita)',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 48,
+      minStock: 12,
+      costUsd: 0.80,
+      prevCostUsd: 0.75,
+      priceUsd: 1.25,
+      emoji: '🍺',
+      img: '../assets/img/productos/polar_pilsen.jpg'
+    },
+    {
+      id: 'prod-polar-zulia',
+      familyId: 'cervezas',
+      group: 'cervezas',
+      code: '502',
+      barcode: '7594001000327',
+      qrCode: 'QR-POLAR-ZULIA',
+      name: 'Cerveza Zulia Original',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 36,
+      minStock: 10,
+      costUsd: 0.88,
+      prevCostUsd: 0.82,
+      priceUsd: 1.35,
+      emoji: '🍻',
+      img: '../assets/img/productos/cerveza_zulia.jpg'
+    },
+    {
+      id: 'prod-solera-verde',
+      familyId: 'cervezas',
+      group: 'cervezas',
+      code: '503',
+      barcode: '7594001000334',
+      qrCode: 'QR-SOLERA-VERDE',
+      name: 'Cerveza Solera Premium (Verde)',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 30,
+      minStock: 8,
+      costUsd: 0.98,
+      prevCostUsd: 0.92,
+      priceUsd: 1.50,
+      emoji: '🍻',
+      img: '../assets/img/productos/solera_verde.jpg'
+    },
+    {
+      id: 'prod-sixpack-polar',
+      familyId: 'cervezas',
+      group: 'cervezas',
+      code: '504',
+      barcode: '7594001000341',
+      qrCode: 'QR-SIXPACK-POLAR',
+      name: 'Six-Pack Polar Pilsen (6 Und)',
+      category: 'Refrescos & Cervezas',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 15,
+      minStock: 4,
+      costUsd: 4.60,
+      prevCostUsd: 4.30,
+      priceUsd: 7.00,
+      emoji: '🍻',
+      img: '../assets/img/productos/sixpack_polar.jpg'
+    },
+
+    // Chucherías
+    {
+      id: 'prod-pepito',
+      familyId: 'chucherias',
+      group: 'chucherias',
+      code: '201',
+      barcode: '7592001000112',
+      qrCode: 'QR-PEPITO-CLASICO',
+      name: 'Pepito Original Frito-Lay',
+      category: 'Chucherías',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 55,
+      minStock: 15,
+      costUsd: 0.55,
+      prevCostUsd: 0.50,
+      priceUsd: 0.95,
+      emoji: '🧀',
+      img: '../assets/img/productos/pepito.jpg'
+    },
+    {
+      id: 'prod-cheetos',
+      familyId: 'chucherias',
+      group: 'chucherias',
+      code: '203',
+      barcode: '7592001000136',
+      qrCode: 'QR-CHEETOS',
+      name: 'Cheetos Crujientes Queso',
+      category: 'Chucherías',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 42,
+      minStock: 10,
+      costUsd: 0.65,
+      prevCostUsd: 0.60,
+      priceUsd: 1.10,
+      emoji: '🐆',
+      img: '../assets/img/productos/cheetos.jpg'
+    },
+    {
+      id: 'prod-cheese-tris',
+      familyId: 'chucherias',
+      group: 'chucherias',
+      code: '204',
+      barcode: '7592001000143',
+      qrCode: 'QR-CHISKESITOS',
+      name: 'Cheese Tris / Chiskesitos',
+      category: 'Chucherías',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 48,
+      minStock: 12,
+      costUsd: 0.58,
+      prevCostUsd: 0.52,
+      priceUsd: 1.00,
+      emoji: '🧀',
+      img: '../assets/img/productos/cheese_tris.jpg'
+    },
+    {
+      id: 'prod-doritos',
+      familyId: 'chucherias',
+      group: 'chucherias',
+      code: '205',
+      barcode: '7592001000150',
+      qrCode: 'QR-DORITOS',
+      name: 'Doritos Mega Queso Nacho',
+      category: 'Chucherías',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 35,
+      minStock: 10,
+      costUsd: 0.95,
+      prevCostUsd: 0.90,
+      priceUsd: 1.50,
+      emoji: '🔺',
+      img: '../assets/img/productos/doritos.jpg'
+    },
+    {
+      id: 'prod-galletas-savoy',
+      familyId: 'chucherias',
+      group: 'chucherias',
+      code: '207',
+      barcode: '7592001000167',
+      qrCode: 'QR-GALLETAS-SAVOY',
+      name: 'Galletas Samba / Savoy Chocolate',
+      category: 'Chucherías',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 40,
+      minStock: 10,
+      costUsd: 0.50,
+      prevCostUsd: 0.45,
+      priceUsd: 0.90,
+      emoji: '🍫',
+      img: '../assets/img/productos/samba_savoy.jpg'
+    },
+
+    // Cigarros
+    {
+      id: 'prod-cigarro-detal',
+      familyId: 'cigarros',
+      group: 'cigarros',
+      code: '401',
+      barcode: '7595001000419',
+      qrCode: 'QR-CIGARRO-DETAL',
+      name: 'Cigarro Detallado 1 Und (Belmont/Consul)',
+      category: 'Cigarros',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 120,
+      minStock: 30,
+      costUsd: 0.10,
+      prevCostUsd: 0.09,
+      priceUsd: 0.20,
+      emoji: '🚬',
+      img: '../assets/img/productos/cigarros.jpg'
+    },
+    {
+      id: 'prod-cigarro-belmont',
+      familyId: 'cigarros',
+      group: 'cigarros',
+      code: '402',
+      barcode: '7595001000426',
+      qrCode: 'QR-BELMONT-20',
+      name: 'Cajetilla Belmont 20 Cigarros',
+      category: 'Cigarros',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 25,
+      minStock: 6,
+      costUsd: 2.10,
+      prevCostUsd: 2.00,
+      priceUsd: 2.90,
+      emoji: '🚬',
+      img: '../assets/img/productos/cigarros.jpg'
+    },
+    {
+      id: 'prod-cigarro-consul',
+      familyId: 'cigarros',
+      group: 'cigarros',
+      code: '403',
+      barcode: '7595001000433',
+      qrCode: 'QR-CONSUL-20',
+      name: 'Cajetilla Consul 20 Cigarros',
+      category: 'Cigarros',
+      type: 'venta',
+      sellable: true,
+      iva: 'G16',
+      taxExempt: false,
+      ivaType: 'G',
+      unit: 'und',
+      stock: 20,
+      minStock: 5,
+      costUsd: 1.80,
+      prevCostUsd: 1.70,
+      priceUsd: 2.50,
+      emoji: '🚬',
+      img: '../assets/img/productos/cigarros.jpg'
+    }
+  ];
+
+  const DEFAULT_INSUMOS = [
+    {
+      id: 'ins-papa',
+      code: 'COC-01',
+      barcode: '990001',
+      name: 'Papa Cruda para Elaboración de Comida y Papas Rellenas',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 25.000,
+      minStock: 8.000,
+      costUsd: 1.35,
+      prevCostUsd: 1.15,
+      priceUsd: 0,
+      emoji: '🥔',
+      img: '../assets/img/productos/papa_rellena.jpg'
+    },
+    {
+      id: 'ins-alinos',
+      code: 'COC-02',
+      barcode: '990002',
+      name: 'Aliños Frescos (Cebolla, Ajo, Pimentón, Cilantro, Ají Dulce, Cebollín)',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 8.500,
+      minStock: 3.000,
+      costUsd: 2.40,
+      prevCostUsd: 2.00,
+      priceUsd: 0,
+      emoji: '🧅',
+      img: '../assets/img/productos/pabellon.jpg'
+    },
+    {
+      id: 'ins-harina-cocina',
+      code: 'COC-03',
+      barcode: '990003',
+      name: 'Harina de Maíz/Trigo para Amasar en Cocina (Empanadas/Arepas/Pastelitos)',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 22.000,
+      minStock: 6.000,
+      costUsd: 1.05,
+      prevCostUsd: 1.05,
+      priceUsd: 0,
+      emoji: '🌾',
+      img: '../assets/img/productos/viveres.jpg'
+    },
+    {
+      id: 'ins-arroz-cocina',
+      code: 'COC-04',
+      barcode: '990004',
+      name: 'Arroz en Saco para Cocinar (Pabellón / Arroz con Pollo / Arroz Chino)',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 30.000,
+      minStock: 8.000,
+      costUsd: 1.15,
+      prevCostUsd: 1.10,
+      priceUsd: 0,
+      emoji: '🍚',
+      img: '../assets/img/productos/arroz_pollo.jpg'
+    },
+    {
+      id: 'ins-carne-mechada',
+      code: 'COC-05',
+      barcode: '990005',
+      name: 'Carne de Res Cruda para Mechar, Moler y Guisar (Cocina)',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 16.500,
+      minStock: 5.000,
+      costUsd: 6.80,
+      prevCostUsd: 6.30,
+      priceUsd: 0,
+      emoji: '🥩',
+      img: '../assets/img/productos/pabellon.jpg'
+    },
+    {
+      id: 'ins-pollo-cocina',
+      code: 'COC-06',
+      barcode: '990006',
+      name: 'Pollo Crudo para Freír a la Broaster y Desmechar (Cocina)',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 20.000,
+      minStock: 6.000,
+      costUsd: 3.60,
+      prevCostUsd: 3.40,
+      priceUsd: 0,
+      emoji: '🍗',
+      img: '../assets/img/productos/pollo_frito.jpg'
+    },
+    {
+      id: 'ins-queso-cocina',
+      code: 'COC-07',
+      barcode: '990007',
+      name: 'Queso Blanco Llanero y Queso Amarillo para Relleno en Cocina',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 12.400,
+      minStock: 4.000,
+      costUsd: 5.40,
+      prevCostUsd: 4.90,
+      priceUsd: 0,
+      emoji: '🧀',
+      img: '../assets/img/productos/tequenos.jpg'
+    },
+    {
+      id: 'ins-jamon-cocina',
+      code: 'COC-08',
+      barcode: '990008',
+      name: 'Jamón para Relleno de Empanadas, Pastelitos y Arroz Chino',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 6.800,
+      minStock: 2.000,
+      costUsd: 5.90,
+      prevCostUsd: 5.90,
+      priceUsd: 0,
+      emoji: '🥓',
+      img: '../assets/img/productos/pastelitos.jpg'
+    },
+    {
+      id: 'ins-cazon-cocina',
+      code: 'COC-09',
+      barcode: '990009',
+      name: 'Cazón / Pescado para Guiso de Empanadas',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 5.500,
+      minStock: 2.000,
+      costUsd: 5.20,
+      prevCostUsd: 5.00,
+      priceUsd: 0,
+      emoji: '🐟',
+      img: '../assets/img/productos/empanadas.jpg'
+    },
+    {
+      id: 'ins-chicharron-cocina',
+      code: 'COC-10',
+      barcode: '990010',
+      name: 'Chicharrón y Caraotas Negras para Relleno / Pabellón',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 6.800,
+      minStock: 2.000,
+      costUsd: 5.80,
+      prevCostUsd: 5.40,
+      priceUsd: 0,
+      emoji: '🍖',
+      img: '../assets/img/productos/empanadas.jpg'
+    },
+    {
+      id: 'ins-ensalada',
+      code: 'COC-11',
+      barcode: '990011',
+      name: 'Vegetales de Ensalada, Aguacate y Plátanos para Tajadas (Cocina)',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 11.000,
+      minStock: 3.000,
+      costUsd: 1.40,
+      prevCostUsd: 1.40,
+      priceUsd: 0,
+      emoji: '🥗',
+      img: '../assets/img/productos/pabellon.jpg'
+    },
+    {
+      id: 'ins-aceite-cocina',
+      code: 'COC-12',
+      barcode: '990012',
+      name: 'Aceite Vegetal para Freír en Cocina (Litros)',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'L',
+      stock: 18.000,
+      minStock: 5.000,
+      costUsd: 2.15,
+      prevCostUsd: 2.00,
+      priceUsd: 0,
+      emoji: '🫗',
+      img: '../assets/img/productos/empanadas.jpg'
+    },
+    {
+      id: 'ins-cafe-cocina',
+      code: 'COC-13',
+      barcode: '990013',
+      name: 'Café en Grano/Molido y Leche en Polvo (Cafetería)',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'kg',
+      stock: 4.500,
+      minStock: 1.500,
+      costUsd: 7.50,
+      prevCostUsd: 7.00,
+      priceUsd: 0,
+      emoji: '☕',
+      img: '../assets/img/productos/cafe.jpg'
+    },
+    {
+      id: 'ins-envase',
+      code: 'COC-14',
+      barcode: '990014',
+      name: 'Envases Térmicos de Almuerzo y Vasos Desechables',
+      category: 'Ingredientes de Cocina',
+      type: 'insumo',
+      sellable: false,
+      unit: 'und',
+      stock: 150,
+      minStock: 40,
+      costUsd: 0.12,
+      prevCostUsd: 0.10,
+      priceUsd: 0,
+      emoji: '🥡',
+      img: '../assets/img/productos/arroz_chino.jpg'
+    }
+  ];
+
+  /* --------------------------------------------------------------------------
+     Función de Migración Automática y Transparente v3 -> v5
+     -------------------------------------------------------------------------- */
+  const VET_OFFSET_MS = 4 * 3600000;
+
+  function parseVersionNumber(ver) {
+    if (typeof ver === 'number' && isFinite(ver)) return ver;
+    const parsed = parseFloat(String(ver || '0').trim());
+    return isFinite(parsed) ? parsed : 0;
+  }
+
+  function getLocalDateIso(dateObj) {
+    const ms = (dateObj instanceof Date && !isNaN(dateObj.getTime()))
+      ? dateObj.getTime()
+      : Date.now();
+    return new Date(ms - VET_OFFSET_MS).toISOString().slice(0, 10);
+  }
+
+  function getLocalMonthIso(dateObj) {
+    return getLocalDateIso(dateObj).slice(0, 7);
+  }
+
+  function toLocalDateIso(isoOrDate) {
+    if (isoOrDate == null || isoOrDate === '') return getLocalDateIso();
+    if (isoOrDate instanceof Date) {
+      return isNaN(isoOrDate.getTime()) ? getLocalDateIso() : getLocalDateIso(isoOrDate);
+    }
+    const raw = String(isoOrDate).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    if (/^\d{4}-\d{2}$/.test(raw)) return raw + '-01';
+    const parsed = new Date(raw);
+    if (isNaN(parsed.getTime())) return getLocalDateIso();
+    return getLocalDateIso(parsed);
+  }
+
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function buildDishesFromVariants(variantsList, familiesList) {
+    const famList = Array.isArray(familiesList) ? familiesList : [];
+    return (Array.isArray(variantsList) ? variantsList : []).map(v => {
+      const fam = famList.find(f => f && f.id === v.familyId);
+      const isExempt = Boolean(v.taxExempt || v.iva === 'E' || v.ivaType === 'E');
+      const ivaCode = v.iva || (isExempt ? 'E' : (v.ivaType === 'R' ? 'R8' : 'G16'));
+      const ivaType = v.ivaType || (ivaCode === 'E' ? 'E' : (ivaCode === 'R8' ? 'R' : 'G'));
+      return {
+        id: v.id,
+        code: v.code,
+        barcode: v.barcode,
+        group: v.familyId,
+        familyId: v.familyId,
+        name: v.name,
+        category: fam ? fam.name : 'Comida',
+        priceUsd: v.priceUsd,
+        costUsd: v.costUsd,
+        iva: ivaCode,
+        ivaType: ivaType,
+        taxExempt: isExempt,
+        active: v.active !== false,
+        emoji: v.emoji || '🥟',
+        img: v.img || '../assets/img/productos/empanadas.jpg',
+        ingredients: v.recipe || [],
+        recipe: v.recipe || [],
+        isDish: true,
+        productId: v.productId
+      };
+    });
+  }
+
+  function migrateV3toV5(oldState) {
+    if (!oldState) return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    const verNum = parseVersionNumber(oldState.version);
+    if (verNum >= 6 || (verNum === 5 && Array.isArray(oldState.variants) && oldState.variants.length > 0)) {
+      return oldState;
+    }
+
+    const migrated = Object.assign({}, DEFAULT_STATE, oldState);
+    migrated.version = 5;
+
+    // Preservar íntegramente datos operativos y contables
+    migrated.sales = Array.isArray(oldState.sales) ? oldState.sales : JSON.parse(JSON.stringify(DEFAULT_STATE.sales));
+    migrated.expenses = Array.isArray(oldState.expenses) ? oldState.expenses : JSON.parse(JSON.stringify(DEFAULT_STATE.expenses));
+    migrated.kardex = Array.isArray(oldState.kardex) ? oldState.kardex : JSON.parse(JSON.stringify(DEFAULT_STATE.kardex));
+    migrated.purchases = Array.isArray(oldState.purchases) ? oldState.purchases : JSON.parse(JSON.stringify(DEFAULT_STATE.purchases));
+    migrated.invoices = Array.isArray(oldState.invoices) ? oldState.invoices : JSON.parse(JSON.stringify(DEFAULT_STATE.invoices));
+    migrated.suppliers = Array.isArray(oldState.suppliers) ? oldState.suppliers : JSON.parse(JSON.stringify(DEFAULT_STATE.suppliers));
+    migrated.heldOrders = Array.isArray(oldState.heldOrders) ? oldState.heldOrders : [];
+    migrated.kitchenBatches = Array.isArray(oldState.kitchenBatches) ? oldState.kitchenBatches : [];
+    migrated.wasteRecords = Array.isArray(oldState.wasteRecords) ? oldState.wasteRecords : [];
+    migrated.posTerminals = Array.isArray(oldState.posTerminals) ? oldState.posTerminals : JSON.parse(JSON.stringify(DEFAULT_STATE.posTerminals));
+    migrated.pagoMovilAccounts = Array.isArray(oldState.pagoMovilAccounts) ? oldState.pagoMovilAccounts : JSON.parse(JSON.stringify(DEFAULT_STATE.pagoMovilAccounts));
+    migrated.batchClosures = Array.isArray(oldState.batchClosures) ? oldState.batchClosures : [];
+    migrated.settings = Object.assign({}, DEFAULT_STATE.settings, oldState.settings || {});
+
+    migrated.families = JSON.parse(JSON.stringify(DEFAULT_FAMILIES));
+    migrated.products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+    migrated.modifierGroups = JSON.parse(JSON.stringify(DEFAULT_MODIFIER_GROUPS));
+    
+    const variants = JSON.parse(JSON.stringify(DEFAULT_VARIANTS));
+    
+    // Mapeo inteligente de platos v3 a variantes v5
+    if (Array.isArray(oldState.dishes)) {
+      oldState.dishes.forEach(oldDish => {
+        const cleanName = (oldDish.name || '').toLowerCase();
+        let matched = variants.find(v => 
+          (oldDish.code && v.code === oldDish.code) ||
+          (oldDish.barcode && v.barcode === oldDish.barcode) ||
+          (cleanName && v.name.toLowerCase() === cleanName)
+        );
+
+        if (matched) {
+          if (oldDish.priceUsd) matched.priceUsd = oldDish.priceUsd;
+          if (Array.isArray(oldDish.ingredients) && oldDish.ingredients.length) {
+            matched.recipe = oldDish.ingredients;
+          }
+        } else {
+          // Plato personalizado en v3: deducir producto padre
+          let targetProd = 'prod-empanada';
+          let familyId = 'fritos';
+          if (cleanName.includes('empanada')) { targetProd = 'prod-empanada'; familyId = 'fritos'; }
+          else if (cleanName.includes('pastelito') || cleanName.includes('tequeño')) { targetProd = 'prod-pastelito'; familyId = 'fritos'; }
+          else if (cleanName.includes('papa')) { targetProd = 'prod-papas'; familyId = 'fritos'; }
+          else if (cleanName.includes('arepa')) { targetProd = 'prod-arepa'; familyId = 'arepas'; }
+          else if (cleanName.includes('cafe') || cleanName.includes('café')) { targetProd = 'prod-cafe'; familyId = 'cafeteria'; }
+          else if (cleanName.includes('arroz') || cleanName.includes('pabellon') || cleanName.includes('almuerzo') || cleanName.includes('pollo')) {
+            targetProd = 'prod-almuerzos'; familyId = 'almuerzos';
+          }
+
+          variants.push({
+            id: oldDish.id || ('var-' + Date.now()),
+            productId: targetProd,
+            familyId,
+            name: oldDish.name,
+            code: oldDish.code || String(variants.length + 1),
+            barcode: oldDish.barcode || ('880' + String(variants.length + 1).padStart(4, '0')),
+            priceUsd: oldDish.priceUsd || 1.50,
+            ivaType: 'E',
+            recipe: oldDish.ingredients || [],
+            active: true,
+            order: variants.length + 1,
+            img: oldDish.img || '',
+            emoji: oldDish.emoji || '🥟'
+          });
+        }
+      });
+    }
+    migrated.variants = variants;
+
+    // Preservar existencias y costos de inventario
+    const retailItems = JSON.parse(JSON.stringify(DEFAULT_RETAIL_ITEMS));
+    const insumos = JSON.parse(JSON.stringify(DEFAULT_INSUMOS));
+
+    if (Array.isArray(oldState.inventory)) {
+      oldState.inventory.forEach(oldItem => {
+        if (oldItem.type === 'insumo' || oldItem.sellable === false) {
+          const ins = insumos.find(i => i.id === oldItem.id || i.code === oldItem.code);
+          if (ins) {
+            if (typeof oldItem.stock === 'number') ins.stock = oldItem.stock;
+            if (typeof oldItem.costUsd === 'number') ins.costUsd = oldItem.costUsd;
+            if (typeof oldItem.active === 'boolean') ins.active = oldItem.active;
+          } else {
+            insumos.push(Object.assign({}, oldItem, { type: 'insumo', sellable: false }));
+          }
+        } else {
+          const ret = retailItems.find(r => r.id === oldItem.id || r.barcode === oldItem.barcode || r.code === oldItem.code);
+          if (ret) {
+            if (typeof oldItem.stock === 'number') ret.stock = oldItem.stock;
+            if (typeof oldItem.costUsd === 'number') ret.costUsd = oldItem.costUsd;
+            if (typeof oldItem.priceUsd === 'number') ret.priceUsd = oldItem.priceUsd;
+            if (typeof oldItem.active === 'boolean') ret.active = oldItem.active;
+          } else {
+            retailItems.push(Object.assign({}, oldItem, {
+              familyId: oldItem.group || 'viveres',
+              type: 'venta',
+              sellable: true
+            }));
+          }
+        }
+      });
+    }
+
+    migrated.retailItems = retailItems;
+    migrated.insumos = insumos;
+    migrated.inventory = [...insumos, ...retailItems];
+
+    migrated.dishes = buildDishesFromVariants(variants, migrated.families);
+
+    return migrated;
+  }
+
+  const DEFAULT_STATE = {
+    version: 6,
+    schemaRevision: 8,
+    families: DEFAULT_FAMILIES,
+    products: DEFAULT_PRODUCTS,
+    modifierGroups: DEFAULT_MODIFIER_GROUPS,
+    variants: DEFAULT_VARIANTS,
+    retailItems: DEFAULT_RETAIL_ITEMS,
+    insumos: DEFAULT_INSUMOS,
+    users: [],
+    settings: {
+      storeName: 'MI TIENDA POS · Restaurante & Abasto',
+      rif: '',
+      phone: '0412-0000000',
+      address: 'Mostrador Principal & Cocina Venezolana',
+      legalNotice: 'NOTA DE ENTREGA — CONTROL INTERNO — NO ES FACTURA FISCAL',
+      rateBcv: 42.85,
+      rateEur: 46.60,
+      rateUsdt: 51.40,
+      ivaMode: 'RECARGO', // 'RECARGO' (suma 16% al cobrar) o 'INCLUIDO' (desglosa precio / 1.16)
+      isContribuyenteEspecial: false,
+      applyIgtf: false,
+      igtfPct: 3,
+      lastRateSync: '',
+      targetMarginPct: 42,
+      nextOrderNumber: 105,
+      fiscalConfig: {
+        enabled: false,
+        mode: 'INTERNO', // 'INTERNO' (por defecto sin máquina fiscal), 'HOMOLOGADO', 'DUAL'
+        ivaMode: 'RECARGO',
+        isContribuyenteEspecial: false,
+        brand: 'THE_FACTORY_HKA',
+        model: '',
+        serialNumber: '',
+        port: 'COM1',
+        baudRate: 9600,
+        ipAddress: '',
+        spoolerPath: 'C:\\MI-TIENDA-DATOS\\spooler\\',
+        taxRateGeneral: 16.0,
+        taxRateReduced: 8.0,
+        applyIgtf3: false,
+        lastReportZ: 0,
+        currentInvoiceNumber: 105
+      }
+    },
+
+    /* ----------------------------------------------------------------------
+       1. INVENTARIO ESTRICTAMENTE SEPARADO (Insumos de Cocina vs Minimercado)
+       ---------------------------------------------------------------------- */
+    inventory: [...DEFAULT_INSUMOS, ...DEFAULT_RETAIL_ITEMS],
+
+    /* ----------------------------------------------------------------------
+       2. PLATOS / VARIANTES (Sincronizado con variants v5)
+       ---------------------------------------------------------------------- */
+    dishes: DEFAULT_VARIANTS.map(v => ({
+      id: v.id,
+      code: v.code,
+      barcode: v.barcode,
+      group: v.familyId,
+      name: v.name,
+      category: (DEFAULT_FAMILIES.find(f => f.id === v.familyId) || {}).name || 'Comida',
+      priceUsd: v.priceUsd,
+      emoji: v.emoji || '🥟',
+      img: v.img || '../assets/img/productos/empanadas.jpg',
+      ingredients: v.recipe || [],
+      recipe: v.recipe || [],
+      isDish: true,
+      productId: v.productId
+    })),
+
+    /* ----------------------------------------------------------------------
+       3. FACTURAS DE PROVEEDORES Y CUENTAS POR PAGAR
+       ---------------------------------------------------------------------- */
+    invoices: [
+      {
+        id: 'FAC-1001',
+        number: '0004812',
+        supplier: 'Verduras El Páramo (Papa, Aliños y Repollo para Cocina)',
+        rif: 'J-31290411-0',
+        date: '2026-10-31',
+        dueDate: '2026-11-07',
+        totalUsd: 64.50,
+        paidUsd: 30.00,
+        status: 'parcial',
+        itemsSummary: '30 kg Papa Cocina ($1.35/kg), 10 kg Aliños Frescos ($2.40/kg)'
+      },
+      {
+        id: 'FAC-1002',
+        number: '0019204',
+        supplier: 'Distribuidora Polar, Víveres y Chucherías C.A.',
+        rif: 'J-40118290-3',
+        date: '2026-10-30',
+        dueDate: '2026-11-06',
+        totalUsd: 185.00,
+        paidUsd: 0.00,
+        status: 'pendiente',
+        itemsSummary: '2 Bultos Harina P.A.N., 1 Bulto Espagueti, 3 Cajas Cerveza Polar, Pepitos y Cigarros'
+      }
+    ],
+
+    /* ----------------------------------------------------------------------
+       4. HISTORIAL DE VENTAS Y CUADRE DE CAJA
+       ---------------------------------------------------------------------- */
+    sales: [
+      {
+        id: 'ORD-103',
+        orderNumber: 103,
+        createdAt: new Date(Date.now() - 1000 * 60 * 50).toISOString(),
+        cashier: 'Caja Principal',
+        customer: 'Mostrador Rápido',
+        rateBcv: 42.85,
+        rateEur: 46.60,
+        rateUsdt: 51.40,
+        subtotalUsd: 8.55,
+        exentoUsd: 0.00,
+        baseG16Usd: 8.55,
+        ivaUsd: 1.37,
+        ivaBs: 58.70,
+        igtfUsd: 0.00,
+        totalUsd: 9.92,
+        totalBs: 425.07,
+        costUsd: 4.10,
+        profitUsd: 4.45,
+        items: [
+          { refId: 'var-alm-pabellon', name: 'Pabellón Criollo', qty: 1, unit: 'plato', priceUsd: 5.00, subtotalUsd: 5.00, isDish: true, iva: 'G16', taxType: 'G' },
+          { refId: 'var-emp-pelua', name: 'Empanada Pelúa', qty: 1, unit: 'plato', priceUsd: 1.50, subtotalUsd: 1.50, isDish: true, iva: 'G16', taxType: 'G' },
+          { refId: 'prod-frescolita-15l', name: 'Frescolita Personal / Lata 355ml', qty: 1, unit: 'und', priceUsd: 1.10, subtotalUsd: 1.10, isDish: false, iva: 'G16', taxType: 'G' },
+          { refId: 'prod-pepito', name: 'Pepito Original Frito-Lay', qty: 1, unit: 'und', priceUsd: 0.95, subtotalUsd: 0.95, isDish: false, iva: 'G16', taxType: 'G' }
+        ],
+        payments: [
+          { method: 'Efectivo USD', amountUsd: 10.00, amountBs: 428.50, ref: 'Billete $10', verified: true }
+        ],
+        changeGiven: {
+          totalChangeUsd: 0.08,
+          totalChangeBs: 3.43,
+          usdCashGiven: 0.00,
+          bsCashGiven: 0,
+          bsPmGiven: 3.43,
+          breakdown: '$0.00 Efectivo USD + 3.43 Bs Pago Móvil'
+        }
+      },
+      {
+        id: 'ORD-104',
+        orderNumber: 104,
+        createdAt: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
+        cashier: 'Caja Principal',
+        customer: 'Mesa 1 / Desayuno',
+        rateBcv: 42.85,
+        rateEur: 46.60,
+        rateUsdt: 51.40,
+        subtotalUsd: 6.15,
+        exentoUsd: 1.55,
+        baseG16Usd: 4.60,
+        ivaUsd: 0.74,
+        ivaBs: 31.71,
+        igtfUsd: 0,
+        totalUsd: 6.89,
+        totalBs: 295.24,
+        costUsd: 2.95,
+        profitUsd: 3.20,
+        items: [
+          { refId: 'var-emp-mechada', name: 'Empanada de Mechada', qty: 2, unit: 'plato', priceUsd: 1.30, subtotalUsd: 2.60, isDish: true, iva: 'G16', taxType: 'G' },
+          { refId: 'var-papa-carne-queso', name: 'Papa Rellena Carne y Queso', qty: 1, unit: 'plato', priceUsd: 1.60, subtotalUsd: 1.60, isDish: true, iva: 'G16', taxType: 'G' },
+          { refId: 'prod-harina-pan', name: 'Harina P.A.N. Blanca 1Kg', qty: 1, unit: 'und', priceUsd: 1.55, subtotalUsd: 1.55, isDish: false, iva: 'E', taxType: 'E' },
+          { refId: 'prod-cigarro-detal', name: 'Cigarro Detallado 1 Und', qty: 2, unit: 'und', priceUsd: 0.20, subtotalUsd: 0.40, isDish: false, iva: 'G16', taxType: 'G' }
+        ],
+        payments: [
+          { method: 'Pago Móvil', amountUsd: 6.89, amountBs: 295.24, bank: '0102 - Venezuela', phone: '0412-5551920', ref: '948210', verified: true }
+        ],
+        changeGiven: {
+          totalChangeUsd: 0,
+          totalChangeBs: 0,
+          usdCashGiven: 0,
+          bsCashGiven: 0,
+          bsPmGiven: 0,
+          breakdown: 'Pago exacto verificado'
+        }
+      }
+    ],
+
+    /* ----------------------------------------------------------------------
+       5. GASTOS OPERATIVOS, CAJA CHICA Y SALIDAS DE EFECTIVO
+       ---------------------------------------------------------------------- */
+    expenses: [
+      {
+        id: 'GAS-101',
+        createdAt: new Date(Date.now() - 1000 * 60 * 140).toISOString(),
+        category: 'Insumos Menores / Hielo y Bolsas',
+        description: 'Compra de 4 bolsas de hielo para cavas y 2 paquetes de bolsas plásticas',
+        paymentSource: 'Efectivo USD',
+        amountUsd: 4.50,
+        amountBs: 192.83,
+        rateUsed: 42.85,
+        responsible: 'Caja Principal'
+      },
+      {
+        id: 'GAS-102',
+        createdAt: new Date(Date.now() - 1000 * 60 * 95).toISOString(),
+        category: 'Flete / Transporte',
+        description: 'Pago de carrera motorizado búsqueda de verduras y aliños frescos',
+        paymentSource: 'Pago Móvil',
+        amountUsd: 3.00,
+        amountBs: 128.55,
+        rateUsed: 42.85,
+        responsible: 'Administrador'
+      }
+    ],
+
+    /* ----------------------------------------------------------------------
+       6. TICKETS EN ESPERA / CUENTAS ABIERTAS EN MOSTRADOR (F3)
+       ---------------------------------------------------------------------- */
+    heldOrders: [
+      {
+        id: 'HOLD-1',
+        customer: 'Mesa 2 (Familia esperando almuerzo)',
+        createdAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+        items: [
+          {
+            cartId: 'c-hold-1',
+            refId: 'var-emp-mechada',
+            code: 'EM03',
+            name: 'Empanada de Carne Mechada Criolla',
+            isDish: true,
+            unit: 'plato',
+            qty: 3,
+            priceUsd: 1.30,
+            note: 'Bien fritas'
+          },
+          {
+            cartId: 'c-hold-2',
+            refId: 'prod-malta-lata',
+            code: '401',
+            name: 'Malta Polar Bien Fría 355ml',
+            isDish: false,
+            unit: 'und',
+            qty: 2,
+            priceUsd: 1.15,
+            note: ''
+          }
+        ]
+      }
+    ],
+
+    /* ----------------------------------------------------------------------
+       7. TANDAS DE PRODUCCIÓN DE COCINA (CONTROL SALIDA A OLLA / BATEA)
+       ---------------------------------------------------------------------- */
+    kitchenBatches: [
+      {
+        id: 'TANDA-01',
+        date: getLocalDateIso(),
+        shift: 'Mañana (Desayunos / Empanadas)',
+        notes: 'Salida inicial para batea de empanadas y papas rellenas',
+        insumosUsed: [
+          { insumoId: 'ins-harina-cocina', name: 'Harina Maíz/Trigo Cocina', qty: 4.0, unit: 'kg', costUsd: 4.20 },
+          { insumoId: 'ins-carne-mechada', name: 'Carne Mechada/Molida', qty: 2.0, unit: 'kg', costUsd: 13.60 },
+          { insumoId: 'ins-queso-cocina', name: 'Queso Blanco/Amarillo', qty: 1.5, unit: 'kg', costUsd: 8.10 },
+          { insumoId: 'ins-papa', name: 'Papa Cruda Cocina', qty: 2.5, unit: 'kg', costUsd: 3.38 }
+        ],
+        expectedPieces: 65,
+        actualPieces: 64
+      }
+    ],
+
+    /* ----------------------------------------------------------------------
+       8. PROVEEDORES REGISTRADOS (COMPRAS Y RECEPCIÓN DE MERCANCÍA)
+       ---------------------------------------------------------------------- */
+    suppliers: [
+      { id: 'prov-polar', name: 'Empresas Polar C.A. / Distribuidora Oriente', rif: 'J-00006543-0', phone: '0414-2223344', category: 'Harina PAN, Cervezas, Maltas, Pepsi' },
+      { id: 'prov-verduras', name: 'Mayorista de Verduras y Aliños Frescos', rif: 'V-15889021-4', phone: '0424-7778899', category: 'Papas, Cebolla, Ají Dulce, Pimentón, Ajo' },
+      { id: 'prov-carnes', name: 'Distribuidora Frigorífica Central Don Pedro', rif: 'J-31456789-0', phone: '0412-9990011', category: 'Carne de Res, Pollo Beneficiado, Cazón' },
+      { id: 'prov-lacteos', name: 'Lácteos & Charcutería San Antonio', rif: 'J-40112233-5', phone: '0416-5554433', category: 'Queso Blanco Llanero, Jamón, Margarina' },
+      { id: 'prov-snacks', name: 'Distribuidora Confitería & Snacks Venezolanos', rif: 'J-29887766-1', phone: '0414-1122334', category: 'Pepitos, Cheese Tris, Doritos, Galletas' }
+    ],
+
+    /* ----------------------------------------------------------------------
+       9. RECEPCIONES Y COMPRAS MULTI-ÍTEM A PROVEEDORES
+       ---------------------------------------------------------------------- */
+    purchases: [
+      {
+        id: 'CMP-101',
+        createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+        docNumber: 'FAC-7820',
+        supplier: 'Empresas Polar C.A. / Distribuidora Oriente',
+        paymentMethod: 'Efectivo USD',
+        totalUsd: 47.50,
+        totalBs: 2035.38,
+        itemsCount: 2,
+        items: [
+          {
+            itemId: 'prod-harina-pan',
+            name: 'Harina P.A.N. Blanca 1Kg',
+            unit: 'und',
+            packsCount: 1,
+            unitsPerPack: 20,
+            totalUnits: 20,
+            packCostUsd: 21.60,
+            unitCostUsd: 1.08,
+            totalCostUsd: 21.60
+          },
+          {
+            itemId: 'prod-cerveza-polar',
+            name: 'Cerveza Polar Pilsen Terciada 330ml',
+            unit: 'und',
+            packsCount: 1,
+            unitsPerPack: 36,
+            totalUnits: 36,
+            packCostUsd: 25.90,
+            unitCostUsd: 0.72,
+            totalCostUsd: 25.90
+          }
+        ],
+        notes: 'Recepción de reposición matutina con factura legal de despacho',
+        responsible: 'Administrador'
+      }
+    ],
+
+    /* ----------------------------------------------------------------------
+       10. REGISTRO FORMAL DE MERMAS, VENCIMIENTOS Y AUTOCONSUMO
+       ---------------------------------------------------------------------- */
+    wasteRecords: [
+      {
+        id: 'MRM-101',
+        createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+        itemId: 'ins-papa',
+        itemCode: 'COC-01',
+        itemName: 'Papa Cruda para Cocina',
+        qty: 1.5,
+        unit: 'kg',
+        unitCostUsd: 1.35,
+        totalCostUsd: 2.03,
+        reason: 'Deterioro / Descomposición',
+        responsible: 'Cocinero Turno Mañana',
+        notes: 'Papas húmedas descartadas al lavar el saco'
+      }
+    ],
+
+    /* ----------------------------------------------------------------------
+       11. LIBRO MAYOR KARDEX: MOVIMIENTOS HISTÓRICOS INMUTABLES
+       ---------------------------------------------------------------------- */
+    kardex: [
+      {
+        id: 'KDX-001',
+        timestamp: new Date(Date.now() - 1000 * 60 * 200).toISOString(),
+        itemId: 'prod-harina-pan',
+        itemCode: 'PAN-01',
+        itemName: 'Harina P.A.N. Blanca 1Kg',
+        itemType: 'venta',
+        action: 'COMPRA',
+        qty: 20,
+        unit: 'und',
+        costUsd: 1.08,
+        prevStock: 12.0,
+        nextStock: 32.0,
+        docRef: 'FAC-7820',
+        supplier: 'Empresas Polar C.A. / Distribuidora Oriente',
+        responsible: 'Administrador',
+        notes: 'Entrada bulto 20 unidades'
+      },
+      {
+        id: 'KDX-002',
+        timestamp: new Date(Date.now() - 1000 * 60 * 190).toISOString(),
+        itemId: 'prod-cerveza-polar',
+        itemCode: 'CER-01',
+        itemName: 'Cerveza Polar Pilsen Terciada 330ml',
+        itemType: 'venta',
+        action: 'COMPRA',
+        qty: 36,
+        unit: 'und',
+        costUsd: 0.72,
+        prevStock: 14.0,
+        nextStock: 50.0,
+        docRef: 'FAC-7820',
+        supplier: 'Empresas Polar C.A. / Distribuidora Oriente',
+        responsible: 'Administrador',
+        notes: 'Entrada caja 36 botellas'
+      },
+      {
+        id: 'KDX-003',
+        timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+        itemId: 'ins-papa',
+        itemCode: 'COC-01',
+        itemName: 'Papa Cruda para Cocina',
+        itemType: 'insumo',
+        action: 'MERMA',
+        qty: -1.5,
+        unit: 'kg',
+        costUsd: 1.35,
+        prevStock: 26.5,
+        nextStock: 25.0,
+        docRef: 'MRM-101',
+        supplier: '',
+        responsible: 'Cocinero Turno Mañana',
+        notes: 'Papas húmedas descartadas al lavar saco'
+      }
+    ],
+
+    /* ----------------------------------------------------------------------
+       12. TERMINALES DE PUNTO DE VENTA (TARJETAS DÉBITO/CRÉDITO Y BIOPAGO)
+       ---------------------------------------------------------------------- */
+    posTerminals: [
+      {
+        id: 'term-bancamiga',
+        name: 'Punto Bancamiga Pax A920',
+        bank: '0172 - Bancamiga',
+        currentBatch: '0014',
+        model: 'Pax A920 SmartPOS 4G',
+        status: 'ACTIVO'
+      },
+      {
+        id: 'term-banesco',
+        name: 'Punto Banesco Verifone Vx520',
+        bank: '0134 - Banesco',
+        currentBatch: '0038',
+        model: 'Verifone Vx520 Dial/IP',
+        status: 'ACTIVO'
+      },
+      {
+        id: 'term-biopago',
+        name: 'Biopago Banco de Venezuela (Huella/Cédula)',
+        bank: '0102 - Venezuela',
+        currentBatch: '0009',
+        model: 'Biopago BDV USB',
+        status: 'ACTIVO'
+      }
+    ],
+
+    /* ----------------------------------------------------------------------
+       13. CUENTAS BANCARIAS RECEPTORAS DE PAGO MÓVIL DEL NEGOCIO
+       ---------------------------------------------------------------------- */
+    pagoMovilAccounts: [
+      {
+        id: 'pm-banesco',
+        name: 'Banesco Comercio (Cuenta Principal)',
+        bank: '0134 - Banesco',
+        phone: '0412-1234567',
+        rif: 'J-50128940-1',
+        holder: 'MI TIENDA POS C.A.',
+        isDefault: true
+      },
+      {
+        id: 'pm-bdv',
+        name: 'Banco de Venezuela (Cuenta Recaudadora)',
+        bank: '0102 - Venezuela',
+        phone: '0414-9876543',
+        rif: 'J-50128940-1',
+        holder: 'MI TIENDA POS C.A.',
+        isDefault: false
+      },
+      {
+        id: 'pm-bancamiga',
+        name: 'Bancamiga Pago Móvil Interbancario',
+        bank: '0172 - Bancamiga',
+        phone: '0424-5551122',
+        rif: 'J-50128940-1',
+        holder: 'MI TIENDA POS C.A.',
+        isDefault: false
+      }
+    ],
+
+    /* ----------------------------------------------------------------------
+       14. CIERRES DE LOTE DE PUNTOS DE VENTA (AUDITORÍA FÍSICA VS SISTEMA)
+       ---------------------------------------------------------------------- */
+    batchClosures: [
+      {
+        id: 'LOTE-CLS-001',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+        terminalId: 'term-bancamiga',
+        terminalName: 'Punto Bancamiga Pax A920',
+        bank: '0172 - Bancamiga',
+        batchNumber: '0013',
+        systemTxCount: 14,
+        systemTotalBs: 1540.20,
+        physicalTxCount: 14,
+        physicalTotalBs: 1540.20,
+        differenceBs: 0.00,
+        status: 'CUADRADO',
+        cashier: 'Cajero Turno Tarde',
+        notes: 'Cierre de lote exacto sin descuadres'
+      }
+    ]
+  };
+
+  function migrateToV6(st) {
+    if (!st) return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    const migrated = st;
+    const prevVersion = parseVersionNumber(migrated.version || 5);
+    const isModernSchema = prevVersion >= 6;
+
+    // 1. Solo forzar orden de familias al migrar desde v5 o si no existen familias
+    if (!isModernSchema || !Array.isArray(migrated.families) || migrated.families.length === 0) {
+      migrated.families = JSON.parse(JSON.stringify(DEFAULT_FAMILIES));
+    }
+    if (!Array.isArray(migrated.products)) {
+      migrated.products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+    }
+    if (!Array.isArray(migrated.modifierGroups)) {
+      migrated.modifierGroups = JSON.parse(JSON.stringify(DEFAULT_MODIFIER_GROUPS));
+    }
+    if (!Array.isArray(migrated.variants)) {
+      migrated.variants = JSON.parse(JSON.stringify(DEFAULT_VARIANTS));
+    }
+
+    // 2. Normalizar configuración fiscal e IVA preservando settings del usuario en v6/v8
+    if (!migrated.settings) migrated.settings = JSON.parse(JSON.stringify(DEFAULT_STATE.settings));
+    else migrated.settings = Object.assign({}, DEFAULT_STATE.settings, migrated.settings);
+
+    if (!migrated.settings.ivaMode) migrated.settings.ivaMode = 'RECARGO';
+    if (migrated.settings.isContribuyenteEspecial === undefined) {
+      migrated.settings.isContribuyenteEspecial = false;
+    }
+    if (!migrated.settings.fiscalConfig) {
+      migrated.settings.fiscalConfig = JSON.parse(JSON.stringify(DEFAULT_STATE.settings.fiscalConfig));
+    } else {
+      migrated.settings.fiscalConfig = Object.assign({}, DEFAULT_STATE.settings.fiscalConfig, migrated.settings.fiscalConfig);
+    }
+
+    // Limpiar datos fiscales ficticios heredados de versiones previas
+    if (migrated.settings.fiscalConfig.serialNumber === 'Z4A2098124') {
+      migrated.settings.fiscalConfig.serialNumber = '';
+      migrated.settings.fiscalConfig.mode = 'INTERNO';
+      migrated.settings.fiscalConfig.enabled = false;
+      migrated.settings.fiscalConfig.isContribuyenteEspecial = false;
+      migrated.settings.fiscalConfig.applyIgtf3 = false;
+      migrated.settings.applyIgtf = false;
+    }
+    if (!isModernSchema && migrated.settings.rif === 'J-50128940-1') {
+      migrated.settings.rif = '';
+    }
+
+    // 3. Unificar campo 'iva' ('G16' | 'R8' | 'E') sin sobrescribir precios, active ni IVA de catálogos v6/v8
+    const exemptIds = new Set([
+      'prod-harina-pan',
+      'prod-harina-pan-amarilla',
+      'prod-espagueti',
+      'prod-arroz-empaque',
+      'prod-mavesa',
+      'inv-harina-pan-blanca',
+      'inv-harina-pan-amarilla',
+      'inv-pasta-larga',
+      'inv-arroz-blanco',
+      'inv-margarina-mavesa'
+    ]);
+
+    const defaultVarMap = new Map(DEFAULT_VARIANTS.map(v => [v.id, v]));
+    if (Array.isArray(migrated.variants)) {
+      migrated.variants.forEach(v => {
+        if (!v) return;
+        if (!isModernSchema) {
+          v.iva = 'G16';
+          v.ivaType = 'G';
+          v.taxExempt = false;
+          const defV = defaultVarMap.get(v.id);
+          if (defV && defV.img && (!v.img || v.img.includes('empanadas.jpg'))) {
+            v.img = defV.img;
+          }
+          if (defV && defV.code && (/^\d{1,2}$/.test(String(v.code || '').trim()) || /^(EMP|PAS|TEQ|PAP|MAN|ARE|ALM|CAF)-\d+$/i.test(String(v.code || '').trim()))) {
+            v.code = defV.code;
+          }
+        } else {
+          if (!v.iva) v.iva = v.taxExempt ? 'E' : (v.ivaType === 'R' ? 'R8' : 'G16');
+          if (!v.ivaType) v.ivaType = v.iva === 'E' ? 'E' : (v.iva === 'R8' ? 'R' : 'G');
+          if (v.taxExempt === undefined) v.taxExempt = v.iva === 'E';
+        }
+      });
+    }
+
+    const defaultRetMap = new Map(DEFAULT_RETAIL_ITEMS.map(r => [r.id, r]));
+    const normalizeRetail = (item) => {
+      if (!item || !item.sellable) {
+        if (item && !item.sellable && !isModernSchema) item.category = 'Ingredientes de Cocina';
+        return;
+      }
+      if (!isModernSchema) {
+        if (exemptIds.has(item.id)) {
+          item.iva = 'E';
+          item.ivaType = 'E';
+          item.taxExempt = true;
+        } else if (item.id === 'prod-agua-mineral' || item.id === 'inv-agua-500') {
+          item.iva = 'G16';
+          item.ivaType = 'G';
+          item.taxExempt = false;
+          item.pendingAccountantConfirmation = true;
+        } else {
+          item.iva = item.iva === 'R8' ? 'R8' : 'G16';
+          item.ivaType = item.iva === 'E' ? 'E' : (item.iva === 'R8' ? 'R' : 'G');
+          item.taxExempt = item.iva === 'E';
+        }
+        const defR = defaultRetMap.get(item.id);
+        if (defR && defR.img && !item.img) {
+          item.img = defR.img;
+        }
+      } else {
+        if (!item.iva) item.iva = item.taxExempt ? 'E' : (item.ivaType === 'R' ? 'R8' : 'G16');
+        if (!item.ivaType) item.ivaType = item.iva === 'E' ? 'E' : (item.iva === 'R8' ? 'R' : 'G');
+        if (item.taxExempt === undefined) item.taxExempt = item.iva === 'E';
+      }
+    };
+
+    if (Array.isArray(migrated.retailItems)) migrated.retailItems.forEach(normalizeRetail);
+    if (Array.isArray(migrated.inventory)) migrated.inventory.forEach(normalizeRetail);
+
+    if (Array.isArray(migrated.variants)) {
+      migrated.dishes = buildDishesFromVariants(migrated.variants, migrated.families);
+    }
+
+    migrated.version = 6;
+    migrated.schemaRevision = 8;
+    syncInventoryReferences(migrated);
+    return migrated;
+  }
+
+  /**
+   * Mantiene una ÚNICA referencia por objeto entre inventory, insumos y retailItems.
+   * Elimina el split-brain donde saveState sobrescribía inventory con copias obsoletas.
+   */
+  function syncInventoryReferences(targetState) {
+    if (!targetState || typeof targetState !== 'object') return;
+    const byId = new Map();
+    const order = [];
+
+    const register = (item, preferExisting) => {
+      if (!item || !item.id) return;
+      if (!byId.has(item.id)) {
+        byId.set(item.id, item);
+        order.push(item.id);
+      } else if (!preferExisting) {
+        const current = byId.get(item.id);
+        Object.assign(current, item);
+      }
+    };
+
+    if (Array.isArray(targetState.inventory)) {
+      targetState.inventory.forEach(i => register(i, true));
+    }
+    if (Array.isArray(targetState.insumos)) {
+      targetState.insumos.forEach(i => register(i, true));
+    }
+    if (Array.isArray(targetState.retailItems)) {
+      targetState.retailItems.forEach(i => register(i, true));
+    }
+
+    const unified = order.map(id => byId.get(id));
+    targetState.inventory = unified;
+    targetState.insumos = unified.filter(i => i.type === 'insumo' || (i.sellable !== true && i.type !== 'venta'));
+    targetState.retailItems = unified.filter(i => i.type === 'venta' || i.sellable === true);
+  }
+
+  let syncChannel = null;
+  try {
+    if (typeof BroadcastChannel === 'function') {
+      syncChannel = new BroadcastChannel('mtp_sync_v8');
+    }
+  } catch (_) {}
+
+  function writeIndexedDbBackup(jsonStr) {
+    try {
+      if (typeof window !== 'undefined' && window.indexedDB) {
+        const req = window.indexedDB.open('MTP_LOCAL_DB', 2);
+        req.onupgradeneeded = function (ev) {
+          const db = ev.target.result;
+          if (!db.objectStoreNames.contains('store')) db.createObjectStore('store');
+        };
+        req.onsuccess = function (ev) {
+          try {
+            const db = ev.target.result;
+            const tx = db.transaction('store', 'readwrite');
+            tx.objectStore('store').put(jsonStr, 'mtp_backup_latest');
+          } catch (_) {}
+        };
+      }
+    } catch (_) {}
+  }
+
+  function loadState() {
+    try {
+      const rawV5 = localStorage.getItem(STORAGE_KEY);
+      if (rawV5) {
+        const parsed = JSON.parse(rawV5);
+        const wasOld = parseVersionNumber(parsed.version) < 6 || Number(parsed.schemaRevision || 0) < 8;
+        const migrated = migrateToV6(migrateV3toV5(parsed));
+        if (wasOld) saveState(migrated, { skipBroadcast: true, skipApi: true });
+        return migrated;
+      }
+      const rawV3 = localStorage.getItem(STORAGE_KEY_V3);
+      if (rawV3) {
+        const parsedV3 = JSON.parse(rawV3);
+        const migrated = migrateToV6(migrateV3toV5(parsedV3));
+        saveState(migrated, { skipBroadcast: true, skipApi: true });
+        return migrated;
+      }
+      const fresh = migrateToV6(JSON.parse(JSON.stringify(DEFAULT_STATE)));
+      saveState(fresh, { skipBroadcast: true, skipApi: true });
+      return fresh;
+    } catch (e) {
+      console.error('Error cargando base de datos:', e);
+      const fallback = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      syncInventoryReferences(fallback);
+      return fallback;
+    }
+  }
+
+  let localFileHandle = null;
+  let isApplyingRemoteSync = false;
+
+  function saveState(newState, opts) {
+    const options = opts || {};
+    try {
+      // Sincronizar espejo de dishes manteniendo referencia única en inventario
+      if (Array.isArray(newState.variants)) {
+        newState.dishes = buildDishesFromVariants(newState.variants, newState.families);
+      }
+      newState.updatedAt = new Date().toISOString();
+      syncInventoryReferences(newState);
+
+      const jsonStr = JSON.stringify(newState);
+      try {
+        localStorage.setItem(STORAGE_KEY, jsonStr);
+        localStorage.setItem(STORAGE_KEY_V3, jsonStr); // Respaldo retrocompatible v3
+      } catch (quotaErr) {
+        console.warn('localStorage lleno, persistiendo vía IndexedDB y servidor:', quotaErr);
+      }
+
+      // Espejo en IndexedDB (capacidad amplia sin límite 5MB)
+      writeIndexedDbBackup(jsonStr);
+
+      // Si el usuario vinculó archivo físico en disco duro, autoguardar
+      if (localFileHandle && localFileHandle.createWritable) {
+        localFileHandle.createWritable().then(writable => {
+          writable.write(jsonStr).then(() => writable.close());
+        }).catch(() => {});
+      }
+
+      // Difundir a otras pestañas abiertas en el mismo navegador
+      if (syncChannel && !options.skipBroadcast && !isApplyingRemoteSync) {
+        try { syncChannel.postMessage({ type: 'STATE_SYNC', updatedAt: newState.updatedAt, jsonStr }); } catch (_) {}
+      }
+
+      // Enviar sincronización al servidor si MTPApiClient está activo
+      if (!options.skipApi && !isApplyingRemoteSync && typeof window !== 'undefined' && window.MTPApiClient && typeof window.MTPApiClient.onStateSaved === 'function') {
+        try { window.MTPApiClient.onStateSaved(newState, options); } catch (_) {}
+      }
+
+      if (typeof window !== 'undefined' && window.dispatchEvent && typeof CustomEvent === 'function') {
+        window.dispatchEvent(new CustomEvent('mtp:state-updated', { detail: newState }));
+      }
+    } catch (e) {
+      console.error('Error saving state:', e);
+    }
+  }
+
+  const state = loadState();
+
+  if (syncChannel) {
+    syncChannel.onmessage = function (ev) {
+      if (!ev || !ev.data || ev.data.type !== 'STATE_SYNC' || !ev.data.jsonStr) return;
+      try {
+        const incoming = JSON.parse(ev.data.jsonStr);
+        if (!incoming || typeof incoming !== 'object') return;
+        isApplyingRemoteSync = true;
+        Object.keys(state).forEach(k => { delete state[k]; });
+        Object.assign(state, incoming);
+        syncInventoryReferences(state);
+        if (typeof window !== 'undefined' && window.dispatchEvent && typeof CustomEvent === 'function') {
+          window.dispatchEvent(new CustomEvent('mtp:state-updated', { detail: state }));
+        }
+      } catch (_) {
+      } finally {
+        isApplyingRemoteSync = false;
+      }
+    };
+  }
+
+  function getFallbackSvgDataUri(title, emoji) {
+    const safeTitle = String(title || 'Producto').slice(0, 22).replace(/[<>&"']/g, '');
+    const ico = emoji || '🍲';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#064e3b"/>
+          <stop offset="100%" stop-color="#0f172a"/>
+        </linearGradient>
+      </defs>
+      <rect width="320" height="200" fill="url(#g)"/>
+      <text x="160" y="95" text-anchor="middle" font-size="54">${ico}</text>
+      <text x="160" y="148" text-anchor="middle" fill="#a7f3d0" font-family="sans-serif" font-size="14" font-weight="bold">${safeTitle}</text>
+    </svg>`;
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  }
+
+  function fmtUSD(val) {
+    const n = Number(val) || 0;
+    return '$' + n.toFixed(2);
+  }
+
+  function fmtBs(valUsd, customRate) {
+    const rate = customRate || state.settings.rateBcv || 42.85;
+    const bs = (Number(valUsd) || 0) * rate;
+    return bs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs';
+  }
+
+  function fmtEur(valUsd) {
+    const bcv = state.settings.rateBcv || 42.85;
+    const eur = state.settings.rateEur || 46.60;
+    const valEur = eur > 0 ? ((Number(valUsd) || 0) * bcv) / eur : 0;
+    return '€' + valEur.toFixed(2);
+  }
+
+  function fmtBsRaw(valBs) {
+    const n = Number(valBs) || 0;
+    return n.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs';
+  }
+
+  function fmtWeight(qty, unit) {
+    const n = Number(qty) || 0;
+    if (unit === 'kg') {
+      if (n < 1 && n > 0) {
+        return Math.round(n * 1000) + ' g (' + n.toFixed(3) + ' kg)';
+      }
+      return n.toFixed(2) + ' kg';
+    }
+    if (unit === 'L') return n.toFixed(2) + ' L';
+    return Math.round(n) + ' ' + (unit || 'und');
+  }
+
+  function getInsumoById(id) {
+    return state.inventory.find(i => i.id === id) || null;
+  }
+
+  function calcDishCost(dish) {
+    if (!dish) return 0;
+    const items = Array.isArray(dish.recipe) ? dish.recipe : (Array.isArray(dish.ingredients) ? dish.ingredients : []);
+    if (!items.length) return 0;
+    let totalCost = 0;
+    items.forEach(ing => {
+      const ins = getInsumoById(ing.insumoId);
+      if (ins) {
+        totalCost += (Number(ins.costUsd) || 0) * (Number(ing.qty) || 0);
+      }
+    });
+    return totalCost;
+  }
+
+  function calcDishMaxPortions(dish) {
+    if (!dish) return 999;
+    const items = Array.isArray(dish.recipe) ? dish.recipe : (Array.isArray(dish.ingredients) ? dish.ingredients : []);
+    if (!items.length) return 999;
+    let minPortions = Infinity;
+    items.forEach(ing => {
+      const ins = getInsumoById(ing.insumoId);
+      if (ins && ing.qty > 0) {
+        const possible = Math.floor((Number(ins.stock) || 0) / Number(ing.qty));
+        if (possible < minPortions) minPortions = possible;
+      }
+    });
+    return minPortions === Infinity ? 0 : Math.max(0, minPortions);
+  }
+
+  function getExchangeGapFactor() {
+    const bcv = Number(state.settings.rateBcv) || 1;
+    const usdt = Number(state.settings.rateUsdt) || bcv;
+    return Math.max(1, usdt / bcv);
+  }
+
+  function getEurGapFactor() {
+    const bcv = Number(state.settings.rateBcv) || 1;
+    const eur = Number(state.settings.rateEur) || bcv;
+    return Math.max(1, eur / bcv);
+  }
+
+  function calcRecommendedPriceUsd(costUsd, targetMarginPct) {
+    const margin = (Number(targetMarginPct) || state.settings.targetMarginPct || 40) / 100;
+    const basePrice = costUsd / Math.max(0.15, (1 - margin));
+    const factor = getExchangeGapFactor();
+    return basePrice * factor;
+  }
+
+  function matchesShortOrBarcode(item, q, qNoDash, qNumPad) {
+    if (!item) return false;
+    const c = String(item.code || '').trim().toUpperCase();
+    const cNoDash = c.replace(/-/g, '');
+    const bc = String(item.barcode || '').trim().toUpperCase();
+    const qr = String(item.qrCode || '').trim().toUpperCase();
+    if (c === q || bc === q || (qr && qr === q)) return true;
+    if (cNoDash && cNoDash === qNoDash) return true;
+    if (('0' + c) === q) return true;
+    // Permitir abreviatura sin cero inicial: EM1 -> EM01, PAS1 -> PAS01, AR1 -> AR01
+    if (/^[A-Z]+\d+$/.test(qNoDash)) {
+      const m = qNoDash.match(/^([A-Z]+)(\d+)$/);
+      if (m) {
+        const padded = m[1] + m[2].padStart(2, '0');
+        if (cNoDash === padded) return true;
+        // Tolerar prefijo viejo EMP-01 vs EM01 / ARE-01 vs AR01 / ALM-01 vs AL01 / CAF-01 vs CA01
+        const aliasMap = { EMP: 'EM', ARE: 'AR', ALM: 'AL', CAF: 'CA' };
+        if (aliasMap[m[1]] && cNoDash === (aliasMap[m[1]] + m[2].padStart(2, '0'))) return true;
+      }
+    }
+    // Si escribió solo un número corto (ej: "01" o "1" -> EM01, "02" -> EM02)
+    if (qNumPad && c === ('EM' + qNumPad)) return true;
+    return false;
+  }
+
+  function findByCodeOrBarcode(query, includeKitchenInsumos = false) {
+    const q = String(query || '').trim().toUpperCase();
+    if (!q) return null;
+    const qNoDash = q.replace(/-/g, '');
+    const qNumPad = /^\d{1,2}$/.test(q) ? q.padStart(2, '0') : '';
+
+    // 1. Variantes de Catálogo v6
+    if (Array.isArray(state.variants)) {
+      const variant = state.variants.find(v => matchesShortOrBarcode(v, q, qNoDash, qNumPad));
+      if (variant) {
+        const prod = (state.products || []).find(p => p.id === variant.productId);
+        return { kind: 'variant', item: variant, product: prod, isDish: true };
+      }
+    }
+
+    // 2. Platos (espejo o legado)
+    if (Array.isArray(state.dishes)) {
+      const dish = state.dishes.find(d => matchesShortOrBarcode(d, q, qNoDash, qNumPad));
+      if (dish) return { kind: 'dish', item: dish };
+    }
+
+    // 3. Retail Items & Inventario
+    if (Array.isArray(state.retailItems)) {
+      const ret = state.retailItems.find(i => matchesShortOrBarcode(i, q, qNoDash, ''));
+      if (ret) return { kind: 'inventory', item: ret };
+    }
+
+    if (Array.isArray(state.inventory)) {
+      const inv = state.inventory.find(i => {
+        if (!includeKitchenInsumos && !i.sellable) return false;
+        return matchesShortOrBarcode(i, q, qNoDash, '');
+      });
+      if (inv) return { kind: 'inventory', item: inv };
+    }
+
+    return null;
+  }
+
+  function getItemsForGroup(groupId) {
+    const GROUP_MAP = {
+      empanadas: 'fritos',
+      pastelitos: 'fritos',
+      papas: 'fritos',
+      almuerzos: 'almuerzos',
+      cafe: 'cafeteria',
+      bebidas: 'bebidas',
+      refrescos: 'bebidas',
+      cervezas: 'cervezas',
+      chucherias: 'chucherias',
+      cigarros: 'cigarros',
+      viveres: 'viveres',
+      arepas: 'arepas',
+      fritos: 'fritos',
+      cafeteria: 'cafeteria'
+    };
+    const targetFamily = GROUP_MAP[groupId] || groupId;
+
+    const dishes = (state.dishes || []).filter(d => d.group === targetFamily || d.group === groupId).map(d => ({
+      kind: 'dish',
+      id: d.id,
+      code: d.code,
+      barcode: d.barcode,
+      name: d.name,
+      category: d.category,
+      group: d.group,
+      priceUsd: d.priceUsd,
+      emoji: d.emoji,
+      img: d.img,
+      stock: calcDishMaxPortions(d),
+      unit: 'plato',
+      raw: d
+    }));
+
+    const prods = (state.inventory || []).filter(i => i.sellable === true && (i.group === targetFamily || i.group === groupId || i.familyId === targetFamily)).map(i => ({
+      kind: 'inventory',
+      id: i.id,
+      code: i.code,
+      barcode: i.barcode,
+      qrCode: i.qrCode,
+      name: i.name,
+      category: i.category,
+      group: i.group || i.familyId,
+      priceUsd: i.priceUsd,
+      emoji: i.emoji,
+      img: i.img,
+      stock: i.stock,
+      unit: i.unit,
+      raw: i
+    }));
+
+    return [...dishes, ...prods];
+  }
+
+  function normalizePagoMovilRefToken(refStr) {
+    const raw = String(refStr || '').trim();
+    if (!raw) return '';
+    const low = raw.toLowerCase();
+    if (low === 'directo' || low === 'pago directo' || low === 'n/a' || low === 'na' || low === 'ninguna' || low === 'sin ref' || low === 'sin referencia') {
+      return '';
+    }
+    const clean = raw.replace(/[^0-9a-zA-Z]/g, '');
+    if (clean.length < 4 || !/\d/.test(clean)) return '';
+    return clean;
+  }
+
+  function findUsedPagoMovilRef(refStr) {
+    const clean = normalizePagoMovilRefToken(refStr);
+    if (!clean) return null;
+    for (const s of (state.sales || [])) {
+      if (!s || s.voided) continue;
+      for (const p of (s.payments || [])) {
+        if (p && p.method === 'Pago Móvil') {
+          const stored = normalizePagoMovilRefToken(p.ref);
+          if (stored.length >= 4) {
+            if (stored === clean || stored.endsWith(clean) || clean.endsWith(stored)) {
+              return {
+                sale: s,
+                payment: p,
+                matchedRef: stored,
+                clean
+              };
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function isPagoMovilRefUsed(refStr) {
+    return !!findUsedPagoMovilRef(refStr);
+  }
+
+  /* Parser inteligente de SMS / Notificación bancaria venezolana */
+  function parsePagoMovilSms(text) {
+    if (!text || typeof text !== 'string') return null;
+    const str = text.trim();
+    let ref = '';
+    const refMatch = str.match(/(?:ref(?:erencia)?|nro|operaci[oó]n|num|doc)[\s.:#]*([0-9]{4,10})/i) ||
+                     str.match(/\b([0-9]{6,8})\b/);
+    if (refMatch) ref = refMatch[1];
+
+    let amountBs = 0;
+    const bsMatch = str.match(/(?:bs\.?|bol[ií]vares|monto:?)[\s]*([0-9]+(?:[.,][0-9]{1,2})?)/i) ||
+                    str.match(/([0-9]+(?:[.,][0-9]{1,2})?)[\s]*(?:bs|ves)/i);
+    if (bsMatch) {
+      amountBs = parseFloat(bsMatch[1].replace(',', '.'));
+    }
+
+    let phone = '';
+    const phoneMatch = str.match(/\b(04(?:12|14|24|16|26)[0-9]{7})\b/) ||
+                       str.match(/\b(04\d{2}[-\s]?\d{7})\b/);
+    if (phoneMatch) phone = phoneMatch[1].replace(/[-\s]/g, '');
+
+    let bank = '';
+    if (/venezuela|bdv|0102/i.test(str)) bank = '0102 - Venezuela';
+    else if (/banesco|0134/i.test(str)) bank = '0134 - Banesco';
+    else if (/mercantil|tpago|0105/i.test(str)) bank = '0105 - Mercantil';
+    else if (/provincial|bbva|0108/i.test(str)) bank = '0108 - Provincial';
+    else if (/bancamiga|0172/i.test(str)) bank = '0172 - Bancamiga';
+    else if (/bnc|0191/i.test(str)) bank = '0191 - BNC';
+
+    return {
+      reference: ref,
+      amountBs: isNaN(amountBs) ? 0 : amountBs,
+      phone,
+      bank,
+      raw: str
+    };
+  }
+
+  /* ==========================================================================
+     MOTOR KARDEX & AUDITORÍA INMUTABLE DE MOVIMIENTOS
+     - Entrada por Compra Proveedor (COMPRA)
+     - Salida por Venta Mostrador (VENTA)
+     - Salida por Merma / Vencimiento / Desperdicio (MERMA)
+     - Salida por Consumo de Personal / Almuerzo Empleados (CONSUMO_PERSONAL)
+     - Ajuste por Conteo Físico Real en Auditoría (AJUSTE_AUDITORIA)
+     - Transformación de Cocina (PRODUCCION_COCINA / SALIDA_OLLA)
+     ========================================================================== */
+  function recordMovementInternal(payload) {
+    if (!Array.isArray(state.kardex)) state.kardex = [];
+    const item = getInsumoById(payload.itemId);
+    const kId = 'KDX-' + Date.now().toString().slice(-6) + Math.floor(Math.random() * 90 + 10);
+    const prev = Number(payload.prevStock !== undefined ? payload.prevStock : (item ? item.stock : 0));
+    const next = Number(payload.nextStock !== undefined ? payload.nextStock : (item ? item.stock : 0));
+    const entry = {
+      id: kId,
+      timestamp: payload.timestamp || new Date().toISOString(),
+      itemId: payload.itemId,
+      itemCode: item ? item.code : (payload.itemCode || '—'),
+      itemName: item ? item.name : (payload.itemName || 'Artículo'),
+      itemType: item ? (item.sellable ? 'venta' : 'insumo') : (payload.itemType || 'general'),
+      action: payload.action || 'MOVIMIENTO',
+      qty: Number(Number(payload.qty || 0).toFixed(3)),
+      unit: item ? item.unit : (payload.unit || 'und'),
+      costUsd: Number(Number(payload.costUsd || (item ? item.costUsd : 0)).toFixed(4)),
+      prevStock: Number(prev.toFixed(3)),
+      nextStock: Number(next.toFixed(3)),
+      docRef: payload.docRef || '—',
+      supplier: payload.supplier || '',
+      responsible: payload.responsible || 'Sistema',
+      notes: payload.notes || ''
+    };
+    state.kardex.unshift(entry);
+    if (state.kardex.length > 2500) state.kardex.length = 2500;
+    return entry;
+  }
+
+  function calcItemModifiersUnitCost(lineItem) {
+    if (!lineItem) return 0;
+    const mods = [].concat(
+      Array.isArray(lineItem.selectedModifiers) ? lineItem.selectedModifiers : [],
+      Array.isArray(lineItem.modifiers) ? lineItem.modifiers : []
+    );
+    let modUnitCost = 0;
+    mods.forEach(mod => {
+      if (!mod) return;
+      let subCost = 0;
+      const modRecipe = Array.isArray(mod.recipe) ? mod.recipe : [];
+      modRecipe.forEach(ing => {
+        const ins = ing && getInsumoById(ing.insumoId || ing.itemId);
+        if (ins) {
+          subCost += (Number(ins.costUsd) || 0) * (Number(ing.qty) || 0);
+        }
+      });
+      if (mod.insumoId && Number(mod.qty || 0) > 0) {
+        const insDirect = getInsumoById(mod.insumoId);
+        if (insDirect) {
+          subCost += (Number(insDirect.costUsd) || 0) * (Number(mod.qty) || 0);
+        }
+      }
+      if (subCost === 0 && !modRecipe.length && !mod.insumoId && Number(mod.costUsd) > 0) {
+        subCost += Number(mod.costUsd) || 0;
+      }
+      modUnitCost += subCost;
+    });
+    return modUnitCost;
+  }
+
+  function recordSale(salePayload) {
+    const orderNum = state.settings.nextOrderNumber++;
+    let totalCostUsd = 0;
+
+    salePayload.items.forEach(line => {
+      if (line.isDish || line.isVariant) {
+        const dish = (state.variants && state.variants.find(v => v.id === line.refId || v.id === line.variantId))
+                  || (state.dishes && state.dishes.find(d => d.id === line.refId));
+        if (dish) {
+          const unitCost = calcDishCost(dish);
+          totalCostUsd += unitCost * line.qty;
+          const ingredients = dish.recipe || dish.ingredients || [];
+          ingredients.forEach(ing => {
+            const ins = getInsumoById(ing.insumoId);
+            if (ins) {
+              const prev = Number(ins.stock || 0);
+              const deduct = Number((ing.qty * line.qty).toFixed(4));
+              ins.stock = Math.max(0, Number((prev - deduct).toFixed(4)));
+              recordMovementInternal({
+                itemId: ins.id,
+                action: 'VENTA',
+                qty: -deduct,
+                costUsd: ins.costUsd,
+                prevStock: prev,
+                nextStock: ins.stock,
+                docRef: 'ORD-' + orderNum,
+                responsible: salePayload.cashier || 'Caja Principal',
+                notes: `Consumo receta: ${line.qty}x ${dish.name}`
+              });
+            }
+          });
+        }
+
+        // Descontar insumos y sumar costo de Modificadores / Extras
+        const mods = [].concat(
+          Array.isArray(line.selectedModifiers) ? line.selectedModifiers : [],
+          Array.isArray(line.modifiers) ? line.modifiers : []
+        );
+        let modExtraCost = 0;
+        mods.forEach(mod => {
+          if (!mod) return;
+          let singleModCost = 0;
+          const modRecipe = mod.recipe || [];
+          modRecipe.forEach(ing => {
+            const ins = getInsumoById(ing.insumoId || ing.itemId);
+            if (ins) {
+              const prev = Number(ins.stock || 0);
+              const deduct = Number((Number(ing.qty || 0) * line.qty).toFixed(4));
+              singleModCost += (Number(ins.costUsd) || 0) * (Number(ing.qty) || 0);
+              ins.stock = Math.max(0, Number((prev - deduct).toFixed(4)));
+              recordMovementInternal({
+                itemId: ins.id,
+                action: 'VENTA',
+                qty: -deduct,
+                costUsd: ins.costUsd,
+                prevStock: prev,
+                nextStock: ins.stock,
+                docRef: 'ORD-' + orderNum,
+                responsible: salePayload.cashier || 'Caja Principal',
+                notes: `Consumo extra receta: ${line.qty}x ${mod.name}`
+              });
+            }
+          });
+          if (mod.insumoId && Number(mod.qty || 0) > 0) {
+            const insDirect = getInsumoById(mod.insumoId);
+            if (insDirect) {
+              const prev = Number(insDirect.stock || 0);
+              const deduct = Number((Number(mod.qty) * line.qty).toFixed(4));
+              singleModCost += (Number(insDirect.costUsd) || 0) * Number(mod.qty);
+              insDirect.stock = Math.max(0, Number((prev - deduct).toFixed(4)));
+              recordMovementInternal({
+                itemId: insDirect.id,
+                action: 'VENTA',
+                qty: -deduct,
+                costUsd: insDirect.costUsd,
+                prevStock: prev,
+                nextStock: insDirect.stock,
+                docRef: 'ORD-' + orderNum,
+                responsible: salePayload.cashier || 'Caja Principal',
+                notes: `Consumo extra receta: ${line.qty}x ${mod.name}`
+              });
+            }
+          }
+          if (singleModCost === 0 && !modRecipe.length && !mod.insumoId && Number(mod.costUsd) > 0) {
+            singleModCost += Number(mod.costUsd) || 0;
+          }
+          modExtraCost += singleModCost;
+        });
+        totalCostUsd += modExtraCost * line.qty;
+      } else {
+        const inv = getInsumoById(line.refId);
+        if (inv) {
+          totalCostUsd += (Number(inv.costUsd) || 0) * line.qty;
+          const prev = Number(inv.stock || 0);
+          inv.stock = Math.max(0, Number((prev - line.qty).toFixed(4)));
+          recordMovementInternal({
+            itemId: inv.id,
+            action: 'VENTA',
+            qty: -line.qty,
+            costUsd: inv.costUsd,
+            prevStock: prev,
+            nextStock: inv.stock,
+            docRef: 'ORD-' + orderNum,
+            responsible: salePayload.cashier || 'Caja Principal',
+            notes: `Venta mostrador POS (${line.qty} ${inv.unit})`
+          });
+        }
+      }
+    });
+
+    if (!state.settings.fiscalConfig) {
+      state.settings.fiscalConfig = JSON.parse(JSON.stringify(DEFAULT_STATE.settings.fiscalConfig));
+    }
+    const fiscalCfg = state.settings.fiscalConfig;
+    if (!fiscalCfg.currentInvoiceNumber || fiscalCfg.currentInvoiceNumber < 1) {
+      fiscalCfg.currentInvoiceNumber = orderNum;
+    }
+    const fiscalNum = fiscalCfg.currentInvoiceNumber++;
+    const bcvRate = Number(state.settings.rateBcv) || 42.85;
+
+    // Enriquecer cada línea con su clasificación IVA del catálogo
+    const enrichedLines = (salePayload.items || []).map(line => {
+      const invItem = state.inventory.find(i => i.id === line.refId);
+      const varItem = (state.variants || []).find(v => v.id === line.refId || v.id === line.variantId);
+      const source = varItem || invItem || {};
+      const itemForTax = Object.assign({}, source, line);
+      const ivaClass = (window.MTPTax && window.MTPTax.classify)
+        ? window.MTPTax.classify(itemForTax)
+        : (line.isDish || line.isVariant ? 'G16' : (source.iva || (source.taxExempt ? 'E' : 'G16')));
+      line.iva = ivaClass;
+      line.taxType = ivaClass === 'E' ? 'E' : (ivaClass === 'R8' ? 'R' : 'G');
+      line.taxExempt = ivaClass === 'E';
+      line.subtotalUsd = Number(((Number(line.qty) || 0) * (Number(line.priceUsd) || 0)).toFixed(2));
+      return line;
+    });
+
+    const changeUsdCashGiven = Number(salePayload.changeGiven && salePayload.changeGiven.usdCashGiven) || 0;
+    const changeBsCashGiven = Number(salePayload.changeGiven && salePayload.changeGiven.bsCashGiven) || 0;
+    const changeBsPmGiven = Number(salePayload.changeGiven && salePayload.changeGiven.bsPmGiven) || 0;
+
+    const taxResult = (window.MTPTax && window.MTPTax.computeTotals)
+      ? window.MTPTax.computeTotals({
+          lines: enrichedLines,
+          payments: salePayload.payments || [],
+          changeUsdCashGiven: changeUsdCashGiven,
+          changeBsCashGiven: changeBsCashGiven,
+          changeBsPmGiven: changeBsPmGiven,
+          changeRate: Number(salePayload.changeGiven && salePayload.changeGiven.rateUsed) || bcvRate,
+          rateBcv: bcvRate,
+          settings: state.settings
+        })
+      : (function fallbackTax() {
+          let exCents = 0, g16Cents = 0;
+          enrichedLines.forEach(l => {
+            const c = Math.round((Number(l.qty) || 0) * Math.round((Number(l.priceUsd) || 0) * 100));
+            if (l.iva === 'E') exCents += c;
+            else g16Cents += c;
+          });
+          const mode = String(state.settings.ivaMode || 'RECARGO').toUpperCase();
+          const baseG16 = mode === 'INCLUIDO' ? Math.round(g16Cents / 1.16) : g16Cents;
+          const iva16 = mode === 'INCLUIDO' ? (g16Cents - baseG16) : Math.round(baseG16 * 0.16);
+          const subBase = exCents + baseG16;
+          const totBeforeIgtf = subBase + iva16;
+          return {
+            ivaMode: mode,
+            subtotalBaseUsd: Number((subBase / 100).toFixed(2)),
+            exentoUsd: Number((exCents / 100).toFixed(2)),
+            exentoBs: Number(((exCents * bcvRate) / 100).toFixed(2)),
+            baseG16Usd: Number((baseG16 / 100).toFixed(2)),
+            baseG16Bs: Number(((baseG16 * bcvRate) / 100).toFixed(2)),
+            totalIvaUsd: Number((iva16 / 100).toFixed(2)),
+            totalIvaBs: Number(((iva16 * bcvRate) / 100).toFixed(2)),
+            igtfUsd: 0,
+            igtfBs: 0,
+            totalUsd: Number((totBeforeIgtf / 100).toFixed(2)),
+            totalBs: Number(((totBeforeIgtf * bcvRate) / 100).toFixed(2))
+          };
+        })();
+
+    // Verificación de coherencia: el total que se cobró en pantalla debe ser
+    // exactamente el que se registra. Si difieren, es un bug de cálculo.
+    if (typeof salePayload.totalUsd === 'number' && Math.abs(taxResult.totalUsd - salePayload.totalUsd) > 0.011) {
+      console.warn('[MI-TIENDA-POS] El total calculado difiere del cobrado:',
+        taxResult.totalUsd, 'vs', salePayload.totalUsd);
+    }
+
+    const hasRealFiscalMachine = Boolean(
+      fiscalCfg.enabled &&
+      fiscalCfg.mode !== 'INTERNO' &&
+      fiscalCfg.serialNumber &&
+      fiscalCfg.serialNumber !== 'Z4A2098124'
+    );
+
+    const fiscalData = {
+      mode: hasRealFiscalMachine ? fiscalCfg.mode : 'INTERNO',
+      isFiscalValid: hasRealFiscalMachine,
+      ivaMode: taxResult.ivaMode,
+      brand: hasRealFiscalMachine ? (fiscalCfg.brand || 'THE_FACTORY_HKA') : '',
+      serialNumber: hasRealFiscalMachine ? fiscalCfg.serialNumber : '',
+      reportZ: hasRealFiscalMachine ? (fiscalCfg.lastReportZ || 0) : 0,
+      fiscalInvoiceNumber: hasRealFiscalMachine ? String(fiscalNum).padStart(8, '0') : '',
+      controlNumber: hasRealFiscalMachine ? ('00-' + String(fiscalNum).padStart(8, '0')) : '',
+      internalOrderNumber: String(orderNum),
+      storeRif: state.settings.rif || '',
+      storeName: state.settings.storeName || 'MI TIENDA POS',
+      storeAddress: state.settings.address || 'Mostrador Principal',
+      customerRif: salePayload.customerRif || 'V-00000000',
+      taxExemptUsd: taxResult.exentoUsd,
+      taxExemptBs: taxResult.exentoBs,
+      taxableBaseUsd: taxResult.baseG16Usd,
+      taxableBaseBs: taxResult.baseG16Bs,
+      ivaUsd: taxResult.totalIvaUsd,
+      ivaBs: taxResult.totalIvaBs,
+      igtfUsd: taxResult.igtfUsd,
+      igtfBs: taxResult.igtfBs,
+      totalBs: taxResult.totalBs,
+      totalUsd: taxResult.totalUsd
+    };
+
+    const newSale = {
+      id: 'ORD-' + orderNum,
+      orderNumber: orderNum,
+      createdAt: new Date().toISOString(),
+      cashier: salePayload.cashier || 'Caja Principal',
+      customer: salePayload.customer || 'Mostrador Rápido',
+      customerRif: salePayload.customerRif || 'V-00000000',      fiscalData,
+      rateBcv: bcvRate,
+      rateEur: state.settings.rateEur,
+      rateUsdt: state.settings.rateUsdt,
+      subtotalUsd: taxResult.subtotalBaseUsd,
+      exentoUsd: taxResult.exentoUsd,
+      baseG16Usd: taxResult.baseG16Usd,
+      ivaUsd: taxResult.totalIvaUsd,
+      ivaBs: taxResult.totalIvaBs,
+      igtfUsd: taxResult.igtfUsd,
+      igtfBs: taxResult.igtfBs,
+      totalUsd: taxResult.totalUsd,
+      totalBs: taxResult.totalBs,
+      costUsd: Number(totalCostUsd.toFixed(2)),
+      profitUsd: Number((taxResult.subtotalBaseUsd - totalCostUsd).toFixed(2)),
+      items: salePayload.items,
+      payments: salePayload.payments || [],
+      changeGiven: salePayload.changeGiven || {
+        totalChangeUsd: 0,
+        totalChangeBs: 0,
+        usdCashGiven: 0,
+        bsCashGiven: 0,
+        bsPmGiven: 0,
+        breakdown: 'Pago exacto'
+      }
+    };
+
+    state.sales.unshift(newSale);
+    saveState(state, { eventType: 'SALE_CREATED', eventPayload: newSale });
+    return newSale;
+  }
+
+  /* Registrar Gasto Operativo / Salida de Caja Chica o Gaveta */
+  function recordExpense(payload) {
+    const bcv = state.settings.rateBcv || 42.85;
+    const rateUsed = Number(payload.rateUsed) || bcv;
+    const amountUsd = Number(payload.amountUsd) || 0;
+    const amountBs = Number(payload.amountBs) || Number((amountUsd * rateUsed).toFixed(2));
+    const exp = {
+      id: 'GAS-' + Date.now().toString().slice(-5),
+      createdAt: new Date().toISOString(),
+      category: payload.category || 'Gasto Operativo',
+      description: payload.description || 'Gasto registrado en turno',
+      paymentSource: payload.paymentSource || 'Efectivo USD',
+      amountUsd: Number(amountUsd.toFixed(2)),
+      amountBs: Number(amountBs.toFixed(2)),
+      rateUsed,
+      responsible: payload.responsible || 'Caja / Admin'
+    };
+    if (!Array.isArray(state.expenses)) state.expenses = [];
+    state.expenses.unshift(exp);
+    saveState(state, { eventType: 'EXPENSE_CREATED', eventPayload: exp });
+    return exp;
+  }
+
+  /* Compra Diaria de Insumos de Cocina (Aliños, Papas, Carnes, Pollo, Queso, Harina, etc.)
+     Conecta la realidad: Suma los kilos a la cocina Y descuenta el dinero de la caja */
+  function recordKitchenPurchase(payload) {
+    const insumo = getInsumoById(payload.insumoId);
+    if (!insumo) return null;
+
+    const qty = Math.max(0.01, Number(payload.qty) || 1);
+    const totalCostUsd = Math.max(0, Number(payload.totalCostUsd) || 0);
+    const unitCost = qty > 0 && totalCostUsd > 0 ? Number((totalCostUsd / qty).toFixed(2)) : insumo.costUsd;
+
+    const prevStock = Number(insumo.stock || 0);
+    insumo.stock = Number((prevStock + qty).toFixed(3));
+    if (unitCost > 0) {
+      insumo.prevCostUsd = insumo.costUsd;
+      insumo.costUsd = unitCost;
+    }
+
+    const docNum = payload.docNumber || ('REC-' + Date.now().toString().slice(-5));
+    const desc = `Compra ${qty} ${insumo.unit} de ${insumo.name} ($${unitCost.toFixed(2)}/${insumo.unit})${payload.supplier ? ' - Prov: ' + payload.supplier : ''}`;
+
+    recordMovementInternal({
+      itemId: insumo.id,
+      action: 'COMPRA',
+      qty,
+      costUsd: unitCost,
+      prevStock,
+      nextStock: insumo.stock,
+      docRef: docNum,
+      supplier: payload.supplier || 'Mercado Mayorista / Feria',
+      responsible: payload.responsible || 'Caja / Cocina',
+      notes: desc
+    });
+
+    if (totalCostUsd > 0) {
+      recordExpense({
+        category: 'Insumos de Cocina (Aliños / Carnes / Verduras)',
+        description: desc,
+        paymentSource: payload.paymentSource || 'Efectivo USD',
+        amountUsd: totalCostUsd,
+        responsible: payload.responsible || 'Caja / Cocina'
+      });
+    }
+
+    saveState(state, {
+      eventType: 'PURCHASE_RECEIVED',
+      eventPayload: {
+        id: 'CMP-' + Date.now().toString().slice(-6),
+        docNumber: docNum,
+        invoiceNo: docNum,
+        supplier: payload.supplier || 'Mercado Mayorista / Feria',
+        paymentMethod: payload.paymentSource || 'Efectivo USD',
+        totalUsd: Number(totalCostUsd.toFixed(2)),
+        responsible: payload.responsible || 'Caja / Cocina',
+        items: [{
+          itemId: insumo.id,
+          id: insumo.id,
+          code: insumo.code,
+          name: insumo.name,
+          unit: insumo.unit,
+          quantity: qty,
+          qty: qty,
+          unitCostUsd: unitCost,
+          costUsd: unitCost
+        }]
+      }
+    });
+
+    return { insumo, qty, totalCostUsd, unitCost };
+  }
+
+  function deleteExpense(expId) {
+    if (!Array.isArray(state.expenses)) return;
+    state.expenses = state.expenses.filter(e => e.id !== expId);
+    saveState(state, { eventType: 'EXPENSE_DELETED', eventPayload: { id: expId } });
+  }
+
+  /* Calculadora de Entrada por Bulto / Caja / Cartón -> Unidad o Kilo */
+  function addBulkStockEntry(payload) {
+    const item = getInsumoById(payload.itemId);
+    if (!item) return null;
+
+    const packsCount = Math.max(0.01, Number(payload.packsCount) || 1);
+    const unitsPerPack = Math.max(0.01, Number(payload.unitsPerPack) || 1);
+    const totalUnitsAdded = Number((packsCount * unitsPerPack).toFixed(3));
+    const packCostUsd = Number(payload.packCostUsd) || 0;
+    const totalCostUsd = Number((packsCount * packCostUsd).toFixed(2));
+    const unitCostUsd = totalUnitsAdded > 0 && packCostUsd > 0
+      ? Number((totalCostUsd / totalUnitsAdded).toFixed(4))
+      : item.costUsd;
+
+    const prevStock = Number(item.stock || 0);
+    item.prevCostUsd = item.costUsd;
+    if (unitCostUsd > 0) {
+      item.costUsd = Number(unitCostUsd.toFixed(2));
+    }
+    item.stock = Number((prevStock + totalUnitsAdded).toFixed(3));
+
+    if (item.sellable && payload.newSalePriceUsd && Number(payload.newSalePriceUsd) > 0) {
+      item.priceUsd = Number(Number(payload.newSalePriceUsd).toFixed(2));
+    }
+
+    const docNum = payload.docNumber || ('BLT-' + Date.now().toString().slice(-5));
+    const supplier = payload.supplier || 'Distribuidor Mayorista';
+
+    recordMovementInternal({
+      itemId: item.id,
+      action: 'COMPRA',
+      qty: totalUnitsAdded,
+      costUsd: unitCostUsd,
+      prevStock,
+      nextStock: item.stock,
+      docRef: docNum,
+      supplier,
+      responsible: payload.responsible || 'Administrador',
+      notes: `Entrada ${packsCount} bulto/caja (${totalUnitsAdded} ${item.unit})`
+    });
+
+    const bulkPurchasePayload = {
+      id: 'CMP-' + Date.now().toString().slice(-6),
+      docNumber: docNum,
+      invoiceNo: docNum,
+      supplier,
+      paymentMethod: payload.paymentMethod || payload.paymentSource || 'Efectivo USD',
+      totalUsd: totalCostUsd,
+      responsible: payload.responsible || 'Administrador',
+      items: [{
+        itemId: item.id,
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        unit: item.unit,
+        quantity: totalUnitsAdded,
+        qty: totalUnitsAdded,
+        unitCostUsd,
+        costUsd: unitCostUsd,
+        newSalePriceUsd: item.sellable ? item.priceUsd : undefined
+      }]
+    };
+
+    if (payload.registerAsExpense && totalCostUsd > 0) {
+      recordExpense({
+        category: 'Compra Mercancía / Insumos (Contado)',
+        description: `Entrada ${packsCount} bulto/caja (${totalUnitsAdded} ${item.unit}) de ${item.name}`,
+        paymentSource: payload.paymentSource || 'Efectivo USD',
+        amountUsd: totalCostUsd,
+        responsible: payload.responsible || 'Administrador'
+      });
+    }
+
+    saveState(state, { eventType: 'PURCHASE_RECEIVED', eventPayload: bulkPurchasePayload });
+
+    return {
+      item,
+      totalUnitsAdded,
+      unitCostUsd,
+      totalCostUsd
+    };
+  }
+
+  /* Recepción Formal Multi-Ítem a Proveedores (Factura / Nota de Entrega) */
+  function recordMultiItemPurchase(payload) {
+    if (!payload || !Array.isArray(payload.items) || !payload.items.length) {
+      toast('Debes agregar al menos un artículo a la compra', 'warn');
+      return null;
+    }
+
+    const docNumber = String(payload.docNumber || ('FAC-' + Date.now().toString().slice(-5))).trim();
+    const supplier = String(payload.supplier || 'Proveedor Mayorista').trim();
+    const paymentMethod = payload.paymentMethod || 'Efectivo USD';
+    const responsible = payload.responsible || 'Administrador';
+    const notes = payload.notes || 'Recepción de mercancía multi-ítem';
+    const bcv = Number(state.settings.rateBcv) || 42.85;
+
+    let totalPurchaseUsd = 0;
+    const processedItems = [];
+
+    payload.items.forEach(line => {
+      const item = getInsumoById(line.itemId);
+      if (!item) return;
+
+      const packs = Math.max(0.01, Number(line.packsCount) || 1);
+      const unitsPerPack = Math.max(0.01, Number(line.unitsPerPack) || 1);
+      const totalUnitsAdded = Number((packs * unitsPerPack).toFixed(3));
+      const packCostUsd = Math.max(0, Number(line.packCostUsd) || 0);
+      const lineCostUsd = Number((packs * packCostUsd).toFixed(2));
+      const unitCostUsd = totalUnitsAdded > 0 && packCostUsd > 0
+        ? Number((lineCostUsd / totalUnitsAdded).toFixed(4))
+        : item.costUsd;
+
+      const prevStock = Number(item.stock || 0);
+      item.prevCostUsd = item.costUsd;
+      if (unitCostUsd > 0) {
+        item.costUsd = Number(unitCostUsd.toFixed(2));
+      }
+      item.stock = Number((prevStock + totalUnitsAdded).toFixed(3));
+
+      if (item.sellable && line.newSalePriceUsd && Number(line.newSalePriceUsd) > 0) {
+        item.priceUsd = Number(Number(line.newSalePriceUsd).toFixed(2));
+      }
+
+      totalPurchaseUsd += lineCostUsd;
+
+      recordMovementInternal({
+        itemId: item.id,
+        action: 'COMPRA',
+        qty: totalUnitsAdded,
+        costUsd: unitCostUsd,
+        prevStock,
+        nextStock: item.stock,
+        docRef: docNumber,
+        supplier,
+        responsible,
+        notes: `Entrada compra multi-ítem (${packs} bultos = ${totalUnitsAdded} ${item.unit})`
+      });
+
+      processedItems.push({
+        itemId: item.id,
+        code: item.code,
+        name: item.name,
+        unit: item.unit,
+        packsCount: packs,
+        unitsPerPack,
+        totalUnits: totalUnitsAdded,
+        packCostUsd,
+        unitCostUsd,
+        totalCostUsd: lineCostUsd,
+        newSalePriceUsd: item.priceUsd
+      });
+    });
+
+    const purchaseRecord = {
+      id: 'CMP-' + Date.now().toString().slice(-6),
+      createdAt: new Date().toISOString(),
+      docNumber,
+      supplier,
+      paymentMethod,
+      totalUsd: Number(totalPurchaseUsd.toFixed(2)),
+      totalBs: Number((totalPurchaseUsd * bcv).toFixed(2)),
+      itemsCount: processedItems.length,
+      items: processedItems,
+      notes,
+      responsible
+    };
+
+    if (!Array.isArray(state.purchases)) state.purchases = [];
+    state.purchases.unshift(purchaseRecord);
+
+    if (paymentMethod !== 'Crédito / Cuentas por Pagar' && paymentMethod !== 'NONE' && totalPurchaseUsd > 0) {
+      recordExpense({
+        category: 'Compra Mercancía / Proveedor',
+        description: `Compra Doc ${docNumber} a ${supplier} (${processedItems.length} artículos)`,
+        paymentSource: paymentMethod,
+        amountUsd: totalPurchaseUsd,
+        responsible
+      });
+    }
+
+    saveState(state, { eventType: 'PURCHASE_RECEIVED', eventPayload: purchaseRecord });
+
+    return purchaseRecord;
+  }
+
+  /* Registro Formal de Mermas, Vencimientos y Autoconsumo */
+  function recordWaste(payload) {
+    const item = getInsumoById(payload.itemId);
+    if (!item) {
+      toast('Artículo no encontrado', 'err');
+      return null;
+    }
+
+    const qty = Math.max(0.01, Number(payload.qty) || 1);
+    const reason = payload.reason || 'Deterioro / Descomposición';
+    const isStaffMeal = payload.isStaffMeal || reason.toLowerCase().includes('personal') || reason.toLowerCase().includes('almuerzo');
+    const actionType = isStaffMeal ? 'CONSUMO_PERSONAL' : 'MERMA';
+    const responsible = payload.responsible || 'Responsable de Turno';
+    const notes = payload.notes || '';
+
+    const prevStock = Number(item.stock || 0);
+    const nextStock = Number(Math.max(0, prevStock - qty).toFixed(3));
+    item.stock = nextStock;
+
+    const totalCostUsd = Number((qty * (Number(item.costUsd) || 0)).toFixed(2));
+    const wasteId = 'MRM-' + Date.now().toString().slice(-5);
+
+    const wasteEntry = {
+      id: wasteId,
+      createdAt: new Date().toISOString(),
+      itemId: item.id,
+      itemCode: item.code,
+      itemName: item.name,
+      qty,
+      unit: item.unit,
+      unitCostUsd: item.costUsd,
+      totalCostUsd,
+      reason,
+      responsible,
+      notes
+    };
+
+    if (!Array.isArray(state.wasteRecords)) state.wasteRecords = [];
+    state.wasteRecords.unshift(wasteEntry);
+
+    recordMovementInternal({
+      itemId: item.id,
+      action: actionType,
+      qty: -qty,
+      costUsd: item.costUsd,
+      prevStock,
+      nextStock,
+      docRef: wasteId,
+      responsible,
+      notes: `${reason}${notes ? ' - ' + notes : ''}`
+    });
+
+    saveState(state, { eventType: 'WASTE_RECORDED', eventPayload: wasteEntry });
+    return wasteEntry;
+  }
+
+  /* Ajuste de Inventario por Conteo Físico Real (Auditoría Ciega) */
+  function recordAuditAdjustment(payload) {
+    const item = getInsumoById(payload.itemId);
+    if (!item) return null;
+
+    const realStock = Math.max(0, Number(payload.realPhysicalStock) || 0);
+    const prevStock = Number(item.stock || 0);
+    const diff = Number((realStock - prevStock).toFixed(3));
+    const responsible = payload.responsible || 'Auditor / Dueño';
+    const reason = payload.reason || 'Ajuste de inventario por conteo físico';
+
+    item.stock = realStock;
+
+    recordMovementInternal({
+      itemId: item.id,
+      action: 'AJUSTE_AUDITORIA',
+      qty: diff,
+      costUsd: item.costUsd,
+      prevStock,
+      nextStock: realStock,
+      docRef: 'AUD-' + Date.now().toString().slice(-5),
+      responsible,
+      notes: `${reason} (Diferencia: ${diff > 0 ? '+' : ''}${diff} ${item.unit})`
+    });
+
+    saveState(state, {
+      eventType: 'STOCK_ADJUSTED',
+      eventPayload: {
+        itemId: item.id,
+        id: item.id,
+        itemName: item.name,
+        unit: item.unit,
+        newStock: realStock,
+        stock: realStock,
+        difference: diff,
+        qty: diff,
+        action: 'AJUSTE_AUDITORIA',
+        reason
+      }
+    });
+    return { item, prevStock, realStock, diff };
+  }
+
+  /* Obtener Historial Kardex de un Ítem o de Todo el Negocio */
+  function getKardexForItem(itemId, limit = 150) {
+    if (!Array.isArray(state.kardex)) return [];
+    if (!itemId || itemId === 'ALL') return state.kardex.slice(0, limit);
+    return state.kardex.filter(k => k.itemId === itemId).slice(0, limit);
+  }
+
+  /* Crear Rápidamente una Nueva Variedad o Artículo dentro de una Categoría */
+  function quickCreateItemInGroup(payload) {
+    const grp = POS_GROUPS.find(g => g.id === payload.groupId) || POS_GROUPS[0];
+    const isDish = payload.kind ? payload.kind === 'dish' : grp.kind === 'dish';
+    const name = String(payload.name || '').trim();
+    if (!name) return null;
+
+    const priceUsd = Math.max(0.05, Number(payload.priceUsd) || 1.00);
+    const costUsd = Math.max(0.01, Number(payload.costUsd) || Number((priceUsd * 0.55).toFixed(2)));
+
+    if (isDish) {
+      const nextNum = (state.variants ? state.variants.length : state.dishes.length) + 1;
+      const code = payload.code || String(nextNum).padStart(2, '0');
+      const dishId = payload.id || ('var-custom-' + Date.now());
+      const defaultRecipe = payload.ingredients || payload.recipe || [
+        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Base Cocina' }
+      ];
+      const existingParent = (state.products || []).find(p => p.familyId === grp.id);
+      const newVariant = {
+        id: dishId,
+        productId: payload.productId || (existingParent ? existingParent.id : 'prod-' + grp.id),
+        familyId: grp.id,
+        code,
+        barcode: payload.barcode || ('8800' + String(nextNum).padStart(3, '0')),
+        name,
+        priceUsd: Number(priceUsd.toFixed(2)),
+        costUsd: Number(costUsd.toFixed(2)),
+        iva: 'G16',
+        ivaType: 'G',
+        taxExempt: false,
+        active: true,
+        order: nextNum,
+        emoji: payload.emoji || grp.emoji || '🥟',
+        img: payload.img || grp.img,
+        recipe: defaultRecipe,
+        ingredients: defaultRecipe
+      };
+      if (!Array.isArray(state.variants)) state.variants = [];
+      state.variants.push(newVariant);
+      saveState(state, {
+        eventType: 'ITEM_SAVED',
+        eventPayload: { item: Object.assign({ kind: 'variant' }, newVariant) }
+      });
+      const createdDish = (state.dishes || []).find(d => d.id === dishId) || newVariant;
+      return { kind: 'dish', item: createdDish };
+    } else {
+      const nextCode = String(600 + state.inventory.length);
+      const code = payload.code || nextCode;
+      const newProd = {
+        id: 'prod-custom-' + Date.now(),
+        code,
+        barcode: payload.barcode || ('75999' + Date.now().toString().slice(-8)),
+        qrCode: 'QR-' + code,
+        group: grp.id,
+        familyId: grp.id,
+        name,
+        category: grp.category || 'Víveres',
+        type: 'venta',
+        sellable: true,
+        active: true,
+        taxExempt: false,
+        iva: 'G16',
+        ivaType: 'G',
+        unit: payload.unit || 'und',
+        stock: Number(payload.stock) >= 0 ? Number(payload.stock) : 24,
+        minStock: Number(payload.minStock) || 6,
+        costUsd: Number(costUsd.toFixed(2)),
+        prevCostUsd: Number(costUsd.toFixed(2)),
+        priceUsd: Number(priceUsd.toFixed(2)),
+        emoji: payload.emoji || grp.emoji || '🛒',
+        img: payload.img || grp.img
+      };
+      state.inventory.push(newProd);
+      saveState(state, {
+        eventType: 'ITEM_SAVED',
+        eventPayload: { item: newProd }
+      });
+      return { kind: 'inventory', item: newProd };
+    }
+  }
+
+  /* Análisis Exhaustivo de Ingresos, Costos, Gastos, Gaveta y Rentabilidad */
+  function getFinancialAnalytics() {
+    const bcv = Number(state.settings.rateBcv) || 42.85;
+    const eur = Number(state.settings.rateEur) || 46.60;
+    const usdt = Number(state.settings.rateUsdt) || 51.40;
+    const sales = state.sales || [];
+    const expenses = state.expenses || [];
+    const invoices = state.invoices || [];
+
+    let grossSalesUsd = 0;
+    let totalCostOfGoodsUsd = 0;
+    let grossProfitUsd = 0;
+    let kitchenSalesUsd = 0;
+    let kitchenCostUsd = 0;
+    let retailSalesUsd = 0;
+    let retailCostUsd = 0;
+
+    let inUsdCash = 0, inBsCash = 0, inPmBs = 0, inPuntoBs = 0, inZelleUsd = 0;
+    let outChangeUsdCash = 0, outChangeBsCash = 0, outChangePmBs = 0;
+
+    const itemStatsMap = {};
+
+    sales.forEach(s => {
+      if (!s || s.voided) return;
+      grossSalesUsd += Number(s.totalUsd || 0);
+      totalCostOfGoodsUsd += Number(s.costUsd || 0);
+      grossProfitUsd += Number(s.profitUsd || 0);
+
+      outChangeUsdCash += Number((s.changeGiven && s.changeGiven.usdCashGiven) || 0);
+      outChangeBsCash += Number((s.changeGiven && s.changeGiven.bsCashGiven) || 0);
+      outChangePmBs += Number((s.changeGiven && s.changeGiven.bsPmGiven) || 0);
+
+      (s.payments || []).forEach(p => {
+        if (p.method === 'Efectivo USD') inUsdCash += Number(p.amountUsd || 0);
+        else if (p.method === 'Efectivo Bs') inBsCash += Number(p.amountBs || 0);
+        else if (p.method === 'Pago Móvil') inPmBs += Number(p.amountBs || 0);
+        else if (p.method === 'Punto de Venta') inPuntoBs += Number(p.amountBs || 0);
+        else if (p.method === 'Zelle / Transf') inZelleUsd += Number(p.amountUsd || 0);
+      });
+
+      const saleIvaMode = String((s.fiscalData && s.fiscalData.ivaMode) || '').toUpperCase();
+      (s.items || []).forEach(it => {
+        const qty = Number(it.qty || 0);
+        const rawLineSub = Number(it.subtotalUsd != null ? it.subtotalUsd : (qty * Number(it.priceUsd || 0)));
+        const isItemExempt = Boolean(it.taxExempt || it.iva === 'E' || it.taxType === 'E');
+        const taxDiv = (saleIvaMode === 'INCLUIDO' && !isItemExempt)
+          ? ((it.iva === 'R8' || it.taxType === 'R') ? 1.08 : 1.16)
+          : 1;
+        const lineSub = Number((rawLineSub / taxDiv).toFixed(4));
+        let unitCost = 0;
+        if (it.isDish || it.isVariant) {
+          const d = (state.variants || []).find(x => x.id === it.refId || x.id === it.variantId || x.name === it.name)
+                 || (state.dishes || []).find(x => x.id === it.refId || x.name === it.name);
+          unitCost = (d ? calcDishCost(d) : lineSub * 0.45) + calcItemModifiersUnitCost(it);
+          kitchenSalesUsd += lineSub;
+          kitchenCostUsd += unitCost * qty;
+        } else {
+          const inv = state.inventory.find(x => x.id === it.refId || x.name === it.name);
+          unitCost = inv ? Number(inv.costUsd || 0) : lineSub * 0.65;
+          retailSalesUsd += lineSub;
+          retailCostUsd += unitCost * qty;
+        }
+        const key = it.name;
+        if (!itemStatsMap[key]) {
+          itemStatsMap[key] = { name: it.name, isDish: !!it.isDish, qty: 0, revenueUsd: 0, profitUsd: 0 };
+        }
+        itemStatsMap[key].qty += qty;
+        itemStatsMap[key].revenueUsd += lineSub;
+        itemStatsMap[key].profitUsd += (lineSub - unitCost * qty);
+      });
+    });
+
+    let totalExpensesUsd = 0;
+    let expUsdCash = 0, expBsCash = 0, expPmBs = 0, expOtherUsd = 0;
+
+    expenses.forEach(e => {
+      const u = Number(e.amountUsd || 0);
+      const b = Number(e.amountBs || (u * bcv));
+      totalExpensesUsd += u;
+      if (e.paymentSource === 'Efectivo USD') expUsdCash += u;
+      else if (e.paymentSource === 'Efectivo Bs') expBsCash += b;
+      else if (e.paymentSource === 'Pago Móvil') expPmBs += b;
+      else expOtherUsd += u;
+    });
+
+    const netOperatingProfitUsd = grossProfitUsd - totalExpensesUsd;
+    const gapFactor = Math.max(1, usdt / bcv);
+    const realUsdtProfit = netOperatingProfitUsd / gapFactor;
+
+    const netDrawerUsd = inUsdCash - outChangeUsdCash - expUsdCash;
+    const netDrawerBs = inBsCash - outChangeBsCash - expBsCash;
+    const netBankPmBs = inPmBs - outChangePmBs - expPmBs;
+
+    const topItems = Object.values(itemStatsMap).sort((a, b) => b.revenueUsd - a.revenueUsd);
+    const totalPendingInvoicesUsd = invoices.reduce((acc, f) => acc + Math.max(0, Number(f.totalUsd || 0) - Number(f.paidUsd || 0)), 0);
+
+    // Auditoría detallada de Puntos de Venta (Terminales) y Pago Móvil (Conciliación)
+    let pmConfirmedBs = 0;
+    let pmPendingBs = 0;
+    const pmByAccount = {};
+    const puntoByTerminal = {};
+
+    (state.posTerminals || []).forEach(term => {
+      puntoByTerminal[term.id] = {
+        terminalId: term.id,
+        terminalName: term.name,
+        bank: term.bank,
+        currentBatch: term.currentBatch || '0001',
+        txCount: 0,
+        totalBs: 0,
+        totalUsd: 0
+      };
+    });
+
+    sales.forEach(s => {
+      if (!s || s.voided) return;
+      (s.payments || []).forEach(p => {
+        if (p.method === 'Pago Móvil') {
+          const isConf = p.verifyStatus === 'CONCILIADO' || (p.verified !== false && p.verifyStatus !== 'PENDIENTE');
+          if (isConf) pmConfirmedBs += Number(p.amountBs || 0);
+          else pmPendingBs += Number(p.amountBs || 0);
+
+          const accName = p.destAccountName || 'Cuenta Principal';
+          if (!pmByAccount[accName]) pmByAccount[accName] = { name: accName, totalBs: 0, count: 0 };
+          pmByAccount[accName].totalBs += Number(p.amountBs || 0);
+          pmByAccount[accName].count++;
+        } else if (p.method === 'Punto de Venta') {
+          const termId = p.terminalId || (state.posTerminals && state.posTerminals[0] ? state.posTerminals[0].id : 'term-bancamiga');
+          if (!puntoByTerminal[termId]) {
+            puntoByTerminal[termId] = {
+              terminalId: termId,
+              terminalName: p.terminalName || 'Punto POS',
+              bank: p.bank || 'Banco Adquirente',
+              currentBatch: p.lote || '0001',
+              txCount: 0,
+              totalBs: 0,
+              totalUsd: 0
+            };
+          }
+          puntoByTerminal[termId].txCount++;
+          puntoByTerminal[termId].totalBs += Number(p.amountBs || 0);
+          puntoByTerminal[termId].totalUsd += Number(p.amountUsd || 0);
+        }
+      });
+    });
+
+    return {
+      bcv, eur, usdt, gapFactor,
+      grossSalesUsd,
+      totalCostOfGoodsUsd,
+      grossProfitUsd,
+      totalExpensesUsd,
+      netOperatingProfitUsd,
+      realUsdtProfit,
+      kitchenSalesUsd,
+      kitchenCostUsd,
+      kitchenProfitUsd: kitchenSalesUsd - kitchenCostUsd,
+      retailSalesUsd,
+      retailCostUsd,
+      retailProfitUsd: retailSalesUsd - retailCostUsd,
+      inUsdCash, inBsCash, inPmBs, inPuntoBs, inZelleUsd,
+      outChangeUsdCash, outChangeBsCash, outChangePmBs,
+      expUsdCash, expBsCash, expPmBs, expOtherUsd,
+      netDrawerUsd, netDrawerBs, netBankPmBs,
+      pmConfirmedBs, pmPendingBs, pmByAccount,
+      puntoByTerminal,
+      posTerminals: state.posTerminals || [],
+      pagoMovilAccounts: state.pagoMovilAccounts || [],
+      batchClosures: state.batchClosures || [],
+      topItems,
+      totalPendingInvoicesUsd
+    };
+  }
+
+  /* ==========================================================================
+     MOTOR DE CIERRE DIARIO, MENSUAL Y ANUAL + PRODUCCIÓN DIARIA DE COCINA
+     - Distingue claramente:
+       A) Comida preparada a diario (Empanadas, Arepas, Almuerzos, Pastelitos, Café):
+          NO tiene stock fijo de piezas compradas; se prepara al día y consume
+          gramos/kilos del inventario de Ingredientes de Cocina.
+       B) Mercancía empaquetada (Víveres, Refrescos, Cervezas, Chucherías, Cigarros):
+          Entra por bulto/caja y descuenta unidades exactas del estante.
+     ========================================================================== */
+  function getPeriodAnalytics(periodType = 'TODAY', filterValue = '') {
+    const bcv = Number(state.settings.rateBcv) || 42.85;
+    const eur = Number(state.settings.rateEur) || 46.60;
+    const usdt = Number(state.settings.rateUsdt) || 51.40;
+    const now = new Date();
+    const todayIso = getLocalDateIso(now);
+    const currentMonthIso = getLocalMonthIso(now);
+    const currentYearIso = todayIso.slice(0, 4);
+
+    const pType = String(periodType || 'TODAY').toUpperCase();
+    let targetDate = todayIso;
+    let targetMonth = currentMonthIso;
+    let targetYear = currentYearIso;
+
+    // Periodo semanal: los últimos 7 días en hora VET (incluye hoy)
+    const weekStartIso = getLocalDateIso(new Date(now.getTime() - 6 * 86400000));
+
+    if (pType === 'DAY' && filterValue) targetDate = toLocalDateIso(filterValue);
+    else if (pType === 'MONTH' && filterValue) targetMonth = String(filterValue).slice(0, 7);
+    else if (pType === 'YEAR' && filterValue) targetYear = String(filterValue).slice(0, 4);
+
+    const allSales = state.sales || [];
+    const allExpenses = state.expenses || [];
+
+    const matchDate = (isoStr) => {
+      if (!isoStr) return pType === 'TODAY' || pType === 'ALL';
+      const dStr = toLocalDateIso(isoStr);
+      if (pType === 'ALL') return true;
+      if (pType === 'TODAY' || pType === 'DAY') return dStr === targetDate;
+      if (pType === 'WEEK') return dStr >= weekStartIso && dStr <= todayIso;
+      if (pType === 'MONTH') return dStr.slice(0, 7) === targetMonth;
+      if (pType === 'YEAR') return dStr.slice(0, 4) === targetYear;
+      return true;
+    };
+
+    const sales = allSales.filter(s => s && !s.voided && matchDate(s.createdAt));
+    const expenses = allExpenses.filter(e => e && matchDate(e.createdAt));
+
+    let ordersCount = sales.length;
+    let grossSalesUsd = 0;
+    let subtotalBaseUsd = 0;
+    let exentoUsd = 0;
+    let baseG16Usd = 0;
+    let ivaUsd = 0;
+    let igtfUsd = 0;
+    let totalCostOfGoodsUsd = 0;
+    let grossProfitUsd = 0;
+
+    // Separación Cocina (Preparado al día) vs Mercancía Empaquetada
+    let kitchenPreparedQty = 0;
+    let kitchenSalesUsd = 0;
+    let kitchenCostUsd = 0;
+    const kitchenByFamily = {
+      fritos: { id: 'fritos', name: 'Empanadas, Pastelitos y Fritos', qty: 0, salesUsd: 0 },
+      arepas: { id: 'arepas', name: 'Arepas Venezolanas', qty: 0, salesUsd: 0 },
+      almuerzos: { id: 'almuerzos', name: 'Almuerzos y Platos Fuertes', qty: 0, salesUsd: 0 },
+      cafeteria: { id: 'cafeteria', name: 'Cafetería Recién Colada', qty: 0, salesUsd: 0 }
+    };
+    const kitchenDishesMap = {};
+    const kitchenIngredientsUsedMap = {};
+
+    let retailSoldQty = 0;
+    let retailSalesUsd = 0;
+    let retailCostUsd = 0;
+    const retailItemsMap = {};
+
+    let inUsdCash = 0, inBsCash = 0, inPmBs = 0, inPuntoBs = 0, inZelleUsd = 0;
+    let outChangeUsdCash = 0, outChangeBsCash = 0, outChangePmBs = 0;
+
+    const daysMap = {};
+    const monthsMap = {};
+    const MONTH_NAMES = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    for (let m = 1; m <= 12; m++) {
+      const mKey = targetYear + '-' + String(m).padStart(2, '0');
+      monthsMap[mKey] = {
+        monthKey: mKey,
+        monthIndex: m,
+        monthName: MONTH_NAMES[m - 1],
+        ordersCount: 0,
+        kitchenPreparedQty: 0,
+        retailSoldQty: 0,
+        subtotalBaseUsd: 0,
+        ivaUsd: 0,
+        grossSalesUsd: 0,
+        costUsd: 0,
+        expensesUsd: 0,
+        netProfitUsd: 0
+      };
+    }
+
+    sales.forEach(s => {
+      const sDate = s.createdAt ? toLocalDateIso(s.createdAt) : todayIso;
+      const sMonth = sDate.slice(0, 7);
+
+      const sTotal = Number(s.totalUsd || 0);
+      const sSub = Number(s.subtotalUsd != null ? s.subtotalUsd : sTotal);
+      const sEx = Number(s.exentoUsd || (s.fiscalData && s.fiscalData.taxExemptUsd) || 0);
+      const sBase16 = Number(s.baseG16Usd || (s.fiscalData && s.fiscalData.taxableBaseUsd) || 0);
+      const sIva = Number(s.ivaUsd || (s.fiscalData && s.fiscalData.ivaUsd) || 0);
+      const sIgtf = Number(s.igtfUsd || (s.fiscalData && s.fiscalData.igtfUsd) || 0);
+      const sCost = Number(s.costUsd || 0);
+      const sProf = Number(s.profitUsd != null ? s.profitUsd : (sSub - sCost));
+
+      grossSalesUsd += sTotal;
+      subtotalBaseUsd += sSub;
+      exentoUsd += sEx;
+      baseG16Usd += sBase16;
+      ivaUsd += sIva;
+      igtfUsd += sIgtf;
+      totalCostOfGoodsUsd += sCost;
+      grossProfitUsd += sProf;
+
+      outChangeUsdCash += Number((s.changeGiven && s.changeGiven.usdCashGiven) || 0);
+      outChangeBsCash += Number((s.changeGiven && s.changeGiven.bsCashGiven) || 0);
+      outChangePmBs += Number((s.changeGiven && s.changeGiven.bsPmGiven) || 0);
+
+      (s.payments || []).forEach(p => {
+        if (p.method === 'Efectivo USD') inUsdCash += Number(p.amountUsd || 0);
+        else if (p.method === 'Efectivo Bs') inBsCash += Number(p.amountBs || 0);
+        else if (p.method === 'Pago Móvil') inPmBs += Number(p.amountBs || 0);
+        else if (p.method === 'Punto de Venta') inPuntoBs += Number(p.amountBs || 0);
+        else if (p.method === 'Zelle / Transf') inZelleUsd += Number(p.amountUsd || 0);
+      });
+
+      if (!daysMap[sDate]) {
+        daysMap[sDate] = {
+          date: sDate,
+          ordersCount: 0,
+          kitchenPreparedQty: 0,
+          retailSoldQty: 0,
+          subtotalBaseUsd: 0,
+          ivaUsd: 0,
+          grossSalesUsd: 0,
+          costUsd: 0,
+          expensesUsd: 0,
+          netProfitUsd: 0
+        };
+      }
+      daysMap[sDate].ordersCount += 1;
+      daysMap[sDate].subtotalBaseUsd += sSub;
+      daysMap[sDate].ivaUsd += sIva;
+      daysMap[sDate].grossSalesUsd += sTotal;
+      daysMap[sDate].costUsd += sCost;
+      daysMap[sDate].netProfitUsd += sProf;
+
+      if (monthsMap[sMonth]) {
+        monthsMap[sMonth].ordersCount += 1;
+        monthsMap[sMonth].subtotalBaseUsd += sSub;
+        monthsMap[sMonth].ivaUsd += sIva;
+        monthsMap[sMonth].grossSalesUsd += sTotal;
+        monthsMap[sMonth].costUsd += sCost;
+        monthsMap[sMonth].netProfitUsd += sProf;
+      }
+
+      let saleIvaMode = String((s.fiscalData && s.fiscalData.ivaMode) || '').toUpperCase();
+      if (!saleIvaMode && Array.isArray(s.items) && s.items.length > 0 && sIva > 0) {
+        const rawSum = s.items.reduce((acc, x) => acc + Number(x.subtotalUsd != null ? x.subtotalUsd : (Number(x.qty || 0) * Number(x.priceUsd || 0))), 0);
+        if (rawSum > sSub + 0.02) saleIvaMode = 'INCLUIDO';
+      }
+
+      const addIngredientUsage = (insId, usedQty) => {
+        const ins = getInsumoById(insId);
+        if (!ins || !(usedQty > 0)) return;
+        const usedCost = usedQty * Number(ins.costUsd || 0);
+        if (!kitchenIngredientsUsedMap[ins.id]) {
+          kitchenIngredientsUsedMap[ins.id] = {
+            id: ins.id,
+            code: ins.code,
+            name: ins.name,
+            unit: ins.unit,
+            qtyUsed: 0,
+            costUsd: 0,
+            remainingStock: ins.stock
+          };
+        }
+        kitchenIngredientsUsedMap[ins.id].qtyUsed = Number((kitchenIngredientsUsedMap[ins.id].qtyUsed + usedQty).toFixed(3));
+        kitchenIngredientsUsedMap[ins.id].costUsd = Number((kitchenIngredientsUsedMap[ins.id].costUsd + usedCost).toFixed(2));
+      };
+
+      (s.items || []).forEach(it => {
+        const qty = Number(it.qty || 0);
+        const rawLineSub = Number(it.subtotalUsd != null ? it.subtotalUsd : (qty * Number(it.priceUsd || 0)));
+        const isItemExempt = Boolean(it.taxExempt || it.iva === 'E' || it.taxType === 'E');
+        const taxDiv = (saleIvaMode === 'INCLUIDO' && !isItemExempt)
+          ? ((it.iva === 'R8' || it.taxType === 'R') ? 1.08 : 1.16)
+          : 1;
+        const lineSub = Number((rawLineSub / taxDiv).toFixed(4));
+        const isKitchenDish = Boolean(
+          it.isDish ||
+          it.isVariant ||
+          it.itemType === 'dish' ||
+          ['fritos', 'arepas', 'almuerzos', 'cafeteria'].includes(it.familyId)
+        );
+
+        if (isKitchenDish) {
+          kitchenPreparedQty += qty;
+          kitchenSalesUsd += lineSub;
+          if (daysMap[sDate]) daysMap[sDate].kitchenPreparedQty += qty;
+          if (monthsMap[sMonth]) monthsMap[sMonth].kitchenPreparedQty += qty;
+
+          const variantObj = (state.variants || []).find(v => v.id === it.refId || v.id === it.variantId || v.name === it.name)
+                          || (state.dishes || []).find(d => d.id === it.refId || d.name === it.name);
+          const famId = it.familyId || (variantObj && variantObj.familyId) || 'fritos';
+          if (kitchenByFamily[famId]) {
+            kitchenByFamily[famId].qty += qty;
+            kitchenByFamily[famId].salesUsd += lineSub;
+          }
+
+          const baseDishCost = variantObj ? calcDishCost(variantObj) : (lineSub * 0.42);
+          const modUnitCost = calcItemModifiersUnitCost(it);
+          const unitCost = baseDishCost + modUnitCost;
+          kitchenCostUsd += unitCost * qty;
+
+          if (!kitchenDishesMap[it.name]) {
+            kitchenDishesMap[it.name] = { name: it.name, familyId: famId, qty: 0, salesUsd: 0, costUsd: 0 };
+          }
+          kitchenDishesMap[it.name].qty += qty;
+          kitchenDishesMap[it.name].salesUsd += lineSub;
+          kitchenDishesMap[it.name].costUsd += unitCost * qty;
+
+          // Calcular gramos/kilos exactos de ingredientes consumidos al preparar este plato y sus extras
+          const recipeList = (variantObj && (variantObj.recipe || variantObj.ingredients)) || [];
+          recipeList.forEach(ing => {
+            if (ing && ing.insumoId) addIngredientUsage(ing.insumoId, Number((Number(ing.qty || 0) * qty).toFixed(4)));
+          });
+          const itemMods = [].concat(
+            Array.isArray(it.selectedModifiers) ? it.selectedModifiers : [],
+            Array.isArray(it.modifiers) ? it.modifiers : []
+          );
+          itemMods.forEach(mod => {
+            if (!mod) return;
+            if (mod.insumoId && Number(mod.qty || 0) > 0) {
+              addIngredientUsage(mod.insumoId, Number((Number(mod.qty) * qty).toFixed(4)));
+            }
+            if (Array.isArray(mod.recipe)) {
+              mod.recipe.forEach(ing => {
+                if (ing && (ing.insumoId || ing.itemId)) {
+                  addIngredientUsage(ing.insumoId || ing.itemId, Number((Number(ing.qty || 0) * qty).toFixed(4)));
+                }
+              });
+            }
+          });
+        } else {
+          retailSoldQty += qty;
+          retailSalesUsd += lineSub;
+          if (daysMap[sDate]) daysMap[sDate].retailSoldQty += qty;
+          if (monthsMap[sMonth]) monthsMap[sMonth].retailSoldQty += qty;
+
+          const invObj = state.inventory.find(x => x.id === it.refId || x.id === it.invId || x.name === it.name);
+          const unitCost = invObj ? Number(invObj.costUsd || 0) : (lineSub * 0.65);
+          retailCostUsd += unitCost * qty;
+
+          if (!retailItemsMap[it.name]) {
+            retailItemsMap[it.name] = { name: it.name, qty: 0, salesUsd: 0, costUsd: 0 };
+          }
+          retailItemsMap[it.name].qty += qty;
+          retailItemsMap[it.name].salesUsd += lineSub;
+          retailItemsMap[it.name].costUsd += unitCost * qty;
+        }
+      });
+    });
+
+    let totalExpensesUsd = 0;
+    let expUsdCash = 0, expBsCash = 0, expPmBs = 0, expOtherUsd = 0;
+
+    expenses.forEach(e => {
+      const eDate = e.createdAt ? toLocalDateIso(e.createdAt) : todayIso;
+      const eMonth = eDate.slice(0, 7);
+      const u = Number(e.amountUsd || 0);
+      const b = Number(e.amountBs || (u * bcv));
+      totalExpensesUsd += u;
+      if (e.paymentSource === 'Efectivo USD') expUsdCash += u;
+      else if (e.paymentSource === 'Efectivo Bs') expBsCash += b;
+      else if (e.paymentSource === 'Pago Móvil') expPmBs += b;
+      else expOtherUsd += u;
+
+      if (!daysMap[eDate]) {
+        daysMap[eDate] = {
+          date: eDate,
+          ordersCount: 0,
+          kitchenPreparedQty: 0,
+          retailSoldQty: 0,
+          subtotalBaseUsd: 0,
+          ivaUsd: 0,
+          grossSalesUsd: 0,
+          costUsd: 0,
+          expensesUsd: 0,
+          netProfitUsd: 0
+        };
+      }
+      daysMap[eDate].expensesUsd += u;
+      daysMap[eDate].netProfitUsd -= u;
+
+      if (monthsMap[eMonth]) {
+        monthsMap[eMonth].expensesUsd += u;
+        monthsMap[eMonth].netProfitUsd -= u;
+      }
+    });
+
+    const netOperatingProfitUsd = grossProfitUsd - totalExpensesUsd;
+    const netDrawerUsd = inUsdCash - outChangeUsdCash - expUsdCash;
+    const netDrawerBs = inBsCash - outChangeBsCash - expBsCash;
+    const netBankPmBs = inPmBs - outChangePmBs - expPmBs;
+
+    return {
+      periodType: pType,
+      targetDate,
+      targetMonth,
+      targetYear,
+      bcv, eur, usdt,
+      ordersCount,
+      sales,
+      expenses,
+      grossSalesUsd: Number(grossSalesUsd.toFixed(2)),
+      grossSalesBs: Number((grossSalesUsd * bcv).toFixed(2)),
+      subtotalBaseUsd: Number(subtotalBaseUsd.toFixed(2)),
+      exentoUsd: Number(exentoUsd.toFixed(2)),
+      baseG16Usd: Number(baseG16Usd.toFixed(2)),
+      ivaUsd: Number(ivaUsd.toFixed(2)),
+      ivaBs: Number((ivaUsd * bcv).toFixed(2)),
+      igtfUsd: Number(igtfUsd.toFixed(2)),
+      totalCostOfGoodsUsd: Number(totalCostOfGoodsUsd.toFixed(2)),
+      grossProfitUsd: Number(grossProfitUsd.toFixed(2)),
+      totalExpensesUsd: Number(totalExpensesUsd.toFixed(2)),
+      netOperatingProfitUsd: Number(netOperatingProfitUsd.toFixed(2)),
+      kitchenPreparedQty,
+      kitchenSalesUsd: Number(kitchenSalesUsd.toFixed(2)),
+      kitchenCostUsd: Number(kitchenCostUsd.toFixed(2)),
+      kitchenProfitUsd: Number((kitchenSalesUsd - kitchenCostUsd).toFixed(2)),
+      kitchenByFamily: Object.values(kitchenByFamily),
+      kitchenDishesList: Object.values(kitchenDishesMap).sort((a, b) => b.qty - a.qty),
+      kitchenIngredientsUsed: Object.values(kitchenIngredientsUsedMap).sort((a, b) => b.costUsd - a.costUsd),
+      retailSoldQty,
+      retailSalesUsd: Number(retailSalesUsd.toFixed(2)),
+      retailCostUsd: Number(retailCostUsd.toFixed(2)),
+      retailProfitUsd: Number((retailSalesUsd - retailCostUsd).toFixed(2)),
+      retailItemsList: Object.values(retailItemsMap).sort((a, b) => b.qty - a.qty),
+      inUsdCash: Number(inUsdCash.toFixed(2)),
+      inBsCash: Number(inBsCash.toFixed(2)),
+      inPmBs: Number(inPmBs.toFixed(2)),
+      inPuntoBs: Number(inPuntoBs.toFixed(2)),
+      inZelleUsd: Number(inZelleUsd.toFixed(2)),
+      outChangeUsdCash: Number(outChangeUsdCash.toFixed(2)),
+      outChangeBsCash: Number(outChangeBsCash.toFixed(2)),
+      outChangePmBs: Number(outChangePmBs.toFixed(2)),
+      expUsdCash: Number(expUsdCash.toFixed(2)),
+      expBsCash: Number(expBsCash.toFixed(2)),
+      expPmBs: Number(expPmBs.toFixed(2)),
+      netDrawerUsd: Number(netDrawerUsd.toFixed(2)),
+      netDrawerBs: Number(netDrawerBs.toFixed(2)),
+      netBankPmBs: Number(netBankPmBs.toFixed(2)),
+      daysList: Object.values(daysMap).sort((a, b) => b.date.localeCompare(a.date)),
+      monthsList: Object.values(monthsMap)
+    };
+  }
+
+  /* Ejecutar y Guardar Acta de Cierre Diario */
+  function performDailyClosure(payload = {}) {
+    const dateStr = payload.date || getLocalDateIso();
+    const stats = getPeriodAnalytics('DAY', dateStr);
+    const countedUsd = payload.countedUsd != null ? Number(payload.countedUsd) : stats.netDrawerUsd;
+    const countedBs = payload.countedBs != null ? Number(payload.countedBs) : stats.netDrawerBs;
+    const diffUsd = Number((countedUsd - stats.netDrawerUsd).toFixed(2));
+    const diffBs = Number((countedBs - stats.netDrawerBs).toFixed(2));
+
+    const closure = {
+      id: 'CIE-DIA-' + dateStr + '-' + Date.now().toString().slice(-4),
+      date: dateStr,
+      closedAt: new Date().toISOString(),
+      responsible: payload.responsible || 'Dueño / Administrador',
+      notes: payload.notes || 'Cierre diario normal de operaciones',
+      rateBcv: stats.bcv,
+      ordersCount: stats.ordersCount,
+      kitchenPreparedQty: stats.kitchenPreparedQty,
+      kitchenSalesUsd: stats.kitchenSalesUsd,
+      kitchenCostUsd: stats.kitchenCostUsd,
+      kitchenIngredientsUsed: stats.kitchenIngredientsUsed,
+      retailSoldQty: stats.retailSoldQty,
+      retailSalesUsd: stats.retailSalesUsd,
+      retailCostUsd: stats.retailCostUsd,
+      subtotalBaseUsd: stats.subtotalBaseUsd,
+      exentoUsd: stats.exentoUsd,
+      baseG16Usd: stats.baseG16Usd,
+      ivaUsd: stats.ivaUsd,
+      igtfUsd: stats.igtfUsd,
+      grossSalesUsd: stats.grossSalesUsd,
+      grossSalesBs: stats.grossSalesBs,
+      totalExpensesUsd: stats.totalExpensesUsd,
+      netOperatingProfitUsd: stats.netOperatingProfitUsd,
+      expectedDrawerUsd: stats.netDrawerUsd,
+      countedDrawerUsd: countedUsd,
+      diffDrawerUsd: diffUsd,
+      expectedDrawerBs: stats.netDrawerBs,
+      countedDrawerBs: countedBs,
+      diffDrawerBs: diffBs,
+      netBankPmBs: stats.netBankPmBs,
+      inPuntoBs: stats.inPuntoBs
+    };
+
+    if (!Array.isArray(state.dailyClosures)) state.dailyClosures = [];
+    state.dailyClosures.unshift(closure);
+    saveState(state, { eventType: 'CLOSURE_SAVED', eventPayload: { scope: 'daily', closure } });
+    return closure;
+  }
+
+  /* Ejecutar y Guardar Acta de Cierre Mensual */
+  function performMonthlyClosure(payload = {}) {
+    const monthStr = payload.month || getLocalMonthIso();
+    const stats = getPeriodAnalytics('MONTH', monthStr);
+    const closure = {
+      id: 'CIE-MES-' + monthStr + '-' + Date.now().toString().slice(-4),
+      month: monthStr,
+      closedAt: new Date().toISOString(),
+      responsible: payload.responsible || 'Dueño / Administrador',
+      notes: payload.notes || ('Cierre consolidado del mes ' + monthStr),
+      rateBcv: stats.bcv,
+      ordersCount: stats.ordersCount,
+      kitchenPreparedQty: stats.kitchenPreparedQty,
+      kitchenSalesUsd: stats.kitchenSalesUsd,
+      kitchenCostUsd: stats.kitchenCostUsd,
+      retailSoldQty: stats.retailSoldQty,
+      retailSalesUsd: stats.retailSalesUsd,
+      retailCostUsd: stats.retailCostUsd,
+      subtotalBaseUsd: stats.subtotalBaseUsd,
+      exentoUsd: stats.exentoUsd,
+      baseG16Usd: stats.baseG16Usd,
+      ivaUsd: stats.ivaUsd,
+      grossSalesUsd: stats.grossSalesUsd,
+      grossSalesBs: stats.grossSalesBs,
+      totalExpensesUsd: stats.totalExpensesUsd,
+      netOperatingProfitUsd: stats.netOperatingProfitUsd,
+      daysWorked: stats.daysList.length
+    };
+
+    if (!Array.isArray(state.monthlyClosures)) state.monthlyClosures = [];
+    state.monthlyClosures.unshift(closure);
+    saveState(state, { eventType: 'CLOSURE_SAVED', eventPayload: { scope: 'monthly', closure } });
+    return closure;
+  }
+
+  /* Cierre de Lote Formal de Punto de Venta (Conciliación Voucher vs Sistema) */
+  function closeTerminalBatch(payload) {
+    if (!Array.isArray(state.posTerminals)) state.posTerminals = [];
+    const term = state.posTerminals.find(t => t.id === payload.terminalId);
+    if (!term) return { success: false, error: 'Terminal no encontrado' };
+
+    const batchNumber = term.currentBatch || '0001';
+    let systemTotalBs = 0;
+    let systemTxCount = 0;
+
+    (state.sales || []).forEach(s => {
+      if (!s || s.voided) return;
+      (s.payments || []).forEach(p => {
+        if (p.method === 'Punto de Venta' && (p.terminalId === term.id || !p.terminalId) && (!p.batchClosed)) {
+          systemTotalBs += Number(p.amountBs || 0);
+          systemTxCount++;
+          p.batchClosed = true;
+          p.batchClosedId = 'LOTE-' + term.id + '-' + batchNumber;
+        }
+      });
+    });
+
+    const physicalTotalBs = Math.max(0, Number(payload.physicalTotalBs) || 0);
+    const physicalTxCount = Math.max(0, parseInt(payload.physicalTxCount, 10) || 0);
+    const diffBs = Number((physicalTotalBs - systemTotalBs).toFixed(2));
+    const status = Math.abs(diffBs) <= 0.05 ? 'CUADRADO' : (diffBs > 0 ? 'SOBRANTE' : 'FALTANTE');
+
+    const closure = {
+      id: 'LOTE-CLS-' + Date.now().toString().slice(-6),
+      timestamp: new Date().toISOString(),
+      terminalId: term.id,
+      terminalName: term.name,
+      bank: term.bank,
+      batchNumber,
+      systemTxCount,
+      systemTotalBs: Number(systemTotalBs.toFixed(2)),
+      physicalTxCount,
+      physicalTotalBs: Number(physicalTotalBs.toFixed(2)),
+      differenceBs: diffBs,
+      status,
+      cashier: payload.cashier || 'Cajero Turno',
+      notes: payload.notes || ''
+    };
+
+    if (!Array.isArray(state.batchClosures)) state.batchClosures = [];
+    state.batchClosures.unshift(closure);
+
+    // Incrementar automáticamente el número de lote para el siguiente turno
+    const nextBatchNum = (parseInt(batchNumber, 10) || 1) + 1;
+    term.currentBatch = String(nextBatchNum).padStart(4, '0');
+
+    saveState(state, {
+      eventType: 'CLOSURE_SAVED',
+      eventPayload: {
+        scope: 'batch',
+        terminalId: term.id,
+        nextBatch: term.currentBatch,
+        closure
+      }
+    });
+    return { success: true, closure, nextBatch: term.currentBatch };
+  }
+
+  /* Actualizar Estado de Conciliación de Pago Móvil (CONCILIADO / PENDIENTE / RECHAZADO) */
+  function updatePagoMovilStatus(saleId, paymentRef, newStatus, reason, paymentId) {
+    const sale = (state.sales || []).find(s => s.id === saleId);
+    if (!sale) return false;
+    const payment = (sale.payments || []).find(p =>
+      p.method === 'Pago Móvil' &&
+      (paymentId ? p.id === paymentId : (!paymentRef || String(p.ref || '') === String(paymentRef)))
+    );
+    if (!payment) return false;
+
+    const cleanStatus = newStatus || 'CONCILIADO';
+    payment.verifyStatus = cleanStatus; // 'CONCILIADO' | 'PENDIENTE' | 'RECHAZADO'
+    payment.verified = cleanStatus === 'CONCILIADO';
+    payment.reviewNotes = reason || '';
+    payment.reviewedAt = new Date().toISOString();
+
+    saveState(state, {
+      eventType: 'PAGO_MOVIL_STATUS_CHANGED',
+      eventPayload: {
+        saleId: saleId,
+        paymentId: payment.id || paymentId || '',
+        paymentRef: payment.ref || paymentRef || '',
+        newStatus: cleanStatus,
+        reason: reason || ''
+      }
+    });
+    return true;
+  }
+
+  /* Registro honesto de Pago Móvil / C2P verificado manualmente (sin simulación bancaria falsa) */
+  function recordVerifiedDigitalPayment(payload) {
+    const bank = (payload && payload.bank) || '0102 - Venezuela';
+    const phone = String((payload && payload.phone) || '').trim().replace(/[-\s]/g, '');
+    const idDoc = String((payload && payload.idDoc) || '').trim().toUpperCase();
+    const reference = String((payload && (payload.reference || payload.ref)) || '').trim();
+    const amountBs = parseFloat(payload && payload.amountBs) || 0;
+    const amountUsd = parseFloat(payload && payload.amountUsd) || 0;
+
+    if (!reference || reference.length < 4) {
+      return { success: false, error: 'Ingresa los últimos 4 a 8 dígitos de la referencia bancaria real' };
+    }
+    if (isPagoMovilRefUsed(reference)) {
+      return { success: false, error: 'Esta referencia bancaria ya fue registrada anteriormente hoy' };
+    }
+    if (amountBs <= 0 && amountUsd <= 0) {
+      return { success: false, error: 'El monto debe ser mayor a 0' };
+    }
+
+    return {
+      success: true,
+      authCode: reference,
+      reference,
+      bank,
+      phone,
+      idDoc,
+      amountBs,
+      amountUsd,
+      verifiedManually: true,
+      message: 'Referencia bancaria validada como única y registrada'
+    };
+  }
+
+  function processC2pPayment(payload) {
+    return recordVerifiedDigitalPayment(payload);
+  }
+
+  function saveTerminal(termPayload) {
+    if (!Array.isArray(state.posTerminals)) state.posTerminals = [];
+    if (termPayload.id) {
+      const idx = state.posTerminals.findIndex(t => t.id === termPayload.id);
+      if (idx !== -1) {
+        state.posTerminals[idx] = Object.assign({}, state.posTerminals[idx], termPayload);
+        saveState(state, { eventType: 'SETTINGS_UPDATED', eventPayload: { posTerminals: state.posTerminals } });
+        return state.posTerminals[idx];
+      }
+    }
+    const newTerm = {
+      id: 'term-' + Date.now(),
+      name: termPayload.name || 'Punto de Venta POS',
+      bank: termPayload.bank || '0134 - Banesco',
+      currentBatch: termPayload.currentBatch || '0001',
+      model: termPayload.model || 'Terminal POS',
+      status: termPayload.status || 'ACTIVO'
+    };
+    state.posTerminals.push(newTerm);
+    saveState(state, { eventType: 'SETTINGS_UPDATED', eventPayload: { posTerminals: state.posTerminals } });
+    return newTerm;
+  }
+
+  function savePagoMovilAccount(accPayload) {
+    if (!Array.isArray(state.pagoMovilAccounts)) state.pagoMovilAccounts = [];
+    if (accPayload.id) {
+      const idx = state.pagoMovilAccounts.findIndex(a => a.id === accPayload.id);
+      if (idx !== -1) {
+        if (accPayload.isDefault) {
+          state.pagoMovilAccounts.forEach(a => a.isDefault = false);
+        }
+        state.pagoMovilAccounts[idx] = Object.assign({}, state.pagoMovilAccounts[idx], accPayload);
+        saveState(state, { eventType: 'SETTINGS_UPDATED', eventPayload: { pagoMovilAccounts: state.pagoMovilAccounts } });
+        return state.pagoMovilAccounts[idx];
+      }
+    }
+    const newAcc = {
+      id: 'pm-acc-' + Date.now(),
+      name: accPayload.name || 'Cuenta Pago Móvil',
+      bank: accPayload.bank || '0102 - Venezuela',
+      phone: accPayload.phone || '',
+      rif: accPayload.rif || state.settings.rif || '',
+      holder: accPayload.holder || state.settings.storeName || '',
+      status: accPayload.status || 'ACTIVO',
+      isDefault: !!accPayload.isDefault
+    };
+    if (newAcc.isDefault) {
+      state.pagoMovilAccounts.forEach(a => a.isDefault = false);
+    }
+    state.pagoMovilAccounts.push(newAcc);
+    saveState(state, { eventType: 'SETTINGS_UPDATED', eventPayload: { pagoMovilAccounts: state.pagoMovilAccounts } });
+    return newAcc;
+  }
+
+  /* --------------------------------------------------------------------------
+     MÓDULO DE INTEGRACIÓN DE MÁQUINAS FISCALES HOMOLOGADAS (SENIAT)
+     Protocolo The Factory HKA / Bixolon / Aclas / BMC
+     -------------------------------------------------------------------------- */
+  function generateFiscalHkaCommand(sale) {
+    const f = sale.fiscalData || {};
+    const bcv = Number(sale.rateBcv || state.settings.rateBcv);
+    const lines = [];
+
+    lines.push(`i01Cliente: ${sale.customer || 'CLIENTE DE CONTADO'}`);
+    lines.push(`i02RIF/CI: ${f.customerRif || 'V-00000000'}`);
+    lines.push(`i03Direccion: ${sale.customerAddress || 'Mostrador Principal'}`);
+
+    (sale.items || []).forEach(it => {
+      const priceBs = (Number(it.priceUsd) * bcv).toFixed(2);
+      const isExempt = it.taxType === 'E';
+      const cleanName = (it.name || 'Articulo').replace(/[^a-zA-Z0-9\s]/g, '').slice(0, 30);
+      const qtyStr = String(Math.round((it.qty || 1) * 1000)).padStart(8, '0');
+      const priceStr = String(Math.round(priceBs * 100)).padStart(10, '0');
+
+      if (isExempt) {
+        lines.push(`d0${qtyStr}${priceStr}${cleanName}`);
+      } else {
+        lines.push(` 0${qtyStr}${priceStr}${cleanName}`);
+      }
+    });
+
+    if (f.igtfBs > 0) {
+      lines.push(`p+0300PERCEPCION IGTF 3% DIVISAS`);
+    }
+
+    lines.push('3');
+    lines.push('101');
+    return lines.join('\r\n');
+  }
+
+  function downloadFiscalCommandFile(sale) {
+    const cmdStr = generateFiscalHkaCommand(sale);
+    const blob = new Blob([cmdStr], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `FACTURA_FISCAL_ORD_${sale.orderNumber}.TXT`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast(`Trama fiscal Factura #${sale.orderNumber} descargada para Spooler`);
+  }
+
+  function hasConfiguredFiscalMachine() {
+    const cfg = (state.settings && state.settings.fiscalConfig) ? state.settings.fiscalConfig : {};
+    return Boolean(
+      cfg.enabled &&
+      cfg.mode !== 'INTERNO' &&
+      cfg.serialNumber &&
+      String(cfg.serialNumber).trim() !== '' &&
+      cfg.serialNumber !== 'Z4A2098124' &&
+      cfg.port
+    );
+  }
+
+  function emitFiscalReportX() {
+    const hasMachine = hasConfiguredFiscalMachine();
+    if (hasMachine) {
+      toast('Reporte X emitido a la Máquina Fiscal (' + state.settings.fiscalConfig.port + ')');
+      return { success: true, command: 'I0X', type: 'REPORTE_X', simulated: false, date: new Date().toISOString() };
+    }
+    toast('Reporte X emitido (Simulado - sin máquina fiscal conectada)');
+    return { success: true, command: 'I0X', type: 'REPORTE_X', simulated: true, date: new Date().toISOString() };
+  }
+
+  function emitFiscalReportZ() {
+    if (!state.settings.fiscalConfig) state.settings.fiscalConfig = {};
+    const hasMachine = hasConfiguredFiscalMachine();
+    const curZ = (state.settings.fiscalConfig.lastReportZ || 0) + 1;
+    state.settings.fiscalConfig.lastReportZ = curZ;
+    saveState(state, { eventType: 'SETTINGS_UPDATED', eventPayload: { fiscalConfig: state.settings.fiscalConfig } });
+    if (hasMachine) {
+      toast(`¡Reporte Z Fiscal #${curZ} ejecutado exitosamente!`);
+      return { success: true, command: 'I0Z', type: 'REPORTE_Z', reportZNumber: curZ, simulated: false, date: new Date().toISOString() };
+    }
+    toast(`Reporte Z Fiscal #${curZ} (Simulado - sin máquina fiscal conectada)`);
+    return { success: true, command: 'I0Z', type: 'REPORTE_Z', reportZNumber: curZ, simulated: true, date: new Date().toISOString() };
+  }
+
+  function saveFiscalConfig(payload) {
+    if (!state.settings.fiscalConfig) state.settings.fiscalConfig = {};
+    state.settings.fiscalConfig = Object.assign({}, state.settings.fiscalConfig, payload);
+    saveState(state, { eventType: 'SETTINGS_UPDATED', eventPayload: { fiscalConfig: state.settings.fiscalConfig } });
+    toast('Configuración de la Máquina Fiscal guardada correctamente.');
+    return state.settings.fiscalConfig;
+  }
+
+  /* Exportar / Importar Base de Datos Local en Disco Duro (Para Windows 7) */
+  function exportBackupJson() {
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateTag = getLocalDateIso();
+    a.href = url;
+    a.download = `RESPALDO_MI_TIENDA_POS_${dateTag}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast('Respaldo descargado en el disco duro de la PC');
+  }
+
+  async function linkLocalDiskFile() {
+    if (window.showSaveFilePicker) {
+      try {
+        localFileHandle = await window.showSaveFilePicker({
+          suggestedName: 'BASE_DATOS_MI_TIENDA_POS.json',
+          types: [{ description: 'Base de Datos JSON', accept: { 'application/json': ['.json'] } }]
+        });
+        saveState(state, { skipApi: true, skipBroadcast: true });
+        toast('¡Archivo físico en disco vinculado! Todo cambio se guardará directo en tu PC.');
+        return true;
+      } catch (e) {
+        return false;
+      }
+    } else {
+      exportBackupJson();
+      return false;
+    }
+  }
+
+  function toast(msg, type = 'ok') {
+    let container = document.getElementById('mtpToastContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'mtpToastContainer';
+      document.body.appendChild(container);
+    }
+    const el = document.createElement('div');
+    el.className = 'mtp-toast ' + (type === 'warn' ? 'warn' : type === 'err' ? 'err' : '');
+    const ico = type === 'warn' ? '⚠️' : type === 'err' ? '🚨' : '✅';
+    el.innerHTML = `<span>${ico}</span><span>${msg}</span>`;
+    container.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transition = 'opacity 0.25s';
+      setTimeout(() => el.remove(), 260);
+    }, 3100);
+  }
+
+  function resetDemoData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_STATE));
+    location.reload();
+  }
+
+
+  /* ==========================================================================
+     HELPERS DEL CATÁLOGO V5 (Familia -> Producto -> Variante -> Extras)
+     ========================================================================== */
+  function getProductsByFamily(familyId) {
+    if (!state.products || !Array.isArray(state.products)) return [];
+    return state.products
+      .filter(p => p.familyId === familyId && p.active !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
+  function getVariantsForProduct(productId) {
+    if (!state.variants || !Array.isArray(state.variants)) return [];
+    return state.variants
+      .filter(v => v.productId === productId && v.active !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
+  function getModifierGroupsForProduct(productId) {
+    const prod = (state.products || []).find(p => p.id === productId);
+    if (!prod || !Array.isArray(prod.modifierGroupIds)) return [];
+    if (!state.modifierGroups || !Array.isArray(state.modifierGroups)) return [];
+    return prod.modifierGroupIds
+      .map(mgId => state.modifierGroups.find(g => g.id === mgId))
+      .filter(Boolean);
+  }
+
+  function getDirectRetailItems(familyId) {
+    syncInventoryReferences(state);
+    return (state.inventory || []).filter(i =>
+      i.sellable === true &&
+      i.active !== false &&
+      (i.familyId === familyId || i.group === familyId)
+    );
+  }
+
+  function getKitchenInsumos() {
+    syncInventoryReferences(state);
+    return (state.inventory || []).filter(i => i.type === 'insumo' || !i.sellable);
+  }
+
+  function getSellableRetail() {
+    syncInventoryReferences(state);
+    return (state.inventory || []).filter(i => i.sellable === true);
+  }
+
+  function adjustItemStock(itemId, deltaQty, meta = {}) {
+    const item = getInsumoById(itemId);
+    if (!item) return null;
+    const prevStock = Number(item.stock || 0);
+    const delta = Number(deltaQty || 0);
+    const allowNegative = Boolean(meta.allowNegative);
+    const rawNext = Number((prevStock + delta).toFixed(3));
+    const nextStock = allowNegative ? rawNext : Math.max(0, rawNext);
+    const appliedDelta = Number((nextStock - prevStock).toFixed(3));
+
+    item.stock = nextStock;
+    if (typeof meta.newCostUsd === 'number' && meta.newCostUsd > 0) {
+      item.prevCostUsd = item.costUsd;
+      item.costUsd = Number(meta.newCostUsd.toFixed(4));
+    }
+
+    const movement = recordMovementInternal({
+      itemId: item.id,
+      action: meta.action || (appliedDelta >= 0 ? 'ENTRADA_RAPIDA' : 'SALIDA_COCINA'),
+      qty: appliedDelta,
+      costUsd: item.costUsd,
+      prevStock,
+      nextStock,
+      docRef: meta.docRef || ('AJ-' + Date.now().toString().slice(-5)),
+      supplier: meta.supplier || '',
+      responsible: meta.responsible || 'Operador',
+      notes: meta.notes || (appliedDelta >= 0 ? 'Entrada directa de inventario' : 'Ajuste o consumo de inventario')
+    });
+
+    saveState(state, {
+      eventType: 'STOCK_ADJUSTED',
+      eventPayload: {
+        itemId: item.id,
+        id: item.id,
+        itemName: item.name,
+        unit: item.unit,
+        newStock: nextStock,
+        stock: nextStock,
+        difference: appliedDelta,
+        qty: appliedDelta,
+        action: movement.action,
+        reason: movement.notes
+      }
+    });
+    return { item, prevStock, nextStock, delta: appliedDelta, movement };
+  }
+
+  function getDynamicBestsellers(limit = 6) {
+    const cutoff = Date.now() - (14 * 86400000);
+    const counts = new Map();
+    (state.sales || []).forEach(s => {
+      if (!s || s.voided) return;
+      const ts = s.createdAt ? new Date(s.createdAt).getTime() : 0;
+      if (ts && ts < cutoff) return;
+      (s.items || []).forEach(it => {
+        const refId = it.refId || it.variantId || it.invId;
+        if (!refId) return;
+        const key = (it.isDish ? 'dish:' : 'retail:') + refId;
+        const cur = counts.get(key) || { kind: it.isDish ? 'dish' : 'retail', id: refId, qty: 0 };
+        cur.qty += Number(it.qty || 0);
+        counts.set(key, cur);
+      });
+    });
+
+    const ranked = Array.from(counts.values()).sort((a, b) => b.qty - a.qty).slice(0, limit);
+    if (ranked.length >= 3) return ranked;
+
+    // Fallback inicial inteligente para tiendas recién creadas
+    const fallback = [];
+    (state.variants || []).filter(v => v.active !== false).slice(0, 4).forEach(v => {
+      fallback.push({ kind: 'dish', id: v.id, qty: 0 });
+    });
+    (state.inventory || []).filter(i => i.sellable && i.active !== false).slice(0, 2).forEach(i => {
+      fallback.push({ kind: 'retail', id: i.id, qty: 0 });
+    });
+    return fallback.slice(0, limit);
+  }
+
+  function importFullBackup(rawObj) {
+    const parsed = typeof rawObj === 'string' ? JSON.parse(rawObj) : rawObj;
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('El respaldo no es un JSON válido.');
+    }
+    const migrated = migrateToV6(migrateV3toV5(parsed));
+    Object.keys(state).forEach(k => { delete state[k]; });
+    Object.assign(state, migrated);
+    syncInventoryReferences(state);
+    saveState(state, { eventType: 'BACKUP_IMPORTED' });
+    return state;
+  }
+
+  function applyRemoteState(incomingState) {
+    if (!incomingState || typeof incomingState !== 'object') return false;
+    const migrated = migrateToV6(migrateV3toV5(incomingState));
+    isApplyingRemoteSync = true;
+    try {
+      Object.keys(state).forEach(k => { delete state[k]; });
+      Object.assign(state, migrated);
+      syncInventoryReferences(state);
+      saveState(state, { skipApi: true, skipBroadcast: true });
+      return true;
+    } finally {
+      isApplyingRemoteSync = false;
+    }
+  }
+
+  function saveProduct(product) {
+    if (!product || !product.name) return false;
+    if (!Array.isArray(state.products)) state.products = [];
+    if (!product.id) product.id = 'prod-' + Date.now();
+    const idx = state.products.findIndex(p => p.id === product.id);
+    if (idx >= 0) {
+      state.products[idx] = Object.assign({}, state.products[idx], product);
+    } else {
+      state.products.push(product);
+    }
+    saveState(state, { eventType: 'CATALOG_CHANGED', eventPayload: { products: state.products } });
+    return product;
+  }
+
+  function saveVariant(variant) {
+    if (!variant || !variant.name) return false;
+    if (!Array.isArray(state.variants)) state.variants = [];
+    if (!variant.id) variant.id = 'var-' + Date.now();
+    if (!variant.recipe && variant.ingredients) variant.recipe = variant.ingredients;
+    if (!variant.ingredients && variant.recipe) variant.ingredients = variant.recipe;
+    const idx = state.variants.findIndex(v => v.id === variant.id);
+    let savedVar = variant;
+    if (idx >= 0) {
+      state.variants[idx] = Object.assign({}, state.variants[idx], variant);
+      savedVar = state.variants[idx];
+    } else {
+      state.variants.push(variant);
+    }
+    saveState(state, {
+      eventType: 'ITEM_SAVED',
+      eventPayload: { item: Object.assign({ kind: 'variant' }, savedVar) }
+    });
+    return savedVar;
+  }
+
+  function deleteVariant(variantId) {
+    if (!Array.isArray(state.variants)) return false;
+    state.variants = state.variants.filter(v => v.id !== variantId);
+    saveState(state, {
+      eventType: 'ITEM_DELETED',
+      eventPayload: { id: variantId, itemId: variantId, kind: 'variant' }
+    });
+    return true;
+  }
+
+  function deleteProduct(id) {
+    if (!id) return false;
+    let found = false;
+    if (Array.isArray(state.variants)) {
+      const prevLen = state.variants.length;
+      state.variants = state.variants.filter(v => v.id !== id);
+      if (state.variants.length !== prevLen) found = true;
+    }
+    if (Array.isArray(state.insumos)) {
+      const prevLen = state.insumos.length;
+      state.insumos = state.insumos.filter(i => i.id !== id);
+      if (state.insumos.length !== prevLen) found = true;
+    }
+    if (Array.isArray(state.retailItems)) {
+      const prevLen = state.retailItems.length;
+      state.retailItems = state.retailItems.filter(r => r.id !== id);
+      if (state.retailItems.length !== prevLen) found = true;
+    }
+    if (Array.isArray(state.inventory)) {
+      const prevLen = state.inventory.length;
+      state.inventory = state.inventory.filter(i => i.id !== id);
+      if (state.inventory.length !== prevLen) found = true;
+    }
+    if (Array.isArray(state.products)) {
+      const prevLen = state.products.length;
+      state.products = state.products.filter(p => p.id !== id);
+      if (state.products.length !== prevLen) found = true;
+    }
+    if (found) {
+      saveState(state, { eventType: 'ITEM_DELETED', eventPayload: { id: id, itemId: id } });
+    }
+    return found;
+  }
+
+  function toggleProductAvailability(id, forceState) {
+    if (!id) return null;
+    syncInventoryReferences(state);
+    let target = null;
+    let targetKind = 'inventory';
+    if (Array.isArray(state.variants)) {
+      const v = state.variants.find(x => x.id === id);
+      if (v) { target = v; targetKind = 'variant'; }
+    }
+    if (!target && Array.isArray(state.inventory)) {
+      const i = state.inventory.find(x => x.id === id);
+      if (i) { target = i; targetKind = 'inventory'; }
+    }
+    if (!target && Array.isArray(state.products)) {
+      const p = state.products.find(x => x.id === id);
+      if (p) { target = p; targetKind = 'product'; }
+    }
+
+    if (!target) return null;
+    const nextState = forceState !== undefined ? !!forceState : (target.active === false ? true : false);
+    target.active = nextState;
+
+    if (targetKind === 'product') {
+      saveState(state, { eventType: 'CATALOG_CHANGED', eventPayload: { products: state.products } });
+    } else {
+      saveState(state, {
+        eventType: 'ITEM_SAVED',
+        eventPayload: {
+          item: targetKind === 'variant' ? Object.assign({ kind: 'variant' }, target) : target,
+          id: id,
+          active: nextState
+        }
+      });
+    }
+    return target;
+  }
+
+  function updateVariantPrice(variantId, newPriceUsd) {
+    if (!variantId) return null;
+    const price = Number(Number(newPriceUsd).toFixed(2));
+    if (!isFinite(price) || price < 0) return null;
+    if (!Array.isArray(state.variants)) state.variants = [];
+    const target = state.variants.find(v => v && v.id === variantId);
+    if (!target) return null;
+    target.priceUsd = price;
+    if (Array.isArray(state.dishes)) {
+      const mirror = state.dishes.find(d => d && d.id === variantId);
+      if (mirror) mirror.priceUsd = price;
+    }
+    saveState(state, {
+      eventType: 'CATALOG_CHANGED',
+      eventPayload: { kind: 'variant', id: variantId, priceUsd: price }
+    });
+    return target;
+  }
+
+  function updateInventoryPrice(invId, newPriceUsd) {
+    if (!invId) return null;
+    const price = Number(Number(newPriceUsd).toFixed(2));
+    if (!isFinite(price) || price < 0) return null;
+    const target = getInsumoById(invId);
+    if (!target) return null;
+    target.priceUsd = price;
+    saveState(state, {
+      eventType: 'CATALOG_CHANGED',
+      eventPayload: { kind: 'inventory', id: invId, priceUsd: price }
+    });
+    return target;
+  }
+
+  function updateBulkPrices(dishUpdates, invUpdates) {
+    const appliedDishes = [];
+    const appliedInv = [];
+
+    if (Array.isArray(dishUpdates)) {
+      dishUpdates.forEach(upd => {
+        if (!upd) return;
+        const id = upd.id || upd.variantId;
+        const price = Number(Number(upd.priceUsd).toFixed(2));
+        if (!id || !isFinite(price) || price < 0) return;
+        const v = (state.variants || []).find(x => x && x.id === id);
+        if (v) {
+          v.priceUsd = price;
+          if (Array.isArray(state.dishes)) {
+            const d = state.dishes.find(x => x && x.id === id);
+            if (d) d.priceUsd = price;
+          }
+          appliedDishes.push({ id, priceUsd: price });
+        }
+      });
+    }
+
+    if (Array.isArray(invUpdates)) {
+      invUpdates.forEach(upd => {
+        if (!upd) return;
+        const id = upd.id || upd.invId || upd.itemId;
+        const price = Number(Number(upd.priceUsd).toFixed(2));
+        if (!id || !isFinite(price) || price < 0) return;
+        const item = getInsumoById(id);
+        if (item) {
+          item.priceUsd = price;
+          appliedInv.push({ id, priceUsd: price });
+        }
+      });
+    }
+
+    if (appliedDishes.length > 0 || appliedInv.length > 0) {
+      saveState(state, {
+        eventType: 'CATALOG_CHANGED',
+        eventPayload: {
+          kind: 'bulk',
+          dishUpdates: appliedDishes,
+          invUpdates: appliedInv
+        }
+      });
+    }
+
+    return { dishUpdates: appliedDishes, invUpdates: appliedInv };
+  }
+
+  /** Resuelve la ruta relativa correcta para imágenes locales según raíz o subcarpeta (/admin/). */
+  function resolveImgPath(src, fallback) {
+    const chosen = (src && String(src).trim()) || (fallback && String(fallback).trim()) || 'assets/img/productos/viveres.jpg';
+    if (/^(data:|blob:|https?:|file:)/i.test(chosen)) return chosen;
+    let clean = chosen.replace(/\\/g, '/').replace(/^(\.\.\/|\.\/)+/, '');
+    if (!clean.includes('/') && !clean.startsWith('assets/')) {
+      clean = 'assets/img/productos/' + clean;
+    }
+    const path = (typeof location !== 'undefined' && location.pathname)
+      ? location.pathname.replace(/\\/g, '/')
+      : '';
+    const inSubdir = /\/(admin|caja|mobile)\//i.test(path);
+    return (inSubdir ? '../' : '') + clean;
+  }
+
+  function getItemById(id) {
+    if (!id) return null;
+    const v = (state.variants || []).find(x => x.id === id);
+    if (v) return Object.assign({}, v, { isVariant: true, kind: 'variant' });
+    const r = (state.retailItems || []).find(x => x.id === id);
+    if (r) return Object.assign({}, r, { isRetail: true, kind: 'retail' });
+    const inv = (state.inventory || []).find(x => x.id === id);
+    if (inv) return Object.assign({}, inv, { isRetail: true, kind: 'retail' });
+    const p = (state.products || []).find(x => x.id === id);
+    if (p) return Object.assign({}, p, { isProduct: true, kind: 'product' });
+    return null;
+  }
+
+  function quickSaveItem(itemData) {
+    if (!itemData || !itemData.name) {
+      return { success: false, error: 'El nombre del producto es obligatorio' };
+    }
+    const name = String(itemData.name).trim();
+    const familyId = String(itemData.familyId || 'viveres').trim();
+    const priceUsd = Math.max(0, Number(itemData.priceUsd) || 0);
+    const costUsd = Math.max(0, Number(itemData.costUsd) || 0);
+    const isKitchenFamily = ['fritos', 'arepas', 'almuerzos', 'cafeteria'].includes(familyId);
+    const type = itemData.type ? itemData.type : (isKitchenFamily ? 'cocina' : 'venta');
+    const isKitchen = type === 'cocina';
+    const taxType = (itemData.taxType === 'E' || itemData.taxExempt) ? 'E' : 'G';
+    const isExempt = taxType === 'E';
+    const ivaCode = isExempt ? 'E' : 'G16';
+    const code = String(itemData.code || Math.floor(100 + Math.random() * 900)).trim();
+    const barcode = String(itemData.barcode || ('8800' + code)).trim();
+    const img = itemData.img || (isKitchen ? '../assets/img/productos/empanadas.jpg' : '../assets/img/productos/viveres.jpg');
+    const emoji = itemData.emoji || (isKitchen ? '🍳' : '📦');
+    const active = itemData.active !== undefined ? !!itemData.active : true;
+
+    if (isKitchen) {
+      if (!Array.isArray(state.variants)) state.variants = [];
+      const id = itemData.id || ('var-quick-' + Date.now());
+      let parentProdId = itemData.productId;
+      if (!parentProdId) {
+        const existingParent = (state.products || []).find(p => p.familyId === familyId);
+        if (existingParent) {
+          parentProdId = existingParent.id;
+        } else {
+          parentProdId = 'prod-' + familyId + '-' + Date.now();
+          saveProduct({
+            id: parentProdId,
+            familyId,
+            name: name,
+            subtitle: 'Platos preparados',
+            active: true
+          });
+        }
+      }
+
+      const existingIdx = state.variants.findIndex(v => v.id === id);
+      const variantObj = {
+        id,
+        productId: parentProdId,
+        familyId,
+        name,
+        code,
+        barcode,
+        priceUsd,
+        costUsd,
+        iva: ivaCode,
+        ivaType: taxType,
+        taxExempt: isExempt,
+        active,
+        order: existingIdx >= 0 ? state.variants[existingIdx].order : (state.variants.length + 1),
+        emoji,
+        img,
+        recipe: (existingIdx >= 0 && state.variants[existingIdx].recipe) ? state.variants[existingIdx].recipe : []
+      };
+
+      if (existingIdx >= 0) {
+        state.variants[existingIdx] = Object.assign({}, state.variants[existingIdx], variantObj);
+      } else {
+        state.variants.push(variantObj);
+      }
+
+      const savedVar = state.variants.find(v => v.id === id) || variantObj;
+      saveState(state, {
+        eventType: 'ITEM_SAVED',
+        eventPayload: { item: Object.assign({ kind: 'variant' }, savedVar) }
+      });
+      if (typeof window !== 'undefined' && window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('mtp:state-updated', { detail: { action: 'saveItem', item: savedVar, kind: 'variant' } }));
+      }
+      return { success: true, item: savedVar, kind: 'variant' };
+    } else {
+      if (!Array.isArray(state.retailItems)) state.retailItems = [];
+      if (!Array.isArray(state.inventory)) state.inventory = [];
+      const id = itemData.id || ('prod-quick-' + Date.now());
+      const stock = itemData.stock !== undefined ? Math.max(0, Number(itemData.stock) || 0) : 20;
+      const minStock = itemData.minStock !== undefined ? Math.max(0, Number(itemData.minStock) || 0) : 5;
+      const unit = itemData.unit || 'und';
+
+      const retailObj = {
+        id,
+        familyId,
+        group: familyId,
+        code,
+        barcode,
+        qrCode: 'QR-' + code,
+        name,
+        category: familyId.charAt(0).toUpperCase() + familyId.slice(1),
+        type: 'venta',
+        sellable: true,
+        active,
+        iva: ivaCode,
+        taxExempt: isExempt,
+        ivaType: taxType,
+        unit,
+        stock,
+        minStock,
+        costUsd,
+        priceUsd,
+        emoji,
+        img
+      };
+
+      const invIdx = state.inventory.findIndex(i => i.id === id);
+      if (invIdx >= 0) {
+        Object.assign(state.inventory[invIdx], retailObj);
+      } else {
+        state.inventory.push(retailObj);
+      }
+
+      const savedInv = state.inventory.find(i => i.id === id) || retailObj;
+      saveState(state, {
+        eventType: 'ITEM_SAVED',
+        eventPayload: { item: savedInv }
+      });
+      return { success: true, item: savedInv, kind: 'retail' };
+    }
+  }
+
+  function saveModifierGroup(group) {
+    if (!group || !group.name) return false;
+    if (!Array.isArray(state.modifierGroups)) state.modifierGroups = [];
+    if (!group.id) group.id = 'mg-' + Date.now();
+    const idx = state.modifierGroups.findIndex(g => g.id === group.id);
+    if (idx >= 0) {
+      state.modifierGroups[idx] = Object.assign({}, state.modifierGroups[idx], group);
+    } else {
+      state.modifierGroups.push(group);
+    }
+    saveState(state, { eventType: 'CATALOG_CHANGED', eventPayload: { modifierGroups: state.modifierGroups } });
+    return group;
+  }
+
+  window.MTP = {
+    state,
+    POS_GROUPS,
+    DEFAULT_FAMILIES,
+    DEFAULT_PRODUCTS,
+    DEFAULT_MODIFIER_GROUPS,
+    DEFAULT_VARIANTS,
+    DEFAULT_RETAIL_ITEMS,
+    DEFAULT_INSUMOS,
+    getLocalDateIso,
+    getLocalMonthIso,
+    toLocalDateIso,
+    escapeHtml,
+    updateVariantPrice,
+    updateInventoryPrice,
+    updateBulkPrices,
+    getProductsByFamily,
+    getVariantsForProduct,
+    getModifierGroupsForProduct,
+    getDirectRetailItems,
+    getKitchenInsumos,
+    getSellableRetail,
+    adjustItemStock,
+    getDynamicBestsellers,
+    importFullBackup,
+    applyRemoteState,
+    saveProduct,
+    saveVariant,
+    deleteVariant,
+    deleteProduct,
+    toggleProductAvailability,
+    getItemById,
+    quickSaveItem,
+    saveModifierGroup,
+    migrateV3toV5,
+    migrateToV6,
+    getItemsForGroup,
+    save: (opts) => saveState(state, opts),
+    saveState,
+    resolveImgPath,
+    getFallbackSvgDataUri,
+    fmtUSD,
+    fmtBs,
+    fmtEur,
+    fmtBsRaw,
+    fmtWeight,
+    getInsumoById,
+    calcDishCost,
+    calcDishMaxPortions,
+    getExchangeGapFactor,
+    getEurGapFactor,
+    calcRecommendedPriceUsd,
+    findByCodeOrBarcode,
+    isPagoMovilRefUsed,
+    findUsedPagoMovilRef,
+    parsePagoMovilSms,
+    recordSale,
+    recordExpense,
+    recordKitchenPurchase,
+    deleteExpense,
+    addBulkStockEntry,
+    recordMultiItemPurchase,
+    recordWaste,
+    recordAuditAdjustment,
+    getKardexForItem,
+    recordMovement: (p) => {
+      const r = recordMovementInternal(p);
+      saveState(state, { eventType: 'STATE_SYNCED', eventPayload: { state } });
+      return r;
+    },
+    quickCreateItemInGroup,
+    getFinancialAnalytics,
+    getPeriodAnalytics,
+    performDailyClosure,
+    performMonthlyClosure,
+    closeTerminalBatch,
+    updatePagoMovilStatus,
+    recordVerifiedDigitalPayment,
+    processC2pPayment,
+    saveTerminal,
+    savePagoMovilAccount,
+    generateFiscalHkaCommand,
+    downloadFiscalCommandFile,
+    emitFiscalReportX,
+    emitFiscalReportZ,
+    saveFiscalConfig,
+    exportBackupJson,
+    linkLocalDiskFile,
+    toast,
+    resetDemoData
+  };
+})();

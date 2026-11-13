@@ -3,7 +3,7 @@
    Casos obligatorios §1.4 de PLAN_ESTABILIZACION_V6.md
    ========================================================================== */
 const assert = require('assert');
-const MTPTax = require('../assets/js/tax.js');
+const MTPTax = require('../assets/js/core/tax.js');
 
 function runTaxTests() {
   console.log('--- Ejecutando pruebas de MTPTax (IVA 16%, Exentos Art. 18 e IGTF 3%) ---');

@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Catálogo V5 · Familia → Producto → Variantes & Escáner | MI TIENDA POS</title>
-  <link rel="stylesheet" href="../assets/css/variables.css">
-  <link rel="stylesheet" href="../assets/css/components.css">
-  <link rel="stylesheet" href="../assets/css/design-v7.css">
-  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <link rel="stylesheet" href="../assets/css/app.css">
   <style>
     .cat-tabs {
       display: flex;
@@ -30,7 +28,7 @@
       align-items: center;
       gap: 6px;
       white-space: nowrap;
-      transition: all var(--dur-fast) var(--ease);
+      transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
     }
     .cat-tab-btn:hover {
       background: var(--surface-2);
@@ -76,7 +74,7 @@
     .badge-mod {
       display: inline-block;
       padding: 2px 6px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       background: #e0e7ff;
       color: #3730a3;
@@ -85,7 +83,7 @@
     }
     .recipe-chip {
       display: inline-block;
-      font-size: 11px;
+      font-size: 12px;
       background: var(--surface-2);
       color: var(--txt);
       padding: 2px 6px;
@@ -110,7 +108,7 @@
       color: var(--txt-2);
       border-radius: var(--radius-sm);
       cursor: pointer;
-      transition: all var(--dur-fast) var(--ease);
+      transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
     }
     .view-toggle-btn.active {
       background: var(--surface);
@@ -143,7 +141,7 @@
           <button class="btn btn-sm btn-secondary" onclick="openNewProductModal()">+ Producto Padre</button>
           <button class="btn btn-sm btn-secondary" onclick="openNewVariantModal()">+ Nueva Variante</button>
           <button class="btn btn-sm btn-secondary" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">📷 Cámara</button>
-          <a href="pos.html" class="btn btn-sm btn-secondary">Ir a Caja</a>
+          <a href="../pos.html" class="btn btn-sm btn-secondary">Ir a Caja</a>
         </div>
       </header>
 
@@ -160,7 +158,7 @@
                 placeholder="Buscar producto, sabor, código PLU o código de barras..." oninput="renderHierarchyView()">
             </div>
             <div class="toolbar-secondary" style="display:flex;gap:8px;align-items:center">
-              <span id="catStatsLabel" style="font-size:11.5px;color:var(--txt-2);font-weight:600">Cargando catálogo...</span>
+              <span id="catStatsLabel" style="font-size:12px;color:var(--txt-2);font-weight:600">Cargando catálogo...</span>
               <button class="btn btn-ghost btn-sm" onclick="openModifierGroupsModal()">Configurar Grupos de Extras</button>
             </div>
           </div>
@@ -176,28 +174,28 @@
             <div class="card" data-section="abasto">
               <div class="card-hd">
                 <div>
-                  <h3 style="font-size:13px">Escáner Activo de Recepción y Venta</h3>
-                  <p style="font-size:11px">Dispara con lector USB o cámara web sobre cualquier empaque</p>
+                  <h3 style="font-size:14px">Escáner Activo de Recepción y Venta</h3>
+                  <p style="font-size:12px">Dispara con lector USB o cámara web sobre cualquier empaque</p>
                 </div>
                 <span class="badge badge-green">LECTOR ACTIVO</span>
               </div>
               <div class="card-bd" style="padding:10px">
-                <div style="background:#0f172a;padding:10px;border-radius:6px;color:#fff;margin-bottom:10px">
-                  <label style="font-size:11px;font-weight:800;color:#34d399;text-transform:uppercase;display:block;margin-bottom:4px">
+                <div style="background:var(--surface-2);border:1px solid var(--line);padding:12px;border-radius:8px;color:var(--txt);margin-bottom:10px">
+                  <label for="liveBarcodeInput" style="font-size:12px;font-weight:800;color:var(--money-in);text-transform:uppercase;display:block;margin-bottom:6px">
                     Código de Barras EAN-13 / UPC / Código Corto:
                   </label>
                   <div style="display:flex;gap:6px">
                     <input type="text" id="liveBarcodeInput" class="input"
                       placeholder="Dispara el lector aquí o escribe..."
-                      style="font-family:var(--font-mono);font-size:13px;font-weight:900;background:#1e293b;color:#fff;border-color:#334155;height:32px">
-                    <button class="btn btn-action btn-sm" onclick="handleScannedCode(document.getElementById('liveBarcodeInput').value)">Buscar</button>
-                    <button class="btn btn-secondary btn-sm" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">Cámara</button>
+                      style="font-family:var(--font-mono);font-size:13px;font-weight:800;background:var(--surface);color:var(--txt);border-color:var(--line-strong);height:36px">
+                    <button type="button" class="btn btn-action btn-sm" onclick="handleScannedCode(document.getElementById('liveBarcodeInput').value)">Buscar</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPBarcode.openCameraScannerModal(handleScannedCode)">Cámara</button>
                   </div>
                 </div>
 
                 <div id="scanResultBox" style="padding:12px;border-radius:6px;border:1.5px dashed var(--line-strong);background:var(--surface-2);text-align:center;color:var(--txt-2)">
                   <strong style="font-size:12px;display:block">Escanea mercancía (Harina P.A.N., Pepito, Refresco, Cerveza, Cigarros)</strong>
-                  <p style="font-size:11px;margin-top:2px">Si existe sumas unidades rápidamente al stock. Si es nuevo se completa el formulario a la derecha.</p>
+                  <p style="font-size:12px;margin-top:2px">Si existe sumas unidades rápidamente al stock. Si es nuevo se completa el formulario a la derecha.</p>
                 </div>
               </div>
             </div>
@@ -206,8 +204,8 @@
             <div class="card" data-section="abasto">
               <div class="card-hd">
                 <div>
-                  <h3 id="formCardTitle" style="font-size:13px">Registrar / Editar con Código de Barras</h3>
-                  <p style="font-size:11px">Vincular empaque al catálogo y fijar margen</p>
+                  <h3 id="formCardTitle" style="font-size:14px">Registrar / Editar con Código de Barras</h3>
+                  <p style="font-size:12px">Vincular empaque al catálogo y fijar margen</p>
                 </div>
               </div>
               <div class="card-bd" style="padding:10px">
@@ -224,7 +222,7 @@
                     </div>
                     <div class="form-group">
                       <label>Familia</label>
-                      <select id="bpGroup" class="select">
+                      <select id="bpGroup" class="select" onchange="syncBpIvaFromGroup()">
                         <option value="viveres">Víveres</option>
                         <option value="chucherias">Chucherías</option>
                         <option value="bebidas">Bebidas & Refrescos</option>
@@ -252,11 +250,19 @@
                     </div>
                     <div class="form-group">
                       <label>PVP USD ($)</label>
-                      <input type="number" step="0.01" id="bpPrice" class="input" required value="1.35">
+                      <input type="number" step="0.01" id="bpPrice" class="input" required value="1.35" oninput="this.dataset.manual='1';updateCalculatedPvpPreview()">
                     </div>
-                    <div class="form-group" style="display:flex;align-items:flex-end">
-                      <button type="submit" class="btn btn-action" style="width:100%;height:30px">Guardar Producto</button>
+                    <div class="form-group">
+                      <label>Tipo de IVA</label>
+                      <select id="bpIva" class="select">
+                        <option value="E">Exento (0% - Víveres)</option>
+                        <option value="G">Gravado 16% (IVA)</option>
+                      </select>
                     </div>
+                  </div>
+                  <div id="bpSuggestedHint" style="font-size:12px;color:var(--txt-2);margin-top:6px;font-variant-numeric:tabular-nums"></div>
+                  <div style="margin-top:8px">
+                    <button type="submit" class="btn btn-action" style="width:100%;height:36px">Guardar Producto</button>
                   </div>
                 </form>
               </div>
@@ -267,8 +273,8 @@
           <div class="card" data-section="abasto">
             <div class="card-hd">
               <div>
-                <h3 style="font-size:13px">Mercancía con Código de Barras Registrado</h3>
-                <p style="font-size:11px">Artículos que se escanean directamente en mostrador o con pistola USB</p>
+                <h3 style="font-size:14px">Mercancía con Código de Barras Registrado</h3>
+                <p style="font-size:12px">Artículos que se escanean directamente en mostrador o con pistola USB</p>
               </div>
               <input type="text" id="filterBarcodesInput" class="input" style="max-width:240px;height:30px" placeholder="Filtrar por nombre o EAN..." oninput="renderRegisteredBarcodes()">
             </div>
@@ -394,7 +400,7 @@
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
               <div>
                 <strong style="font-size:12px;color:var(--txt)">Escandallo de Insumos de Cocina:</strong>
-                <p style="font-size:11px;color:var(--txt-3);margin:0">Gramos que descuenta del almacén al vender una unidad</p>
+                <p style="font-size:12px;color:var(--txt-3);margin:0">Gramos que descuenta del almacén al vender una unidad</p>
               </div>
               <button type="button" class="btn btn-secondary btn-sm" onclick="addRecipeRowInVariantModal()">+ Añadir Insumo</button>
             </div>
@@ -417,7 +423,7 @@
         <button class="btn btn-ghost btn-sm" onclick="closeModifierGroupsModal()">✕</button>
       </div>
       <div class="modal-bd">
-        <p style="font-size:11px;color:var(--txt-2);margin-bottom:10px">
+        <p style="font-size:12px;color:var(--txt-2);margin-bottom:10px">
           Configura opciones opcionales u obligatorias (ej. Tipo de masa para arepas, salsa, contornos, empaque para llevar).
         </p>
         <div id="modifierGroupsListContainer"></div>
@@ -428,23 +434,40 @@
     </div>
   </div>
 
-  <script src="../assets/js/icons.js"></script>
-  <script src="../assets/js/tax.js"></script>
-  <script src="../assets/js/config.js"></script>
-  <script src="../assets/js/rates.js"></script>
-  <script src="../assets/js/permissions.js"></script>
-  <script src="../assets/js/auth.js"></script>
-  <script src="../assets/js/barcode-engine.js"></script>
-  <script src="../assets/js/ui.js"></script>
-  <script src="../assets/js/keys.js"></script>
-  <script src="../assets/js/sidenav.js"></script>
-  <script src="../assets/js/code-structure.js"></script>
-  <script src="../assets/js/barcode-printer.js"></script>
-  <script src="../assets/js/product-drawer.js"></script>
+  <script src="../assets/js/ui/icons.js"></script>
+  <script src="../assets/js/core/tax.js"></script>
+  <script src="../assets/js/core/config.js"></script>
+  <script src="../assets/js/core/api-client.js"></script>
+  <script src="../assets/js/core/rates.js"></script>
+  <script src="../assets/js/core/permissions.js"></script>
+  <script src="../assets/js/core/auth.js"></script>
+  <script src="../assets/js/modules/barcode-engine.js"></script>
+  <script src="../assets/js/ui/ui.js"></script>
+  <script src="../assets/js/ui/keys.js"></script>
+  <script src="../assets/js/ui/view-transitions.js"></script>
+  <script src="../assets/js/ui/sidenav.js"></script>
+  <script src="../assets/js/core/code-structure.js"></script>
+  <script src="../assets/js/modules/barcode-printer.js"></script>
+  <script src="../assets/js/modules/product-drawer.js"></script>
   <script>
     let activeFamilyFilter = 'all';
     let currentMainView = 'hierarchy';
     let variantModalRecipe = [];
+
+    function esc(v) {
+      if (window.MTP && typeof MTP.escapeHtml === 'function') return MTP.escapeHtml(v);
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getActorName() {
+      const u = window.MTPAuth && typeof MTPAuth.getCurrentUser === 'function' ? MTPAuth.getCurrentUser() : null;
+      return (u && u.name) ? u.name : 'Administrador';
+    }
 
     function switchMainView(mode) {
       currentMainView = mode;
@@ -454,6 +477,7 @@
       document.getElementById('btnViewScanner').classList.toggle('active', mode === 'scanner');
       if (mode === 'scanner') {
         renderRegisteredBarcodes();
+        updateCalculatedPvpPreview();
         setTimeout(() => document.getElementById('liveBarcodeInput')?.focus(), 150);
       } else {
         renderHierarchyView();
@@ -464,7 +488,7 @@
       const container = document.getElementById('familyTabsContainer');
       const families = MTP.state.families || [];
       let html = `
-        <button class="cat-tab-btn ${activeFamilyFilter === 'all' ? 'active' : ''}" onclick="selectFamilyTab('all')">
+        <button type="button" class="cat-tab-btn ${activeFamilyFilter === 'all' ? 'active' : ''}" data-family-id="all">
           ${window.MTPIcons ? MTPIcons.get('store', { size: 14 }) : ''}
           Todas las Familias
         </button>
@@ -473,9 +497,9 @@
         const isActive = activeFamilyFilter === f.id;
         const ico = window.MTPIcons ? MTPIcons.get(f.icon || 'dish', { size: 14 }) : '';
         html += `
-          <button class="cat-tab-btn ${isActive ? 'active' : ''}" onclick="selectFamilyTab('${f.id}')">
+          <button type="button" class="cat-tab-btn ${isActive ? 'active' : ''}" data-family-id="${esc(f.id)}">
             ${ico}
-            ${f.name}
+            ${esc(f.name)}
           </button>
         `;
       });
@@ -498,8 +522,8 @@
       let totalVariantsCount = 0;
       let totalRetailCount = 0;
 
-      const filteredFamilies = activeFamilyFilter === 'all' 
-        ? families 
+      const filteredFamilies = activeFamilyFilter === 'all'
+        ? families
         : families.filter(f => f.id === activeFamilyFilter);
 
       let html = '';
@@ -509,74 +533,82 @@
         const products = MTP.getProductsByFamily(fam.id);
         const retailItems = MTP.getDirectRetailItems(fam.id);
 
-        // Si hay búsqueda por texto, filtrar
         let matchedProducts = products;
         let matchedRetail = retailItems;
         if (q) {
           matchedProducts = products.filter(p => {
             const vars = MTP.getVariantsForProduct(p.id);
-            const matchesProd = p.name.toLowerCase().includes(q);
-            const matchesVar = vars.some(v => v.name.toLowerCase().includes(q) || String(v.code).includes(q) || String(v.barcode).includes(q));
+            const matchesProd = String(p.name || '').toLowerCase().includes(q);
+            const matchesVar = vars.some(v =>
+              String(v.name || '').toLowerCase().includes(q) ||
+              String(v.code || '').toLowerCase().includes(q) ||
+              String(v.barcode || '').toLowerCase().includes(q)
+            );
             return matchesProd || matchesVar;
           });
-          matchedRetail = retailItems.filter(r => r.name.toLowerCase().includes(q) || String(r.barcode).toLowerCase().includes(q) || String(r.code).toLowerCase().includes(q));
+          matchedRetail = retailItems.filter(r =>
+            String(r.name || '').toLowerCase().includes(q) ||
+            String(r.barcode || '').toLowerCase().includes(q) ||
+            String(r.code || '').toLowerCase().includes(q)
+          );
         }
 
         if (!matchedProducts.length && !matchedRetail.length && q) {
-          return; // omitir familia vacía si hay búsqueda activa
+          return;
         }
 
         const sectionAttr = isGastronomy ? 'cocina' : 'abasto';
         const famIco = window.MTPIcons ? MTPIcons.get(fam.icon || 'dish', { size: 16 }) : '';
+        const famColor = esc(fam.color || '#3B82F6');
 
         html += `
           <div class="card" data-section="${sectionAttr}" style="margin-bottom:14px">
             <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center">
               <div style="display:flex;align-items:center;gap:8px">
                 ${famIco}
-                <h3 style="font-size:13px;font-weight:800;color:var(--txt)">${fam.name}</h3>
-                <span class="badge badge-cat-pill" style="background:${fam.color}22;color:${fam.color};border:1px solid ${fam.color}44">
+                <h3 style="font-size:14px;font-weight:800;color:var(--txt)">${esc(fam.name)}</h3>
+                <span class="badge badge-cat-pill" style="background:${famColor}22;color:${famColor};border:1px solid ${famColor}44">
                   ${isGastronomy ? 'Comida de Cocina' : 'Venta Directa / Minimercado'}
                 </span>
               </div>
               <div style="display:flex;gap:6px">
                 ${isGastronomy ? `
-                  <button class="btn btn-ghost btn-sm" onclick="openNewProductModal('${fam.id}')">+ Producto en ${fam.name}</button>
+                  <button type="button" class="btn btn-ghost btn-sm" data-prod-action="new-product" data-family-id="${esc(fam.id)}">+ Producto en ${esc(fam.name)}</button>
                 ` : `
-                  <button class="btn btn-ghost btn-sm" onclick="switchMainView('scanner')">+ Cargar Mercancía</button>
+                  <button type="button" class="btn btn-ghost btn-sm" data-prod-action="go-scanner">+ Cargar Mercancía</button>
                 `}
               </div>
             </div>
             <div class="card-bd" style="padding:10px">
         `;
 
-        // Renderizar Productos Padres si tiene
         if (matchedProducts.length > 0) {
           matchedProducts.forEach(prod => {
             totalProductsCount++;
             const variants = MTP.getVariantsForProduct(prod.id);
             const modGroups = MTP.getModifierGroupsForProduct(prod.id);
             const fallbackImg = MTP.getFallbackSvgDataUri(prod.name, prod.emoji);
+            const imgSrc = MTP.resolveImgPath ? MTP.resolveImgPath(prod.img, fallbackImg) : (prod.img || fallbackImg);
 
             html += `
               <div class="product-box">
                 <div class="product-box-hd">
                   <div class="prod-info">
-                    <img src="${prod.img || fallbackImg}" class="prod-thumb" alt="${prod.name}" onerror="this.onerror=null;this.src='${fallbackImg}'">
+                    <img src="${esc(imgSrc)}" data-fallback="${esc(fallbackImg)}" class="prod-thumb" alt="${esc(prod.name)}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback">
                     <div>
                       <div style="display:flex;align-items:center;gap:6px">
-                        <strong style="font-size:13px;color:var(--txt)">${prod.name}</strong>
-                        <span class="badge badge-blue" style="font-size:10px">${variants.length} sabores/variantes</span>
+                        <strong style="font-size:13px;color:var(--txt)">${esc(prod.name)}</strong>
+                        <span class="badge badge-blue" style="font-size:12px">${variants.length} sabores/variantes</span>
                       </div>
-                      <div style="font-size:11px;color:var(--txt-2);margin-top:2px">
-                        ${prod.subtitle || ''}
-                        ${modGroups.map(mg => `<span class="badge-mod">${mg.name}</span>`).join('')}
+                      <div style="font-size:12px;color:var(--txt-2);margin-top:2px">
+                        ${esc(prod.subtitle || '')}
+                        ${modGroups.map(mg => `<span class="badge-mod">${esc(mg.name)}</span>`).join('')}
                       </div>
                     </div>
                   </div>
                   <div style="display:flex;gap:6px">
-                    <button class="btn btn-action btn-sm" onclick="openNewVariantModal('${prod.id}')">+ Añadir Sabor</button>
-                    <button class="btn btn-secondary btn-sm" onclick="openEditProductModal('${prod.id}')">Editar</button>
+                    <button type="button" class="btn btn-action btn-sm" data-prod-action="new-variant" data-id="${esc(prod.id)}">+ Añadir Sabor</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-prod-action="edit-product" data-id="${esc(prod.id)}">Editar</button>
                   </div>
                 </div>
 
@@ -588,7 +620,7 @@
                         <th style="min-width:190px">Escandallo (Insumos)</th>
                         <th style="width:85px">Costo</th>
                         <th style="width:125px">PVP ($ / Bs)</th>
-                        <th style="width:145px;text-align:right">Margen / Acciones</th>
+                        <th style="width:165px;text-align:right">Margen / Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -600,36 +632,37 @@
               variants.forEach(v => {
                 totalVariantsCount++;
                 const cost = MTP.calcDishCost(v);
-                const price = v.priceUsd || 0;
+                const price = Number(v.priceUsd) || 0;
                 const profit = price - cost;
-                const marginPct = price > 0 ? (((profit) / price) * 100).toFixed(0) : 0;
+                const marginPct = price > 0 ? ((profit / price) * 100).toFixed(0) : 0;
                 const bsAmount = (price * bcv).toFixed(2);
-                const recipeChips = (v.recipe || []).map(r => `<span class="recipe-chip">${r.label || (r.qty * 1000 + 'g')}</span>`).join('');
+                const isExempt = (v.ivaType === 'E' || v.iva === 'E' || v.taxExempt === true);
+                const recipeChips = (v.recipe || []).map(r => `<span class="recipe-chip">${esc(r.label || ((Number(r.qty) * 1000) + 'g'))}</span>`).join('');
 
                 html += `
                   <tr class="variant-row">
                     <td>
                       <div style="display:flex;align-items:center;gap:6px">
-                        <span class="code-pill">#${v.code}</span>
-                        <strong style="font-size:13px">${v.name}</strong>
+                        <span class="code-pill">#${esc(v.code || '—')}</span>
+                        <strong style="font-size:13px">${esc(v.name)}</strong>
                       </div>
-                      <div style="font-size:10.5px;color:var(--txt-3);margin-top:2px">
-                        ${v.barcode ? '<span style="font-family:var(--font-mono)">' + v.barcode + '</span> · ' : ''}
-                        <span>${v.ivaType === 'G' ? 'IVA 16%' : 'Exento'}</span>
+                      <div style="font-size:12px;color:var(--txt-3);margin-top:2px">
+                        ${v.barcode ? '<span style="font-family:var(--font-mono)">' + esc(v.barcode) + '</span> · ' : ''}
+                        <span>${isExempt ? 'Exento' : 'IVA 16%'}</span>
                       </div>
                     </td>
-                    <td style="font-size:11px">${recipeChips || '<span style="color:var(--txt-3);font-style:italic">Sin receta asignada</span>'}</td>
-                    <td><span class="money-out" style="font-weight:700">${MTP.fmtUSD(cost)}</span></td>
-                    <td>
+                    <td style="font-size:12px">${recipeChips || '<span style="color:var(--txt-3);font-style:italic">Sin receta asignada</span>'}</td>
+                    <td style="font-variant-numeric:tabular-nums"><span class="money-out" style="font-weight:700">${MTP.fmtUSD(cost)}</span></td>
+                    <td style="font-variant-numeric:tabular-nums">
                       <strong style="color:var(--money-in)">${MTP.fmtUSD(price)}</strong>
-                      <span style="font-size:11px;color:var(--info);display:block">${bsAmount} Bs</span>
+                      <span style="font-size:12px;color:var(--info);display:block">${bsAmount} Bs</span>
                     </td>
                     <td style="text-align:right">
                       <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
-                        <span class="badge ${marginPct >= 35 ? 'badge-green' : 'badge-yellow'}" style="font-size:11px;font-weight:700">${marginPct}%</span>
-                        <button class="btn btn-secondary btn-sm" onclick="window.MTPBarcodePrinter && window.MTPBarcodePrinter.open({ itemId: '${v.id}' })" title="Imprimir etiqueta con código de barras">🏷️</button>
-                        <button class="btn btn-secondary btn-sm" onclick="window.MTPProductDrawer ? window.MTPProductDrawer.open({ mode: 'edit', id: '${v.id}', onSaved: () => renderHierarchyView(), onDeleted: () => renderHierarchyView() }) : openEditVariantModal('${v.id}')">Editar</button>
-                        <button class="btn btn-secondary btn-sm" style="color:var(--money-out)" onclick="confirmDeleteVariant('${v.id}', '${v.name}')" title="Eliminar">✕</button>
+                        <span class="badge ${marginPct >= 35 ? 'badge-green' : 'badge-yellow'}" style="font-size:12px;font-weight:700">${marginPct}%</span>
+                        <button type="button" class="btn btn-secondary btn-sm" data-prod-action="print-barcode" data-id="${esc(v.id)}" title="Imprimir etiqueta con código de barras">🏷️</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-prod-action="edit-variant-drawer" data-id="${esc(v.id)}">Editar</button>
+                        <button type="button" class="btn btn-secondary btn-sm" style="color:var(--money-out)" data-prod-action="delete-variant" data-id="${esc(v.id)}" title="Eliminar">✕</button>
                       </div>
                     </td>
                   </tr>
@@ -646,16 +679,15 @@
           });
         }
 
-        // Renderizar Artículos de Venta Directa / Minimercado si tiene
         if (matchedRetail.length > 0) {
           html += `
             <div class="table-wrap" style="border:1px solid var(--line);border-radius:6px;overflow:hidden">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th style="width:40px">Foto</th>
-                    <th style="width:60px">Código</th>
-                    <th style="width:120px">Código de Barras (EAN)</th>
+                    <th style="width:44px">Foto</th>
+                    <th style="width:70px">Código</th>
+                    <th style="width:130px">Código de Barras (EAN)</th>
                     <th>Producto Minimercado</th>
                     <th>Stock Actual</th>
                     <th>Costo USD</th>
@@ -671,35 +703,37 @@
             const cost = Number(it.costUsd) || 0;
             const price = Number(it.priceUsd) || 0;
             const profit = price - cost;
-            const marginPct = price > 0 ? (((profit) / price) * 100).toFixed(0) : 0;
+            const marginPct = price > 0 ? ((profit / price) * 100).toFixed(0) : 0;
             const bsAmount = (price * bcv).toFixed(2);
+            const fallbackRetail = '../assets/img/productos/viveres.jpg';
+            const imgSrc = MTP.resolveImgPath ? MTP.resolveImgPath(it.img, fallbackRetail) : (it.img || fallbackRetail);
 
             html += `
               <tr class="variant-row">
-                <td><img src="${it.img || '../assets/img/productos/viveres.jpg'}" style="width:34px;height:34px;border-radius:4px;object-fit:cover;border:1px solid var(--line)"></td>
-                <td><span class="code-pill">#${it.code}</span></td>
-                <td style="font-family:var(--font-mono);font-size:11.5px;font-weight:700">${it.barcode || '—'}</td>
+                <td><img src="${esc(imgSrc)}" data-fallback="${fallbackRetail}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback" style="width:34px;height:34px;border-radius:4px;object-fit:cover;border:1px solid var(--line)"></td>
+                <td><span class="code-pill">#${esc(it.code || '—')}</span></td>
+                <td style="font-family:var(--font-mono);font-size:12px;font-weight:700">${esc(it.barcode || '—')}</td>
                 <td>
-                  <strong style="font-size:12px">${it.name}</strong>
-                  <span style="font-size:10px;color:var(--txt-3);display:block">${it.category || fam.name}</span>
+                  <strong style="font-size:13px">${esc(it.name)}</strong>
+                  <span style="font-size:12px;color:var(--txt-3);display:block">${esc(it.category || fam.name)}</span>
                 </td>
                 <td>
-                  <strong>${it.stock} ${it.unit || 'und'}</strong>
-                  <div style="display:flex;gap:3px;margin-top:2px">
-                    <button class="btn btn-action btn-sm" style="padding:1px 5px;font-size:10px" onclick="quickAddStock('${it.id}', 1)">+1</button>
-                    <button class="btn btn-action btn-sm" style="padding:1px 5px;font-size:10px" onclick="quickAddStock('${it.id}', 12)">+12</button>
+                  <strong>${esc(it.stock)} ${esc(it.unit || 'und')}</strong>
+                  <div style="display:flex;gap:4px;margin-top:4px">
+                    <button type="button" class="btn btn-action btn-sm" style="padding:2px 8px;font-size:12px" data-prod-action="quick-stock" data-id="${esc(it.id)}" data-qty="1">+1</button>
+                    <button type="button" class="btn btn-action btn-sm" style="padding:2px 8px;font-size:12px" data-prod-action="quick-stock" data-id="${esc(it.id)}" data-qty="12">+12</button>
                   </div>
                 </td>
-                <td>${MTP.fmtUSD(cost)}</td>
-                <td>
+                <td style="font-variant-numeric:tabular-nums">${MTP.fmtUSD(cost)}</td>
+                <td style="font-variant-numeric:tabular-nums">
                   <strong style="color:var(--money-in)">${MTP.fmtUSD(price)}</strong>
-                  <span style="font-size:10.5px;color:var(--info);display:block">${bsAmount} Bs</span>
+                  <span style="font-size:12px;color:var(--info);display:block">${bsAmount} Bs</span>
                 </td>
-                <td><span class="badge ${marginPct >= 30 ? 'badge-green' : 'badge-yellow'}" style="font-size:10px">${marginPct}%</span></td>
+                <td><span class="badge ${marginPct >= 30 ? 'badge-green' : 'badge-yellow'}" style="font-size:12px">${marginPct}%</span></td>
                 <td style="text-align:right">
                   <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
-                    <button class="btn btn-secondary btn-sm" onclick="window.MTPBarcodePrinter && window.MTPBarcodePrinter.open({ itemId: '${it.id}' })" title="Imprimir etiqueta con código de barras">🏷️</button>
-                    <button class="btn btn-secondary btn-sm" onclick="window.MTPProductDrawer ? window.MTPProductDrawer.open({ mode: 'edit', id: '${it.id}', onSaved: () => renderHierarchyView(), onDeleted: () => renderHierarchyView() }) : (loadProductIntoForm('${it.id}'), switchMainView('scanner'))">Editar</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-prod-action="print-barcode" data-id="${esc(it.id)}" title="Imprimir etiqueta con código de barras">🏷️</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-prod-action="edit-retail-drawer" data-id="${esc(it.id)}">Editar</button>
                   </div>
                 </td>
               </tr>
@@ -718,8 +752,13 @@
         `;
       });
 
-      container.innerHTML = html;
-      document.getElementById('catStatsLabel').textContent = 
+      container.innerHTML = html || `
+        <div class="empty-state">
+          <div class="empty-state-title">No se encontraron productos</div>
+          <div class="empty-state-desc">Prueba limpiando el buscador o seleccionando "Todas las Familias".</div>
+        </div>
+      `;
+      document.getElementById('catStatsLabel').textContent =
         `${totalProductsCount} productos · ${totalVariantsCount} sabores/variantes · ${totalRetailCount} artículos minimercado`;
     }
 
@@ -734,7 +773,7 @@
       document.getElementById('pModalOrder').value = '1';
 
       const famSelect = document.getElementById('pModalFamily');
-      famSelect.innerHTML = (MTP.state.families || []).map(f => `<option value="${f.id}" ${f.id === defaultFamId ? 'selected' : ''}>${f.name}</option>`).join('');
+      famSelect.innerHTML = (MTP.state.families || []).map(f => `<option value="${esc(f.id)}" ${f.id === defaultFamId ? 'selected' : ''}>${esc(f.name)}</option>`).join('');
 
       renderModifierCheckboxes([]);
       document.getElementById('productModal').classList.add('open');
@@ -750,7 +789,7 @@
       document.getElementById('pModalOrder').value = prod.order || 1;
 
       const famSelect = document.getElementById('pModalFamily');
-      famSelect.innerHTML = (MTP.state.families || []).map(f => `<option value="${f.id}" ${f.id === prod.familyId ? 'selected' : ''}>${f.name}</option>`).join('');
+      famSelect.innerHTML = (MTP.state.families || []).map(f => `<option value="${esc(f.id)}" ${f.id === prod.familyId ? 'selected' : ''}>${esc(f.name)}</option>`).join('');
 
       renderModifierCheckboxes(prod.modifierGroupIds || []);
       document.getElementById('productModal').classList.add('open');
@@ -760,13 +799,13 @@
       const box = document.getElementById('pModalModifiersCheckboxes');
       const groups = MTP.state.modifierGroups || [];
       if (!groups.length) {
-        box.innerHTML = `<span style="font-size:11px;color:var(--txt-muted)">Sin grupos de modificadores configurados</span>`;
+        box.innerHTML = `<span style="font-size:12px;color:var(--txt-muted)">Sin grupos de modificadores configurados</span>`;
         return;
       }
       box.innerHTML = groups.map(g => `
-        <label style="font-size:11.5px;display:flex;align-items:center;gap:4px;cursor:pointer">
-          <input type="checkbox" value="${g.id}" ${selectedIds.includes(g.id) ? 'checked' : ''} class="mod-group-check">
-          <strong>${g.name}</strong> (${g.options.length} opciones)
+        <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" value="${esc(g.id)}" ${selectedIds.includes(g.id) ? 'checked' : ''} class="mod-group-check">
+          <strong>${esc(g.name)}</strong> (${(g.options || []).length} opciones)
         </label>
       `).join('');
     }
@@ -780,7 +819,7 @@
       const familyId = document.getElementById('pModalFamily').value;
       const name = document.getElementById('pModalName').value.trim();
       const subtitle = document.getElementById('pModalSubtitle').value.trim();
-      const order = parseInt(document.getElementById('pModalOrder').value) || 1;
+      const order = parseInt(document.getElementById('pModalOrder').value, 10) || 1;
 
       if (!name) {
         MTP.toast('Escribe el nombre del producto', 'warn');
@@ -830,12 +869,9 @@
       document.getElementById('vModalPrice').value = '1.30';
 
       const prodSelect = document.getElementById('vModalProduct');
-      prodSelect.innerHTML = (MTP.state.products || []).map(p => `<option value="${p.id}" ${p.id === defaultProdId ? 'selected' : ''}>${p.name} (${p.familyId})</option>`).join('');
+      prodSelect.innerHTML = (MTP.state.products || []).map(p => `<option value="${esc(p.id)}" ${p.id === defaultProdId ? 'selected' : ''}>${esc(p.name)} (${esc(p.familyId)})</option>`).join('');
 
-      variantModalRecipe = [
-        { insumoId: 'ins-harina-cocina', qty: 0.070, label: '70 g Harina' },
-        { insumoId: 'ins-queso-cocina', qty: 0.050, label: '50 g Queso' }
-      ];
+      variantModalRecipe = [];
 
       switchVariantModalTab('general');
       renderVariantRecipeList();
@@ -851,11 +887,12 @@
       document.getElementById('vModalName').value = v.name;
       document.getElementById('vModalCode').value = v.code || '';
       document.getElementById('vModalBarcode').value = v.barcode || '';
-      document.getElementById('vModalIva').value = v.ivaType || 'G';
+      const isExempt = (v.ivaType === 'E' || v.iva === 'E' || v.taxExempt === true);
+      document.getElementById('vModalIva').value = isExempt ? 'E' : 'G';
       document.getElementById('vModalPrice').value = v.priceUsd || 0;
 
       const prodSelect = document.getElementById('vModalProduct');
-      prodSelect.innerHTML = (MTP.state.products || []).map(p => `<option value="${p.id}" ${p.id === v.productId ? 'selected' : ''}>${p.name}</option>`).join('');
+      prodSelect.innerHTML = (MTP.state.products || []).map(p => `<option value="${esc(p.id)}" ${p.id === v.productId ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
 
       variantModalRecipe = JSON.parse(JSON.stringify(v.recipe || v.ingredients || []));
       switchVariantModalTab('general');
@@ -870,31 +907,35 @@
 
     function renderVariantRecipeList() {
       const box = document.getElementById('vModalRecipeList');
-      const kitchenItems = (MTP.state.insumos || MTP.state.inventory.filter(i => !i.sellable));
+      const kitchenItems = (MTP.state.insumos || (MTP.state.inventory || []).filter(i => !i.sellable));
 
       if (!variantModalRecipe.length) {
-        box.innerHTML = `<div style="text-align:center;padding:8px;font-size:11px;color:var(--txt-muted)">Sin insumos asignados a este sabor.</div>`;
+        box.innerHTML = `<div style="text-align:center;padding:8px;font-size:12px;color:var(--txt-muted)">Sin insumos asignados a este sabor. Pulsa "+ Añadir Insumo" si lleva receta.</div>`;
         return;
       }
 
       box.innerHTML = variantModalRecipe.map((ing, idx) => `
         <div style="display:grid;grid-template-columns:2.5fr 1fr 2fr auto;gap:6px;align-items:center;margin-bottom:6px">
-          <select class="select" onchange="variantModalRecipe[${idx}].insumoId=this.value;recalcVariantModalCost()" style="padding:4px;font-size:11px">
-            ${kitchenItems.map(k => `<option value="${k.id}" ${k.id === ing.insumoId ? 'selected' : ''}>${k.name} (${k.unit})</option>`).join('')}
+          <select class="select" data-recipe-idx="${idx}" data-recipe-field="insumoId" style="padding:4px 8px;font-size:12px">
+            ${kitchenItems.map(k => `<option value="${esc(k.id)}" ${k.id === ing.insumoId ? 'selected' : ''}>${esc(k.name)} (${esc(k.unit || 'und')})</option>`).join('')}
           </select>
-          <input type="number" step="0.005" class="input" value="${ing.qty}" placeholder="Kg/L/Und"
-            style="padding:4px;font-size:11px;font-weight:700"
-            oninput="variantModalRecipe[${idx}].qty=parseFloat(this.value)||0;recalcVariantModalCost()">
-          <input type="text" class="input" value="${ing.label || ''}" placeholder="Etiqueta ej: 75g Harina"
-            style="padding:4px;font-size:11px"
-            oninput="variantModalRecipe[${idx}].label=this.value">
-          <button class="btn btn-ghost btn-sm" style="color:var(--danger);padding:2px 6px" onclick="variantModalRecipe.splice(${idx},1);renderVariantRecipeList();recalcVariantModalCost()">✕</button>
+          <input type="number" step="0.005" class="input" data-recipe-idx="${idx}" data-recipe-field="qty" value="${esc(ing.qty)}" placeholder="Kg/L/Und"
+            style="padding:4px 8px;font-size:12px;font-weight:700">
+          <input type="text" class="input" data-recipe-idx="${idx}" data-recipe-field="label" value="${esc(ing.label || '')}" placeholder="Etiqueta ej: 75g Harina"
+            style="padding:4px 8px;font-size:12px">
+          <button type="button" class="btn btn-ghost btn-sm" data-recipe-idx="${idx}" data-recipe-field="remove" style="color:var(--danger);padding:4px 8px">✕</button>
         </div>
       `).join('');
     }
 
     function addRecipeRowInVariantModal() {
-      variantModalRecipe.push({ insumoId: 'ins-carne-mechada', qty: 0.050, label: '50 g Carne' });
+      const kitchenItems = (MTP.state.insumos || (MTP.state.inventory || []).filter(i => !i.sellable));
+      const defIns = kitchenItems.find(k => k.id === 'ins-carne-mechada') || kitchenItems[0];
+      if (!defIns) {
+        MTP.toast('Registra primero al menos un insumo de cocina en Inventario', 'warn');
+        return;
+      }
+      variantModalRecipe.push({ insumoId: defIns.id, qty: 0.050, label: '50 g ' + defIns.name });
       renderVariantRecipeList();
       recalcVariantModalCost();
     }
@@ -921,7 +962,9 @@
       const name = document.getElementById('vModalName').value.trim();
       const code = document.getElementById('vModalCode').value.trim();
       const barcode = document.getElementById('vModalBarcode').value.trim();
-      const ivaType = document.getElementById('vModalIva').value;
+      const ivaType = document.getElementById('vModalIva').value === 'E' ? 'E' : 'G';
+      const taxExempt = ivaType === 'E';
+      const iva = taxExempt ? 'E' : 'G16';
       const priceUsd = parseFloat(document.getElementById('vModalPrice').value) || 0;
 
       if (!name) {
@@ -936,7 +979,9 @@
         name,
         code,
         barcode,
+        iva,
         ivaType,
+        taxExempt,
         priceUsd,
         recipe: variantModalRecipe,
         active: true,
@@ -970,11 +1015,11 @@
       container.innerHTML = groups.map(g => `
         <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <strong style="font-size:12.5px">${g.name}</strong>
-            <span class="badge badge-blue" style="font-size:10px">Mín: ${g.min} / Máx: ${g.max}</span>
+            <strong style="font-size:13px">${esc(g.name)}</strong>
+            <span class="badge badge-blue" style="font-size:12px">Mín: ${esc(g.min)} / Máx: ${esc(g.max)}</span>
           </div>
-          <div style="font-size:11px;color:var(--txt-2)">
-            ${g.options.map(o => `<span class="badge-mod">${o.name} (${MTP.fmtUSD(o.priceUsd)})</span>`).join('')}
+          <div style="font-size:12px;color:var(--txt-2)">
+            ${(g.options || []).map(o => `<span class="badge-mod">${esc(o.name)} (${MTP.fmtUSD(o.priceUsd)})</span>`).join('')}
           </div>
         </div>
       `).join('');
@@ -996,23 +1041,50 @@
       const found = MTP.findByCodeOrBarcode(code, true);
       const box = document.getElementById('scanResultBox');
 
-      if (found && (found.kind === 'inventory' || found.kind === 'variant')) {
+      if (found && (found.kind === 'variant' || found.kind === 'dish')) {
         const it = found.item;
+        const parentName = found.product ? found.product.name + ' — ' : '';
+        const isEx = (it.ivaType === 'E' || it.iva === 'E' || it.taxExempt === true);
+        const fallbackDish = '../assets/img/productos/empanadas.jpg';
+        const imgSrc = MTP.resolveImgPath ? MTP.resolveImgPath((found.product && found.product.img) || it.img, fallbackDish) : ((found.product && found.product.img) || it.img || fallbackDish);
+
         box.innerHTML = `
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;flex-wrap:wrap">
             <div style="display:flex;align-items:center;gap:10px">
-              <img src="${it.img || '../assets/img/productos/viveres.jpg'}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid var(--line)">
+              <img src="${esc(imgSrc)}" data-fallback="${fallbackDish}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid var(--line)">
               <div>
-                <span class="badge badge-green">CÓDIGO IDENTIFICADO (${it.barcode || it.code})</span>
-                <div style="font-size:14px;font-weight:800;color:var(--txt);margin-top:2px">${it.name}</div>
-                <div style="font-size:11.5px;color:var(--txt-2)">Stock actual: <strong>${it.stock || 0} ${it.unit || 'und'}</strong> · PVP: <strong>${MTP.fmtUSD(it.priceUsd)}</strong></div>
+                <span class="badge badge-blue">PLATO DE COCINA IDENTIFICADO (${esc(it.barcode || it.code)})</span>
+                <div style="font-size:14px;font-weight:800;color:var(--txt);margin-top:2px">${esc(parentName + it.name)}</div>
+                <div style="font-size:12px;color:var(--txt-2)">Código #${esc(it.code || '—')} · PVP: <strong>${MTP.fmtUSD(it.priceUsd || 0)}</strong> · ${isEx ? 'Exento' : 'IVA 16%'}</div>
               </div>
             </div>
-            <div style="display:flex;gap:4px;flex-wrap:wrap">
-              <button class="btn btn-action btn-sm" onclick="quickAddStock('${it.id}', 1)">+1 Und</button>
-              <button class="btn btn-action btn-sm" onclick="quickAddStock('${it.id}', 12)">+12 Docena</button>
-              <button class="btn btn-secondary btn-sm" onclick="quickAddStock('${it.id}', 24)">+24 Bulto</button>
-              <button class="btn btn-ghost btn-sm" onclick="loadProductIntoForm('${it.id}')">Editar</button>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              ${found.kind === 'variant' ? `<button type="button" class="btn btn-action btn-sm" data-prod-action="edit-variant-modal" data-id="${esc(it.id)}">✏️ Editar Sabor / Receta</button>` : ''}
+              <button type="button" class="btn btn-secondary btn-sm" data-prod-action="print-barcode" data-id="${esc(it.id)}">🏷️ Etiqueta</button>
+            </div>
+          </div>
+        `;
+        MTP.toast(`Plato identificado: ${parentName + it.name}`);
+      } else if (found && found.kind === 'inventory') {
+        const it = found.item;
+        const fallbackRetail = '../assets/img/productos/viveres.jpg';
+        const imgSrc = MTP.resolveImgPath ? MTP.resolveImgPath(it.img, fallbackRetail) : (it.img || fallbackRetail);
+
+        box.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:10px">
+              <img src="${esc(imgSrc)}" data-fallback="${fallbackRetail}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback" style="width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid var(--line)">
+              <div>
+                <span class="badge badge-green">CÓDIGO IDENTIFICADO (${esc(it.barcode || it.code)})</span>
+                <div style="font-size:14px;font-weight:800;color:var(--txt);margin-top:2px">${esc(it.name)}</div>
+                <div style="font-size:12px;color:var(--txt-2)">Stock actual: <strong>${esc(it.stock || 0)} ${esc(it.unit || 'und')}</strong> · PVP: <strong>${MTP.fmtUSD(it.priceUsd)}</strong></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button type="button" class="btn btn-action btn-sm" data-prod-action="quick-stock" data-id="${esc(it.id)}" data-qty="1">+1 Und</button>
+              <button type="button" class="btn btn-action btn-sm" data-prod-action="quick-stock" data-id="${esc(it.id)}" data-qty="12">+12 Docena</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-prod-action="quick-stock" data-id="${esc(it.id)}" data-qty="24">+24 Bulto</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-prod-action="edit-retail-form" data-id="${esc(it.id)}">Editar</button>
             </div>
           </div>
         `;
@@ -1022,16 +1094,21 @@
         box.innerHTML = `
           <div style="text-align:left;display:flex;align-items:center;justify-content:space-between">
             <div>
-              <span class="badge badge-yellow">CÓDIGO NUEVO DETECTADO: ${code}</span>
+              <span class="badge badge-yellow">CÓDIGO NUEVO DETECTADO: ${esc(code)}</span>
               <div style="font-weight:800;color:var(--txt);margin-top:2px">Este empaque no está registrado aún.</div>
-              <div style="font-size:11px;color:var(--txt-2)">Completa nombre, costo y precio a la derecha para guardarlo.</div>
+              <div style="font-size:12px;color:var(--txt-2)">Completa nombre, costo y precio a la derecha para guardarlo.</div>
             </div>
           </div>
         `;
+        document.getElementById('formCardTitle').textContent = 'Registrar / Editar con Código de Barras';
         document.getElementById('bpId').value = '';
         document.getElementById('bpBarcode').value = code;
         document.getElementById('bpCode').value = String(100 + (MTP.state.inventory || []).length);
         document.getElementById('bpName').value = '';
+        const priceEl = document.getElementById('bpPrice');
+        if (priceEl) priceEl.dataset.manual = '';
+        syncBpIvaFromGroup();
+        updateCalculatedPvpPreview();
         document.getElementById('bpName').focus();
       }
     }
@@ -1039,10 +1116,12 @@
     function quickAddStock(invId, qty) {
       const it = MTP.getInsumoById(invId);
       if (!it) return;
-      const prev = Number(it.stock) || 0;
-      it.stock = Number((prev + qty).toFixed(2));
-      MTP.save();
-      handleScannedCode(it.barcode || it.code);
+      MTP.adjustItemStock(it.id, qty, {
+        action: 'ENTRADA_RAPIDA',
+        reason: 'Sumado desde lector de productos',
+        responsible: getActorName()
+      });
+      if (currentMainView === 'scanner') handleScannedCode(it.barcode || it.code);
       renderRegisteredBarcodes();
       renderHierarchyView();
       MTP.toast(`Sumadas +${qty} ${it.unit || 'und'} a "${it.name}" (Nuevo Stock: ${it.stock})`);
@@ -1059,11 +1138,47 @@
       document.getElementById('bpName').value = it.name || '';
       document.getElementById('bpStock').value = it.stock || 0;
       document.getElementById('bpCost').value = it.costUsd || 0;
-      document.getElementById('bpPrice').value = it.priceUsd || 0;
+      const priceEl = document.getElementById('bpPrice');
+      priceEl.value = it.priceUsd || 0;
+      priceEl.dataset.manual = '1';
+      const isEx = (it.ivaType === 'E' || it.iva === 'E' || it.taxExempt === true || it.taxType === 'E');
+      const bpIvaEl = document.getElementById('bpIva');
+      if (bpIvaEl) bpIvaEl.value = isEx ? 'E' : 'G';
+      updateCalculatedPvpPreview();
+    }
+
+    function syncBpIvaFromGroup() {
+      const groupEl = document.getElementById('bpGroup');
+      const bpIvaEl = document.getElementById('bpIva');
+      if (!groupEl || !bpIvaEl) return;
+      bpIvaEl.value = groupEl.value === 'viveres' ? 'E' : 'G';
     }
 
     function updateCalculatedPvpPreview() {
-      // cálculo dinámico opcional si se cambia el costo
+      const cost = parseFloat(document.getElementById('bpCost')?.value) || 0;
+      const priceEl = document.getElementById('bpPrice');
+      const hintEl = document.getElementById('bpSuggestedHint');
+      const isEditingExisting = !!(document.getElementById('bpId')?.value);
+      const bcv = Number(MTP.state.settings?.rateBcv) || 1;
+      const targetMargin = Number(MTP.state.settings?.targetMarginPct) || 40;
+
+      const suggested = (typeof MTP.calcRecommendedPriceUsd === 'function')
+        ? Number(MTP.calcRecommendedPriceUsd(cost, targetMargin) || 0)
+        : (cost > 0 ? cost / Math.max(0.15, 1 - targetMargin / 100) : 0);
+
+      if (priceEl && !isEditingExisting && priceEl.dataset.manual !== '1' && cost > 0) {
+        priceEl.value = suggested.toFixed(2);
+      }
+
+      const currentPrice = parseFloat(priceEl?.value) || 0;
+      const actualMargin = currentPrice > 0 ? (((currentPrice - cost) / currentPrice) * 100).toFixed(0) : '0';
+      if (hintEl) {
+        if (cost <= 0) {
+          hintEl.innerHTML = 'Ingresa el costo en USD para calcular el PVP sugerido.';
+        } else {
+          hintEl.innerHTML = `Sugerido (${targetMargin}%): <strong>${MTP.fmtUSD(suggested)}</strong> (${(suggested * bcv).toFixed(2)} Bs) · Margen actual: <strong>${actualMargin}%</strong> <button type="button" class="btn btn-ghost btn-sm" style="padding:2px 8px;margin-left:6px" data-prod-action="apply-bp-suggested" data-price="${suggested.toFixed(2)}">Aplicar sugerido</button>`;
+        }
+      }
     }
 
     function saveBarcodeProduct(e) {
@@ -1076,47 +1191,35 @@
       const stock = parseFloat(document.getElementById('bpStock').value) || 0;
       const costUsd = parseFloat(document.getElementById('bpCost').value) || 0;
       const priceUsd = parseFloat(document.getElementById('bpPrice').value) || 0;
+      const bpIvaEl = document.getElementById('bpIva');
+      const ivaType = bpIvaEl ? (bpIvaEl.value === 'E' ? 'E' : 'G') : (group === 'viveres' ? 'E' : 'G');
+      const taxExempt = ivaType === 'E';
+      const iva = taxExempt ? 'E' : 'G16';
+      const existing = id ? MTP.getInsumoById(id) : null;
 
-      if (id) {
-        const existing = MTP.getInsumoById(id);
-        if (existing) {
-          existing.barcode = barcode;
-          existing.code = code;
-          existing.familyId = group;
-          existing.group = group;
-          existing.name = name;
-          existing.stock = stock;
-          existing.costUsd = costUsd;
-          existing.priceUsd = priceUsd;
-        }
-      } else {
-        const newItem = {
-          id: 'prod-' + Date.now(),
-          code,
-          barcode,
-          qrCode: 'QR-' + code,
-          familyId: group,
-          group,
-          name,
-          category: (MTP.state.families && MTP.state.families.find(f => f.id === group))?.name || 'Víveres',
-          type: 'venta',
-          sellable: true,
-          unit: 'und',
-          stock,
-          minStock: 6,
-          costUsd,
-          prevCostUsd: costUsd,
-          priceUsd,
-          emoji: '📦',
-          img: '../assets/img/productos/viveres.jpg'
-        };
-        if (!Array.isArray(MTP.state.retailItems)) MTP.state.retailItems = [];
-        MTP.state.retailItems.push(newItem);
-        if (!Array.isArray(MTP.state.inventory)) MTP.state.inventory = [];
-        MTP.state.inventory.push(newItem);
+      const res = MTP.quickSaveItem({
+        id: id || undefined,
+        code,
+        barcode,
+        familyId: group,
+        name,
+        type: 'venta',
+        unit: existing ? existing.unit : 'und',
+        stock,
+        costUsd,
+        priceUsd,
+        img: existing ? existing.img : '../assets/img/productos/viveres.jpg',
+        emoji: existing ? existing.emoji : '📦',
+        taxType: ivaType,
+        iva,
+        ivaType,
+        taxExempt
+      });
+      if (!res || !res.success) {
+        MTP.toast((res && res.error) || 'No se pudo guardar el producto', 'warn');
+        return;
       }
 
-      MTP.save();
       renderRegisteredBarcodes();
       renderHierarchyView();
       MTP.toast(`Mercancía "${name}" guardada con código ${barcode}`);
@@ -1128,31 +1231,142 @@
       const bcv = Number(MTP.state.settings.rateBcv) || 1;
 
       const items = (MTP.state.inventory || []).filter(i => i.sellable && (
-        !q || i.name.toLowerCase().includes(q) || String(i.barcode).toLowerCase().includes(q) || String(i.code).toLowerCase().includes(q)
+        !q ||
+        String(i.name || '').toLowerCase().includes(q) ||
+        String(i.barcode || '').toLowerCase().includes(q) ||
+        String(i.code || '').toLowerCase().includes(q)
       ));
 
-      tbody.innerHTML = items.map(it => `
+      tbody.innerHTML = items.map(it => {
+        const fallbackRetail = '../assets/img/productos/viveres.jpg';
+        const imgSrc = MTP.resolveImgPath ? MTP.resolveImgPath(it.img, fallbackRetail) : (it.img || fallbackRetail);
+        return `
         <tr>
-          <td><img src="${it.img || '../assets/img/productos/viveres.jpg'}" style="width:34px;height:34px;border-radius:4px;object-fit:cover"></td>
-          <td><span class="code-pill">#${it.code}</span></td>
-          <td style="font-family:var(--font-mono);font-weight:700">${it.barcode || '—'}</td>
-          <td><strong>${it.name}</strong></td>
-          <td><span class="badge badge-blue">${it.familyId || it.group || it.category}</span></td>
-          <td><strong>${it.stock} ${it.unit}</strong></td>
-          <td>${MTP.fmtUSD(it.costUsd)}</td>
-          <td><strong>${MTP.fmtUSD(it.priceUsd)}</strong> <span style="font-size:10.5px;color:var(--info)">(${(it.priceUsd * bcv).toFixed(2)} Bs)</span></td>
+          <td><img src="${esc(imgSrc)}" data-fallback="${fallbackRetail}" onerror="this.onerror=null;if(this.dataset.fallback)this.src=this.dataset.fallback" style="width:34px;height:34px;border-radius:4px;object-fit:cover"></td>
+          <td><span class="code-pill">#${esc(it.code || '—')}</span></td>
+          <td style="font-family:var(--font-mono);font-weight:700">${esc(it.barcode || '—')}</td>
+          <td><strong>${esc(it.name)}</strong></td>
+          <td><span class="badge badge-blue">${esc(it.familyId || it.group || it.category || '')}</span></td>
+          <td><strong>${esc(it.stock)} ${esc(it.unit || 'und')}</strong></td>
+          <td style="font-variant-numeric:tabular-nums">${MTP.fmtUSD(it.costUsd)}</td>
+          <td style="font-variant-numeric:tabular-nums"><strong>${MTP.fmtUSD(it.priceUsd)}</strong> <span style="font-size:12px;color:var(--info)">(${(Number(it.priceUsd || 0) * bcv).toFixed(2)} Bs)</span></td>
           <td>
-            <button class="btn btn-action btn-sm" onclick="quickAddStock('${it.id}', 6)">+6</button>
-            <button class="btn btn-ghost btn-sm" onclick="loadProductIntoForm('${it.id}')">Editar</button>
-            <button class="btn btn-secondary btn-sm" onclick="window.MTPBarcodePrinter && window.MTPBarcodePrinter.open({ itemId: '${it.id}' })" title="Imprimir etiqueta">🏷️</button>
+            <div style="display:flex;gap:6px">
+              <button type="button" class="btn btn-action btn-sm" data-prod-action="quick-stock" data-id="${esc(it.id)}" data-qty="6">+6</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-prod-action="edit-retail-form" data-id="${esc(it.id)}">Editar</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-prod-action="print-barcode" data-id="${esc(it.id)}" title="Imprimir etiqueta">🏷️</button>
+            </div>
           </td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
+    }
+
+    function handleProdActionClick(e) {
+      const btn = e.target.closest('[data-prod-action]');
+      if (!btn) return;
+      const action = btn.dataset.prodAction;
+      const id = btn.dataset.id;
+
+      if (action === 'new-product') {
+        openNewProductModal(btn.dataset.familyId);
+      } else if (action === 'go-scanner') {
+        switchMainView('scanner');
+      } else if (action === 'new-variant') {
+        openNewVariantModal(id);
+      } else if (action === 'edit-product') {
+        openEditProductModal(id);
+      } else if (action === 'print-barcode') {
+        window.MTPBarcodePrinter && window.MTPBarcodePrinter.open({ itemId: id });
+      } else if (action === 'edit-variant-modal') {
+        openEditVariantModal(id);
+      } else if (action === 'edit-variant-drawer') {
+        if (window.MTPProductDrawer) {
+          window.MTPProductDrawer.open({
+            mode: 'edit',
+            id,
+            onSaved: () => renderHierarchyView(),
+            onDeleted: () => renderHierarchyView()
+          });
+        } else {
+          openEditVariantModal(id);
+        }
+      } else if (action === 'delete-variant') {
+        const v = (MTP.state.variants || []).find(x => x.id === id);
+        if (v) confirmDeleteVariant(v.id, v.name);
+      } else if (action === 'quick-stock') {
+        quickAddStock(id, Number(btn.dataset.qty) || 1);
+      } else if (action === 'edit-retail-drawer') {
+        if (window.MTPProductDrawer) {
+          window.MTPProductDrawer.open({
+            mode: 'edit',
+            id,
+            onSaved: () => renderHierarchyView(),
+            onDeleted: () => renderHierarchyView()
+          });
+        } else {
+          loadProductIntoForm(id);
+          switchMainView('scanner');
+        }
+      } else if (action === 'edit-retail-form') {
+        loadProductIntoForm(id);
+      } else if (action === 'apply-bp-suggested') {
+        const priceEl = document.getElementById('bpPrice');
+        if (priceEl && btn.dataset.price) {
+          priceEl.value = btn.dataset.price;
+          priceEl.dataset.manual = '1';
+          updateCalculatedPvpPreview();
+        }
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       renderFamilyTabs();
       renderHierarchyView();
+      syncBpIvaFromGroup();
+      updateCalculatedPvpPreview();
+
+      document.getElementById('familyTabsContainer')?.addEventListener('click', e => {
+        const btn = e.target.closest('[data-family-id]');
+        if (btn) selectFamilyTab(btn.dataset.familyId);
+      });
+
+      ['hierarchyCatalogList', 'scanResultBox', 'bpSuggestedHint', 'registeredBarcodesBody'].forEach(elId => {
+        document.getElementById(elId)?.addEventListener('click', handleProdActionClick);
+      });
+
+      const recipeList = document.getElementById('vModalRecipeList');
+      if (recipeList) {
+        recipeList.addEventListener('change', e => {
+          const el = e.target.closest('[data-recipe-field="insumoId"]');
+          if (!el) return;
+          const idx = Number(el.dataset.recipeIdx);
+          if (variantModalRecipe[idx]) {
+            variantModalRecipe[idx].insumoId = el.value;
+            recalcVariantModalCost();
+          }
+        });
+        recipeList.addEventListener('input', e => {
+          const el = e.target.closest('[data-recipe-field]');
+          if (!el) return;
+          const idx = Number(el.dataset.recipeIdx);
+          if (!variantModalRecipe[idx]) return;
+          if (el.dataset.recipeField === 'qty') {
+            variantModalRecipe[idx].qty = parseFloat(el.value) || 0;
+            recalcVariantModalCost();
+          } else if (el.dataset.recipeField === 'label') {
+            variantModalRecipe[idx].label = el.value;
+          }
+        });
+        recipeList.addEventListener('click', e => {
+          const btn = e.target.closest('[data-recipe-field="remove"]');
+          if (!btn) return;
+          const idx = Number(btn.dataset.recipeIdx);
+          variantModalRecipe.splice(idx, 1);
+          renderVariantRecipeList();
+          recalcVariantModalCost();
+        });
+      }
 
       const inp = document.getElementById('liveBarcodeInput');
       if (inp) {

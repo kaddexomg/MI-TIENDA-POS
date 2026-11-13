@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recetas, Salida a Olla y Escandallos por Variante | MI TIENDA POS</title>
-  <link rel="stylesheet" href="../assets/css/variables.css">
-  <link rel="stylesheet" href="../assets/css/components.css">
-  <link rel="stylesheet" href="../assets/css/design-v7.css">
-  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <link rel="stylesheet" href="../assets/css/app.css">
   <style>
     .fam-filter-tabs {
       display: flex;
@@ -18,7 +16,7 @@
     }
     .fam-tab-pill {
       padding: 5px 12px;
-      font-size: 11.5px;
+      font-size: 12px;
       font-weight: 700;
       border-radius: 6px;
       border: 1px solid var(--line);
@@ -58,7 +56,7 @@
       border-radius: 6px;
       padding: 6px 8px;
       margin: 8px 0;
-      font-size: 11px;
+      font-size: 12px;
     }
     .recipe-ing-item {
       display: flex;
@@ -169,7 +167,7 @@
                 </div>
               </div>
 
-              <div id="ollaResultBox" style="background:#0f172a;color:#fff;border-radius:var(--radius);padding:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
+              <div id="ollaResultBox" style="background:var(--surface-2);color:var(--txt);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
             </div>
           </div>
         </div>
@@ -288,7 +286,7 @@
 
         <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <strong style="font-size:11.5px;color:var(--txt-2);text-transform:uppercase">Insumos que descuenta en gramos:</strong>
+            <strong style="font-size:12px;color:var(--txt-2);text-transform:uppercase">Insumos que descuenta en gramos:</strong>
             <button class="btn btn-secondary btn-sm" onclick="addRecipeModalIngredientRow()">+ Añadir Insumo</button>
           </div>
           <div id="editRecipeIngredientsList"></div>
@@ -301,21 +299,39 @@
     </div>
   </div>
 
-  <script src="../assets/js/icons.js"></script>
-  <script src="../assets/js/tax.js"></script>
-  <script src="../assets/js/config.js"></script>
-  <script src="../assets/js/rates.js"></script>
-  <script src="../assets/js/permissions.js"></script>
-  <script src="../assets/js/auth.js"></script>
-  <script src="../assets/js/ui.js"></script>
-  <script src="../assets/js/keys.js"></script>
-  <script src="../assets/js/sidenav.js"></script>
-  <script src="../assets/js/code-structure.js"></script>
-  <script src="../assets/js/barcode-printer.js"></script>
+  <script src="../assets/js/ui/icons.js"></script>
+  <script src="../assets/js/core/tax.js"></script>
+  <script src="../assets/js/core/config.js"></script>
+  <script src="../assets/js/core/api-client.js"></script>
+  <script src="../assets/js/core/rates.js"></script>
+  <script src="../assets/js/core/permissions.js"></script>
+  <script src="../assets/js/core/auth.js"></script>
+  <script src="../assets/js/ui/ui.js"></script>
+  <script src="../assets/js/ui/keys.js"></script>
+  <script src="../assets/js/ui/view-transitions.js"></script>
+  <script src="../assets/js/ui/sidenav.js"></script>
+  <script src="../assets/js/core/code-structure.js"></script>
+  <script src="../assets/js/modules/barcode-printer.js"></script>
   <script>
     let activeRecipeFam = 'all';
     let currentRecetasTab = 'tanda';
     let editRecipeIngredients = [];
+
+    function esc(str) {
+      if (window.MTP && typeof MTP.escapeHtml === 'function') return MTP.escapeHtml(str);
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getLocalDateIso(dateObj) {
+      if (window.MTP && typeof MTP.getLocalDateIso === 'function') return MTP.getLocalDateIso(dateObj);
+      const ms = dateObj instanceof Date ? dateObj.getTime() : Date.now();
+      return new Date(ms - 4 * 3600000).toISOString().slice(0, 10);
+    }
 
     function switchRecetasTab(tab) {
       currentRecetasTab = tab;
@@ -340,6 +356,35 @@
     }
 
     function initRecetasPage() {
+      const famTabs = document.getElementById('recipeFamTabs');
+      if (famTabs && !famTabs.dataset.bound) {
+        famTabs.dataset.bound = '1';
+        famTabs.addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-fam-id]');
+          if (!btn) return;
+          selectRecipeFam(btn.dataset.famId || 'all');
+        });
+      }
+      const batchesBody = document.getElementById('kitchenBatchesTableBody');
+      if (batchesBody && !batchesBody.dataset.bound) {
+        batchesBody.dataset.bound = '1';
+        batchesBody.addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-batch-action]');
+          if (!btn) return;
+          const id = btn.dataset.batchId || '';
+          if (btn.dataset.batchAction === 'print') printBatchLabel(id);
+          else if (btn.dataset.batchAction === 'delete') promptDeleteBatch(id);
+        });
+      }
+      const recGrid = document.getElementById('recipesGrid');
+      if (recGrid && !recGrid.dataset.bound) {
+        recGrid.dataset.bound = '1';
+        recGrid.addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-edit-recipe]');
+          if (!btn) return;
+          openEditRecipeModal(btn.dataset.editRecipe || '');
+        });
+      }
       renderRecipeFamTabs();
       initOllaDishSelect();
       renderRecipesCards();
@@ -353,7 +398,7 @@
       const families = (MTP.state.families || []).filter(f => gastroFamIds.includes(f.id));
 
       let html = `
-        <button class="fam-tab-pill ${activeRecipeFam === 'all' ? 'active' : ''}" onclick="selectRecipeFam('all')">
+        <button type="button" class="fam-tab-pill ${activeRecipeFam === 'all' ? 'active' : ''}" data-fam-id="all">
           ${window.MTPIcons ? MTPIcons.get('store', { size: 14 }) : '🍽️'}
           Todos los Sabores
         </button>
@@ -362,14 +407,14 @@
         const isActive = activeRecipeFam === f.id;
         const ico = window.MTPIcons ? MTPIcons.get(f.icon || 'dish', { size: 14 }) : '';
         html += `
-          <button class="fam-tab-pill ${isActive ? 'active' : ''}" onclick="selectRecipeFam('${f.id}')">
+          <button type="button" class="fam-tab-pill ${isActive ? 'active' : ''}" data-fam-id="${esc(f.id)}">
             ${ico}
-            ${f.name}
+            ${esc(f.name)}
           </button>
         `;
       });
       html += `
-        <button class="fam-tab-pill ${activeRecipeFam === 'extras' ? 'active' : ''}" onclick="selectRecipeFam('extras')">
+        <button type="button" class="fam-tab-pill ${activeRecipeFam === 'extras' ? 'active' : ''}" data-fam-id="extras">
           ➕ Extras y Adicionales
         </button>
       `;
@@ -388,7 +433,7 @@
       sel.innerHTML = variants.map(v => {
         const prod = (MTP.state.products || []).find(p => p.id === v.productId);
         const prodName = prod ? prod.name : 'Plato';
-        return `<option value="${v.id}">[#${v.code}] ${prodName} · ${v.name} (${MTP.fmtUSD(v.priceUsd)})</option>`;
+        return `<option value="${esc(v.id)}">[#${esc(v.code)}] ${esc(prodName)} · ${esc(v.name)} (${MTP.fmtUSD(v.priceUsd)})</option>`;
       }).join('');
     }
 
@@ -422,11 +467,11 @@
         return `
           <tr>
             <td>
-              <strong>${b.date}</strong>
-              <div style="font-size:11px;color:var(--txt-2)">${b.shift}</div>
-              <div style="font-size:10px;color:var(--txt-3)">${b.notes || ''}</div>
+              <strong>${esc(b.date)}</strong>
+              <div style="font-size:12px;color:var(--txt-2)">${esc(b.shift)}</div>
+              <div style="font-size:12px;color:var(--txt-3)">${esc(b.notes || '')}</div>
             </td>
-            <td style="font-size:11.5px;max-width:280px">${insSummary}</td>
+            <td style="font-size:12px;max-width:280px">${esc(insSummary)}</td>
             <td><strong style="font-size:12.5px">${exp}</strong> und</td>
             <td><strong style="font-size:12.5px;color:${act >= exp ? 'var(--money-in)' : 'var(--money-out)'}">${act}</strong> und</td>
             <td>
@@ -437,8 +482,8 @@
             <td><strong class="money-out">${MTP.fmtUSD(totalCost)}</strong></td>
             <td style="text-align:right">
               <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px">
-                <button class="btn btn-secondary btn-sm" onclick="printBatchLabel('${b.id}')" title="Imprimir etiqueta térmica para esta tanda de producción">🏷️ Etiqueta</button>
-                <button class="btn btn-secondary btn-sm" style="color:var(--money-out)" onclick="promptDeleteBatch('${b.id}')" title="Eliminar tanda">✕</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-batch-action="print" data-batch-id="${esc(b.id)}" title="Imprimir etiqueta térmica para esta tanda de producción">🏷️ Etiqueta</button>
+                <button type="button" class="btn btn-secondary btn-sm" style="color:var(--money-out)" data-batch-action="delete" data-batch-id="${esc(b.id)}" title="Eliminar tanda">✕</button>
               </div>
             </td>
           </tr>
@@ -475,35 +520,47 @@
       const pKg = parseFloat(document.getElementById('batchPotatoKg').value) || 0;
       const expPieces = parseInt(document.getElementById('batchExpectedPieces').value) || 1;
       const actPieces = parseInt(document.getElementById('batchActualPieces').value) || 1;
+      const batchId = 'TANDA-' + Date.now();
 
-      // Descontar del almacén de cocina
-      const harina = MTP.getInsumoById('ins-harina-cocina');
-      const carne = MTP.getInsumoById('ins-carne-mechada');
-      const queso = MTP.getInsumoById('ins-queso-cocina');
-      const papa = MTP.getInsumoById('ins-papa');
+      const inputs = [
+        { id: 'ins-harina-cocina', label: 'Harina Maíz/Trigo', kg: fKg, fallbackCost: 1.05 },
+        { id: 'ins-carne-mechada', label: 'Carne Mechada/Molida', kg: mKg, fallbackCost: 6.80 },
+        { id: 'ins-queso-cocina', label: 'Queso Relleno', kg: qKg, fallbackCost: 5.40 },
+        { id: 'ins-papa', label: 'Papa Cruda Cocina', kg: pKg, fallbackCost: 1.35 }
+      ];
 
-      if (harina) harina.stock = Math.max(0, Number((harina.stock - fKg).toFixed(3)));
-      if (carne) carne.stock = Math.max(0, Number((carne.stock - mKg).toFixed(3)));
-      if (queso) queso.stock = Math.max(0, Number((queso.stock - qKg).toFixed(3)));
-      if (papa) papa.stock = Math.max(0, Number((papa.stock - pKg).toFixed(3)));
+      const insumosUsed = inputs.map(row => {
+        const ins = MTP.getInsumoById(row.id);
+        if (row.kg > 0 && ins) {
+          MTP.adjustItemStock(row.id, -row.kg, {
+            action: 'PRODUCCION_COCINA',
+            docRef: batchId,
+            reason: notes || ('Tanda de cocina ' + shift),
+            responsible: 'Cocina'
+          });
+        }
+        return {
+          insumoId: row.id,
+          name: ins ? ins.name : row.label,
+          qty: row.kg,
+          unit: (ins && ins.unit) || 'kg',
+          costUsd: row.kg * (ins ? ins.costUsd : row.fallbackCost)
+        };
+      });
 
       if (!Array.isArray(MTP.state.kitchenBatches)) MTP.state.kitchenBatches = [];
       MTP.state.kitchenBatches.unshift({
-        id: 'TANDA-' + Date.now(),
-        date: new Date().toISOString().slice(0, 10),
+        id: batchId,
+        date: getLocalDateIso(),
         shift,
         notes,
-        insumosUsed: [
-          { insumoId: 'ins-harina-cocina', name: 'Harina Maíz/Trigo', qty: fKg, unit: 'kg', costUsd: fKg * (harina ? harina.costUsd : 1.05) },
-          { insumoId: 'ins-carne-mechada', name: 'Carne Mechada/Molida', qty: mKg, unit: 'kg', costUsd: mKg * (carne ? carne.costUsd : 6.80) },
-          { insumoId: 'ins-queso-cocina', name: 'Queso Relleno', qty: qKg, unit: 'kg', costUsd: qKg * (queso ? queso.costUsd : 5.40) },
-          { insumoId: 'ins-papa', name: 'Papa Cruda Cocina', qty: pKg, unit: 'kg', costUsd: pKg * (papa ? papa.costUsd : 1.35) }
-        ],
+        insumosUsed,
         expectedPieces: expPieces,
         actualPieces: actPieces
       });
 
-      MTP.save();
+      if (typeof MTP.saveState === 'function') MTP.saveState(MTP.state, { eventType: 'BATCH_RECORDED' });
+      else MTP.save({ eventType: 'BATCH_RECORDED' });
       document.getElementById('newBatchModal').classList.remove('open');
       renderKitchenBatchesTable();
       MTP.toast(`Tanda registrada. Descontados kilos del almacén de cocina.`);
@@ -550,37 +607,85 @@
       const variantId = document.getElementById('ollaDishSelect').value;
       const variant = (MTP.state.variants || []).find(v => v.id === variantId);
       if (!variant) return;
-      const p = parseInt(document.getElementById('ollaTargetPlates').value) || 1;
-      renderOllaOutput(variant, p);
+
+      const kgArroz = Math.max(0, parseFloat(document.getElementById('ollaKgArroz').value) || 0);
+      const kgProteina = Math.max(0, parseFloat(document.getElementById('ollaKgProteina').value) || 0);
+      const kgPapa = Math.max(0, parseFloat(document.getElementById('ollaKgPapa').value) || 0);
+      const kgAlinos = Math.max(0, parseFloat(document.getElementById('ollaKgAlinos').value) || 0);
+
+      const recipe = variant.recipe || variant.ingredients || [];
+      const groupPerPortion = { arroz: 0, proteina: 0, papa: 0, alinos: 0 };
+      const groupCostSums = { arroz: 0, proteina: 0, papa: 0, alinos: 0 };
+
+      recipe.forEach(ing => {
+        const id = String(ing.insumoId || '');
+        const qty = Number(ing.qty || 0);
+        if (qty <= 0) return;
+        const ins = MTP.getInsumoById(id);
+        const unitCost = ins ? (Number(ins.costUsd) || 0) : 0;
+        if (id.includes('harina') || id.includes('arroz')) {
+          groupPerPortion.arroz += qty;
+          groupCostSums.arroz += qty * unitCost;
+        } else if (id.includes('carne') || id.includes('pollo') || id.includes('queso') || id.includes('cazon') || id.includes('chicharron')) {
+          groupPerPortion.proteina += qty;
+          groupCostSums.proteina += qty * unitCost;
+        } else if (id.includes('papa')) {
+          groupPerPortion.papa += qty;
+          groupCostSums.papa += qty * unitCost;
+        } else if (id.includes('alinos') || id.includes('ensalada')) {
+          groupPerPortion.alinos += qty;
+          groupCostSums.alinos += qty * unitCost;
+        }
+      });
+
+      const groupKg = { arroz: kgArroz, proteina: kgProteina, papa: kgPapa, alinos: kgAlinos };
+      const ratios = [];
+      let customCost = 0;
+      ['arroz', 'proteina', 'papa', 'alinos'].forEach(g => {
+        if (groupPerPortion[g] > 0) {
+          ratios.push(groupKg[g] / groupPerPortion[g]);
+          const avgCostPerKg = groupCostSums[g] / groupPerPortion[g];
+          customCost += groupKg[g] * avgCostPerKg;
+        }
+      });
+
+      let p = parseInt(document.getElementById('ollaTargetPlates').value, 10) || 1;
+      if (ratios.length > 0) {
+        p = Math.max(1, Math.floor(Math.min(...ratios)));
+        document.getElementById('ollaTargetPlates').value = p;
+      }
+
+      renderOllaOutput(variant, p, ratios.length > 0 ? customCost : null);
     }
 
-    function renderOllaOutput(variant, portions) {
+    function renderOllaOutput(variant, portions, customTotalCost) {
       const unitCost = MTP.calcDishCost(variant);
-      const totalCost = unitCost * portions;
+      const totalCost = (customTotalCost !== undefined && customTotalCost !== null) ? customTotalCost : (unitCost * portions);
+      const effUnitCost = portions > 0 ? (totalCost / portions) : unitCost;
       const totalRevenue = variant.priceUsd * portions;
       const totalProfit = totalRevenue - totalCost;
       const bcv = Number(MTP.state.settings.rateBcv) || 1;
 
       document.getElementById('ollaResultBox').innerHTML = `
         <div>
-          <span style="font-size:10px;color:#94a3b8;font-weight:700">UNIDADES ESTIMADAS</span>
-          <div style="font-size:18px;font-weight:900;color:#34d399">${portions} piezas</div>
-          <div style="font-size:11px;color:#cbd5e1">Costo Unit: ${MTP.fmtUSD(unitCost)}</div>
+          <span style="font-size:12px;color:var(--txt-3);font-weight:700">UNIDADES ESTIMADAS</span>
+          <div style="font-size:18px;font-weight:900;color:var(--money-in)">${portions} piezas</div>
+          <div style="font-size:12px;color:var(--txt-2)">Costo Unit: ${MTP.fmtUSD(effUnitCost)}</div>
         </div>
         <div>
-          <span style="font-size:10px;color:#94a3b8;font-weight:700">COSTO TOTAL INSUMOS</span>
-          <div style="font-size:18px;font-weight:900;color:#f87171">${MTP.fmtUSD(totalCost)}</div>
-          <div style="font-size:11px;color:#cbd5e1">${(totalCost * bcv).toFixed(2)} Bs</div>
+          <span style="font-size:12px;color:var(--txt-3);font-weight:700">COSTO TOTAL INSUMOS</span>
+          <div style="font-size:18px;font-weight:900;color:var(--money-out)">${MTP.fmtUSD(totalCost)}</div>
+          <div style="font-size:12px;color:var(--txt-2)">${(totalCost * bcv).toFixed(2)} Bs</div>
         </div>
         <div>
-          <span style="font-size:10px;color:#94a3b8;font-weight:700">VENTA BRUTA ESPERADA</span>
-          <div style="font-size:18px;font-weight:900;color:#fbbf24">${MTP.fmtUSD(totalRevenue)}</div>
-          <div style="font-size:11px;color:#cbd5e1">${(totalRevenue * bcv).toFixed(2)} Bs</div>
+          <span style="font-size:12px;color:var(--txt-3);font-weight:700">VENTA BRUTA ESPERADA</span>
+          <div style="font-size:18px;font-weight:900;color:#b45309">${MTP.fmtUSD(totalRevenue)}</div>
+          <div style="font-size:12px;color:var(--txt-2)">${(totalRevenue * bcv).toFixed(2)} Bs</div>
         </div>
         <div>
-          <span style="font-size:10px;color:#94a3b8;font-weight:700">GANANCIA NETA LIMPIA</span>
-          <div style="font-size:18px;font-weight:900;color:#34d399">+${MTP.fmtUSD(totalProfit)}</div>
-          <div style="font-size:11px;color:#34d399;font-weight:800">+${(totalProfit * bcv).toFixed(2)} Bs (${totalRevenue > 0 ? (((totalProfit)/totalRevenue)*100).toFixed(0) : 0}% margen)</div>
+          <span style="font-size:12px;color:var(--txt-3);font-weight:700">GANANCIA NETA LIMPIA</span>
+          <div style="font-size:18px;font-weight:900;color:var(--money-in)">+${MTP.fmtUSD(totalProfit)}</div>
+          <div style="font-size:12px;color:var(--money-in);font-weight:800">+${(totalProfit * bcv).toFixed(2)} Bs (${totalRevenue > 0 ? (((totalProfit)/totalRevenue)*100).toFixed(0) : 0}% margen)</div>
         </div>
       `;
     }
@@ -632,7 +737,7 @@
           const displayLabel = i.label || `${(i.qty * 1000).toFixed(0)}g ${insName}`;
           return `
             <div class="recipe-ing-item">
-              <span>• ${displayLabel}</span>
+              <span>• ${esc(displayLabel)}</span>
               <span style="font-family:var(--font-mono)">${ins ? MTP.fmtUSD(Number(ins.costUsd || 0) * Number(i.qty || 0)) : ''}</span>
             </div>
           `;
@@ -642,18 +747,18 @@
           <div class="recipe-card">
             <div>
               <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
-                <img src="${v.img || (prod ? prod.img : '') || fallbackImg}"
-                  alt="${v.name}" onerror="this.onerror=null;this.src='${fallbackImg}'"
+                <img src="${esc(MTP.resolveImgPath ? MTP.resolveImgPath(v.img || (prod ? prod.img : ''), fallbackImg) : (v.img || (prod ? prod.img : '') || fallbackImg))}"
+                  alt="${esc(v.name)}" onerror="this.onerror=null;this.src='${esc(fallbackImg)}'"
                   style="width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:#f1f5f9">
                 <div style="flex:1;min-width:0">
                   <div style="display:flex;align-items:center;gap:4px">
-                    <span class="code-pill">#${v.code}</span>
-                    <span class="badge ${maxPort > 15 ? 'badge-green' : 'badge-yellow'}" style="font-size:9.5px">
+                    <span class="code-pill">#${esc(v.code)}</span>
+                    <span class="badge ${maxPort > 15 ? 'badge-green' : 'badge-yellow'}" style="font-size:12px">
                       ${maxPort} porciones disp
                     </span>
                   </div>
-                  <strong style="font-size:12.5px;color:var(--txt);display:block;margin-top:2px">${v.name}</strong>
-                  <span style="font-size:10.5px;color:var(--txt-3)">${prodName}</span>
+                  <strong style="font-size:12.5px;color:var(--txt);display:block;margin-top:2px">${esc(v.name)}</strong>
+                  <span style="font-size:12px;color:var(--txt-3)">${esc(prodName)}</span>
                 </div>
               </div>
 
@@ -664,10 +769,10 @@
 
             <div style="display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:1px dashed var(--line)">
               <div>
-                <div style="font-size:12px;font-weight:900;color:var(--money-in)">${MTP.fmtUSD(v.priceUsd)} <span style="font-size:10.5px;color:var(--info)">(${(v.priceUsd * bcv).toFixed(2)} Bs)</span></div>
-                <div style="font-size:10.5px;color:var(--txt-2)">Costo: <strong class="money-out">${MTP.fmtUSD(cost)}</strong> · Margen: <strong style="color:var(--money-in)">+${MTP.fmtUSD(profit)} (${marginPct}%)</strong></div>
+                <div style="font-size:12px;font-weight:900;color:var(--money-in)">${MTP.fmtUSD(v.priceUsd)} <span style="font-size:12px;color:var(--info)">(${(v.priceUsd * bcv).toFixed(2)} Bs)</span></div>
+                <div style="font-size:12px;color:var(--txt-2)">Costo: <strong class="money-out">${MTP.fmtUSD(cost)}</strong> · Margen: <strong style="color:var(--money-in)">+${MTP.fmtUSD(profit)} (${marginPct}%)</strong></div>
               </div>
-              <button class="btn btn-ghost btn-sm" onclick="openEditRecipeModal('${v.id}')">✏️ Editar Receta</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-edit-recipe="${esc(v.id)}">✏️ Editar Receta</button>
             </div>
           </div>
         `;
@@ -699,21 +804,21 @@
           const ins = MTP.getInsumoById(r.insumoId);
           const insCost = ins ? Number(ins.costUsd || 0) * Number(r.qty || 0) : 0;
           cost += insCost;
-          return `<div>• ${r.label || `${r.qty * 1000}g ${ins ? ins.name : ''}`} (${MTP.fmtUSD(insCost)})</div>`;
+          return `<div>• ${esc(r.label || `${r.qty * 1000}g ${ins ? ins.name : ''}`)} (${MTP.fmtUSD(insCost)})</div>`;
         }).join('');
 
         return `
           <div class="recipe-card" style="background:var(--surface-2)">
             <div>
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                <strong style="font-size:12px;color:var(--txt)">${opt.name}</strong>
-                <span class="badge badge-blue" style="font-size:9.5px">${item.groupName}</span>
+                <strong style="font-size:12px;color:var(--txt)">${esc(opt.name)}</strong>
+                <span class="badge badge-blue" style="font-size:12px">${esc(item.groupName)}</span>
               </div>
-              <div style="font-size:11px;color:var(--txt-2);margin:4px 0">
+              <div style="font-size:12px;color:var(--txt-2);margin:4px 0">
                 ${ingLines}
               </div>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px dashed var(--line);font-size:11px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px dashed var(--line);font-size:12px">
               <div>PVP Extra: <strong>${MTP.fmtUSD(opt.priceUsd)}</strong> · Costo: <strong class="money-out">${MTP.fmtUSD(cost)}</strong></div>
             </div>
           </div>
@@ -722,19 +827,34 @@
     }
 
     function openNewVariantRecipeModal() {
-      const variants = MTP.state.variants || [];
-      if (variants.length) {
-        openEditRecipeModal(variants[0].id);
-      }
+      const titleEl = document.getElementById('recipeModalTitle');
+      if (titleEl) titleEl.textContent = 'Nueva Variante / Receta de Cocina';
+      document.getElementById('editRecipeVariantId').value = '';
+      const codeInp = document.getElementById('editRecipeCode');
+      const barInp = document.getElementById('editRecipeBarcode');
+      if (codeInp) { codeInp.readOnly = false; codeInp.value = ''; codeInp.placeholder = 'Ej: 199'; codeInp.style.background = ''; }
+      if (barInp) { barInp.readOnly = false; barInp.value = ''; barInp.placeholder = 'Opcional'; barInp.style.background = ''; }
+      document.getElementById('editRecipeName').value = '';
+      document.getElementById('editRecipePrice').value = '2.00';
+
+      editRecipeIngredients = [];
+      renderModalRecipeRows();
+      updateModalRecipePreview();
+      document.getElementById('variantRecipeModal').classList.add('open');
+      setTimeout(() => document.getElementById('editRecipeName')?.focus(), 60);
     }
 
     function openEditRecipeModal(variantId) {
       const v = (MTP.state.variants || []).find(x => x.id === variantId);
       if (!v) return;
 
+      const titleEl = document.getElementById('recipeModalTitle');
+      if (titleEl) titleEl.textContent = 'Configurar Escandallo de Receta';
       document.getElementById('editRecipeVariantId').value = v.id;
-      document.getElementById('editRecipeCode').value = v.code || '';
-      document.getElementById('editRecipeBarcode').value = v.barcode || '';
+      const codeInp = document.getElementById('editRecipeCode');
+      const barInp = document.getElementById('editRecipeBarcode');
+      if (codeInp) { codeInp.readOnly = true; codeInp.value = v.code || ''; codeInp.style.background = 'var(--surface-2)'; }
+      if (barInp) { barInp.readOnly = true; barInp.value = v.barcode || ''; barInp.style.background = 'var(--surface-2)'; }
       document.getElementById('editRecipeName').value = v.name;
       document.getElementById('editRecipePrice').value = v.priceUsd || 0;
 
@@ -750,22 +870,22 @@
       const kitchenItems = (MTP.state.insumos || MTP.state.inventory.filter(i => !i.sellable));
 
       if (!editRecipeIngredients.length) {
-        container.innerHTML = `<div style="text-align:center;padding:8px;font-size:11px;color:var(--txt-muted)">Sin insumos asignados</div>`;
+        container.innerHTML = `<div style="text-align:center;padding:8px;font-size:12px;color:var(--txt-muted)">Sin insumos asignados</div>`;
         return;
       }
 
       container.innerHTML = editRecipeIngredients.map((ing, idx) => `
         <div style="display:grid;grid-template-columns:2.5fr 1fr 2fr auto;gap:6px;align-items:center;margin-bottom:6px">
-          <select class="select" onchange="editRecipeIngredients[${idx}].insumoId=this.value;updateModalRecipePreview()" style="padding:4px;font-size:11px">
-            ${kitchenItems.map(k => `<option value="${k.id}" ${k.id === ing.insumoId ? 'selected' : ''}>${k.name} (${k.unit})</option>`).join('')}
+          <select class="select" onchange="editRecipeIngredients[${idx}].insumoId=this.value;updateModalRecipePreview()" style="padding:4px;font-size:12px">
+            ${kitchenItems.map(k => `<option value="${esc(k.id)}" ${k.id === ing.insumoId ? 'selected' : ''}>${esc(k.name)} (${esc(k.unit)})</option>`).join('')}
           </select>
-          <input type="number" step="0.005" class="input" value="${ing.qty}" placeholder="Kg/L/Und"
-            style="padding:4px;font-size:11px;font-weight:700"
+          <input type="number" step="0.005" class="input" value="${Number(ing.qty || 0)}" placeholder="Kg/L/Und"
+            style="padding:4px;font-size:12px;font-weight:700"
             oninput="editRecipeIngredients[${idx}].qty=parseFloat(this.value)||0;updateModalRecipePreview()">
-          <input type="text" class="input" value="${ing.label || ''}" placeholder="Etiqueta ej: 75g Harina"
-            style="padding:4px;font-size:11px"
+          <input type="text" class="input" value="${esc(ing.label || '')}" placeholder="Etiqueta ej: 75g Harina"
+            style="padding:4px;font-size:12px"
             oninput="editRecipeIngredients[${idx}].label=this.value">
-          <button class="btn btn-ghost btn-sm" style="color:var(--danger);padding:2px 6px" onclick="editRecipeIngredients.splice(${idx},1);renderModalRecipeRows();updateModalRecipePreview()">✕</button>
+          <button type="button" class="btn btn-ghost btn-sm" style="color:var(--danger);padding:2px 6px" onclick="editRecipeIngredients.splice(${idx},1);renderModalRecipeRows();updateModalRecipePreview()">✕</button>
         </div>
       `).join('');
     }
@@ -787,16 +907,59 @@
 
     function saveVariantRecipeFromModal() {
       const variantId = document.getElementById('editRecipeVariantId').value;
+      const name = document.getElementById('editRecipeName').value.trim();
+      const priceUsd = parseFloat(document.getElementById('editRecipePrice').value) || 0;
+      if (!name) {
+        MTP.toast('Escribe el nombre del sabor o variante', 'warn');
+        return;
+      }
+
+      if (!variantId) {
+        const famId = (activeRecipeFam && activeRecipeFam !== 'all' && activeRecipeFam !== 'extras') ? activeRecipeFam : 'fritos';
+        const prod = (MTP.state.products || []).find(p => p.familyId === famId) || (MTP.state.products || [])[0];
+        const code = (document.getElementById('editRecipeCode').value || '').trim() || String(Math.floor(100 + Math.random() * 900));
+        const barcode = (document.getElementById('editRecipeBarcode').value || '').trim();
+        const newVariant = {
+          id: 'var-' + Date.now(),
+          productId: prod ? prod.id : 'prod-empanadas',
+          familyId: famId,
+          code,
+          barcode,
+          name,
+          priceUsd,
+          ivaType: 'G16',
+          iva: 'G16',
+          taxExempt: false,
+          active: true,
+          recipe: editRecipeIngredients,
+          ingredients: editRecipeIngredients
+        };
+        if (typeof MTP.saveVariant === 'function') {
+          MTP.saveVariant(newVariant);
+        } else {
+          if (!Array.isArray(MTP.state.variants)) MTP.state.variants = [];
+          MTP.state.variants.push(newVariant);
+          MTP.save();
+        }
+        document.getElementById('variantRecipeModal').classList.remove('open');
+        initOllaDishSelect();
+        renderRecipesCards();
+        loadDishIntoOllaPlanner();
+        MTP.toast(`Nueva receta "${name}" creada.`);
+        return;
+      }
+
       const v = (MTP.state.variants || []).find(x => x.id === variantId);
       if (!v) return;
 
-      v.name = document.getElementById('editRecipeName').value.trim();
-      v.priceUsd = parseFloat(document.getElementById('editRecipePrice').value) || 0;
+      v.name = name;
+      v.priceUsd = priceUsd;
       v.recipe = editRecipeIngredients;
       v.ingredients = editRecipeIngredients; // sincronizar retrocompatibilidad
 
       MTP.save();
       document.getElementById('variantRecipeModal').classList.remove('open');
+      initOllaDishSelect();
       renderRecipesCards();
       loadDishIntoOllaPlanner();
       MTP.toast(`Receta de "${v.name}" actualizada.`);
