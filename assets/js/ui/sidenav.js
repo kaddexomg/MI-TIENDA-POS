@@ -563,6 +563,9 @@
             <span class="aside-user-name">${escTxt(userName)}</span>
             <span class="aside-user-badge role-${escTxt(userRole)}">${escTxt(roleLabel)}</span>
           </div>
+          <button type="button" class="aside-theme-btn" id="asideThemeBtn" onclick="window.MTPTheme && window.MTPTheme.toggle()" title="Cambiar Tema Claro / Oscuro">
+            ${window.MTPTheme && window.MTPTheme.isDark() ? '☀️' : '🌙'}
+          </button>
           <button type="button" class="aside-logout-btn" onclick="window.MTPAuth ? window.MTPAuth.logout() : window.location.href='${escTxt(indexHref)}'" title="Bloquear / Cerrar Sesión">
             ${logoutIco}
           </button>
@@ -575,6 +578,21 @@
     if (topRateEl) {
       topRateEl.innerHTML = `<span class="top-dot green"></span> BCV: <strong>${bcv}</strong> · USDT: <strong>${usdt}</strong> <span class="top-edit">✎</span>`;
       topRateEl.onclick = () => window.MTPRates && window.MTPRates.openQuickRateModal();
+    }
+
+    // Botón de alternancia de tema Claro / Oscuro en Topbar
+    const topbarRight = document.querySelector('.topbar-right');
+    if (topbarRight && !document.getElementById('topbarThemeBtn')) {
+      const themeBtn = document.createElement('button');
+      themeBtn.type = 'button';
+      themeBtn.id = 'topbarThemeBtn';
+      themeBtn.className = 'btn btn-ghost btn-sm mtp-theme-btn';
+      themeBtn.style.minWidth = '34px';
+      themeBtn.style.padding = '0 8px';
+      themeBtn.innerHTML = window.MTPTheme && window.MTPTheme.isDark() ? '☀️' : '🌙';
+      themeBtn.title = 'Cambiar Tema (Claro / Oscuro)';
+      themeBtn.onclick = () => window.MTPTheme && window.MTPTheme.toggle();
+      topbarRight.appendChild(themeBtn);
     }
 
     // Backdrop móvil (<900px) + cierre por Esc y enlace de menú

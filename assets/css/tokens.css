@@ -1,14 +1,16 @@
 /* ==========================================================================
-   MI-TIENDA-POS — tokens.css (Tokens de Diseño Centralizados)
+   MI-TIENDA-POS — tokens.css (Tokens de Diseño Centralizados v8.1)
    - Objetivo: Windows 7 / Chromium 108-109 / PC de Bajos Recursos (100% Offline)
-   - Superficie clara Apple Light + Sidebar Navy Profundo (#09131F)
+   - Light: fondo cálido contrastado, tarjetas elevadas, jerarquía visible
+   - Dark: diseñado explícitamente (no invertido mecánicamente)
+   - Sin oklch(), color-mix(), @layer, @container, :has(), backdrop-filter
    ========================================================================== */
 
 :root {
   /* ========================================================================
-     1. Paleta Semántica y Shell Maestro
+     1. Paleta Semántica y Shell Maestro (Light Theme)
      ======================================================================== */
-  --nav-bg: #09131F;             /* Sidebar, cabeceras dark, obsidian navy */
+  --nav-bg: #09131F;             /* Sidebar obsidian navy */
   --nav-border: #152233;         /* Divisores sutiles para fondo dark */
   --nav-hover: #132438;          /* Hover interactivo en sidebar */
   --nav-active: rgba(245, 158, 11, 0.14); /* Fondo activo sutil ámbar */
@@ -21,12 +23,12 @@
   --action-txt: #1A1A1A;         /* Texto de alto contraste sobre ámbar */
   --action-light: #FEF3C7;       /* Fondo suave ámbar */
 
-  --money-in: #10B981;           /* Ingresos, ventas, éxito, botón cobrar (Esmeralda) */
+  --money-in: #10B981;           /* Ingresos, ventas, éxito (Esmeralda) */
   --money-in-hover: #059669;     /* Hover dinero entrante */
   --money-in-light: #ECFDF5;     /* Fondo suave para badges/estados positivos */
   --money-in-txt: #065F46;       /* Texto oscuro sobre fondos verde menta */
 
-  --money-out: #EF4444;          /* Gastos, mermas, faltantes, eliminar (Carmesí) */
+  --money-out: #EF4444;          /* Gastos, mermas, faltantes (Carmesí) */
   --money-out-hover: #DC2626;    /* Hover dinero saliente */
   --money-out-light: #FEF2F2;    /* Fondo suave para alertas de gasto/peligro */
   --money-out-txt: #991B1B;      /* Texto oscuro sobre fondos rojizos */
@@ -36,23 +38,28 @@
   --info-light: #EFF6FF;         /* Fondo suave info */
   --info-txt: #1E40AF;
 
-  --purple: #8B5CF6;             /* Especiales, variantes, usuarios (Violeta) */
+  --purple: #8B5CF6;             /* Especiales, variantes (Violeta) */
   --purple-hover: #7C3AED;
   --purple-light: #F5F3FF;
   --purple-txt: #5B21B6;
 
-  --page: #F8FAFC;               /* Fondo pizarra ultra-limpio y moderno */
-  --surface: #FFFFFF;            /* Fondo de tarjetas, modales y superficies */
-  --surface-2: #F1F5F9;          /* Fondos secundarios y cabeceras de tabla */
-  --surface-3: #E2E8F0;          /* Fondos muted de inputs y áreas de control */
+  /* ========================================================================
+     1b. Superficies, Texto y Bordes — JERARQUÍA VISIBLE
+     Ahora con verdadera diferencia de profundidad entre --page y --surface
+     ======================================================================== */
+  --page: #EDEEF2;               /* Fondo general: gris cálido con presencia */
+  --surface: #FFFFFF;            /* Tarjetas, modales: blanco puro que POP contra page */
+  --surface-2: #F4F5F8;          /* Fondos secundarios, cabeceras de tabla, inputs */
+  --surface-3: #E8EAF0;          /* Fondos muted, áreas de control, segmented */
 
-  --line: #E2E8F0;               /* Bordes nítidos y finos */
-  --line-strong: #CBD5E1;        /* Bordes reforzados / divisores fuertes */
+  --line: #D8DBE3;               /* Bordes nítidos principales */
+  --line-strong: #B8BCC8;        /* Bordes reforzados / divisores fuertes */
 
-  --txt: #0F172A;                /* Texto principal (Slate 900, máxima legibilidad) */
+  --txt: #0F172A;                /* Texto principal (máxima legibilidad) */
   --txt-1: var(--txt);           /* Alias primario */
   --txt-2: #334155;              /* Texto secundario / subtítulos / labels */
   --txt-3: #64748B;              /* Texto terciario / metadatos / hints */
+  --txt-4: #94A3B8;              /* Placeholder, disabled */
   --txt-inv: #FFFFFF;            /* Texto invertido sobre fondos oscuros */
 
   /* ========================================================================
@@ -97,7 +104,7 @@
   --txt-muted: var(--txt-3);
 
   /* ========================================================================
-     4. Espaciado, Radios y Sombras (Apple Light Standard)
+     4. Espaciado, Radios y Sombras (Reforzadas para que las tarjetas destaquen)
      ======================================================================== */
   --sp-1: 4px;
   --sp-2: 8px;
@@ -113,10 +120,11 @@
   --radius-xl: 22px;
   --radius-full: 9999px;
 
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
-  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -2px rgba(15, 23, 42, 0.03);
-  --shadow-lg: 0 12px 28px -4px rgba(15, 23, 42, 0.10), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.07), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.09), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 14px 32px -4px rgba(15, 23, 42, 0.14), 0 4px 10px -2px rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 1px 4px rgba(15, 23, 42, 0.06), 0 4px 14px rgba(15, 23, 42, 0.03);
   --shadow-glow-amber: 0 2px 8px rgba(217, 119, 6, 0.22);
   --shadow-glow-green: 0 2px 8px rgba(5, 150, 105, 0.22);
 
@@ -146,7 +154,7 @@
   --fw-extrabold: 800;
 
   /* ========================================================================
-     7. Transiciones, Curvas y Accesibilidad
+     7. Transiciones, Curvas y Accesibilidad (Emil Kowalski)
      ======================================================================== */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-fluid: cubic-bezier(0.16, 1, 0.3, 1);
@@ -169,6 +177,122 @@
   --focus-ring: 0 0 0 3px rgba(245, 158, 11, 0.38);
 }
 
+/* ==========================================================================
+   DARK THEME — Diseñado explícitamente, no invertido mecánicamente.
+   Se activa con [data-theme="dark"] en <html> o con prefers-color-scheme.
+   Superficies oscuras con profundidad, texto claro, acentos recalibrados.
+   ========================================================================== */
+[data-theme="dark"] {
+  --page: #0C1220;               /* Fondo general: navy profundo */
+  --surface: #151D2E;            /* Tarjetas, modales: elevadas sobre page */
+  --surface-2: #1A2538;          /* Fondos secundarios, inputs, cabeceras tabla */
+  --surface-3: #1F2D42;          /* Fondos muted, áreas de control */
+
+  --line: #243044;               /* Bordes principales en dark */
+  --line-strong: #2E3D54;        /* Bordes reforzados */
+
+  --txt: #E8ECF4;                /* Texto principal claro */
+  --txt-2: #A8B5C8;              /* Texto secundario */
+  --txt-3: #6B7D95;              /* Texto terciario */
+  --txt-4: #4A5C74;              /* Placeholder, disabled */
+  --txt-inv: #0F172A;            /* Texto invertido (sobre acentos claros) */
+
+  /* Acentos recalibrados para legibilidad en fondo oscuro */
+  --action: #FBBF24;             /* Ámbar más brillante */
+  --action-hover: #F59E0B;
+  --action-light: rgba(251, 191, 36, 0.12);
+  --action-txt: #0F172A;
+
+  --money-in: #34D399;           /* Esmeralda más clara */
+  --money-in-hover: #10B981;
+  --money-in-light: rgba(52, 211, 153, 0.12);
+  --money-in-txt: #6EE7B7;
+
+  --money-out: #F87171;          /* Rojo más suave */
+  --money-out-hover: #EF4444;
+  --money-out-light: rgba(248, 113, 113, 0.12);
+  --money-out-txt: #FCA5A5;
+
+  --info: #60A5FA;               /* Azul más claro */
+  --info-hover: #3B82F6;
+  --info-light: rgba(96, 165, 250, 0.12);
+  --info-txt: #93C5FD;
+
+  --purple: #A78BFA;
+  --purple-hover: #8B5CF6;
+  --purple-light: rgba(167, 139, 250, 0.12);
+  --purple-txt: #C4B5FD;
+
+  /* Sidebar en dark se funde con el page */
+  --nav-bg: #080E18;
+  --nav-border: #162032;
+  --nav-hover: #111C2E;
+
+  /* Sombras más oscuras y sutiles */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 14px -2px rgba(0, 0, 0, 0.35), 0 2px 6px -2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 14px 32px -4px rgba(0, 0, 0, 0.45), 0 4px 10px -2px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.2), 0 4px 14px rgba(0, 0, 0, 0.1);
+  --shadow-glow-amber: 0 2px 12px rgba(251, 191, 36, 0.2);
+  --shadow-glow-green: 0 2px 12px rgba(52, 211, 153, 0.2);
+
+  --focus-ring: 0 0 0 3px rgba(251, 191, 36, 0.35);
+}
+
+/* ==========================================================================
+   Respetar preferencia del sistema si no hay tema explícito
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0C1220;
+    --surface: #151D2E;
+    --surface-2: #1A2538;
+    --surface-3: #1F2D42;
+    --line: #243044;
+    --line-strong: #2E3D54;
+    --txt: #E8ECF4;
+    --txt-2: #A8B5C8;
+    --txt-3: #6B7D95;
+    --txt-4: #4A5C74;
+    --txt-inv: #0F172A;
+    --action: #FBBF24;
+    --action-hover: #F59E0B;
+    --action-light: rgba(251, 191, 36, 0.12);
+    --action-txt: #0F172A;
+    --money-in: #34D399;
+    --money-in-hover: #10B981;
+    --money-in-light: rgba(52, 211, 153, 0.12);
+    --money-in-txt: #6EE7B7;
+    --money-out: #F87171;
+    --money-out-hover: #EF4444;
+    --money-out-light: rgba(248, 113, 113, 0.12);
+    --money-out-txt: #FCA5A5;
+    --info: #60A5FA;
+    --info-hover: #3B82F6;
+    --info-light: rgba(96, 165, 250, 0.12);
+    --info-txt: #93C5FD;
+    --purple: #A78BFA;
+    --purple-hover: #8B5CF6;
+    --purple-light: rgba(167, 139, 250, 0.12);
+    --purple-txt: #C4B5FD;
+    --nav-bg: #080E18;
+    --nav-border: #162032;
+    --nav-hover: #111C2E;
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 14px -2px rgba(0, 0, 0, 0.35), 0 2px 6px -2px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 14px 32px -4px rgba(0, 0, 0, 0.45), 0 4px 10px -2px rgba(0, 0, 0, 0.3);
+    --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.2), 0 4px 14px rgba(0, 0, 0, 0.1);
+    --shadow-glow-amber: 0 2px 12px rgba(251, 191, 36, 0.2);
+    --shadow-glow-green: 0 2px 12px rgba(52, 211, 153, 0.2);
+    --focus-ring: 0 0 0 3px rgba(251, 191, 36, 0.35);
+  }
+}
+
+/* ==========================================================================
+   RESET GLOBAL Y TIPOGRAFÍA BASE
+   ========================================================================== */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -197,7 +321,7 @@ button, input, select, textarea {
   color: inherit;
 }
 
-/* Scrollbars Limpios */
+/* Scrollbars Limpios (temáticos) */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -206,9 +330,15 @@ button, input, select, textarea {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: var(--line-strong);
   border-radius: var(--radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: var(--txt-4);
+}
+
+/* Selección de Texto temática */
+::selection {
+  background: rgba(245, 158, 11, 0.25);
+  color: var(--txt);
 }

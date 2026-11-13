@@ -328,6 +328,36 @@
           </div>
         </div>
 
+        <!-- APARIENCIA Y TEMA VISUAL (MODO CLARO / OSCURO / AUTOMÁTICO) -->
+        <div class="card" data-section="abasto" style="margin-bottom:12px">
+          <div class="card-hd">
+            <div>
+              <h3>
+                <span id="themeCardIcon">🎨</span> Apariencia y Tema Visual
+              </h3>
+              <p>Elige entre el tema claro con contraste nítido o el modo oscuro descansado para la vista</p>
+            </div>
+            <span class="badge badge-blue" id="themeActiveBadge">Tema Activo</span>
+          </div>
+          <div class="card-bd">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+              <div class="form-group" style="min-width:240px">
+                <label>Modo de Visualización</label>
+                <select id="cfgThemeSelect" class="select" onchange="handleThemeChange(this.value)">
+                  <option value="light">☀️ Modo Claro (Alto contraste, fondos con relieve)</option>
+                  <option value="dark">🌙 Modo Oscuro (Fondos navy descansados, noche)</option>
+                  <option value="auto">💻 Automático (Sigue la preferencia del sistema operativo)</option>
+                </select>
+              </div>
+              <div style="display:flex;align-items:flex-end;height:100%;margin-top:20px">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.MTPTheme && window.MTPTheme.toggle(); syncThemeSelector()">
+                  ⇄ Alternar Ahora
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- ACCESO DIRECTO EN ESCRITORIO WINDOWS 7 -->
         <div class="card" data-section="fiscal" style="margin-bottom:0">
           <div class="card-hd">
@@ -538,6 +568,7 @@
       if (document.getElementById('fiscReportZInput')) document.getElementById('fiscReportZInput').value = fc.lastReportZ || 0;
       if (document.getElementById('fiscNextInvoiceInput')) document.getElementById('fiscNextInvoiceInput').value = fc.currentInvoiceNumber || s.nextOrderNumber || 105;
       if (document.getElementById('fiscThermalWidthSelect')) document.getElementById('fiscThermalWidthSelect').value = fc.thermalWidth || '80mm';
+      syncThemeSelector();
       if (document.getElementById('fiscApplyIgtfCheck')) document.getElementById('fiscApplyIgtfCheck').checked = Boolean(s.isContribuyenteEspecial);
 
       const termsBody = document.getElementById('terminalsTableBody');
@@ -862,6 +893,32 @@
       document.getElementById('modalPmAccount').classList.remove('open');
       renderPmAccountsTable();
       MTP.toast(`Cuenta Pago Móvil "${name}" guardada.`);
+    }
+
+    function syncThemeSelector() {
+      const sel = document.getElementById('cfgThemeSelect');
+      const badge = document.getElementById('themeActiveBadge');
+      const current = window.MTPTheme ? window.MTPTheme.get() : 'auto';
+      if (sel) sel.value = current;
+      if (badge) {
+        const isDark = window.MTPTheme && window.MTPTheme.isDark();
+        badge.textContent = isDark ? 'Modo Oscuro Activo' : 'Modo Claro Activo';
+        badge.className = isDark ? 'badge badge-purple' : 'badge badge-green';
+      }
+    }
+
+    function handleThemeChange(val) {
+      if (window.MTPTheme) {
+        if (val === 'auto') {
+          try { localStorage.removeItem('mtp_theme'); } catch(_) {}
+          window.MTPTheme.set();
+        } else {
+          try { localStorage.setItem('mtp_theme', val); } catch(_) {}
+          window.MTPTheme.set(val);
+        }
+        syncThemeSelector();
+        MTP.toast(val === 'dark' ? 'Modo Oscuro activado' : (val === 'light' ? 'Modo Claro activado' : 'Modo Automático activado'));
+      }
     }
 
     function saveSettingsForm() {

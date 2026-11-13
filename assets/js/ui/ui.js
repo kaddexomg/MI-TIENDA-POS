@@ -221,6 +221,72 @@
     return cont;
   }
 
+  /* ------------------------------------------------------------- Tema --- */
+  function getTheme() {
+    try {
+      return localStorage.getItem('mtp_theme') || 'auto';
+    } catch (_) {
+      return 'auto';
+    }
+  }
+
+  function isDarkActive() {
+    const attr = document.documentElement.getAttribute('data-theme');
+    if (attr === 'dark') return true;
+    if (attr === 'light') return false;
+    return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }
+
+  function applyTheme(theme) {
+    if (!theme) theme = getTheme();
+    const rootEl = document.documentElement;
+    if (theme === 'dark') {
+      rootEl.setAttribute('data-theme', 'dark');
+    } else if (theme === 'light') {
+      rootEl.setAttribute('data-theme', 'light');
+    } else {
+      rootEl.removeAttribute('data-theme');
+    }
+    updateThemeButtons();
+  }
+
+  function updateThemeButtons() {
+    const dark = isDarkActive();
+    const btns = document.querySelectorAll('.mtp-theme-btn, .aside-theme-btn, [data-action="toggle-theme"]');
+    for (let i = 0; i < btns.length; i++) {
+      const btn = btns[i];
+      btn.innerHTML = dark ? '☀️' : '🌙';
+      btn.setAttribute('title', dark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro');
+      btn.setAttribute('aria-label', dark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro');
+    }
+  }
+
+  function toggleTheme() {
+    const next = isDarkActive() ? 'light' : 'dark';
+    try {
+      localStorage.setItem('mtp_theme', next);
+    } catch (_) {}
+    applyTheme(next);
+    return next;
+  }
+
+  // Inicializar inmediatamente
+  if (typeof document !== 'undefined') {
+    applyTheme(getTheme());
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', updateThemeButtons);
+    } else {
+      updateThemeButtons();
+    }
+  }
+
+  root.MTPTheme = {
+    get: getTheme,
+    set: applyTheme,
+    toggle: toggleTheme,
+    isDark: isDarkActive
+  };
+
   root.MTPUI = {
     escapeHtml: escapeHtml,
     statCard: statCard,
@@ -230,6 +296,7 @@
     confirmDialog: confirmDialog,
     promptDialog: promptDialog,
     menuDialog: menuDialog,
-    ensureToastRegion: ensureToastRegion
+    ensureToastRegion: ensureToastRegion,
+    theme: root.MTPTheme
   };
 })(window);
