@@ -1,7 +1,7 @@
 # AGENTS.md — Contexto Maestro, Indexación Completa y Bitácora de MI-TIENDA-POS
 
-> **Actualizado**: 1 de Noviembre de 2026 (`20:55 VET`) — **Versión 6 (Estabilización Integral v6)**
-> **Cerebro del Proyecto**: Ver también [PROJECT_BRAIN.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/PROJECT_BRAIN.md) y [PLAN_ESTABILIZACION_V6.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/PLAN_ESTABILIZACION_V6.md)
+> **Actualizado**: 13 de Noviembre de 2026 (`12:30 VET`) — **Versión 8.0.0 (Arquitectura Centralizada, Rediseño Apple Light & Shell Nativo Win7 SP1)**
+> **Arquitectura Activa**: Ver [docs/ARQUITECTURA.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/docs/ARQUITECTURA.md) y archivo histórico en [`docs/archivo/`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/docs/archivo/)
 > **Propósito**: Define las reglas de negocio gastronómicas y comerciales venezolanas, la indexación total del proyecto, la separación estricta de inventario (Ingredientes de Cocina vs. Mercancía de Venta Directa), la facturación con IVA 16% Venezolano e IGTF 3%, el menú simplificado de 5 opciones para el dueño, las 47 fotografías reales verificadas 100% offline y la suite de pruebas automatizadas.
 
 ---
@@ -61,26 +61,39 @@
 ## 4. Índice Completo del Proyecto (`C:\Users\PC\Desktop\MI-TIENDA-POS`)
 
 - **Raíz**:
-  - [index.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/index.html) — Acceso por PIN (`Administrador` / `Encargado` / `Cajero`).
-  - [AGENTS.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/AGENTS.md), [PROJECT_BRAIN.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/PROJECT_BRAIN.md) y [PLAN_ESTABILIZACION_V6.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/PLAN_ESTABILIZACION_V6.md).
-  - [INICIAR-POS.bat](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/INICIAR-POS.bat), [INICIAR-ADMIN.bat](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/INICIAR-ADMIN.bat) e [INSTALADOR-WINDOWS-7.bat](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/INSTALADOR-WINDOWS-7.bat).
-- **Estilos (`assets/css/`)**:
-  - [assets/css/variables.css](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/css/variables.css) — Tokens de diseño y tipografía base `15px` legible para adulto mayor.
-  - [assets/css/components.css](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/css/components.css) — Componentes UI reutilizables con botones de `34px` y celdas claras.
-  - [assets/css/layout.css](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/css/layout.css) — Barra lateral de `218px` con las 5 opciones principales del dueño.
-  - [assets/css/pos.css](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/css/pos.css) — Pantalla de Caja (`Zero-Scroll 100vh`), miniaturas reales `48x48px` (`.pos-card-thumb`) y pills `+IVA` / `Exento`.
-- **Lógica JS (`assets/js/`)**:
-  - [assets/js/tax.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/tax.js) — Motor puro de cálculo de IVA 16%, Exentos e IGTF 3% en centavos enteros.
-  - [assets/js/config.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/config.js) — Estado central v6 (`mtp_store_v3`), migración automática `migrateToV6()`, catálogo con 47 imágenes reales locales, inventario separado (`insumo` vs `venta`), compras de cocina (`recordKitchenPurchase`) y detector de Pago Móvil usado.
-  - [assets/js/rates.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/rates.js) — Motor multimoneda BCV USD / Euro / USDT Binance.
-  - [assets/js/pos-engine.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/pos-engine.js) — Motor de Caja con desglose de IVA en tiempo real, miniaturas de productos reales, Pago Móvil multicuenta y vueltos mixtos.
-  - [assets/js/barcode-engine.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/barcode-engine.js) — Escáner por pistola USB y cámara web.
-  - [assets/js/sidenav.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/sidenav.js) — Menú simplificado de 5 opciones principales + desplegable `"⚙️ Más opciones"`.
-  - [assets/js/icons.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/icons.js) — Librería de iconos vectoriales SVG 100% offline.
+  - [index.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/index.html) — Acceso seguro por PIN (`Administrador` / `Encargado` / `Cajero`) y redirección a destino.
+  - [pos.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/pos.html) — Terminal de Caja Unificada (3 columnas Zero-Scroll, 9 familias con Víveres `#4`, cobro multimoneda y comanda térmica).
+  - [README.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/README.md) y [AGENTS.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/AGENTS.md).
+  - [docs/ARQUITECTURA.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/docs/ARQUITECTURA.md) — Documentación activa de organización estructural.
+- **Módulos Administrativos (`admin/`)**:
+  - [admin/index.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/admin/index.html) — Dashboard ejecutivo ("Mi día") con métricas y gráficos horarios.
+  - [admin/inventario.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/admin/inventario.html) — Inventario separado (Cocina vs Mostrador), Kardex y conteo físico.
+  - [admin/facturas.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/admin/facturas.html) — Compras de mercancía y gastos de cocina en 3 pasos.
+  - [admin/cierres.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/admin/cierres.html) — Cuadre del día y arqueo físico por denominaciones de billetes/monedas.
+  - [admin/precios.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/admin/precios.html) — Brecha cambiaria BCV vs USDT y cálculo de precios protegidos.
+  - [admin/productos.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/admin/productos.html) — Catálogo y variantes con recetas vinculadas.
+  - [admin/recetas.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/admin/recetas.html) — Tandas de cocina, planificador de olla y recetario por gramos.
+  - [admin/usuarios.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/admin/usuarios.html) — Gestión de roles y claves PIN.
+  - [admin/ajustes.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/admin/ajustes.html) — Configuración fiscal, impresora fiscal SENIAT y respaldos.
+- **Estilos Consolidados (`assets/css/`)**:
+  - [assets/css/tokens.css](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/css/tokens.css) — Tokens de diseño Light Apple + Sidebar Navy `#09131F`, tipografía tabular y movimiento.
+  - [assets/css/app.css](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/css/app.css) — Componentes UI, tablas, botones táctiles, modales y barra lateral.
+  - [assets/css/pos.css](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/css/pos.css) — Pantalla de Caja Zero-Scroll 100vh, cálculo de vuelto e impresión térmica 80mm/58mm.
+- **Lógica Modular JS (`assets/js/`)**:
+  - `assets/js/core/`: [tax.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/core/tax.js), [config.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/core/config.js), [rates.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/core/rates.js), [change.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/core/change.js), [auth.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/core/auth.js), [permissions.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/core/permissions.js), [api-client.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/core/api-client.js), [code-structure.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/core/code-structure.js).
+  - `assets/js/modules/`: [pos-engine.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/modules/pos-engine.js), [barcode-engine.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/modules/barcode-engine.js), [barcode-printer.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/modules/barcode-printer.js), [closures.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/modules/closures.js), [product-drawer.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/modules/product-drawer.js).
+  - `assets/js/ui/`: [icons.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/ui/icons.js) (SVG nativos), [keys.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/ui/keys.js) (Paleta `Ctrl+K`), [sidenav.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/ui/sidenav.js), [ui.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/ui/ui.js), [view-transitions.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/ui/view-transitions.js).
+- **Shell Nativo Desktop (`desktop/`)**:
+  - [desktop/main.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/desktop/main.js) — Proceso principal Electron 22.3.27 ia32 para Windows 7 SP1+ sin aceleración GPU forzada.
+  - [desktop/preload.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/desktop/preload.js) — Puente IPC `window.MTPDesktop`.
+- **Servidor y Journal Anti-Apagones (`server/`)**:
+  - [server/server.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/server/server.js), [server/api.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/server/api.js), [server/journal.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/server/journal.js), [server/state.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/server/state.js).
+- **Herramientas de Empaquetado (`tools/`)**:
+  - [tools/build-win7-installer.ps1](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tools/build-win7-installer.ps1) y [tools/installer.iss](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tools/installer.iss) — Compilador Inno Setup para generar `dist\Instalar-MI-TIENDA-POS.exe`.
 - **Imágenes Reales (`assets/img/productos/`)**:
   - 47 fotografías reales optimizadas (`240x240` JPG `<25 KB`) y atribuidas en [assets/img/productos/CREDITOS.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/img/productos/CREDITOS.md).
 - **Suite de Pruebas (`tests/`)**:
-  - [tests/tax.test.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/tax.test.js) y [tests/run.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/run.js).
+  - [tests/tax.test.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/tax.test.js), [tests/pos.test.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/pos.test.js), [tests/ui.test.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/ui.test.js), [tests/sync-integrity.test.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/sync-integrity.test.js) y [tests/run.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/run.js).
 
 ---
 
@@ -223,3 +236,12 @@
     - **Compromiso y Resguardo de Contexto**:
       - Queda formalmente registrado el fracaso del rediseño estético para no repetir este patrón visual de neón/fondos discordantes.
       - La base lógica, el motor fiscal, las denominaciones de vuelto y las pruebas se mantienen blindadas, pero la capa visual del POS queda señalada como fallida y sujeta a replanteamiento guiado por el usuario.
+
+14. **✅ ARQUITECTURA CENTRALIZADA v8.0.0, REDISEÑO APPLE LIGHT Y SHELL NATIVO WIN7 SP1 (13 de Noviembre de 2026)**:
+    - **Centralización Total**: Terminal de Caja unificada en raíz ([`pos.html`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/pos.html)), eliminando duplicados obsoletos (`caja/`, `admin/pos.html`, scripts `.bat` raíz y binarios sueltos). Rutas legadas archivadas en `docs/archivo/`.
+    - **Rediseño Visual Limpio**: Sustitución definitiva del estilo neón/oscuro por estética Apple/iPad Light (`#F5F7FA` / `#FFFFFF`) con barra lateral Navy (`#09131F`). Cero `backdrop-filter`, cero degradados aurora y tipografía tabular (`tabular-nums`) para 60 fps estables en Windows 7 SP1 y pantallas estándar (1024×768 / 1366×768).
+    - **Consolidación CSS**: Reducción de hojas de estilo a 3 archivos ([`tokens.css`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/css/tokens.css), [`app.css`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/css/app.css), [`pos.css`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/css/pos.css)).
+    - **Modularización JavaScript**: Organización clara en `core/` (tax, config, rates, change, auth, permissions), `modules/` (pos-engine, product-drawer, barcode-engine, barcode-printer, closures) y `ui/` (icons, keys, sidenav, ui, view-transitions). Cero CDNs y 100% offline.
+    - **Persistencia Anti-Apagones**: Journal transaccional append-only en [`server/journal.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/server/journal.js) escribiendo con `fsync` síncrono en `C:\MI-TIENDA-DATOS\journal.ndjson`. Recuperación inmediata ante cortes eléctricos bruscos.
+    - **Shell Nativo Desktop e Instalador Windows 7**: Proceso Electron 22.3.27 ia32 en [`desktop/`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/desktop/) y compilador Inno Setup 6.7.3 en [`tools/build-win7-installer.ps1`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tools/build-win7-installer.ps1) generando `dist\Instalar-MI-TIENDA-POS.exe` validado con `--smoke-test`.
+    - **Suite de Pruebas Integral**: 100% de pruebas aprobadas en [`tests/run.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/run.js), [`tests/tax.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/tax.test.js), [`server/test-journal.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/server/test-journal.js) y `npm --prefix desktop test`.
