@@ -1,6 +1,6 @@
 # AGENTS.md — Contexto Maestro, Indexación Completa y Bitácora de MI-TIENDA-POS
 
-> **Actualizado**: 13 de Noviembre de 2026 (`18:10 VET`) — **Versión 8.3.0 (Densidad Compacta, Atajos de Familia, Pool Gemini Real, Fotos de Producto con IA y Pago Móvil verificado por SMS)**
+> **Actualizado**: 13 de Noviembre de 2026 (`19:10 VET`) — **Versión 8.3.0 (Densidad Compacta, Atajos de Familia, Pool Gemini Real, Fotos de Producto con IA, Pago Móvil verificado por SMS y Cáscara Viva Móvil APK 1.1.0)**
 > **Arquitectura Activa**: Ver [docs/ARQUITECTURA.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/docs/ARQUITECTURA.md) y archivo histórico en [`docs/archivo/`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/docs/archivo/)
 > **Propósito**: Define las reglas de negocio gastronómicas y comerciales venezolanas, la indexación total del proyecto, la separación estricta de inventario (Ingredientes de Cocina vs. Mercancía de Venta Directa), la facturación con IVA 16% Venezolano e IGTF 3%, el menú simplificado de 5 opciones para el dueño, las 47 fotografías reales verificadas 100% offline y la suite de pruebas automatizadas.
 
@@ -91,8 +91,12 @@
   - [server/ai-keys.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/server/ai-keys.js) — Pool rotativo de llaves Gemini (cuota compartida, llaves fuera de Git).
   - [server/image-search.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/server/image-search.js) — Búsqueda de fotos reales (Bing + DuckDuckGo) y proxy de imágenes.
   - [server/photo-studio.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/server/photo-studio.js) — Búsqueda asistida por IA y guardado de fotos en `C:\MI-TIENDA-DATOS\media\productos`.
+- **Aplicación Móvil (`mobile/`)**:
+  - [mobile/index.html](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/mobile/index.html), [mobile/mobile.css](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/mobile/mobile.css) y [mobile/mobile.js](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/mobile/mobile.js) — Panel del dueño (Mi Día, Pago Móvil, Inventario, IA Costos, Control) con cáscara viva desde el servidor.
+  - [mobile/android-app/src/com/mitienda/admin/MainActivity.java](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/mobile/android-app/src/com/mitienda/admin/MainActivity.java) — WebView que carga `serverUrl + /mobile/index.html` y cae a la copia local del APK si no hay red.
 - **Herramientas de Empaquetado (`tools/`)**:
   - [tools/build-win7-installer.ps1](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tools/build-win7-installer.ps1) y [tools/installer.iss](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tools/installer.iss) — Compilador Inno Setup para generar `dist\Instalar-MI-TIENDA-POS.exe`.
+  - [tools/build-mobile-apk.ps1](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tools/build-mobile-apk.ps1) — Compila y firma `MI-TIENDA-ADMIN.apk` (JDK 21 + Android SDK 35).
 - **Imágenes Reales (`assets/img/productos/`)**:
   - 47 fotografías reales optimizadas (`240x240` JPG `<25 KB`) y atribuidas en [assets/img/productos/CREDITOS.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/img/productos/CREDITOS.md).
 - **Suite de Pruebas (`tests/`)**:
@@ -285,3 +289,11 @@
     - **Prueba real de punta a punta por la API**: `GET /api/ai/keys` → 7 configuradas, modelo `gemini-3.5-flash-lite`; `POST /api/ai/suggest-query` → `"Malta Polar 250ml botella lata real"`; `GET /api/ai/search-images` → 30 fotos; `GET /api/ai/image-proxy` → JPEG 200 OK (29 KB). `callGemini` respondió `"LISTO"` en 846 ms.
     - **Higiene de secretos**: las llaves viven **solo** en `C:\MI-TIENDA-DATOS\ia-config.json` (fuera del repositorio y de Git). Se eliminaron los archivos temporales usados para el rastreo y un escáner confirmó **0 llaves de Google dentro del proyecto**; los textos de ejemplo de Ajustes y las llaves falsas de `tests/ai-photos.test.js` se cambiaron para no parecer credenciales reales.
     - **Aprendizaje para el futuro**: las llaves de JJ PAPER son del dueño y se reutilizan aquí; **nunca** se copian al repositorio, a `AGENTS.md`, a la documentación ni a los mensajes de chat — solo al archivo de configuración local del equipo.
+
+18. **✅ CÁSCARA VIVA MÓVIL (APK 1.1.0) — LA INTERFAZ SE CARGA DEL SERVIDOR (13 de Noviembre de 2026)**:
+    - **WebView con respaldo**: [`MainActivity.java`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/mobile/android-app/src/com/mitienda/admin/MainActivity.java) prueba `GET /api/v1/status` (2,5 s) y carga `serverUrl + /mobile/index.html`; si no hay red, usa la copia dentro del APK (`http://localhost/index.html`). Si la página remota abre pero su JavaScript no arranca (`window.__MTP_MOBILE_READY__`), vuelve sola a la copia guardada.
+    - **Puente nativo**: `AndroidBridge.setServerUrl()` guarda la dirección apenas el dueño la configura (sin esperar al login), `getUiSource()` informa `remote`/`local` y `reloadUi()` recarga la interfaz viva.
+    - **Detección de origen**: [`mobile.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/mobile/mobile.js) reconoce cuando la página viene de `/mobile/` y usa ese origen como servidor; guarda la URL en las preferencias nativas y muestra `Interfaz viva` o `Copia guardada` en Control, con botón `🔄 Actualizar interfaz desde el servidor`.
+    - **Servidor**: `/mobile/index.html`, `/mobile/mobile.css`, `/mobile/mobile.js` y `/mobile/brand-icon.png` se sirven con `Cache-Control: no-cache`; probado con Chrome headless (login visible, `Conectado · Red de Tienda`).
+    - **APK**: `MI-TIENDA-ADMIN.apk` versión 1.1.0 (versionCode 2), 425 KB, firmado y verificado; se instala una sola vez y las próximas mejoras de `mobile/` se ven sin recompilar.
+    - **Llaves**: siguen fuera del repo; el APK no lleva ninguna. Cada servidor (PC o VPS) usa su propio `ia-config.json` en `MTP_DATA_DIR`.

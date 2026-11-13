@@ -159,7 +159,19 @@
       }
     }
 
-    if (!state.serverUrl && window.location && window.location.protocol && window.location.protocol.indexOf('http') === 0) {
+    var hasHttpOrigin = window.location && window.location.protocol && window.location.protocol.indexOf('http') === 0;
+    var servedByServer = hasHttpOrigin && window.location.pathname.indexOf('/mobile/') === 0;
+
+    if (servedByServer) {
+      // Cáscara viva: si esta interfaz vino del servidor, ese ES el servidor.
+      // Así el teléfono no se queda apuntando a una dirección vieja.
+      state.serverUrl = window.location.origin;
+      if (window.location.protocol === 'https:') {
+        state.vpsUrl = window.location.origin;
+      } else {
+        state.lanUrl = window.location.origin;
+      }
+    } else if (!state.serverUrl && hasHttpOrigin) {
       var isNativeShell = Boolean(window.AndroidBridge) || (window.location.hostname === 'appassets.androidplatform.net') || (window.location.hostname === 'localhost' && !window.location.port);
       if (!isNativeShell) {
         state.serverUrl = window.location.origin;
@@ -188,6 +200,13 @@
         token: state.token,
         user: state.user
       }));
+    } catch (e) {}
+    // La cáscara nativa usa esta dirección para cargar la interfaz del servidor
+    // en el próximo arranque (sin esperar a que se active el servicio de alertas).
+    try {
+      if (window.AndroidBridge && typeof window.AndroidBridge.setServerUrl === 'function') {
+        window.AndroidBridge.setServerUrl(state.serverUrl || '');
+      }
     } catch (e) {}
   }
 
@@ -1236,6 +1255,15 @@
       ? (isVps ? '<span class="pill pill-green">VPS Nube</span>' : '<span class="pill pill-blue">Red Local</span>')
       : '<span class="pill pill-amber">Sin conexión</span>';
     var srvLabel = state.serverUrl ? esc(state.serverUrl) : 'No configurado todavía';
+    var uiSource = '';
+    try {
+      if (window.AndroidBridge && typeof window.AndroidBridge.getUiSource === 'function') {
+        uiSource = String(window.AndroidBridge.getUiSource() || '');
+      }
+    } catch (e) {}
+    var uiSourcePill = uiSource === 'remote'
+      ? '<span class="pill pill-green">Interfaz viva</span>'
+      : (uiSource === 'local' ? '<span class="pill pill-amber">Copia guardada</span>' : '');
 
     root.innerHTML =
       '<div class="sec-head">' +
@@ -1244,12 +1272,15 @@
       '</div>' +
       '<div class="m-card">' +
         '<div class="m-card-hd"><h2>📱 Conexión VPS y Respaldo</h2>' + connPill + '</div>' +
-        '<div style="font-size:12.5px;color:var(--txt-2);margin-bottom:10px">' + (state.serverOnline ? 'Servidor activo: ' : 'Servidor objetivo: ') + '<code>' + srvLabel + '</code></div>' +
+        '<div style="font-size:12.5px;color:var(--txt-2);margin-bottom:10px">' + (state.serverOnline ? 'Servidor activo: ' : 'Servidor objetivo: ') + '<code>' + srvLabel + '</code>' + (uiSourcePill ? ' ' + uiSourcePill : '') + '</div>' +
         '<div class="action-row">' +
           '<button type="button" id="editServersBtn" class="m-btn m-btn-primary m-btn-sm" style="flex:1">☁️ Configurar VPS / Red</button>' +
           (state.vpsUrl ? '<button type="button" id="switchVpsBtn" class="m-btn m-btn-secondary m-btn-sm">Usar VPS</button>' : '') +
           (state.lanUrl ? '<button type="button" id="switchLanBtn" class="m-btn m-btn-secondary m-btn-sm">Wi-Fi</button>' : '') +
         '</div>' +
+        (window.AndroidBridge && typeof window.AndroidBridge.reloadUi === 'function'
+          ? '<div class="action-row"><button type="button" id="reloadUiBtn" class="m-btn m-btn-secondary m-btn-block">🔄 Actualizar interfaz desde el servidor</button></div>'
+          : '') +
         '<div class="action-row">' +
           '<button type="button" id="testNotifBtn" class="m-btn m-btn-blue m-btn-sm" style="flex:1">🔔 Probar Notificación</button>' +
           '<button type="button" id="logoutBtn" class="m-btn m-btn-danger m-btn-sm" style="flex:1">Bloquear / Salir</button>' +
@@ -1338,6 +1369,13 @@
     var editSrvB = document.getElementById('editServersBtn');
     if (editSrvB) editSrvB.addEventListener('click', function () {
       openServerSettingsSheet();
+    });
+    var reloadUiB = document.getElementById('reloadUiBtn');
+    if (reloadUiB) reloadUiB.addEventListener('click', function () {
+      if (window.AndroidBridge && typeof window.AndroidBridge.reloadUi === 'function') {
+        showToast('Actualizando interfaz desde el servidor...');
+        window.AndroidBridge.reloadUi();
+      }
     });
     document.getElementById('testNotifBtn').addEventListener('click', function () {
       if (window.AndroidBridge && typeof window.AndroidBridge.showTestNotification === 'function') {
@@ -1964,5 +2002,8 @@
     } else {
       showLoginScreen('');
     }
+
+    // Señal para la cáscara nativa: si mobile.js no arrancó, el APK usa su copia local.
+    window.__MTP_MOBILE_READY__ = true;
   });
 })();
