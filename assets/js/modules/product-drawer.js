@@ -280,6 +280,14 @@
                 </div>
               </div>
 
+              <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnDrawerWebPhoto"
+                  title="La IA arma la búsqueda y trae fotos reales de internet">
+                  🌐 Buscar foto en internet
+                </button>
+                <span style="font-size:11.5px;color:#64748B">o elige una de las 47 fotos offline</span>
+              </div>
+
               <div class="apple-photo-grid" id="drawerPhotoGrid" style="margin-top:8px">
                 ${photoOptions}
               </div>
@@ -485,20 +493,22 @@
     updateTaxAdvisor();
 
     function selectPhoto(src) {
-      const resolved = resolveDrawerImg(src);
-      const filename = String(src || '').split('/').pop() || 'empanadas.jpg';
-      selectedImg = 'assets/img/productos/' + filename;
+      const raw = String(src || '');
+      const isRootAbsolute = raw.charAt(0) === '/';
+      const resolved = isRootAbsolute ? raw : resolveDrawerImg(raw);
+      const filename = raw.split('/').pop() || 'empanadas.jpg';
+      selectedImg = isRootAbsolute ? raw : ('assets/img/productos/' + filename);
       const preview = backdrop.querySelector('#drawerPhotoPreview');
       const photoName = backdrop.querySelector('#drawerPhotoName');
       preview.src = resolved;
 
       const match = LOCAL_PRODUCT_IMAGES.find(x => x.file === filename);
-      photoName.textContent = match ? match.name : filename;
+      photoName.textContent = match ? match.name : (isRootAbsolute ? 'Foto guardada en la caja' : filename);
 
       const opts = backdrop.querySelectorAll('.apple-photo-option');
       opts.forEach(opt => {
         const optFile = String(opt.getAttribute('data-src') || '').split('/').pop();
-        opt.classList.toggle('selected', optFile === filename);
+        opt.classList.toggle('selected', !isRootAbsolute && optFile === filename);
       });
     }
 
@@ -508,6 +518,30 @@
         selectPhoto(opt.getAttribute('data-src'));
       });
     });
+
+    // Buscar una foto real en internet (IA + Bing/DuckDuckGo)
+    const webPhotoBtn = backdrop.querySelector('#btnDrawerWebPhoto');
+    if (webPhotoBtn) {
+      webPhotoBtn.addEventListener('click', () => {
+        if (!root.MTPPhotoStudio || typeof root.MTPPhotoStudio.open !== 'function') {
+          if (root.MTP && root.MTP.toast) {
+            root.MTP.toast('El buscador de fotos no está disponible en esta pantalla.', 'warn');
+          }
+          return;
+        }
+        const currentName = backdrop.querySelector('#drawerProdName').value.trim();
+        root.MTPPhotoStudio.open({
+          name: currentName,
+          familyId: selectedFamilyId,
+          onPick: function (pickedPath) {
+            selectPhoto(pickedPath);
+            if (root.MTP && root.MTP.toast) {
+              root.MTP.toast('📸 Foto lista. Guarda el producto para aplicarla.');
+            }
+          }
+        });
+      });
+    }
 
     const printLabelBtn = backdrop.querySelector('#btnDrawerPrintLabel');
     if (printLabelBtn) {

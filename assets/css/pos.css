@@ -133,16 +133,16 @@ body.pos-fullscreen-body .admin-topbar {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 190px 1fr 370px;
-  gap: 10px;
+  grid-template-columns: 174px 1fr 342px;
+  gap: 8px;
   overflow: hidden;
 }
 
 @media (max-width: 1120px) {
   .pos-layout-3col,
   .pos-layout {
-    grid-template-columns: 165px 1fr 330px;
-    gap: 8px;
+    grid-template-columns: 158px 1fr 318px;
+    gap: 7px;
   }
 }
 
@@ -152,11 +152,11 @@ body.pos-fullscreen-body .admin-topbar {
 .pos-col-families {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 8px;
+  border-radius: 11px;
+  padding: 6px;
   overflow-y: auto;
   min-height: 0;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
@@ -197,6 +197,16 @@ body.pos-fullscreen-body .admin-topbar {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
 }
 
+.pos-fam-hint {
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--txt-3);
+  padding: 1px 0 3px;
+}
+
 .pos-col-families::-webkit-scrollbar,
 .pos-products-scroll::-webkit-scrollbar,
 .ticket-items::-webkit-scrollbar {
@@ -225,10 +235,10 @@ body.pos-fullscreen-body .admin-topbar {
 .pos-family-nav-btn {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 9px 11px;
-  min-height: 48px;
-  border-radius: 10px;
+  gap: 1px;
+  padding: 6px 9px;
+  min-height: 40px;
+  border-radius: 8px;
   border: 1px solid var(--line);
   border-left: 4px solid var(--fam-color, #64748B);
   background: var(--surface-2);
@@ -244,9 +254,7 @@ body.pos-fullscreen-body .admin-topbar {
 .pos-family-nav-btn:hover {
   background: var(--surface-3);
   border-color: var(--line-strong);
-}
-
-.pos-family-nav-btn:active {
+}.pos-family-nav-btn:active {
   transform: scale(0.97);
 }
 
@@ -534,7 +542,7 @@ body.pos-fullscreen-body .admin-topbar {
 .pos-products-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 9px;
 }
 
 @keyframes cardCascadeIn {
@@ -545,8 +553,8 @@ body.pos-fullscreen-body .admin-topbar {
 .pos-product-section {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 12px;
+  border-radius: 11px;
+  padding: 9px;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
@@ -575,8 +583,8 @@ body.pos-fullscreen-body .admin-topbar {
 
 .pos-flavors-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
+  gap: 8px;
 }
 
 .pos-flavor-card,
@@ -585,11 +593,11 @@ body.pos-fullscreen-body .admin-topbar {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 110px;
-  padding: 12px 13px;
+  min-height: 88px;
+  padding: 8px 9px;
   background: var(--surface);
   border: 1.5px solid var(--line-strong);
-  border-radius: 16px;
+  border-radius: 11px;
   cursor: pointer;
   user-select: none;
   text-align: left;

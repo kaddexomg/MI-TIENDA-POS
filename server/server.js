@@ -141,6 +141,44 @@ function serveStaticFile(req, res, pathname) {
 }
 
 /**
+ * Sirve las fotografías de producto guardadas por el dueño.
+ * Viven fuera del proyecto (C:\MI-TIENDA-DATOS\media\productos) para que
+ * sobrevivan a actualizaciones y no ensucien el repositorio.
+ */
+function serveProductMedia(req, res, pathname) {
+  const MEDIA_PREFIX = '/media/productos/';
+  let fileName = '';
+  try {
+    fileName = path.basename(decodeURIComponent(pathname.slice(MEDIA_PREFIX.length)));
+  } catch (e) {
+    fileName = '';
+  }
+
+  if (!/^[a-z0-9][a-z0-9._-]*\.(jpg|jpeg|png|webp|gif)$/i.test(fileName)) {
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('404 Foto no encontrada');
+    return;
+  }
+
+  const filePath = path.join(journal.getDataDir(), 'media', 'productos', fileName);
+  fs.stat(filePath, function (err, stats) {
+    if (err || !stats.isFile()) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('404 Foto no encontrada');
+      return;
+    }
+    const ext = path.extname(filePath).toLowerCase();
+    res.writeHead(200, {
+      'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
+      'Content-Length': stats.size,
+      'Cache-Control': 'public, max-age=604800',
+      'X-Content-Type-Options': 'nosniff'
+    });
+    fs.createReadStream(filePath).pipe(res);
+  });
+}
+
+/**
  * Crea e inicializa el servidor HTTP.
  */
 function createServer() {
@@ -165,6 +203,12 @@ function createServer() {
     // Despacho a API REST
     if (pathname === '/api' || pathname.indexOf('/api/') === 0) {
       api.handleApiRequest(req, res, journal, stateManager);
+      return;
+    }
+
+    // Fotografías de producto guardadas fuera del proyecto
+    if (pathname.indexOf('/media/productos/') === 0) {
+      serveProductMedia(req, res, pathname);
       return;
     }
 

@@ -212,6 +212,16 @@
           <div>
             <span id="pmRefVerifyBadge" class="badge badge-yellow">⏳ Verificar Ref</span>
           </div>
+
+          <div style="grid-column:1/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-top:1px dashed #BFDBFE;padding-top:7px">
+            <input type="text" id="pmBankSmsInput" class="input"
+              style="flex:1;min-width:230px;padding:6px;font-size:12px"
+              placeholder="Pega el SMS del banco: «Recibiste Bs 120,00 de 0412… Ref 849201»">
+            <button type="button" class="btn btn-blue btn-sm" onclick="window.MTPPos.verifyPagoMovilSms()">
+              📩 Verificar con el banco
+            </button>
+            <span id="pmBankProofBadge" class="badge badge-yellow">Sin comprobante</span>
+          </div>
         </div>
 
         <div id="puntoExtraFields" class="chk-punto-box" style="display:none">
@@ -358,7 +368,8 @@
   <script src="assets/js/modules/barcode-engine.js"></script>
   <script src="assets/js/core/change.js"></script>
   <script src="assets/js/ui/view-transitions.js"></script>
-  <script src="assets/js/modules/product-drawer.js"></script>
+  <script src="assets/js/modules/photo-studio.js"></script>
+<script src="assets/js/modules/product-drawer.js"></script>
   <script src="assets/js/modules/pos-engine.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {

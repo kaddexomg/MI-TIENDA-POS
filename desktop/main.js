@@ -70,9 +70,9 @@ const APP_VERSION = (() => {
       ? path.join(__dirname, 'package.json')
       : path.join(APP_ROOT, 'package.json');
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-    return pkg.version || '8.0.0';
+    return pkg.version || '8.3.0';
   } catch (_) {
-    return '8.0.0';
+    return '8.3.0';
   }
 })();
 

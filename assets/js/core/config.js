@@ -5144,6 +5144,8 @@
   function resolveImgPath(src, fallback) {
     const chosen = (src && String(src).trim()) || (fallback && String(fallback).trim()) || 'assets/img/productos/viveres.jpg';
     if (/^(data:|blob:|https?:|file:)/i.test(chosen)) return chosen;
+    // Rutas absolutas del servidor local (fotos guardadas por el dueño en /media/productos)
+    if (chosen.charAt(0) === '/') return chosen;
     let clean = chosen.replace(/\\/g, '/').replace(/^(\.\.\/|\.\/)+/, '');
     if (!clean.includes('/') && !clean.startsWith('assets/')) {
       clean = 'assets/img/productos/' + clean;

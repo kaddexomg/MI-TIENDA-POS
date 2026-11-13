@@ -17,6 +17,7 @@
   let activeModifierCartId = null;
   let replacingCartId = null;
   let currentPayments = [];
+  let pmBankProof = null; // comprobante verificado del SMS del banco (Pago Móvil)
   let changeRateMode = 'BCV'; // 'BCV' | 'EUR' | 'USDT' | 'CUSTOM'
   let customChangeRate = 0;
   let changeRemainderMode = 'PM'; // 'PM' (Pago Móvil Bs) | 'BS_CASH' (Efectivo Bs)
@@ -362,7 +363,9 @@
       `;
     }).join('');
 
-    nav.innerHTML = sectorBar + famButtons;
+    nav.innerHTML = sectorBar +
+      '<div class="pos-fam-hint">Atajos: teclas 1–9 · PgUp / PgDn</div>' +
+      famButtons;
   }
 
   function getFamilyItemCount(familyId) {
@@ -1595,6 +1598,38 @@
 
   function setupEventListeners() {
     const scanInput = document.getElementById('posScannerInput');
+    let famKeyTimer = null;
+
+    function switchFamilyByDigit(digit) {
+      const list = getFamiliesList();
+      if (!list || !list.length) return false;
+      const targetFam = list.find(f => String(f.key) === String(digit)) || list[parseInt(digit, 10) - 1];
+      if (!targetFam) return false;
+      selectedCardIdx = -1;
+      setActiveFamily(targetFam.id);
+      if (scanInput) scanInput.value = '';
+      focusScannerInput(false);
+      if (MTP && typeof MTP.toast === 'function') {
+        MTP.toast('Familia: ' + targetFam.name);
+      }
+      return true;
+    }
+
+    function cycleFamily(direction) {
+      const list = getFilteredFamiliesList();
+      if (!list || !list.length) return;
+      let idx = -1;
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].id === activeFamilyId) { idx = i; break; }
+      }
+      if (idx < 0) idx = 0;
+      const next = (idx + (direction >= 0 ? 1 : -1) + list.length) % list.length;
+      selectedCardIdx = -1;
+      setActiveFamily(list[next].id);
+      if (scanInput) scanInput.value = '';
+      focusScannerInput(false);
+    }
+
     if (scanInput) {
       scanInput.addEventListener('keydown', function (e) {
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
@@ -1605,6 +1640,12 @@
         if (e.key === 'Enter') {
           e.preventDefault();
           const val = scanInput.value.trim();
+          // Un solo dígito (1-9) = cambiar de familia, no es un código de barras
+          if (/^[1-9]$/.test(val)) {
+            if (famKeyTimer) { clearTimeout(famKeyTimer); famKeyTimer = null; }
+            switchFamilyByDigit(val);
+            return;
+          }
           if (val) {
             const exact = MTP.findByCodeOrBarcode ? MTP.findByCodeOrBarcode(val) : null;
             if (exact) {
@@ -1625,6 +1666,7 @@
           }
           focusScannerInput(false);
         } else if (e.key === 'Escape') {
+          if (famKeyTimer) { clearTimeout(famKeyTimer); famKeyTimer = null; }
           scanInput.value = '';
           selectedCardIdx = -1;
           renderProductsCol('');
@@ -1634,6 +1676,9 @@
 
       scanInput.addEventListener('input', function () {
         const val = scanInput.value.trim();
+
+        if (famKeyTimer) { clearTimeout(famKeyTimer); famKeyTimer = null; }
+
         // Si el usuario teclea '3*', preselecciona el multiplicador 3
         if (/^\d+\*$/.test(val)) {
           const m = parseInt(val, 10);
@@ -1641,6 +1686,18 @@
           scanInput.value = '';
           return;
         }
+
+        // Un dígito solo en el lector: espera 420 ms. Si no llega nada más,
+        // era el atajo de familia (el escáner real escribe todo en <50 ms).
+        if (/^[1-9]$/.test(val)) {
+          famKeyTimer = setTimeout(function () {
+            famKeyTimer = null;
+            if (scanInput && scanInput.value.trim() === val) {
+              switchFamilyByDigit(val);
+            }
+          }, 420);
+        }
+
         if (!val) selectedCardIdx = -1;
         renderProductsCol(val);
       });
@@ -1852,18 +1909,21 @@
           return;
         }
 
-        // Alt + [1..9]: Cambiar de familia incluso con el buscador enfocado
-        if (e.altKey && /^[1-9]$/.test(e.key)) {
-          const families = getFamiliesList();
-          const targetFam = families.find(f => String(f.key) === e.key) || families[parseInt(e.key, 10) - 1];
-          if (targetFam) {
+        // Alt+[1..9] o Ctrl+[1..9]: cambiar de familia incluso escribiendo en el buscador
+        if ((e.altKey || e.ctrlKey) && !e.shiftKey && /^[1-9]$/.test(e.key) &&
+            !document.querySelector('.modal-backdrop.open, .apple-sheet-backdrop.open')) {
+          if (switchFamilyByDigit(e.key)) {
             e.preventDefault();
-            selectedCardIdx = -1;
-            if (scanInput) scanInput.value = '';
-            setActiveFamily(targetFam.id);
-            focusScannerInput(false);
             return;
           }
+        }
+
+        // PgUp / PgDn: recorrer las familias sin usar el mouse
+        if ((e.key === 'PageDown' || e.key === 'PageUp') &&
+            !document.querySelector('.modal-backdrop.open, .apple-sheet-backdrop.open')) {
+          e.preventDefault();
+          cycleFamily(e.key === 'PageDown' ? 1 : -1);
+          return;
         }
 
         // Escape: Cerrar modales, drawer o cancelar reemplazo
@@ -1937,12 +1997,8 @@
 
         // Teclas numéricas [1] al [9]: Selección directa de Familia Maestra
         if (/^[1-9]$/.test(e.key)) {
-          const families = getFamiliesList();
-          const targetFam = families.find(f => String(f.key) === e.key) || families[parseInt(e.key, 10) - 1];
-          if (targetFam) {
+          if (switchFamilyByDigit(e.key)) {
             e.preventDefault();
-            selectedCardIdx = -1;
-            setActiveFamily(targetFam.id);
           }
         }
       });
@@ -2036,6 +2092,7 @@
 
     currentPayments = [];
     changeDistDirty = false;
+    resetPagoMovilProof();
 
     const refInput = document.getElementById('payRefInput');
     if (refInput) refInput.value = '';
@@ -2122,6 +2179,7 @@
 
     const previewTax = computeCheckoutDisplayTax();
     refreshCheckoutAmountSuggestion(previewTax);
+    resetPagoMovilProof();
     renderPaymentsAndChange();
   }
 
@@ -2199,6 +2257,125 @@
     }
   }
 
+  /* ==========================================================================
+     VERIFICACIÓN REAL DE PAGO MÓVIL CON EL SMS DEL BANCO
+     No existe una API pública de los bancos venezolanos para consultar un
+     pago. La prueba que SÍ vale es el mensaje que el banco emite cuando el
+     dinero entra: aquí se pega (o llega desde el teléfono del dueño), se
+     compara monto/referencia y queda guardado como comprobante de la venta.
+     ========================================================================== */
+  function simpleTextHash(text) {
+    const s = String(text || '');
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) {
+      h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+    }
+    return 'bp' + h.toString(36);
+  }
+
+  function isBankProofTextUsed(hash) {
+    if (!hash) return false;
+    const sales = (MTP.state && Array.isArray(MTP.state.sales)) ? MTP.state.sales : [];
+    for (let i = 0; i < sales.length; i++) {
+      const sale = sales[i];
+      if (!sale || sale.voided) continue;
+      const pays = Array.isArray(sale.payments) ? sale.payments : [];
+      for (let j = 0; j < pays.length; j++) {
+        if (pays[j] && pays[j].bankProof && pays[j].bankProof.textHash === hash) return true;
+      }
+    }
+    return false;
+  }
+
+  function setPmProofBadge(kind, text) {
+    const badge = document.getElementById('pmBankProofBadge');
+    if (!badge) return;
+    badge.className = 'badge ' + (kind === 'ok' ? 'badge-green' : kind === 'err' ? 'badge-red' : 'badge-yellow');
+    badge.textContent = text;
+  }
+
+  function resetPagoMovilProof() {
+    pmBankProof = null;
+    const input = document.getElementById('pmBankSmsInput');
+    if (input) input.value = '';
+    setPmProofBadge('idle', 'Sin comprobante');
+  }
+
+  function verifyPagoMovilSms() {
+    const input = document.getElementById('pmBankSmsInput');
+    const raw = input ? input.value.trim() : '';
+    if (!raw) {
+      MTP.toast('Pega primero el mensaje que te envió el banco.', 'warn');
+      if (input) input.focus();
+      return false;
+    }
+
+    const parsed = MTP.parsePagoMovilSms ? MTP.parsePagoMovilSms(raw) : null;
+    if (!parsed) {
+      setPmProofBadge('err', 'Mensaje no reconocido');
+      MTP.toast('No pude leer ese mensaje. Copia el texto completo del SMS del banco.', 'warn');
+      return false;
+    }
+
+    const bcv = Number(MTP.state.settings.rateBcv) || 42.85;
+    const inputUsd = parseFloat((document.getElementById('payAmountUsd') || {}).value) || 0;
+    const inputBs = parseFloat((document.getElementById('payAmountBs') || {}).value) || 0;
+    const totalPreview = computeCheckoutDisplayTax();
+    const expectedBs = inputBs > 0 ? inputBs : (inputUsd > 0 ? inputUsd * bcv : Number(totalPreview.totalBs) || 0);
+    const bankBs = Number(parsed.amountBs) || 0;
+    const tolerance = Math.max(1, expectedBs * 0.005);
+
+    if (!bankBs) {
+      setPmProofBadge('err', 'SMS sin monto legible');
+      MTP.toast('El mensaje no trae un monto en Bs que pueda comparar.', 'warn');
+      return false;
+    }
+
+    const textHash = simpleTextHash(raw);
+    if (isBankProofTextUsed(textHash)) {
+      setPmProofBadge('err', '⚠ Ese SMS ya fue usado');
+      MTP.toast('Este mismo mensaje del banco ya se registró en otra venta.', 'err');
+      return false;
+    }
+
+    const diff = Math.abs(bankBs - expectedBs);
+    if (expectedBs > 0 && diff > tolerance) {
+      pmBankProof = null;
+      setPmProofBadge('err', 'Monto no coincide (banco Bs ' + bankBs.toFixed(2) + ')');
+      MTP.toast('El banco reporta Bs ' + bankBs.toFixed(2) + ' y el cobro es Bs ' + expectedBs.toFixed(2) + '. Revisa antes de cobrar.', 'err');
+      return false;
+    }
+
+    if (parsed.reference && MTP.isPagoMovilRefUsed && MTP.isPagoMovilRefUsed(parsed.reference)) {
+      pmBankProof = null;
+      setPmProofBadge('err', '⚠ Referencia ya cobrada');
+      MTP.toast('La referencia ' + parsed.reference + ' ya aparece en otra venta.', 'err');
+      return false;
+    }
+
+    pmBankProof = {
+      status: 'MATCH',
+      reference: parsed.reference || '',
+      amountBs: Number(bankBs.toFixed(2)),
+      expectedBs: Number(expectedBs.toFixed(2)),
+      phone: parsed.phone || '',
+      bank: parsed.bank || '',
+      textHash: textHash,
+      verifiedAt: new Date().toISOString(),
+      raw: raw.slice(0, 240)
+    };
+
+    const refInput = document.getElementById('payRefInput');
+    if (refInput && parsed.reference && !refInput.value.trim()) {
+      refInput.value = parsed.reference;
+      checkPagoMovilRefLive(parsed.reference);
+    }
+
+    setPmProofBadge('ok', '✅ Banco confirma Bs ' + bankBs.toFixed(2) + (parsed.reference ? ' · Ref ' + parsed.reference : ''));
+    MTP.toast('Pago verificado con el mensaje del banco.', 'ok');
+    return true;
+  }
+
   /**
    * Fuente ÚNICA de líneas de pago. Todo (billete, pago móvil, tarjeta,
    * efectivo) entra por aquí para que el total, el vuelto y el registro
@@ -2242,7 +2419,8 @@
     const pmAccounts = (MTP.state && Array.isArray(MTP.state.pagoMovilAccounts)) ? MTP.state.pagoMovilAccounts : [];
     const activePmAcc = pmAccounts.find(a => a.status === 'ACTIVO') || pmAccounts[0] || null;
     const isPmMethod = method === 'Pago Móvil';
-    const pmVerified = isPmMethod ? (opts.verified === true) : true;
+    const proof = (isPmMethod && pmBankProof && pmBankProof.status === 'MATCH') ? pmBankProof : null;
+    const pmVerified = isPmMethod ? (opts.verified === true || !!proof) : true;
     const pmStatus = isPmMethod ? (opts.verifyStatus || (pmVerified ? 'CONCILIADO' : 'PENDIENTE')) : 'CONCILIADO';
 
     currentPayments.push({
@@ -2266,10 +2444,12 @@
         ? (liqOption ? (liqOption.dataset.liquidation || 'VES') : 'VES')
         : '',
       verifyStatus: pmStatus,
-      verified: pmVerified
+      verified: pmVerified,
+      bankProof: proof || null
     });
 
     changeDistDirty = false;
+    resetPagoMovilProof();
     if (refInput) refInput.value = '';
     if (voucherInput) voucherInput.value = '';
     const postTax = computeSaleTotals(currentPayments);
@@ -2999,6 +3179,8 @@
     addPaymentLine,
     removePaymentLine,
     checkPagoMovilRefLive,
+    verifyPagoMovilSms,
+    resetPagoMovilProof,
     rebalanceChangeDistribution,
     renderVueltoValidation,
     suggestChangeBreakdown,

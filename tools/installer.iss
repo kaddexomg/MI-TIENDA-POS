@@ -13,7 +13,7 @@
 ; ============================================================================
 
 #define MyAppName "MI TIENDA POS"
-#define MyAppVersion "8.0.0"
+#define MyAppVersion "8.3.0"
 #define MyAppPublisher "MI TIENDA POS"
 #define MyAppExeName "MI-TIENDA-POS.exe"
 #define MySourceDir "..\dist\MI-TIENDA-POS-win32-ia32"

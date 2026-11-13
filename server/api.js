@@ -25,6 +25,9 @@ const path = require('path');
 const url = require('url');
 const crypto = require('crypto');
 const aiAdvisor = require('./ai-advisor');
+const aiKeys = require('./ai-keys');
+const imageSearch = require('./image-search');
+const photoStudio = require('./photo-studio');
 
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000; // 12 horas
 const DEFAULT_SEED_USERS = {
@@ -453,7 +456,7 @@ function handleApiRequest(req, res, journal, stateManager) {
     return sendJson(res, 200, {
       ok: true,
       service: 'MI-TIENDA-POS Local Engine',
-      version: '8.0.0',
+      version: '8.3.0',
       uptimeSec: Math.floor(process.uptime()),
       device: 'CAJA-01',
       lastSeq: journal.getLastSeq(),
@@ -754,6 +757,123 @@ function handleApiRequest(req, res, journal, stateManager) {
       const question = body && body.question ? String(body.question) : '';
       const result = aiAdvisor.answerQuestion(stateManager.getState(), question);
       return sendJson(res, 200, Object.assign({ ok: true }, result), req);
+    });
+    return;
+  }
+
+  // 13. GET /api/v1/ai/keys — Estado del pool de llaves Gemini (solo Dueño)
+  if (pathname === '/api/ai/keys' && method === 'GET') {
+    if (session.role !== 'Administrador') {
+      return sendJson(res, 403, { ok: false, error: 'Solo el Administrador puede ver las llaves de IA.' }, req);
+    }
+    return sendJson(res, 200, aiKeys.getStatus(), req);
+  }
+
+  // 14. POST /api/v1/ai/keys — Guardar llaves Gemini (solo Dueño)
+  if (pathname === '/api/ai/keys' && method === 'POST') {
+    if (session.role !== 'Administrador') {
+      return sendJson(res, 403, { ok: false, error: 'Solo el Administrador puede cambiar las llaves de IA.' }, req);
+    }
+    readJsonBody(req, function (err, body) {
+      if (err) return sendJson(res, 400, { ok: false, error: err.message }, req);
+      try {
+        const status = aiKeys.saveKeys(body && body.keys, body && body.model, body && body.enabled);
+        return sendJson(res, 200, status, req);
+      } catch (saveErr) {
+        return sendJson(res, 500, { ok: false, error: 'No se pudieron guardar las llaves: ' + saveErr.message }, req);
+      }
+    });
+    return;
+  }
+
+  // 15. POST /api/v1/ai/keys/test — Probar cada llave contra Google (solo Dueño)
+  if (pathname === '/api/ai/keys/test' && method === 'POST') {
+    if (session.role !== 'Administrador') {
+      return sendJson(res, 403, { ok: false, error: 'Solo el Administrador puede probar las llaves de IA.' }, req);
+    }
+    aiKeys.testKeys().then(function (result) {
+      return sendJson(res, result.ok ? 200 : 502, result, req);
+    }).catch(function (testErr) {
+      return sendJson(res, 500, { ok: false, error: 'Error probando llaves: ' + testErr.message }, req);
+    });
+    return;
+  }
+
+  // 16. POST /api/v1/ai/suggest-query — La IA redacta la búsqueda de la foto
+  if (pathname === '/api/ai/suggest-query' && method === 'POST') {
+    if (session.role !== 'Administrador' && session.role !== 'Encargado') {
+      return sendJson(res, 403, { ok: false, error: 'Solo Administrador o Encargado puede buscar fotos.' }, req);
+    }
+    readJsonBody(req, function (err, body) {
+      if (err) return sendJson(res, 400, { ok: false, error: err.message }, req);
+      photoStudio.suggestQuery(body || {}).then(function (result) {
+        return sendJson(res, 200, result, req);
+      }).catch(function (e) {
+        return sendJson(res, 500, { ok: false, error: 'Error consultando la IA: ' + e.message }, req);
+      });
+    });
+    return;
+  }
+
+  // 17. GET /api/v1/ai/search-images?q=... — Fotos reales de producto
+  if (pathname === '/api/ai/search-images' && method === 'GET') {
+    if (session.role !== 'Administrador' && session.role !== 'Encargado') {
+      return sendJson(res, 403, { ok: false, error: 'Solo Administrador o Encargado puede buscar fotos.' }, req);
+    }
+    const q = String(query.q || query.query || '').trim();
+    if (q.length < 2) {
+      return sendJson(res, 400, { ok: false, error: 'Escribe al menos 2 letras para buscar.', results: [] }, req);
+    }
+    imageSearch.searchImages(q, { limit: query.limit }).then(function (result) {
+      return sendJson(res, 200, result, req);
+    }).catch(function (e) {
+      return sendJson(res, 500, { ok: false, error: 'Error buscando imágenes: ' + e.message, results: [] }, req);
+    });
+    return;
+  }
+
+  // 18. GET /api/v1/ai/image-proxy?url=... — Miniatura servida por la caja local
+  if (pathname === '/api/ai/image-proxy' && method === 'GET') {
+    const target = String(query.url || '').trim();
+    if (!/^https?:\/\//i.test(target)) {
+      res.writeHead(400, buildCorsHeaders(req, { 'Content-Type': 'text/plain; charset=utf-8' }));
+      return res.end('URL inválida');
+    }
+    imageSearch.httpGet(target, { binary: true, timeout: 12000 }).then(function (img) {
+      if (img.status !== 200 || !img.body || !img.body.length) {
+        res.writeHead(502, buildCorsHeaders(req, { 'Content-Type': 'text/plain; charset=utf-8' }));
+        return res.end('No se pudo leer la imagen');
+      }
+      const ct = String(img.headers['content-type'] || 'image/jpeg').split(';')[0].trim();
+      if (ct.indexOf('image/') !== 0) {
+        res.writeHead(415, buildCorsHeaders(req, { 'Content-Type': 'text/plain; charset=utf-8' }));
+        return res.end('El enlace no es una imagen');
+      }
+      res.writeHead(200, buildCorsHeaders(req, {
+        'Content-Type': ct,
+        'Content-Length': img.body.length,
+        'Cache-Control': 'public, max-age=86400'
+      }));
+      res.end(img.body);
+    }).catch(function () {
+      res.writeHead(502, buildCorsHeaders(req, { 'Content-Type': 'text/plain; charset=utf-8' }));
+      res.end('Error descargando la imagen');
+    });
+    return;
+  }
+
+  // 19. POST /api/v1/ai/product-photo — Guardar la foto elegida dentro de la caja
+  if (pathname === '/api/ai/product-photo' && method === 'POST') {
+    if (session.role !== 'Administrador' && session.role !== 'Encargado') {
+      return sendJson(res, 403, { ok: false, error: 'Solo Administrador o Encargado puede guardar fotos.' }, req);
+    }
+    readJsonBody(req, function (err, body) {
+      if (err) return sendJson(res, 400, { ok: false, error: err.message }, req);
+      photoStudio.savePhoto(body || {}).then(function (result) {
+        return sendJson(res, result.ok ? 200 : 400, result, req);
+      }).catch(function (e) {
+        return sendJson(res, 500, { ok: false, error: 'No se pudo guardar la foto: ' + e.message }, req);
+      });
     });
     return;
   }
