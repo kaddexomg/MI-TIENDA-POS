@@ -125,6 +125,26 @@
     .scanner-mode-btn.active.mode-pos {
       color: var(--emerald-txt);
     }
+    .scanner-mode-btn.active.mode-auto {
+      color: var(--nav-bg);
+    }
+    .scanner-auto-banner {
+      margin-top: 8px;
+      padding: 9px 12px;
+      border-radius: 12px;
+      background: var(--emerald-soft, rgba(16, 185, 129, 0.12));
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: var(--emerald-txt, #065f46);
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+    }
+    .scanner-auto-banner.manual {
+      background: var(--surface-2);
+      border-color: var(--line);
+      color: var(--txt-2);
+    }
     .scanner-card {
       background: var(--surface);
       border-radius: 18px;
@@ -296,11 +316,14 @@
     </header>
 
     <main class="scanner-scroll">
-      <!-- Selector de Modo -->
+      <!-- Selector de Modo: Automático sigue la pantalla abierta en la PC -->
       <div class="scanner-mode-seg" role="tablist">
-        <button type="button" class="scanner-mode-btn active mode-pos" data-mode="POS_ADD">🛒 Enviar a Caja POS</button>
+        <button type="button" class="scanner-mode-btn active mode-auto" data-mode="AUTO">🖥️ Automático</button>
+        <button type="button" class="scanner-mode-btn mode-pos" data-mode="POS_ADD">🛒 Vender (Caja)</button>
+        <button type="button" class="scanner-mode-btn" data-mode="INVENTORY_FILL">📦 Inventario</button>
         <button type="button" class="scanner-mode-btn" data-mode="LOOKUP">🔍 Consultar Precio</button>
       </div>
+      <div id="autoDestBanner" class="scanner-auto-banner">🖥️ Conectando con la PC para saber a dónde enviar...</div>
 
       <!-- Visor de Cámara -->
       <div class="scanner-card">
@@ -353,7 +376,7 @@
       <!-- Resultado del último escaneo -->
       <div class="scanner-card" id="scanResultCard">
         <div style="font-size:12.5px;color:var(--txt-3);font-weight:700;text-align:center;padding:8px 4px">
-          Apunta al código de barras (EAN-13, Code 128) o escríbelo abajo. Se enviará al instante a la Caja abierta en la PC.
+          Apunta al código de barras (EAN-13, Code 128) o escríbelo abajo. Se envía al instante a la Caja o al Inventario, según la pantalla abierta en la PC.
         </div>
       </div>
 
@@ -402,13 +425,16 @@
         token: '',
         pairCode: '',
         user: null,
-        mode: 'POS_ADD',
+        mode: 'AUTO',
         qty: 1,
         lockQty: false,
         paused: false,
         history: [],
         lastMatch: null
       };
+
+      /* Contexto de pantalla activa en la PC (modo AUTO) */
+      var ctxState = { screen: null, label: null, sse: null, timer: null };
 
       function $(id) { return document.getElementById(id); }
 
@@ -453,8 +479,9 @@
       function loadInitialConfig() {
         var params = getQueryParams();
 
-        if (params.mode && (params.mode.toUpperCase() === 'LOOKUP' || params.mode.toUpperCase() === 'POS_ADD')) {
-          state.mode = params.mode.toUpperCase();
+        var paramMode = String(params.mode || '').toUpperCase();
+        if (['AUTO', 'POS_ADD', 'INVENTORY_FILL', 'LOOKUP'].indexOf(paramMode) !== -1) {
+          state.mode = paramMode;
         }
         if (params.pair) {
           state.pairCode = String(params.pair).trim().toUpperCase();
@@ -647,6 +674,82 @@
           var m = btns[i].getAttribute('data-mode');
           btns[i].classList.toggle('active', m === state.mode);
         }
+        updateAutoBanner();
+      }
+
+      function updateAutoBanner() {
+        var b = $('autoDestBanner');
+        if (!b) return;
+        if (state.mode !== 'AUTO') {
+          var forced = { POS_ADD: '🛒 la Caja (ventas)', INVENTORY_FILL: '📦 el Inventario', LOOKUP: '🔍 solo consulta de precio' }[state.mode] || 'la Caja';
+          b.classList.add('manual');
+          b.innerHTML = 'Modo manual: cada lectura va a <strong>' + forced + '</strong>, sin importar la pantalla de la PC.';
+          return;
+        }
+        b.classList.remove('manual');
+        if (ctxState.screen === 'pos') {
+          b.innerHTML = '🖥️ La PC está en <strong>CAJA</strong> → cada lectura suma al ticket del cliente.';
+        } else if (ctxState.screen === 'inventario') {
+          b.innerHTML = '🖥️ La PC está en <strong>INVENTARIO</strong> → cada lectura entra como mercancía recibida.';
+        } else if (ctxState.screen === 'gastos') {
+          b.innerHTML = '🖥️ La PC está en <strong>COMPRAS Y GASTOS</strong> → cada lectura solo consulta el producto.';
+        } else {
+          b.innerHTML = '🖥️ La PC no ha anunciado pantalla → por defecto cada lectura va a la <strong>CAJA</strong>.';
+        }
+      }
+
+      function applyContext(ctx) {
+        if (ctx && typeof ctx === 'object') {
+          ctxState.screen = ctx.screen || null;
+          ctxState.label = ctx.label || null;
+        } else {
+          ctxState.screen = null;
+          ctxState.label = null;
+        }
+        updateAutoBanner();
+      }
+
+      function connectContextStream() {
+        if (!state.serverUrl || !state.token || typeof EventSource !== 'function') return;
+        if (ctxState.sse) { try { ctxState.sse.close(); } catch (e) {} ctxState.sse = null; }
+        try {
+          var es = new EventSource(normalizeUrl(state.serverUrl) + '/api/v1/scanner/stream?token=' + encodeURIComponent(state.token));
+          es.addEventListener('scanner_ready', function (e) {
+            try { var d = JSON.parse(e.data); applyContext(d.activeScreen); } catch (_) {}
+          });
+          es.addEventListener('scanner_context', function (e) {
+            try { applyContext(JSON.parse(e.data)); } catch (_) {}
+          });
+          ctxState.sse = es;
+        } catch (e) {}
+      }
+
+      function refreshContextOnce() {
+        if (!state.serverUrl || !state.token) return;
+        fetch(normalizeUrl(state.serverUrl) + '/api/v1/scanner/info?_t=' + Date.now(), {
+          headers: { Authorization: 'Bearer ' + state.token }
+        })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) { if (d && d.ok) applyContext(d.activeScreen); })
+          .catch(function () {});
+      }
+
+      function startContextWatch() {
+        connectContextStream();
+        refreshContextOnce();
+        if (!ctxState.timer) {
+          ctxState.timer = setInterval(function () {
+            if (!ctxState.sse || ctxState.sse.readyState !== 1) {
+              refreshContextOnce();
+              connectContextStream();
+            }
+          }, 12000);
+        }
+      }
+
+      function stopContextWatch() {
+        if (ctxState.sse) { try { ctxState.sse.close(); } catch (e) {} ctxState.sse = null; }
+        if (ctxState.timer) { clearInterval(ctxState.timer); ctxState.timer = null; }
       }
 
       function updateMultiplierUi() {
@@ -692,7 +795,9 @@
 
           var sentBadge = mode === 'LOOKUP'
             ? '<span class="pill pill-blue">🔍 Solo consulta</span>'
-            : '<span class="pill pill-green">✅ Enviado ' + sentQty + 'x a Caja (#' + escHtml(resData.seq) + ')</span>';
+            : (mode === 'INVENTORY_FILL'
+              ? '<span class="pill pill-green">📦 Enviado ' + sentQty + 'x a Inventario (#' + escHtml(resData.seq) + ')</span>'
+              : '<span class="pill pill-green">✅ Enviado ' + sentQty + 'x a Caja (#' + escHtml(resData.seq) + ')</span>');
 
           card.innerHTML =
             '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">' +
@@ -710,10 +815,12 @@
             '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;align-items:center">' +
               sentBadge + stockBadge +
             '</div>' +
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">' +
-              '<button type="button" class="m-btn m-btn-primary m-btn-sm" data-quick-add="1" data-quick-code="' + escHtml(code) + '">🛒 +1 a Caja</button>' +
-              '<button type="button" class="m-btn m-btn-secondary m-btn-sm" data-quick-add="3" data-quick-code="' + escHtml(code) + '">🛒 +3 a Caja</button>' +
-            '</div>';
+            (mode === 'POS_ADD'
+              ? '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">' +
+                  '<button type="button" class="m-btn m-btn-primary m-btn-sm" data-quick-add="1" data-quick-code="' + escHtml(code) + '">🛒 +1 a Caja</button>' +
+                  '<button type="button" class="m-btn m-btn-secondary m-btn-sm" data-quick-add="3" data-quick-code="' + escHtml(code) + '">🛒 +3 a Caja</button>' +
+                '</div>'
+              : '');
 
           var qBtns = card.querySelectorAll('[data-quick-add]');
           for (var i = 0; i < qBtns.length; i++) {
@@ -756,7 +863,7 @@
                 '<div style="font-size:11.5px;color:var(--txt-3);font-family:monospace">' + escHtml(h.code) + ' · ' + escHtml(h.time) + '</div>' +
               '</div>' +
               '<span class="pill ' + (h.mode === 'LOOKUP' ? 'pill-blue' : 'pill-green') + '">' +
-                (h.mode === 'LOOKUP' ? 'Consulta' : 'POS') +
+                (h.mode === 'LOOKUP' ? 'Consulta' : (h.mode === 'INVENTORY_FILL' ? 'Inventario' : 'Caja')) +
               '</span>' +
             '</div>';
         }
@@ -814,8 +921,12 @@
             window.MTPMobileScanner.playBeep(data.match && data.match.found ? 'ok' : 'warn');
           }
 
+          // El servidor resuelve el modo AUTO según la pantalla abierta en la PC
+          var resolvedMode = String((data.scan && data.scan.mode) || data.resolvedMode || mode).toUpperCase();
+          if (data.activeScreen !== undefined) applyContext(data.activeScreen);
+
           var finalQty = (data.scan && data.scan.qty) || qty;
-          renderResultCard(data, finalQty, mode);
+          renderResultCard(data, finalQty, resolvedMode);
 
           var now = new Date();
           var timeStr = now.toTimeString().slice(0, 8);
@@ -823,13 +934,13 @@
             code: (data.scan && data.scan.code) || clean,
             name: (data.match && data.match.found) ? data.match.name : 'No catalogado',
             qty: finalQty,
-            mode: mode,
+            mode: resolvedMode,
             time: timeStr
           });
           if (state.history.length > 20) state.history.length = 20;
           renderHistory();
 
-          if (mode !== 'LOOKUP' && !state.lockQty && !opts.qtyOverride && state.qty !== 1) {
+          if (resolvedMode !== 'LOOKUP' && !state.lockQty && !opts.qtyOverride && state.qty !== 1) {
             state.qty = 1;
             updateMultiplierUi();
           }
@@ -888,6 +999,7 @@
 
       function showAuthScreen(errorMsg) {
         if (window.MTPMobileScanner) window.MTPMobileScanner.stopCamera();
+        stopContextWatch();
         var authScr = $('scannerAuthScreen');
         var mainScr = $('scannerMainScreen');
         if (mainScr) mainScr.classList.add('hidden');
@@ -916,6 +1028,7 @@
         updateMultiplierUi();
         renderHistory();
         setConnPill(true, 'En línea');
+        startContextWatch();
         startLiveViewfinder();
       }
 

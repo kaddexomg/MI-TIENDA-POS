@@ -63,6 +63,36 @@ let lastScanSeq = 0;
 let cachedScannerPairCode = null;
 let cachedScannerPairDir = null;
 
+/* Contexto de pantalla activa en la PC (para el modo AUTO del escáner móvil).
+   La pantalla abierta (Caja / Inventario / Gastos) anuncia su presencia con un
+   heartbeat; si el anuncio es reciente, el escáner automático enruta allí. */
+let activeScreenContext = null;
+const SCREEN_CONTEXT_TTL_MS = 45000;
+const SCREEN_LABELS = { pos: 'Caja', inventario: 'Inventario', gastos: 'Compras y Gastos', otra: 'Otra pantalla' };
+
+function normalizeScreenName(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  if (s === 'pos' || s === 'caja') return 'pos';
+  if (s === 'inventario' || s === 'inventory') return 'inventario';
+  if (s === 'gastos' || s === 'facturas' || s === 'expenses') return 'gastos';
+  return 'otra';
+}
+
+function getFreshScreenContext() {
+  if (activeScreenContext && activeScreenContext.at && (Date.now() - activeScreenContext.at) <= SCREEN_CONTEXT_TTL_MS) {
+    return activeScreenContext;
+  }
+  return null;
+}
+
+function resolveAutoScanMode() {
+  const ctx = getFreshScreenContext();
+  if (!ctx) return { mode: 'POS_ADD', screen: null, reason: 'sin-contexto-caja-por-defecto' };
+  if (ctx.screen === 'inventario') return { mode: 'INVENTORY_FILL', screen: 'inventario', reason: 'pantalla-inventario' };
+  if (ctx.screen === 'pos') return { mode: 'POS_ADD', screen: 'pos', reason: 'pantalla-caja' };
+  return { mode: 'LOOKUP', screen: ctx.screen, reason: 'pantalla-no-ventas' };
+}
+
 function sha256Hex(text) {
   return crypto.createHash('sha256').update(String(text), 'utf8').digest('hex');
 }
@@ -581,6 +611,22 @@ function broadcastScannerEvent(scanObj) {
   });
 }
 
+function broadcastScannerContext() {
+  const ctx = getFreshScreenContext();
+  const data = JSON.stringify({
+    screen: ctx ? ctx.screen : null,
+    label: ctx ? ctx.label : null,
+    at: ctx ? ctx.at : 0
+  });
+  const payload = 'event: scanner_context\ndata: ' + data + '\n\n';
+  sseClients.forEach(function (clientRes) {
+    try { clientRes.write(payload); } catch (e) { sseClients.delete(clientRes); }
+  });
+  scannerStreamClients.forEach(function (clientRes) {
+    try { clientRes.write(payload); } catch (e) { scannerStreamClients.delete(clientRes); }
+  });
+}
+
 function isLoopbackRequest(req) {
   const addr = req && req.socket && req.socket.remoteAddress
     ? String(req.socket.remoteAddress)
@@ -784,8 +830,32 @@ function handleApiRequest(req, res, journal, stateManager) {
       lanScannerUrls: lanScannerUrls,
       lanHttpsScannerUrls: lanHttpsScannerUrls,
       lastScanSeq: lastScanSeq,
-      connectedScanners: scannerStreamClients.size + sseClients.size
+      connectedScanners: scannerStreamClients.size + sseClients.size,
+      activeScreen: getFreshScreenContext()
     }, req);
+  }
+
+  // 3b-2. POST /api/v1/scanner/context (La PC anuncia qué pantalla tiene abierta: pos / inventario / gastos)
+  if (pathname === '/api/scanner/context' && method === 'POST') {
+    readJsonBody(req, function (err, body) {
+      if (err) return sendJson(res, 400, { ok: false, error: err.message }, req);
+      const ctxAuth = resolveScannerAuth(req, query, body, secret, journal);
+      if (!ctxAuth.ok && !isLoopbackRequest(req)) {
+        return sendJson(res, 401, { ok: false, error: 'Se requiere token o pairCode válido para anunciar la pantalla activa.' }, req);
+      }
+      const screen = normalizeScreenName(body && body.screen);
+      const label = String((body && body.label) || '').trim().slice(0, 60) || SCREEN_LABELS[screen];
+      const changed = !activeScreenContext || activeScreenContext.screen !== screen;
+      activeScreenContext = {
+        screen: screen,
+        label: label,
+        page: String((body && body.page) || '').slice(0, 120),
+        at: Date.now()
+      };
+      if (changed) broadcastScannerContext();
+      return sendJson(res, 200, { ok: true, context: activeScreenContext }, req);
+    });
+    return;
   }
 
   // 3c. GET /api/v1/scanner/stream (SSE exclusivo para recibir escaneos del teléfono en tiempo real)
@@ -802,7 +872,7 @@ function handleApiRequest(req, res, journal, stateManager) {
     });
     res.writeHead(200, sseHeaders);
     res.write(': connected scanSeq=' + lastScanSeq + '\n\n');
-    res.write('event: scanner_ready\ndata: ' + JSON.stringify({ lastScanSeq: lastScanSeq }) + '\n\n');
+    res.write('event: scanner_ready\ndata: ' + JSON.stringify({ lastScanSeq: lastScanSeq, activeScreen: getFreshScreenContext() }) + '\n\n');
 
     if (query.sinceSeq !== undefined) {
       const replayFrom = parseInt(query.sinceSeq, 10) || 0;
@@ -856,6 +926,7 @@ function handleApiRequest(req, res, journal, stateManager) {
       ok: true,
       lastSeq: lastScanSeq,
       rateBcv: Number(settings.rateBcv) || 42.85,
+      activeScreen: getFreshScreenContext(),
       scans: scans,
       lookup: lookupResult
     }, req);
@@ -873,7 +944,14 @@ function handleApiRequest(req, res, journal, stateManager) {
       if (!parsed.code) {
         return sendJson(res, 400, { ok: false, error: 'El código de barras no puede estar vacío.' }, req);
       }
-      const mode = String((body && body.mode) || 'POS_ADD').trim().toUpperCase();
+      let mode = String((body && body.mode) || 'AUTO').trim().toUpperCase();
+      let autoInfo = null;
+      if (mode === 'AUTO') {
+        autoInfo = resolveAutoScanMode();
+        mode = autoInfo.mode;
+      } else if (['POS_ADD', 'INVENTORY_FILL', 'LOOKUP'].indexOf(mode) === -1) {
+        mode = 'POS_ADD';
+      }
       const isLookupOnly = mode === 'LOOKUP';
       const includeInsumos = isLookupOnly || mode === 'INVENTORY_FILL' || Boolean(body && body.includeInsumos);
       const stateObj = stateManager && typeof stateManager.getState === 'function' ? stateManager.getState() : {};
@@ -887,6 +965,8 @@ function handleApiRequest(req, res, journal, stateManager) {
         rawCode: String((body && body.code) || '').trim(),
         qty: parsed.qty,
         mode: mode,
+        requestedMode: String((body && body.mode) || 'AUTO').trim().toUpperCase(),
+        autoScreen: autoInfo ? autoInfo.screen : null,
         format: String((body && body.format) || 'manual').trim(),
         device: String((body && body.device) || 'Teléfono').trim(),
         target: String((body && body.target) || 'pos').trim(),
@@ -907,6 +987,8 @@ function handleApiRequest(req, res, journal, stateManager) {
         ok: true,
         seq: lastScanSeq,
         broadcasted: !isLookupOnly,
+        resolvedMode: mode,
+        activeScreen: getFreshScreenContext(),
         scan: scanRecord,
         match: match
       }, req);

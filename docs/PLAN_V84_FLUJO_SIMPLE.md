@@ -147,3 +147,16 @@
    - Siempre en **versión clara** (luz limpia): nada de vidrio oscuro neón (lección del 12-nov).
 3. **Modo del escáner por defecto**: ✅ **Automático por pantalla activa de la PC**, con botones para forzar Vender / Inventario / Consultar.
 4. **VPS**: ✅ **LAN primero, VPS preparado** (deploy nginx existente listo para activar cuando el dueño quiera).
+
+---
+
+## 5. Progreso de ejecución
+
+- **F0 — Base asegurada** ✅ (16-nov-2026): suite completa verde, fix test journal (versión 8.3.0), commit `0c82c71`.
+- **F1 — Escáner pistola universal** ✅ (16-nov-2026):
+  - Servidor: `POST /api/v1/scanner/context` (pantalla activa con heartbeat 20 s y TTL 45 s), modo `AUTO` que enruta a Caja / Inventario / Consulta según la pantalla abierta; `activeScreen` expuesto en info/poll/SSE (`scanner_context`).
+  - PC: `MTPBarcode.announceScreen()` automático por página (pos / inventario / gastos); Inventario reacciona a lecturas remotas (abre "Llegó mercancía" con renglón por unidad, suma al conteo físico, o guía a crear el producto si el código no existe).
+  - Teléfono: 4 modos (🖥️ Automático por defecto · 🛒 Vender · 📦 Inventario · 🔍 Consultar) + banner en vivo "La PC está en CAJA/INVENTARIO → ...".
+  - QR offline vendorizado (`assets/js/vendor/qrcode.js` MIT + `assets/js/ui/qr.js`): QR grande del enlace HTTPS en el modal 📷 Escáner, con guía de 2 pasos.
+  - Evidencia: SCN-7 y SCN-8 nuevos (8/8), suite completa 100%, check-html/check-scripts OK (incluyen ahora `mobile/scanner.html`), smoke test real contra servidor HTTP en puerto de prueba: enrutamiento AUTO inventario→caja, manual gana, anónimo 401.
+- **Siguiente**: F2 (venta en 3 pasos visibles) → F3 (inventario guiado) → F4 (gastos) → F5 (Mis números) → F6 (fiscal guiada) → F7 (móvil) → F8 (piel M3 + Liquid Morph) → F9 (empaquetado).

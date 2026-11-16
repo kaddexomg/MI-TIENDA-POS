@@ -520,6 +520,8 @@
   <script src="../assets/js/ui/sidenav.js"></script>
   <script src="../assets/js/core/code-structure.js"></script>
   <script src="../assets/js/modules/barcode-printer.js"></script>
+  <script src="../assets/js/vendor/qrcode.js"></script>
+  <script src="../assets/js/ui/qr.js"></script>
   <script src="../assets/js/modules/barcode-engine.js"></script>
   <script src="../assets/js/modules/photo-studio.js"></script>
 <script src="../assets/js/modules/product-drawer.js"></script>
@@ -1357,6 +1359,92 @@
         MTP.toast(`Ajuste aplicado: ${res.item.name} ahora tiene ${res.realStock} ${res.item.unit} (Diferencia: ${res.diff > 0 ? '+' : ''}${res.diff})`);
       }
     }
+
+    /* ===== ESCÁNER REMOTO (teléfono como pistola inalámbrica) — MODO INVENTARIO =====
+       El servidor enruta aquí las lecturas cuando esta pantalla está abierta (modo AUTO)
+       o cuando el teléfono fuerza "📦 Inventario". Tres caminos claros:
+       1. Conteo abierto → suma al conteo físico.
+       2. Código no registrado → guía para crear el producto en 5 segundos.
+       3. Producto existente → abre "Llegó mercancía" con el renglón listo. */
+    function findInvItemByScan(scan) {
+      const m = scan.match || {};
+      if (m.found && m.id && MTP.getInsumoById) {
+        const byId = MTP.getInsumoById(m.id);
+        if (byId) return byId;
+      }
+      const code = String(scan.code || m.code || '').trim().toLowerCase();
+      if (!code) return null;
+      return (MTP.state.inventory || []).find(i =>
+        String(i.code || '').toLowerCase() === code || String(i.barcode || '').toLowerCase() === code
+      ) || null;
+    }
+
+    function handleInventoryRemoteScan(scan) {
+      const qty = Math.max(1, parseInt(scan.qty, 10) || 1);
+      const item = findInvItemByScan(scan);
+
+      const auditModal = document.getElementById('auditModal');
+      if (auditModal && auditModal.classList.contains('open')) {
+        if (!item) { MTP.toast('Código no registrado: ' + (scan.code || ''), 'warn'); return; }
+        const sel = document.getElementById('auditItemSelect');
+        if (sel) sel.value = item.id;
+        const realEl = document.getElementById('auditRealStock');
+        if (realEl) {
+          const cur = parseFloat(realEl.value);
+          realEl.value = String((isNaN(cur) ? 0 : cur) + qty);
+          updateAuditPreview();
+        }
+        MTP.toast('🔢 Conteo: +' + qty + ' ' + item.unit + ' de ' + item.name, 'ok');
+        return;
+      }
+
+      if (!item) {
+        MTP.toast('⚠ El código ' + (scan.code || '') + ' no está registrado. Crea el producto para poder recibirlo.', 'warn');
+        if (window.MTPProductDrawer && typeof window.MTPProductDrawer.open === 'function') {
+          window.MTPProductDrawer.open({ mode: 'create', onSaved: () => initInvPage() });
+          setTimeout(() => {
+            const bc = document.getElementById('drawerBarcode');
+            if (bc) {
+              bc.value = String(scan.code || '');
+              bc.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          }, 300);
+        }
+        return;
+      }
+
+      const mpModal = document.getElementById('multiPurchaseModal');
+      const wasOpen = mpModal && mpModal.classList.contains('open');
+      if (!wasOpen) openMultiPurchaseModal();
+      const tbody = document.getElementById('mpRowsBody');
+      if (!wasOpen && tbody) tbody.innerHTML = ''; // solo lo escaneado, sin renglones vacíos
+
+      let existing = null;
+      if (tbody) {
+        tbody.querySelectorAll('tr').forEach(tr => {
+          const sel = tr.querySelector('.mp-item-select');
+          if (sel && sel.value === item.id) existing = tr;
+        });
+      }
+      if (existing) {
+        const packsInput = existing.querySelector('.mp-packs');
+        const unitsInput = existing.querySelector('.mp-units-per-pack');
+        if (unitsInput) unitsInput.value = '1';
+        if (packsInput) packsInput.value = String((parseFloat(packsInput.value) || 0) + qty);
+        recalcPurchaseTotals();
+      } else {
+        // Entrada por UNIDAD: packs = cantidad escaneada,  unidad por bulto = 1, costo unitario actual
+        addPurchaseRow(item.id, qty, 1, Number(item.costUsd || 0), 0);
+      }
+      MTP.toast('📦 Llegó: +' + qty + ' ' + item.unit + ' de ' + item.name + '. Revisa el costo y guarda.', 'ok');
+    }
+
+    window.addEventListener('mtp:remote-barcode', function (e) {
+      const scan = e && e.detail;
+      if (!scan) return;
+      if (String(scan.mode || '').toUpperCase() !== 'INVENTORY_FILL') return;
+      handleInventoryRemoteScan(scan);
+    });
 
     function toggleInvTypeFields() {
       const t = document.getElementById('invEditType').value;

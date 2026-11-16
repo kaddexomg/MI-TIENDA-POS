@@ -10,7 +10,8 @@ const PAGES = [
   'admin/ajustes.html', 'admin/cierres.html', 'admin/facturas.html', 'admin/index.html',
   'admin/inventario.html', 'admin/precios.html', 'admin/productos.html',
   'admin/recetas.html', 'admin/usuarios.html',
-  'mobile/index.html'
+  'mobile/index.html',
+  'mobile/scanner.html'
 ];
 
 let bad = 0;

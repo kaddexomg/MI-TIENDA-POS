@@ -276,6 +276,14 @@
               <button type="button" class="btn btn-secondary btn-sm" id="mtpPhoneCopyBtn">📋 Copiar</button>
               <button type="button" class="btn btn-primary btn-sm" id="mtpPhoneOpenBtn">↗️ Abrir</button>
             </div>
+            <div style="display:flex;gap:12px;align-items:center;margin-top:10px;flex-wrap:wrap">
+              <div id="mtpPhoneQrBox" style="background:#ffffff;border-radius:10px;padding:6px;border:1px solid #bbf7d0;line-height:0;flex-shrink:0"></div>
+              <div style="font-size:12px;color:#14532d;line-height:1.55;flex:1;min-width:180px">
+                <strong>Conecta el teléfono en 2 pasos:</strong><br>
+                1️⃣ Abre la cámara del teléfono y apunta a este QR.<br>
+                2️⃣ La primera vez acepta el certificado de seguridad. Listo: cada lectura llega aquí al instante, a la Caja o al Inventario según la pantalla abierta.
+              </div>
+            </div>
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:#166534;font-weight:700">
               <span>Clave enlace: <strong id="mtpPhonePairCode" style="font-family:monospace;letter-spacing:1px">------</strong></span>
               <span id="mtpPhoneLastScan">${lastRemoteScanSummary ? ('Último: ' + escHtml(lastRemoteScanSummary)) : 'Esperando lecturas del teléfono...'}</span>
@@ -463,9 +471,14 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
         if (!data || !data.ok) return;
-        const bestUrl = (data.lanScannerUrls && data.lanScannerUrls[0]) || data.scannerUrl || (baseUrl + '/escaner');
+        const bestUrl = (data.lanHttpsScannerUrls && data.lanHttpsScannerUrls[0]) || data.httpsScannerUrl ||
+          (data.lanScannerUrls && data.lanScannerUrls[0]) || data.scannerUrl || (baseUrl + '/escaner');
         if (urlInput) urlInput.value = bestUrl;
         if (pairEl) pairEl.textContent = data.pairCode || 'PIN';
+        const qrBox = modal.querySelector('#mtpPhoneQrBox');
+        if (qrBox && typeof window !== 'undefined' && window.MTPQR && typeof window.MTPQR.svg === 'function') {
+          qrBox.innerHTML = window.MTPQR.svg(bestUrl, 148);
+        }
         if (copyBtn) {
           copyBtn.onclick = function () {
             if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
@@ -571,7 +584,11 @@
       }
     }
 
-    triggerScan(dispatchCode);
+    // En modo INVENTORY_FILL la pantalla de Inventario reacciona al evento
+    // (abre "Llegó mercancía" o suma al conteo); no se dispara el flujo de Caja.
+    if (mode !== 'INVENTORY_FILL') {
+      triggerScan(dispatchCode);
+    }
 
     if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
       try {
@@ -630,6 +647,14 @@
         try {
           const scanObj = JSON.parse(e.data);
           handleRemoteScan(scanObj);
+        } catch (_) {}
+      });
+      remoteSse.addEventListener('scanner_context', function (e) {
+        try {
+          const ctx = JSON.parse(e.data);
+          if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+            window.dispatchEvent(new CustomEvent('mtp:scanner-context', { detail: ctx }));
+          }
         } catch (_) {}
       });
       remoteSse.onerror = function () {
@@ -703,10 +728,57 @@
     remoteBridgeStarted = false;
   }
 
+  /* Contexto de pantalla activa: la PC le dice al servidor qué pantalla tiene
+     abierta (Caja / Inventario / Gastos) para que el escáner del teléfono en
+     modo AUTOMÁTICO enrute cada lectura al lugar correcto. Heartbeat 20 s. */
+  let screenAnnounceTimer = null;
+  let announcedScreen = '';
+  let announcedLabel = '';
+
+  function detectScreenFromLocation() {
+    if (typeof window === 'undefined' || !window.location) return '';
+    const p = String(window.location.pathname || '').toLowerCase();
+    if (/pos\.html$|\/caja\//.test(p)) return 'pos';
+    if (/inventario/.test(p)) return 'inventario';
+    if (/facturas|gastos/.test(p)) return 'gastos';
+    return '';
+  }
+
+  function announceScreen(screen, label) {
+    const s = String(screen || detectScreenFromLocation() || '').trim().toLowerCase();
+    if (!s) return;
+    announcedScreen = s;
+    if (label) announcedLabel = String(label);
+    const baseUrl = resolveApiBaseUrl();
+    if (!baseUrl || typeof fetch !== 'function') return;
+    const send = function () {
+      const tok = resolveApiToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (tok) headers.Authorization = 'Bearer ' + tok;
+      try {
+        fetch(baseUrl + '/api/v1/scanner/context', {
+          method: 'POST',
+          headers: headers,
+          cache: 'no-store',
+          body: JSON.stringify({
+            screen: announcedScreen,
+            label: announcedLabel,
+            page: (typeof window !== 'undefined' && window.location) ? window.location.pathname : ''
+          })
+        }).catch(function () {});
+      } catch (_) {}
+    };
+    send();
+    if (!screenAnnounceTimer && typeof setInterval === 'function') {
+      screenAnnounceTimer = setInterval(send, 20000);
+    }
+  }
+
   if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     const bootBridge = function () {
       setTimeout(function () {
         startRemoteScannerBridge();
+        announceScreen();
       }, 250);
     };
     if (document.readyState === 'loading') {
@@ -714,7 +786,10 @@
     } else {
       bootBridge();
     }
-    window.addEventListener('mtp:api-online', startRemoteScannerBridge);
+    window.addEventListener('mtp:api-online', function () {
+      startRemoteScannerBridge();
+      announceScreen();
+    });
   }
 
   return {
@@ -726,6 +801,7 @@
     handleRemoteScan: handleRemoteScan,
     startRemoteScannerBridge: startRemoteScannerBridge,
     stopRemoteScannerBridge: stopRemoteScannerBridge,
+    announceScreen: announceScreen,
     openCameraScannerModal: openCameraScannerModal,
     closeCameraScannerModal: closeCameraScannerModal,
     submitManualCode: submitManualCode,

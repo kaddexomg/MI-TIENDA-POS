@@ -358,6 +358,94 @@ test('SCN-6: MTPBarcode.handleRemoteScan maneja multiplicadores, deduplicación,
   assert.strictEqual(okDrawer, true);
   assert.strictEqual(drawerBarcodeInput.value, '7592001000112');
   assert.strictEqual(scannedCodes.length, 1, 'Con el drawer de producto abierto no debe agregarse al carrito');
+
+  // F) INVENTORY_FILL no dispara el flujo de Caja (lo maneja la pantalla de Inventario)
+  drawerOpen = false;
+  const okInv = MTPBarcode.handleRemoteScan({ id: 'scan_e', seq: 7, code: '7591001000015', qty: 2, mode: 'INVENTORY_FILL' });
+  assert.strictEqual(okInv, true);
+  assert.strictEqual(scannedCodes.length, 1, 'INVENTORY_FILL no debe agregarse al carrito de Caja');
 });
 
-console.log('\n' + (process.exitCode ? '❌ Hubo pruebas fallidas en Escáner Móvil' : '✅ Pruebas de Escáner Móvil y Puente POS: ' + passed + '/6 OK') + '\n');
+/* -------------------------------------------------------------------------- */
+/* 4. Modo AUTO: enrutamiento según la pantalla activa de la PC               */
+/* -------------------------------------------------------------------------- */
+
+test('SCN-7: Modo AUTO enruta según la pantalla activa (context + heartbeat + manual gana)', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mtp-scanner-ctx-'));
+  try {
+    const journal = makeTempJournal(tmpDir);
+    const sm = makeMockStateManager();
+
+    // El teléfono se autentica con el código de enlace (pairCode), como en la vida real
+    const info0 = invokeApiSync('GET', '/api/v1/scanner/info', null, {}, journal, sm, '127.0.0.1');
+    const pair = info0.body.pairCode;
+    assert.ok(pair, 'Debe existir pairCode para autenticar el escáner');
+    const scan = (body) => invokeApiSync('POST', '/api/v1/scanner/scan', Object.assign({ pairCode: pair }, body), {}, journal, sm, '127.0.0.1');
+
+    // A) Sin contexto anunciado: AUTO cae a Caja por defecto
+    const noCtx = scan({ code: '7591001000015', mode: 'AUTO' });
+    assert.strictEqual(noCtx.statusCode, 200);
+    assert.strictEqual(noCtx.body.resolvedMode, 'POS_ADD');
+
+    // B) La PC anuncia Inventario → AUTO entra como mercancía (incluye insumos de cocina)
+    const ctxInv = invokeApiSync('POST', '/api/v1/scanner/context', { screen: 'inventario', page: '/admin/inventario.html' }, {}, journal, sm, '127.0.0.1');
+    assert.strictEqual(ctxInv.statusCode, 200);
+    assert.strictEqual(ctxInv.body.context.screen, 'inventario');
+
+    const autoInv = scan({ code: '7591001000015', mode: 'AUTO' });
+    assert.strictEqual(autoInv.body.resolvedMode, 'INVENTORY_FILL');
+    assert.strictEqual(autoInv.body.scan.requestedMode, 'AUTO');
+    assert.strictEqual(autoInv.body.scan.autoScreen, 'inventario');
+    assert.strictEqual(autoInv.body.broadcasted, true);
+
+    const insumoInv = scan({ code: 'INS-PAPA', mode: 'INVENTORY_FILL' });
+    assert.strictEqual(insumoInv.body.match.found, true, 'Insumo de cocina sí se encuentra en modo inventario');
+
+    // C) La PC vuelve a Caja → AUTO suma al ticket
+    invokeApiSync('POST', '/api/v1/scanner/context', { screen: 'pos' }, {}, journal, sm, '127.0.0.1');
+    const autoPos = scan({ code: 'EM01', mode: 'AUTO' });
+    assert.strictEqual(autoPos.body.resolvedMode, 'POS_ADD');
+
+    // D) Pantalla de Compras y Gastos → AUTO solo consulta (no transmite)
+    invokeApiSync('POST', '/api/v1/scanner/context', { screen: 'gastos' }, {}, journal, sm, '127.0.0.1');
+    const autoGastos = scan({ code: 'EM01', mode: 'AUTO' });
+    assert.strictEqual(autoGastos.body.resolvedMode, 'LOOKUP');
+    assert.strictEqual(autoGastos.body.broadcasted, false);
+
+    // E) /scanner/info expone la pantalla activa para el banner del teléfono
+    const info = invokeApiSync('GET', '/api/v1/scanner/info', null, {}, journal, sm, '127.0.0.1');
+    assert.strictEqual(info.body.activeScreen.screen, 'gastos');
+
+    // F) El modo manual explícito siempre gana sobre el contexto
+    const forced = scan({ code: '7591001000015', mode: 'POS_ADD' });
+    assert.strictEqual(forced.body.resolvedMode, 'POS_ADD');
+
+    // G) Contexto desde LAN anónimo es rechazado (401)
+    const anonCtx = invokeApiSync('POST', '/api/v1/scanner/context', { screen: 'pos' }, {}, journal, sm, '192.168.1.55');
+    assert.strictEqual(anonCtx.statusCode, 401);
+  } finally {
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (_) {}
+  }
+});
+
+/* -------------------------------------------------------------------------- */
+/* 5. Generador QR offline (vendor/qrcode.js + ui/qr.js)                      */
+/* -------------------------------------------------------------------------- */
+
+test('SCN-8: MTPQR genera matriz QR válida y SVG offline para el enlace del escáner', () => {
+  const MTPQR = require('../assets/js/ui/qr.js');
+  const url = 'https://192.168.1.100:7443/escaner?pair=123456';
+  const matrix = MTPQR.matrix(url);
+  assert.ok(matrix && matrix.length >= 21, 'La matriz QR debe existir y tener al menos 21 módulos (versión 1)');
+  assert.strictEqual(matrix.length, matrix[0].length, 'La matriz QR debe ser cuadrada');
+  // Patrones de búsqueda (finder) en las esquinas superiores
+  assert.ok(matrix[0][0] && matrix[0][6] && matrix[6][0] && matrix[6][6], 'Finder pattern superior izquierdo presente');
+  const n = matrix.length;
+  assert.ok(matrix[0][n - 1] && matrix[0][n - 7] && matrix[6][n - 1], 'Finder pattern superior derecho presente');
+  const svg = MTPQR.svg(url, 160);
+  assert.ok(svg.indexOf('<svg') === 0, 'Debe producir un SVG');
+  assert.ok(svg.indexOf('<path') !== -1, 'El SVG debe contener los módulos como path');
+  assert.strictEqual(MTPQR.svg('', 160), '', 'Texto vacío no produce QR');
+});
+
+console.log('\n' + (process.exitCode ? '❌ Hubo pruebas fallidas en Escáner Móvil' : '✅ Pruebas de Escáner Móvil y Puente POS: ' + passed + '/8 OK') + '\n');
