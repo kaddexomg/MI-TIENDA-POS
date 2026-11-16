@@ -38,6 +38,16 @@
         <!-- Banner de Modo Reemplazo (⇄ Reemplazar) -->
         <div id="posReplaceBanner" style="display:none;align-items:center;justify-content:space-between;background:#fef3c7;border:1.5px solid #f59e0b;color:#92400e;padding:6px 12px;border-radius:8px;margin-bottom:6px;font-size:12.5px;font-weight:700"></div>
 
+        <!-- GUÍA DE 3 PASOS PARA VENDER (siempre visible, lenguaje de dueño) -->
+        <div class="pos-steps-bar" id="posStepsBar" aria-label="Pasos para vender">
+          <div class="pos-step active" id="posStep1"><span class="pos-step-num">1</span><span class="pos-step-txt">Escanea o toca el producto</span></div>
+          <span class="pos-step-arrow" aria-hidden="true">→</span>
+          <div class="pos-step" id="posStep2"><span class="pos-step-num">2</span><span class="pos-step-txt">Cobra (F2)</span></div>
+          <span class="pos-step-arrow" aria-hidden="true">→</span>
+          <div class="pos-step" id="posStep3"><span class="pos-step-num">3</span><span class="pos-step-txt">Entrega vuelto y ticket</span></div>
+          <div class="pos-step-hint" id="posStepHint">Escanea un código o toca una foto para empezar.</div>
+        </div>
+
         <!-- DISTRIBUCIÓN A 3 COLUMNAS FIJAS (ZERO-SCROLL GLOBAL 1366x768 / 1024x768) -->
         <div class="pos-layout-3col">
           <!-- COLUMNA 1: FAMILIAS MAESTRAS (Izquierda, ~160px) -->
@@ -389,6 +399,43 @@
         newProdBtn.style.display = 'none';
       }
     });
+
+    /* Barra de pasos "1 Escanea → 2 Cobra → 3 Vuelto y ticket":
+       guía visible para que cualquier persona sepa qué hacer en cada momento. */
+    (function () {
+      var hintTimer = null;
+      function setStep(n, hint) {
+        for (var i = 1; i <= 3; i++) {
+          var el = document.getElementById('posStep' + i);
+          if (!el) continue;
+          el.classList.toggle('active', i === n);
+          el.classList.toggle('done', i < n);
+        }
+        var h = document.getElementById('posStepHint');
+        if (h && hint) h.textContent = hint;
+      }
+      window.addEventListener('mtp:cart-changed', function (e) {
+        var d = (e && e.detail) || {};
+        if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
+        if (d.count > 0) {
+          setStep(2, 'Producto agregado. Cuando termines, toca el botón grande COBRAR (F2).');
+        } else {
+          setStep(1, 'Escanea un código o toca una foto para empezar.');
+        }
+      });
+      window.addEventListener('mtp:checkout-opened', function () {
+        setStep(2, 'Revisa el total, recibe el pago y prepara el vuelto.');
+      });
+      window.addEventListener('mtp:sale-completed', function (e) {
+        var d = (e && e.detail) || {};
+        var msg = '✅ Venta #' + (d.orderNumber || '') + ' registrada. Entrega el vuelto y el ticket al cliente.';
+        setStep(3, msg);
+        if (hintTimer) clearTimeout(hintTimer);
+        hintTimer = setTimeout(function () {
+          setStep(1, 'Escanea un código o toca una foto para empezar.');
+        }, 7000);
+      });
+    })();
   </script>
 </body>
 </html>

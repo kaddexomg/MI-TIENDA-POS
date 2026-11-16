@@ -253,8 +253,8 @@
     <div class="modal-box" style="max-width:960px;width:95%">
       <div class="modal-hd">
         <div>
-          <h3>Historial de Entradas y Salidas de la Tienda</h3>
-          <p>Historial trazable de compras, ventas de mostrador, mermas, consumo de personal y ajustes</p>
+          <h3>Qué entró · Qué salió · Qué queda</h3>
+          <p>Cada compra, venta, daño o conteo queda anotado aquí, con fecha y responsable</p>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('kardexModal').classList.remove('open')">✕</button>
       </div>
@@ -304,12 +304,13 @@
     <div class="modal-box" style="max-width:940px;width:95%">
       <div class="modal-hd">
         <div>
-          <h3>Llegó Mercancía (Factura de Proveedor y Bultos)</h3>
-          <p>Registra varios productos de una misma factura, calcula bultos y sincroniza la gaveta de caja</p>
+          <h3>Llegó Mercancía</h3>
+          <p>① Elige el producto (o escanéalo con el teléfono) → ② ¿cuánto llegó? → ③ ¿cuánto costó? → Guardar</p>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('multiPurchaseModal').classList.remove('open')">✕</button>
       </div>
       <div class="modal-bd">
+        <div class="inv-scan-hint">📱 <strong>¿Tienes el teléfono conectado como escáner?</strong> Cada código que leas agrega el producto aquí automáticamente, con su cantidad y costo. Si compras por bulto o caja, usa la calculadora de abajo.</div>
         <!-- CALCULADORA DE BULTOS INTEGRADA EN ACORDEÓN -->
         <details class="v7-accordion" style="margin-bottom:12px">
           <summary>🧮 Calculadora Rápida: Bulto / Saco → Unidad o Kg</summary>
@@ -827,7 +828,7 @@
             window.MTPBarcodePrinter.open({ itemId: itemId });
           }
         }},
-        { label: '📋 Ver movimientos (Kardex)', run: function () { openKardexModal(itemId); } },
+        { label: '📋 Qué entró y qué salió', run: function () { openKardexModal(itemId); } },
         { label: '⚡ Editar datos en 5 segundos (Drawer)', run: function () {
           if (window.MTPProductDrawer) {
             window.MTPProductDrawer.open({ mode: 'edit', id: itemId, onSaved: () => initInvPage(), onDeleted: () => initInvPage() });
@@ -1215,7 +1216,7 @@
         }
         document.getElementById('multiPurchaseModal').classList.remove('open');
         initInvPage();
-        MTP.toast(`¡Factura ${docNumber} procesada con éxito! +${res.itemsCount} productos entraron al stock y Kardex.`);
+        MTP.toast(`¡Listo! ${res.itemsCount} productos entraron al inventario y ya están a la venta.`);
       }
     }
 
@@ -1279,7 +1280,7 @@
       if (res) {
         document.getElementById('wasteModal').classList.remove('open');
         initInvPage();
-        MTP.toast(`Merma registrada: -${res.qty} ${res.unit} dados de baja y asentados en Kardex`);
+        MTP.toast(`Anotado: -${res.qty} ${res.unit} salieron del inventario (daño o pérdida).`);
       }
     }
 

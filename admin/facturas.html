@@ -366,9 +366,23 @@
       const totalBoughtUsd = list.reduce((acc, f) => acc + f.totalUsd, 0);
       const pendingCount = list.filter(f => f.status !== 'pagada').length;
 
+      // Gastos de hoy (lenguaje de dueño: "¿cuánto gasté hoy?")
+      const todayStr = new Date().toDateString();
+      const expensesToday = (MTP.state.expenses || []).filter(e => {
+        const d = e.createdAt || e.ts;
+        return d && new Date(d).toDateString() === todayStr;
+      });
+      const spentTodayUsd = expensesToday.reduce((acc, e) => acc + (Number(e.amountUsd) || 0), 0);
+
       const statGrid = document.getElementById('invInvoicesStats');
       if (statGrid) {
         statGrid.innerHTML =
+          MTPUI.statCard({
+            label: 'Gasté hoy',
+            tone: spentTodayUsd > 0 ? 'out' : 'in',
+            value: MTP.fmtUSD(spentTodayUsd),
+            sub: expensesToday.length + (expensesToday.length === 1 ? ' gasto anotado hoy' : ' gastos anotados hoy') + ' · ' + (spentTodayUsd * bcv).toFixed(2) + ' Bs'
+          }) +
           MTPUI.statCard({
             label: 'Total Cuentas por Pagar',
             tone: totalDebtUsd > 0 ? 'out' : 'in',

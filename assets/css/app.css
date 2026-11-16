@@ -2866,3 +2866,101 @@ button:active {
   border-color: #1E3A8A;
   color: #93C5FD;
 }
+
+/* ==========================================================================
+   PIEL MATERIAL 3 + LIQUID MORPH (v8.4)
+   - Esquinas expresivas M3, superficies tonales y state layers suaves.
+   - Liquid Morph: vidrio líquido real SOLO en táctil (pointer: coarse);
+     en PC/Win7 vidrio simulado con capas translúcidas + reflejo, sin
+     backdrop-filter, para mantener 60 fps en Chromium 108.
+   - Todo con tokens: respeta modo oscuro y prefers-reduced-motion.
+   ========================================================================== */
+
+/* Tarjetas M3: esquina expresiva y relieve tonal suave */
+.card {
+  border-radius: var(--m3-shape-card, 16px);
+}
+.card-hd {
+  border-radius: var(--m3-shape-card, 16px) var(--m3-shape-card, 16px) 0 0;
+}
+
+/* State layer M3 en botones: capa de color que responde al hover/press */
+.btn {
+  position: relative;
+  border-radius: var(--m3-shape-chip, 10px);
+}
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast, 140ms) var(--ease-fluid, ease);
+}
+.btn:hover::after { opacity: var(--m3-state-hover, 0.06); }
+.btn:active::after { opacity: var(--m3-state-press, 0.10); }
+
+/* Botonera de acciones grandes (Inventario): tonal M3 + presión háptica */
+.action-btn {
+  border-radius: var(--m3-shape-card, 16px);
+  transition: transform var(--dur-tap, 80ms) var(--ease-out), box-shadow var(--dur-fast, 140ms) var(--ease-fluid), background var(--dur-fast, 140ms) var(--ease-fluid);
+}
+.action-btn:active {
+  transform: scale(0.97);
+}
+
+/* Modales Liquid Morph: vidrio claro con reflejo superior.
+   En PC el vidrio se simula (capa translúcida + sheen); en táctil se
+   añade desenfoque real moderado, solo en el modal (nunca en listas). */
+.modal-box {
+  border-radius: var(--m3-shape-modal, 24px);
+  background: var(--glass-bg-strong, rgba(255, 255, 255, 0.90));
+  background-image: var(--glass-sheen);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.70));
+  box-shadow: var(--glass-shadow, 0 18px 44px -12px rgba(15, 23, 42, 0.28));
+}
+.modal-hd {
+  background: transparent;
+  border-radius: var(--m3-shape-modal, 24px) var(--m3-shape-modal, 24px) 0 0;
+}
+.modal-ft {
+  background: transparent;
+}
+@media (pointer: coarse) {
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .modal-box {
+      background: var(--glass-bg, rgba(255, 255, 255, 0.78));
+      background-image: var(--glass-sheen);
+      -webkit-backdrop-filter: blur(var(--glass-blur, 14px));
+      backdrop-filter: blur(var(--glass-blur, 14px));
+    }
+  }
+}
+
+/* KPIs tonales M3: cifra grande sobre superficie tonal del color semántico */
+.stat-card.tone-in { background: var(--m3-tonal-in, #E7F6EF); }
+.stat-card.tone-out { background: var(--m3-tonal-out, #FDEAEA); }
+.stat-card.tone-info { background: var(--m3-tonal-info, #E8F0FE); }
+.stat-card.tone-cash { background: var(--m3-tonal-action, #FDF1DC); }
+
+/* Aviso de escaneo en Inventario (F3) */
+.inv-scan-hint {
+  padding: 9px 12px;
+  margin-bottom: 12px;
+  border-radius: var(--m3-shape-chip, 10px);
+  background: var(--m3-tonal-in, #E7F6EF);
+  border: 1px solid rgba(16, 185, 129, 0.30);
+  color: var(--money-in-txt, #065F46);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn::after,
+  .action-btn {
+    transition: none;
+  }
+}

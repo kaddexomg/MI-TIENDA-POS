@@ -1860,3 +1860,114 @@ body.pos-fullscreen-body .admin-topbar {
     visibility: visible !important;
   }
 }
+
+/* ==========================================================================
+   F2 v8.4 — Barra guía de 3 pasos para vender (lenguaje de dueño)
+   ========================================================================== */
+.pos-steps-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  margin-bottom: 6px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--line, #D8DBE3);
+  border-radius: var(--radius, 12px);
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.pos-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 4px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--txt-3, #64748B);
+  background: transparent;
+  white-space: nowrap;
+  transition: background 140ms ease, color 140ms ease;
+}
+.pos-step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  background: var(--surface-2, #EDEEF2);
+  color: var(--txt-2, #475569);
+  flex-shrink: 0;
+}
+.pos-step.active {
+  background: var(--money-in-light, #D1FAE5);
+  color: var(--money-in, #059669);
+}
+.pos-step.active .pos-step-num {
+  background: var(--money-in, #059669);
+  color: #FFFFFF;
+}
+.pos-step.done {
+  color: var(--txt-2, #475569);
+}
+.pos-step.done .pos-step-num {
+  background: var(--money-in, #059669);
+  color: #FFFFFF;
+}
+.pos-step-arrow {
+  color: var(--txt-3, #94A3B8);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.pos-step-hint {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--txt-2, #475569);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+@media (max-width: 1100px) {
+  .pos-step-txt { display: none; }
+  .pos-step-hint { font-size: 11px; }
+}
+@media print {
+  .pos-steps-bar { display: none !important; }
+}
+
+/* ==========================================================================
+   PIEL MATERIAL 3 EN CAJA (v8.4) — esquinas expresivas y respuesta táctil
+   sin tocar el layout Zero-Scroll ni el rendimiento en Win7.
+   ========================================================================== */
+.pos-flavor-card,
+.pos-retail-card {
+  border-radius: var(--m3-shape-card, 16px);
+  transition: transform var(--dur-tap, 80ms) var(--ease-out),
+              box-shadow var(--dur-fast, 140ms) var(--ease-fluid),
+              border-color var(--dur-fast, 140ms) var(--ease-fluid);
+}
+.pos-flavor-card:active,
+.pos-retail-card:active {
+  transform: scale(0.97);
+}
+.pos-family-btn {
+  border-radius: var(--m3-shape-chip, 10px);
+}
+.ticket-hd,
+.ticket-totals {
+  border-radius: var(--m3-shape-card, 16px) var(--m3-shape-card, 16px) 0 0;
+}
+.btn-cobrar-big {
+  border-radius: var(--m3-shape-card, 16px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pos-flavor-card,
+  .pos-retail-card {
+    transition: none;
+  }
+}

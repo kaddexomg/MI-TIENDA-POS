@@ -175,6 +175,45 @@
   --tracking-tight: -0.02em;
   --tap-min: 44px;
   --focus-ring: 0 0 0 3px rgba(245, 158, 11, 0.38);
+
+  /* ========================================================================
+     8. Material 3 + Liquid Morph (v8.4)
+     - M3: superficies tonales, state layers, esquinas expresivas
+     - Liquid Morph: vidrio líquido REAL solo en pantallas táctiles
+       (pointer: coarse); en PC / Win7 se simula con capas translúcidas
+       y reflejos precalculados, sin backdrop-filter, 60 fps intactos.
+     ======================================================================== */
+  --m3-state-hover: 0.06;
+  --m3-state-press: 0.10;
+  --m3-shape-card: 16px;
+  --m3-shape-modal: 24px;
+  --m3-shape-chip: 10px;
+
+  --m3-tonal-in: #E7F6EF;
+  --m3-tonal-action: #FDF1DC;
+  --m3-tonal-info: #E8F0FE;
+  --m3-tonal-out: #FDEAEA;
+
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-bg-strong: rgba(255, 255, 255, 0.90);
+  --glass-border: rgba(255, 255, 255, 0.70);
+  --glass-shadow: 0 18px 44px -12px rgba(15, 23, 42, 0.28);
+  --glass-blur: 14px;
+  --glass-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.14) 38%, rgba(255, 255, 255, 0) 62%);
+}
+
+/* Liquid Morph y tonales M3 en modo oscuro */
+[data-theme="dark"] {
+  --m3-tonal-in: rgba(52, 211, 153, 0.10);
+  --m3-tonal-action: rgba(251, 191, 36, 0.10);
+  --m3-tonal-info: rgba(96, 165, 250, 0.10);
+  --m3-tonal-out: rgba(248, 113, 113, 0.10);
+
+  --glass-bg: rgba(21, 29, 46, 0.80);
+  --glass-bg-strong: rgba(21, 29, 46, 0.92);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-shadow: 0 18px 44px -12px rgba(0, 0, 0, 0.55);
+  --glass-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(255, 255, 255, 0) 62%);
 }
 
 /* ==========================================================================

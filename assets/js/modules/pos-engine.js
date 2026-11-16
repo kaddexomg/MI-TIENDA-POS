@@ -1196,6 +1196,11 @@
     const totalUsd = tax.totalUsd;
     const totalBs = tax.totalBs;
 
+    // Aviso desacoplado para la barra de pasos "1 Escanea → 2 Cobra → 3 Vuelto"
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+      try { window.dispatchEvent(new CustomEvent('mtp:cart-changed', { detail: { count: totalItems, totalUsd: totalUsd } })); } catch (_) {}
+    }
+
     if (countEl) countEl.textContent = `${totalItems} producto${totalItems === 1 ? '' : 's'}`;
     if (totUsdEl) totUsdEl.textContent = MTP.fmtUSD(totalUsd);
     if (totBsEl) totBsEl.textContent = MTP.fmtBsRaw(totalBs);
@@ -2106,6 +2111,9 @@
 
     const modal = document.getElementById('posCheckoutModal');
     if (modal) modal.classList.add('open');
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+      try { window.dispatchEvent(new CustomEvent('mtp:checkout-opened')); } catch (_) {}
+    }
     const amountInput = document.getElementById('payAmountUsd');
     if (amountInput) amountInput.focus();
   }
@@ -2807,6 +2815,13 @@
     renderShortcutsAndHeldBar();
 
     MTP.toast(`¡Orden #${recorded.orderNumber} registrada con éxito!`);
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+      try {
+        window.dispatchEvent(new CustomEvent('mtp:sale-completed', {
+          detail: { orderNumber: recorded.orderNumber, totalUsd: totalUsd, changeUsd: changeUsd }
+        }));
+      } catch (_) {}
+    }
     showPrintedTicketsModal(recorded);
   }
 
