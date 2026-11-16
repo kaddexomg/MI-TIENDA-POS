@@ -528,6 +528,18 @@ input, select, textarea {
   margin-bottom: 12px;
 }
 
+.quick-actions-row.cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.quick-actions-row.cols-3 .quick-tile {
+  flex-direction: column;
+  text-align: center;
+  padding: 10px 8px;
+  gap: 6px;
+  font-size: 12px;
+}
+
 .quick-tile {
   display: flex;
   align-items: center;
@@ -1083,6 +1095,161 @@ input, select, textarea {
   .k-btn:hover { background: rgba(255, 255, 255, 0.14); }
   .chip-btn:hover:not(.active) { background: #FFFFFF; border-color: var(--txt-3); }
   .icon-glass-btn:hover { background: #FFFFFF; }
+}
+
+/* ==========================================================================
+   8. VISOR Y CONTROLES DEL ESCÁNER DE CÓDIGO DE BARRAS
+   ========================================================================== */
+.scanner-viewfinder {
+  position: relative;
+  height: 215px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #09131F;
+  border: 2px solid rgba(16, 185, 129, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.scanner-viewfinder.compact {
+  height: 175px;
+}
+
+.scanner-viewfinder.hit {
+  border-color: #34D399;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.35);
+}
+
+.scanner-viewfinder video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scanner-reticle {
+  position: absolute;
+  inset: 22px 34px;
+  border: 2px dashed rgba(255, 255, 255, 0.55);
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(9, 19, 31, 0.36);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.scanner-laser {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #10B981, #34D399, #10B981, transparent);
+  box-shadow: 0 0 10px #10B981;
+  animation: scannerLaserSweep 1.8s ease-in-out infinite;
+}
+
+@keyframes scannerLaserSweep {
+  0%, 100% { transform: translateY(-28px); opacity: 0.75; }
+  50% { transform: translateY(28px); opacity: 1; }
+}
+
+.scanner-flash-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 185, 129, 0.38);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.scanner-flash-overlay.flash {
+  opacity: 1;
+}
+
+.scanner-status-badge {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 8px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(9, 19, 31, 0.84);
+  color: #A7F3D0;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scanner-controls-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.scanner-controls-bar.cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.scanner-controls-bar .m-btn.is-on {
+  background: var(--amber-soft);
+  border-color: var(--amber);
+  color: var(--amber-txt);
+}
+
+.scanner-mult-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+}
+
+.scanner-mult-pills {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+}
+
+.scanner-mult-btn {
+  flex: 1;
+  min-height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  color: var(--txt-2);
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.scanner-mult-btn.active {
+  background: var(--nav-bg);
+  border-color: var(--nav-bg);
+  color: #FFFFFF;
+}
+
+.scanner-lock-btn {
+  min-width: 36px;
+  min-height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.scanner-lock-btn.active {
+  background: var(--emerald-soft);
+  border-color: var(--emerald);
 }
 
 @media (prefers-reduced-motion: reduce) {

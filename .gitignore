@@ -26,3 +26,6 @@ desktop/node_modules/
 respaldos/
 *.json.bak
 screenshot-*.png
+
+# Carpetas temporales de pruebas
+.test_data_*/

@@ -14,6 +14,7 @@
  */
 
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
@@ -21,8 +22,10 @@ const url = require('url');
 const journal = require('./journal');
 const stateManager = require('./state');
 const api = require('./api');
+const ssl = require('./ssl');
 
 const DEFAULT_PORT = 7070;
+const DEFAULT_HTTPS_PORT = 7443;
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 const MIME_TYPES = {
@@ -76,6 +79,13 @@ function serveStaticFile(req, res, pathname) {
   }
   if (decodedPath === '/admin' || decodedPath === '/admin/') {
     res.writeHead(302, { 'Location': '/admin/index.html' });
+    res.end();
+    return;
+  }
+  if (decodedPath === '/escaner' || decodedPath === '/escaner/' || decodedPath === '/scanner' || decodedPath === '/scanner/' || decodedPath === '/mobile/escaner') {
+    const parsedOrig = url.parse(req.url || '', false);
+    const qs = parsedOrig && parsedOrig.search ? parsedOrig.search : '';
+    res.writeHead(302, { 'Location': '/mobile/scanner.html' + qs });
     res.end();
     return;
   }
@@ -181,19 +191,8 @@ function serveProductMedia(req, res, pathname) {
 /**
  * Crea e inicializa el servidor HTTP.
  */
-function createServer() {
-  // 1. Inicializar journal inmutable
-  const journalInfo = journal.init();
-
-  // 2. Materializar estado en memoria a partir de snapshot + replay
-  const state = stateManager.init(journal);
-
-  console.log('[MTP Server] Base de datos transaccional cargada con éxito.');
-  console.log('[MTP Server] Ruta de almacenamiento: ' + journalInfo.dataDir);
-  console.log('[MTP Server] Eventos previos registrados: ' + journalInfo.lastSeq);
-
-  // 3. Crear despachador HTTP
-  const server = http.createServer(function (req, res) {
+function createRequestListener() {
+  return function (req, res) {
     // Cabeceras de seguridad globales
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
 
@@ -221,28 +220,56 @@ function createServer() {
 
     // Despacho de Archivos Estáticos
     serveStaticFile(req, res, pathname);
-  });
+  };
+}
 
-  return server;
+function createServer() {
+  // 1. Inicializar Journal Transaccional
+  const journalInfo = journal.init();
+
+  // 2. Materializar estado en memoria a partir de snapshot + replay
+  const state = stateManager.init(journal);
+
+  console.log('[MTP Server] Base de datos transaccional cargada con éxito.');
+  console.log('[MTP Server] Ruta de almacenamiento: ' + journalInfo.dataDir);
+  console.log('[MTP Server] Eventos previos registrados: ' + journalInfo.lastSeq);
+
+  // 3. Crear despachador HTTP
+  return http.createServer(createRequestListener());
 }
 
 /**
- * Inicia el servidor escuchando en el puerto configurado.
+ * Inicia el servidor escuchando en el puerto configurado (HTTP 7070 + HTTPS 7443 para cámara móvil).
  */
 function start(portToUse) {
   const port = portToUse || parseInt(process.env.PORT, 10) || DEFAULT_PORT;
+  const httpsPort = parseInt(process.env.HTTPS_PORT, 10) || DEFAULT_HTTPS_PORT;
   const server = createServer();
 
   server.listen(port, '0.0.0.0', function () {
     console.log('================================================================');
     console.log('  MI-TIENDA-POS v5.0.0 · Servidor Local + Journal Anti-Apagones');
-    console.log('  Puerto de escucha : ' + port);
+    console.log('  Puerto HTTP       : ' + port);
     console.log('  Acceso local Caja : http://localhost:' + port + '/pos.html');
     console.log('  Acceso local Admin: http://localhost:' + port + '/admin/index.html');
-    console.log('  Acceso general    : http://localhost:' + port + '/index.html');
+    console.log('  Escáner Móvil     : https://localhost:' + httpsPort + '/escaner');
     console.log('  Directorio Datos  : ' + journal.getDataDir());
     console.log('================================================================');
   });
+
+  let httpsServer = null;
+  try {
+    const creds = ssl.getOrCreateSslCredentials(journal.getDataDir());
+    httpsServer = https.createServer(creds, createRequestListener());
+    httpsServer.on('error', function (err) {
+      console.warn('[MTP Server] Aviso HTTPS (' + httpsPort + '): ' + err.message);
+    });
+    httpsServer.listen(httpsPort, '0.0.0.0', function () {
+      console.log('[MTP Server] Escáner Cámara Segura HTTPS activo en puerto ' + httpsPort);
+    });
+  } catch (e) {
+    console.warn('[MTP Server] No se pudo iniciar listener HTTPS:', e.message);
+  }
 
   // Manejo de apagado limpio
   function handleGracefulShutdown(signal) {

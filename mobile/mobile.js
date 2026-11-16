@@ -152,6 +152,19 @@
       }
     } catch (e) {}
 
+    // La sesión nativa sobrevive al cambio de origen (localhost -> servidor),
+    // así la cáscara viva no obliga a escribir el PIN dos veces.
+    if (!state.token && window.AndroidBridge && typeof window.AndroidBridge.getAuthToken === 'function') {
+      var nativeToken = window.AndroidBridge.getAuthToken();
+      if (nativeToken) state.token = nativeToken;
+    }
+    if (!state.user && window.AndroidBridge && typeof window.AndroidBridge.getUserJson === 'function') {
+      try {
+        var nativeUser = JSON.parse(window.AndroidBridge.getUserJson() || 'null');
+        if (nativeUser && nativeUser.role) state.user = nativeUser;
+      } catch (e) {}
+    }
+
     if (!state.serverUrl) {
       if (window.AndroidBridge && typeof window.AndroidBridge.getServerUrl === 'function') {
         var bUrl = window.AndroidBridge.getServerUrl();
@@ -206,6 +219,9 @@
     try {
       if (window.AndroidBridge && typeof window.AndroidBridge.setServerUrl === 'function') {
         window.AndroidBridge.setServerUrl(state.serverUrl || '');
+      }
+      if (window.AndroidBridge && typeof window.AndroidBridge.setSessionUser === 'function') {
+        window.AndroidBridge.setSessionUser(JSON.stringify(state.user || null));
       }
     } catch (e) {}
   }
@@ -698,7 +714,8 @@
         '<div class="kpi-card tone-amber"><div class="kpi-tag">Pago Móvil Pend.</div><div class="kpi-val tabular-nums">' + pmPending.length + '</div><div class="kpi-sub">' + (pmPending.length ? 'Desliza a la derecha' : 'Todo verificado') + '</div></div>' +
         '<div class="kpi-card tone-red"><div class="kpi-tag">Salud IA / Gastos</div><div class="kpi-val tabular-nums">' + (aiSum ? (aiSum.healthScore + '/100') : fmtUsd(sum.expUsd)) + '</div><div class="kpi-sub tabular-nums">Gastos: ' + fmtUsd(sum.expUsd) + '</div></div>' +
       '</div>' +
-      '<div class="quick-actions-row">' +
+      '<div class="quick-actions-row cols-3">' +
+        '<button type="button" id="quickScannerPosBtn" class="quick-tile"><span class="quick-tile-ico" style="background:var(--blue-soft);color:var(--blue-txt)">📷</span><span>Escáner POS</span></button>' +
         '<button type="button" id="quickAddProdBtn" class="quick-tile"><span class="quick-tile-ico" style="background:var(--emerald-soft);color:var(--emerald-txt)">+</span><span>Nuevo Producto</span></button>' +
         '<button type="button" id="quickVerifyPmBtn" class="quick-tile"><span class="quick-tile-ico" style="background:var(--amber-soft);color:var(--amber-txt)">' + pmPending.length + '</span><span>Verificar Pagos</span></button>' +
       '</div>' +
@@ -707,6 +724,9 @@
 
     var vpsBtn = document.getElementById('liveSetupVpsBtn');
     if (vpsBtn) vpsBtn.addEventListener('click', openServerSettingsSheet);
+
+    var qScan = document.getElementById('quickScannerPosBtn');
+    if (qScan) qScan.addEventListener('click', function () { openBarcodeScannerSheet({ mode: 'POS_ADD' }); });
 
     var qAdd = document.getElementById('quickAddProdBtn');
     if (qAdd) qAdd.addEventListener('click', function () { openProductSheet(null); });
@@ -866,8 +886,9 @@
         '<div><h2 class="sec-head-title">Inventario</h2><p class="sec-head-sub">Cocina y mercancía de venta directa</p></div>' +
         '<span class="pill ' + (lowCount > 0 ? 'pill-amber' : 'pill-green') + '">' + (lowCount > 0 ? lowCount + ' bajos' : inv.length + ' items') + '</span>' +
       '</div>' +
-      '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+      '<div style="display:flex;gap:6px;margin-bottom:10px">' +
         '<input type="search" id="invSearchInput" class="m-input" value="' + esc(state.invSearch) + '" placeholder="Buscar producto, código o barra..." style="flex:1">' +
+        '<button type="button" id="scanInvBtn" class="m-btn m-btn-navy m-btn-sm" aria-label="Escanear código" title="Escanear código de barras">📷</button>' +
         '<button type="button" id="addNewProdBtn" class="m-btn m-btn-primary m-btn-sm" style="white-space:nowrap">+ Producto</button>' +
       '</div>' +
       '<div class="filter-row" id="invFilterBar">' + filters + '</div>' +
@@ -878,6 +899,13 @@
       sInput.addEventListener('input', function () {
         state.invSearch = sInput.value;
         renderInventoryCardsOnly(root);
+      });
+    }
+
+    var scanInvBtn = document.getElementById('scanInvBtn');
+    if (scanInvBtn) {
+      scanInvBtn.addEventListener('click', function () {
+        openBarcodeScannerSheet({ mode: 'INVENTORY' });
       });
     }
 
@@ -1032,9 +1060,26 @@
       '<div class="field-group"><label class="field-label">Tipo de Artículo</label>' +
       '<select id="pType" class="m-select"><option value="venta" ' + (it.type !== 'insumo' ? 'selected' : '') + '>🛒 Mercancía de Venta Directa</option><option value="insumo" ' + (it.type === 'insumo' ? 'selected' : '') + '>🥘 Ingrediente Exclusivo de Cocina</option></select></div>' +
       '<div class="field-group"><label class="field-label">Nombre del Producto</label><input id="pName" type="text" class="m-input" value="' + esc(it.name || '') + '" placeholder="Ej: Harina P.A.N. Blanca 1Kg"></div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+      '<div style="display:grid;grid-template-columns:1fr 1.3fr;gap:8px">' +
         '<div class="field-group"><label class="field-label">Código / SKU</label><input id="pCode" type="text" class="m-input" value="' + esc(it.code || '') + '" placeholder="Ej: VIV05"></div>' +
-        '<div class="field-group"><label class="field-label">Código de Barras</label><input id="pBarcode" type="text" inputmode="numeric" class="m-input" value="' + esc(it.barcode || '') + '" placeholder="759..."></div>' +
+        '<div class="field-group"><label class="field-label">Código de Barras</label>' +
+          '<div style="display:flex;gap:5px;align-items:center">' +
+            '<input id="pBarcode" type="text" inputmode="numeric" class="m-input" value="' + esc(it.barcode || '') + '" placeholder="759..." style="flex:1">' +
+            '<button type="button" id="pScanBarcodeBtn" class="m-btn m-btn-navy m-btn-sm" style="min-height:46px;padding:0 11px" title="Escanear código con cámara">📷</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div id="pInlineScanWrap" class="hidden" style="margin-bottom:12px;padding:10px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line-strong)">' +
+        '<div class="scanner-viewfinder compact" id="pInlineViewfinder">' +
+          '<video id="pInlineVideo" autoplay playsinline muted></video>' +
+          '<div class="scanner-reticle"><div class="scanner-laser"></div></div>' +
+          '<div id="pInlineStatus" class="scanner-status-badge">Apunta al código de barras...</div>' +
+        '</div>' +
+        '<div class="scanner-controls-bar cols-3">' +
+          '<button type="button" id="pInlineTorchBtn" class="m-btn m-btn-secondary m-btn-sm">🔦 Luz</button>' +
+          '<label for="pInlinePhotoInput" class="m-btn m-btn-blue m-btn-sm" style="margin:0;cursor:pointer">📸 Foto<input type="file" id="pInlinePhotoInput" accept="image/*" capture="environment" class="hidden"></label>' +
+          '<button type="button" id="pInlineCloseBtn" class="m-btn m-btn-danger m-btn-sm">Cerrar</button>' +
+        '</div>' +
       '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
         '<div class="field-group"><label class="field-label">Familia</label><select id="pFamily" class="m-select">' + famOpts + '</select></div>' +
@@ -1064,7 +1109,75 @@
     document.getElementById('pPrice').addEventListener('input', updatePreview);
     updatePreview();
 
+    var pScanBtn = document.getElementById('pScanBarcodeBtn');
+    var pScanWrap = document.getElementById('pInlineScanWrap');
+    var pInlineVideo = document.getElementById('pInlineVideo');
+    var pInlineStatus = document.getElementById('pInlineStatus');
+    var pInlineTorch = document.getElementById('pInlineTorchBtn');
+    var pInlineClose = document.getElementById('pInlineCloseBtn');
+    var pInlinePhoto = document.getElementById('pInlinePhotoInput');
+
+    function closeInlineScanner() {
+      if (window.MTPMobileScanner) window.MTPMobileScanner.stopCamera();
+      if (pScanWrap) pScanWrap.classList.add('hidden');
+    }
+
+    if (pScanBtn && pScanWrap && window.MTPMobileScanner) {
+      pScanBtn.addEventListener('click', function () {
+        if (!pScanWrap.classList.contains('hidden')) {
+          closeInlineScanner();
+          return;
+        }
+        pScanWrap.classList.remove('hidden');
+        window.MTPMobileScanner.startCamera({
+          videoEl: pInlineVideo,
+          onStatus: function (st) {
+            if (pInlineStatus && st && st.message) pInlineStatus.textContent = st.message;
+            if (pInlineTorch && st && typeof st.hasTorch === 'boolean') pInlineTorch.disabled = !st.hasTorch;
+          },
+          onDetect: function (code) {
+            var bcInput = document.getElementById('pBarcode');
+            if (bcInput) bcInput.value = code;
+            window.MTPMobileScanner.playBeep('ok');
+            closeInlineScanner();
+            showToast('Código capturado: ' + code);
+          }
+        });
+      });
+    }
+    if (pInlineTorch && window.MTPMobileScanner) {
+      pInlineTorch.addEventListener('click', function () {
+        window.MTPMobileScanner.toggleTorch().then(function (on) {
+          pInlineTorch.classList.toggle('is-on', on);
+        });
+      });
+    }
+    if (pInlineClose) {
+      pInlineClose.addEventListener('click', closeInlineScanner);
+    }
+    if (pInlinePhoto && window.MTPMobileScanner) {
+      pInlinePhoto.addEventListener('change', function () {
+        var f = pInlinePhoto.files && pInlinePhoto.files[0];
+        pInlinePhoto.value = '';
+        if (!f) return;
+        if (pInlineStatus) pInlineStatus.textContent = 'Analizando foto...';
+        window.MTPMobileScanner.decodeImageFile(f).then(function (res) {
+          if (res && res.code) {
+            var bcInput = document.getElementById('pBarcode');
+            if (bcInput) bcInput.value = res.code;
+            window.MTPMobileScanner.playBeep('ok');
+            closeInlineScanner();
+            showToast('Código leído de foto: ' + res.code);
+          } else {
+            window.MTPMobileScanner.playBeep('err');
+            if (pInlineStatus) pInlineStatus.textContent = 'No se detectó un código claro';
+          }
+        });
+      });
+    }
+
     document.getElementById('pSaveBtn').addEventListener('click', function () {
+      closeInlineScanner();
       var name = document.getElementById('pName').value.trim();
       if (!name) {
         showToast('Escribe el nombre del producto');
@@ -1408,7 +1521,286 @@
   }
 
   function closeSheet() {
+    if (window.MTPMobileScanner && typeof window.MTPMobileScanner.stopCamera === 'function') {
+      window.MTPMobileScanner.stopCamera();
+    }
     document.getElementById('sheetBackdrop').classList.remove('open');
+  }
+
+  function findLocalCatalogItem(rawCode) {
+    var q = String(rawCode || '').trim().toUpperCase();
+    if (!q) return null;
+    var qNoDash = q.replace(/-/g, '');
+    var st = state.appState || {};
+    var bcv = Number((st.settings && st.settings.rateBcv) || 42.85);
+    var lists = [
+      { kind: 'variant', arr: Array.isArray(st.variants) ? st.variants : [] },
+      { kind: 'retail', arr: Array.isArray(st.inventory) ? st.inventory : [] }
+    ];
+    for (var l = 0; l < lists.length; l++) {
+      var list = lists[l].arr;
+      for (var i = 0; i < list.length; i++) {
+        var it = list[i];
+        if (!it || it.active === false) continue;
+        var c = String(it.code || '').trim().toUpperCase();
+        var bc = String(it.barcode || '').trim().toUpperCase();
+        if ((c && (c === q || c.replace(/-/g, '') === qNoDash)) || (bc && bc === q)) {
+          return {
+            found: true,
+            kind: lists[l].kind,
+            item: it,
+            name: it.name || '',
+            code: it.code || '',
+            barcode: it.barcode || '',
+            priceUsd: Number(it.priceUsd || 0),
+            priceBs: Number((Number(it.priceUsd || 0) * bcv).toFixed(2)),
+            stock: it.stock !== undefined && it.stock !== null ? Number(it.stock) : null,
+            minStock: it.minStock !== undefined && it.minStock !== null ? Number(it.minStock) : 5,
+            unit: it.unit || 'und'
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  function openBarcodeScannerSheet(options) {
+    options = options || {};
+    var scanState = {
+      mode: options.mode || 'POS_ADD',
+      qty: 1
+    };
+
+    var body =
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px" id="sheetScanModeRow">' +
+        '<button type="button" class="m-btn m-btn-sm ' + (scanState.mode === 'POS_ADD' ? 'm-btn-primary' : 'm-btn-secondary') + '" data-smode="POS_ADD">🛒 A Caja POS</button>' +
+        '<button type="button" class="m-btn m-btn-sm ' + (scanState.mode === 'LOOKUP' ? 'm-btn-primary' : 'm-btn-secondary') + '" data-smode="LOOKUP">🔍 Consultar</button>' +
+        '<button type="button" class="m-btn m-btn-sm ' + (scanState.mode === 'INVENTORY' ? 'm-btn-primary' : 'm-btn-secondary') + '" data-smode="INVENTORY">📦 Inventario</button>' +
+      '</div>' +
+      '<div class="scanner-viewfinder compact" id="sheetScanViewfinder">' +
+        '<video id="sheetScanVideo" autoplay playsinline muted></video>' +
+        '<div class="scanner-reticle"><div class="scanner-laser"></div></div>' +
+        '<div id="sheetScanFlash" class="scanner-flash-overlay"></div>' +
+        '<div id="sheetScanStatus" class="scanner-status-badge">Iniciando cámara...</div>' +
+      '</div>' +
+      '<div class="scanner-controls-bar">' +
+        '<button type="button" id="sheetScanTorchBtn" class="m-btn m-btn-secondary m-btn-sm">🔦 Luz</button>' +
+        '<button type="button" id="sheetScanSwitchBtn" class="m-btn m-btn-secondary m-btn-sm">🔄 Cámara</button>' +
+        '<label for="sheetScanPhotoInput" class="m-btn m-btn-blue m-btn-sm" style="margin:0;cursor:pointer">📸 Foto<input type="file" id="sheetScanPhotoInput" accept="image/*" capture="environment" class="hidden"></label>' +
+        '<a href="scanner.html" id="sheetOpenFullScanner" class="m-btn m-btn-navy m-btn-sm" style="text-decoration:none">⛶ Completa</a>' +
+      '</div>' +
+      '<div class="scanner-mult-row" id="sheetScanMultRow">' +
+        '<span style="font-size:12px;font-weight:800;color:var(--txt-2)">Cant:</span>' +
+        '<div class="scanner-mult-pills">' +
+          '<button type="button" class="scanner-mult-btn active" data-sqty="1">1x</button>' +
+          '<button type="button" class="scanner-mult-btn" data-sqty="2">2x</button>' +
+          '<button type="button" class="scanner-mult-btn" data-sqty="3">3x</button>' +
+          '<button type="button" class="scanner-mult-btn" data-sqty="5">5x</button>' +
+        '</div>' +
+      '</div>' +
+      '<form id="sheetManualScanForm" style="display:flex;gap:6px;margin-top:10px">' +
+        '<input type="text" id="sheetManualScanInput" class="m-input tabular-nums" placeholder="O escribe código (759..., EM01)" style="font-family:monospace;font-weight:700;flex:1">' +
+        '<button type="submit" class="m-btn m-btn-primary">Enviar</button>' +
+      '</form>' +
+      '<div id="sheetScanResult" style="margin-top:10px;padding:10px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);font-size:13px;color:var(--txt-3);text-align:center">' +
+        'Apunta al código de barras para enviar directo a la Caja POS o buscar en tu inventario.' +
+      '</div>';
+
+    openSheet('📷 Escáner Rápido POS', body);
+
+    function renderModePills() {
+      document.querySelectorAll('#sheetScanModeRow [data-smode]').forEach(function (b) {
+        var m = b.getAttribute('data-smode');
+        b.className = 'm-btn m-btn-sm ' + (m === scanState.mode ? 'm-btn-primary' : 'm-btn-secondary');
+      });
+      var multRow = document.getElementById('sheetScanMultRow');
+      if (multRow) multRow.classList.toggle('hidden', scanState.mode !== 'POS_ADD');
+    }
+
+    function renderHitCard(code, resData, localHit) {
+      var resBox = document.getElementById('sheetScanResult');
+      if (!resBox) return;
+      var m = (resData && resData.match && resData.match.found) ? resData.match : localHit;
+      if (scanState.mode === 'INVENTORY') {
+        if (m && m.found && m.item) {
+          resBox.style.textAlign = 'left';
+          resBox.innerHTML =
+            '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center">' +
+              '<div><strong style="color:var(--txt-1)">' + esc(m.name) + '</strong><div style="font-size:12px;color:var(--txt-3)">Stock: ' + esc(m.stock) + ' ' + esc(m.unit || 'und') + ' · ' + fmtUsd(m.priceUsd) + '</div></div>' +
+              '<button type="button" id="sheetInvEditHitBtn" class="m-btn m-btn-primary m-btn-sm">Editar</button>' +
+            '</div>';
+          var eb = document.getElementById('sheetInvEditHitBtn');
+          if (eb) eb.onclick = function () { openProductSheet(m.item); };
+        } else {
+          resBox.style.textAlign = 'left';
+          resBox.innerHTML =
+            '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center">' +
+              '<div><strong style="color:var(--amber-txt)">Código nuevo: ' + esc(code) + '</strong><div style="font-size:12px;color:var(--txt-3)">No está registrado en inventario.</div></div>' +
+              '<button type="button" id="sheetInvCreateHitBtn" class="m-btn m-btn-amber m-btn-sm">+ Crear</button>' +
+            '</div>';
+          var cb = document.getElementById('sheetInvCreateHitBtn');
+          if (cb) cb.onclick = function () { openProductSheet({ barcode: code, type: 'venta' }); };
+        }
+        return;
+      }
+
+      if (m && m.found) {
+        resBox.style.textAlign = 'left';
+        resBox.innerHTML =
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
+            '<div>' +
+              '<strong style="color:var(--txt-1);font-size:14px">' + esc(m.name) + '</strong>' +
+              '<div style="font-size:12px;color:var(--txt-3);font-family:monospace">' + esc(code) + '</div>' +
+            '</div>' +
+            '<div style="text-align:right" class="tabular-nums">' +
+              '<strong style="color:var(--emerald-dark);font-size:16px">' + fmtUsd(m.priceUsd) + '</strong>' +
+              '<div style="font-size:11.5px;color:var(--txt-3)">' + fmtBs(m.priceBs) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center">' +
+            '<span class="pill ' + (scanState.mode === 'POS_ADD' ? 'pill-green' : 'pill-blue') + '">' +
+              (scanState.mode === 'POS_ADD' ? ('✅ Enviado ' + scanState.qty + 'x a Caja') : '🔍 Solo consulta') +
+            '</span>' +
+            (m.stock !== null && m.stock !== undefined ? '<span class="pill pill-amber">Stock: ' + esc(m.stock) + '</span>' : '') +
+          '</div>';
+      } else {
+        resBox.style.textAlign = 'center';
+        resBox.innerHTML = '<strong style="color:var(--amber-txt)">Código ' + esc(code) + '</strong> · ' +
+          (scanState.mode === 'POS_ADD' ? 'Enviado a Caja POS (no hallado en caché)' : 'No encontrado en el catálogo');
+      }
+    }
+
+    function processSheetScan(rawCode, formatName) {
+      var clean = String(rawCode || '').trim();
+      if (!clean) return;
+      var vf = document.getElementById('sheetScanViewfinder');
+      var fl = document.getElementById('sheetScanFlash');
+      if (vf) { vf.classList.add('hit'); setTimeout(function () { vf.classList.remove('hit'); }, 300); }
+      if (fl) { fl.classList.add('flash'); setTimeout(function () { fl.classList.remove('flash'); }, 240); }
+
+      var localHit = findLocalCatalogItem(clean);
+      if (window.MTPMobileScanner) {
+        window.MTPMobileScanner.playBeep(localHit ? 'ok' : 'warn');
+      }
+
+      if (scanState.mode === 'INVENTORY') {
+        if (localHit) {
+          state.invSearch = clean;
+          var sInp = document.getElementById('invSearchInput');
+          if (sInp) sInp.value = clean;
+          renderInventoryCardsOnly();
+        }
+        renderHitCard(clean, null, localHit);
+        return;
+      }
+
+      var apiMode = scanState.mode === 'LOOKUP' ? 'LOOKUP' : 'POS_ADD';
+      apiFetch('/api/v1/scanner/scan', {
+        method: 'POST',
+        body: JSON.stringify({
+          code: clean,
+          qty: scanState.qty,
+          mode: apiMode,
+          format: formatName || 'camera',
+          device: window.AndroidBridge ? 'MI-TIENDA-APK' : 'Panel Móvil'
+        })
+      }).then(function (data) {
+        renderHitCard(clean, data, localHit);
+        if (apiMode === 'POS_ADD') {
+          showToast('Enviado a Caja: ' + ((data.match && data.match.found) ? data.match.name : clean));
+          if (scanState.qty !== 1) {
+            scanState.qty = 1;
+            document.querySelectorAll('#sheetScanMultRow [data-sqty]').forEach(function (b) {
+              b.classList.toggle('active', b.getAttribute('data-sqty') === '1');
+            });
+          }
+        }
+      }).catch(function (err) {
+        renderHitCard(clean, null, localHit);
+        showToast(apiMode === 'POS_ADD' ? ('Error al enviar a Caja: ' + err.message) : 'Consultado en caché local');
+      });
+    }
+
+    document.querySelectorAll('#sheetScanModeRow [data-smode]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        scanState.mode = b.getAttribute('data-smode') || 'POS_ADD';
+        renderModePills();
+      });
+    });
+
+    document.querySelectorAll('#sheetScanMultRow [data-sqty]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        scanState.qty = parseInt(b.getAttribute('data-sqty'), 10) || 1;
+        document.querySelectorAll('#sheetScanMultRow [data-sqty]').forEach(function (x) {
+          x.classList.toggle('active', x === b);
+        });
+      });
+    });
+
+    var manualForm = document.getElementById('sheetManualScanForm');
+    if (manualForm) {
+      manualForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var inp = document.getElementById('sheetManualScanInput');
+        if (!inp || !inp.value.trim()) return;
+        var val = inp.value.trim();
+        inp.value = '';
+        processSheetScan(val, 'manual');
+      });
+    }
+
+    var torchBtn = document.getElementById('sheetScanTorchBtn');
+    if (torchBtn && window.MTPMobileScanner) {
+      torchBtn.addEventListener('click', function () {
+        window.MTPMobileScanner.toggleTorch().then(function (on) {
+          torchBtn.classList.toggle('is-on', on);
+        });
+      });
+    }
+
+    var switchBtn = document.getElementById('sheetScanSwitchBtn');
+    if (switchBtn && window.MTPMobileScanner) {
+      switchBtn.addEventListener('click', function () {
+        window.MTPMobileScanner.switchCamera();
+      });
+    }
+
+    var photoInput = document.getElementById('sheetScanPhotoInput');
+    if (photoInput && window.MTPMobileScanner) {
+      photoInput.addEventListener('change', function () {
+        var f = photoInput.files && photoInput.files[0];
+        photoInput.value = '';
+        if (!f) return;
+        var stEl = document.getElementById('sheetScanStatus');
+        if (stEl) stEl.textContent = 'Analizando foto del código...';
+        window.MTPMobileScanner.decodeImageFile(f).then(function (res) {
+          if (res && res.code) {
+            processSheetScan(res.code, 'photo');
+          } else {
+            window.MTPMobileScanner.playBeep('err');
+            if (stEl) stEl.textContent = 'No se detectó ningún código en la foto';
+          }
+        });
+      });
+    }
+
+    renderModePills();
+    if (window.MTPMobileScanner) {
+      var videoEl = document.getElementById('sheetScanVideo');
+      var statusEl = document.getElementById('sheetScanStatus');
+      window.MTPMobileScanner.startCamera({
+        videoEl: videoEl,
+        cooldownMs: 1350,
+        intervalMs: 140,
+        onStatus: function (st) {
+          if (statusEl && st && st.message) statusEl.textContent = st.message;
+          if (torchBtn && st && typeof st.hasTorch === 'boolean') torchBtn.disabled = !st.hasTorch;
+        },
+        onDetect: function (code, meta) {
+          processSheetScan(code, (meta && meta.format) || 'camera');
+        }
+      });
+    }
   }
 
   function updateLoginConnPill(status, labelText) {
@@ -1942,6 +2334,14 @@
 
     initSwipePager();
     initSheetSwipeDismiss();
+
+    var hdrScanBtn = document.getElementById('hdrScannerBtn');
+    if (hdrScanBtn) {
+      hdrScanBtn.addEventListener('click', function () {
+        vibrateLight();
+        openBarcodeScannerSheet({ mode: 'POS_ADD' });
+      });
+    }
 
     document.getElementById('hdrRefreshBtn').addEventListener('click', function () {
       refreshAllData(false);

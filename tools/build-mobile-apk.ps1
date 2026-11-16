@@ -36,6 +36,8 @@ New-Item -ItemType Directory -Force -Path $AssetsRootDir, $GenDir, $ClassesDir, 
 Copy-Item (Join-Path $MobileWebDir 'index.html') $AssetsRootDir -Force
 Copy-Item (Join-Path $MobileWebDir 'mobile.css') $AssetsRootDir -Force
 Copy-Item (Join-Path $MobileWebDir 'mobile.js') $AssetsRootDir -Force
+Copy-Item (Join-Path $MobileWebDir 'barcode-scanner.js') $AssetsRootDir -Force
+Copy-Item (Join-Path $MobileWebDir 'scanner.html') $AssetsRootDir -Force
 $BrandPng = Join-Path $RootDir 'assets\img\brand-icon.png'
 if (Test-Path $BrandPng) {
   Copy-Item $BrandPng (Join-Path $AssetsRootDir 'brand-icon.png') -Force

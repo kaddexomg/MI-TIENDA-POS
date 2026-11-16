@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#09131F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Escáner POS — MI-TIENDA-POS</title>
+  <link rel="icon" type="image/png" href="brand-icon.png">
+  <link rel="stylesheet" href="mobile.css">
+  <style>
+    .scanner-app-shell {
+      height: 100%;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: var(--page);
+      color: var(--txt-1);
+    }
+    .scanner-scroll {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 12px 14px calc(20px + var(--safe-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 560px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .scanner-topbar {
+      background: var(--nav-bg);
+      color: #FFFFFF;
+      padding: calc(10px + var(--safe-top)) 14px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+    }
+    .scanner-brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+    .scanner-brand-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .scanner-conn-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(16, 185, 129, 0.16);
+      color: #6EE7B7;
+      white-space: nowrap;
+    }
+    .scanner-conn-pill.offline {
+      background: rgba(239, 68, 68, 0.18);
+      color: #FCA5A5;
+    }
+    .scanner-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .scanner-top-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .scanner-back-btn, .scanner-gear-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      min-height: 36px;
+      padding: 0 10px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+    }
+    .scanner-mode-seg {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: var(--surface-3);
+      padding: 4px;
+      border-radius: 14px;
+    }
+    .scanner-mode-btn {
+      min-height: 40px;
+      border: 0;
+      border-radius: 11px;
+      background: transparent;
+      color: var(--txt-2);
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+    }
+    .scanner-mode-btn.active {
+      background: var(--surface);
+      color: var(--nav-bg);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    }
+    .scanner-mode-btn.active.mode-pos {
+      color: var(--emerald-txt);
+    }
+    .scanner-card {
+      background: var(--surface);
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      padding: 12px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+    }
+    .scanner-auth-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: calc(18px + var(--safe-top)) 18px calc(24px + var(--safe-bottom));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(160deg, #09131F 0%, #0F1D32 60%, #0B2520 100%);
+      color: #FFFFFF;
+    }
+    .scanner-auth-card {
+      width: 100%;
+      max-width: 390px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 22px;
+      padding: 20px 18px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    .scanner-auth-input {
+      width: 100%;
+      min-height: 46px;
+      border-radius: 13px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(9, 19, 31, 0.65);
+      color: #FFFFFF;
+      padding: 10px 12px;
+      outline: none;
+      font-weight: 700;
+    }
+    .scanner-auth-input:focus {
+      border-color: var(--emerald);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.24);
+    }
+    .scanner-keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .scanner-kp-btn {
+      min-height: 50px;
+      border-radius: 13px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.09);
+      color: #FFFFFF;
+      font-size: 19px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .scanner-kp-btn:active {
+      transform: scale(0.95);
+      background: rgba(16, 185, 129, 0.35);
+    }
+    .scanner-samples-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .scanner-sample-chip {
+      border: 1px solid var(--line-strong);
+      background: var(--surface-2);
+      color: var(--txt-2);
+      border-radius: 10px;
+      padding: 6px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .scanner-sample-chip:active {
+      background: var(--emerald-soft);
+      color: var(--emerald-txt);
+    }
+    .scanner-history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .scanner-history-item:last-child {
+      border-bottom: 0;
+      padding-bottom: 2px;
+    }
+  </style>
+  <script>
+    window.__MTP_IS_SCANNER_APP__ = true;
+  </script>
+</head>
+<body class="scanner-body">
+
+  <!-- PANTALLA DE CONEXIÓN / PIN / EMPAREJAMIENTO -->
+  <section id="scannerAuthScreen" class="scanner-auth-wrap">
+    <div class="scanner-auth-card">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
+        <div style="width:44px;height:44px;border-radius:14px;background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.45);display:flex;align-items:center;justify-content:center;font-size:22px">📷</div>
+        <div>
+          <h1 style="margin:0;font-size:18px;font-weight:800;color:#FFFFFF">Escáner Móvil POS</h1>
+          <div style="font-size:12.5px;color:#94A3B8">Pistola inalámbrica para Caja e Inventario</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px">
+        <label for="authServerInput" style="display:block;font-size:11.5px;font-weight:700;color:#CBD5E1;margin-bottom:4px">Servidor de Caja (LAN / VPS)</label>
+        <input type="url" id="authServerInput" class="scanner-auth-input" placeholder="http://192.168.1.100:7070" autocomplete="off">
+      </div>
+
+      <div style="margin-bottom:8px">
+        <label for="authPinInput" style="display:block;font-size:11.5px;font-weight:700;color:#CBD5E1;margin-bottom:4px">PIN (Cajero / Admin) o Código de Enlace (6 dígitos)</label>
+        <input type="text" inputmode="numeric" id="authPinInput" class="scanner-auth-input tabular-nums" style="text-align:center;font-size:20px !important;letter-spacing:4px" placeholder="••••" maxlength="12" autocomplete="off">
+      </div>
+
+      <div class="scanner-keypad" id="authKeypad">
+        <button type="button" class="scanner-kp-btn" data-key="1">1</button>
+        <button type="button" class="scanner-kp-btn" data-key="2">2</button>
+        <button type="button" class="scanner-kp-btn" data-key="3">3</button>
+        <button type="button" class="scanner-kp-btn" data-key="4">4</button>
+        <button type="button" class="scanner-kp-btn" data-key="5">5</button>
+        <button type="button" class="scanner-kp-btn" data-key="6">6</button>
+        <button type="button" class="scanner-kp-btn" data-key="7">7</button>
+        <button type="button" class="scanner-kp-btn" data-key="8">8</button>
+        <button type="button" class="scanner-kp-btn" data-key="9">9</button>
+        <button type="button" class="scanner-kp-btn" data-key="CLR" style="font-size:13px;color:#FCA5A5">Borrar</button>
+        <button type="button" class="scanner-kp-btn" data-key="0">0</button>
+        <button type="button" class="scanner-kp-btn" data-key="DEL" style="font-size:16px">⌫</button>
+      </div>
+
+      <div id="authErrorMsg" class="hidden" style="margin-top:10px;padding:8px 10px;border-radius:10px;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.45);color:#FECACA;font-size:12.5px;font-weight:700;text-align:center"></div>
+
+      <button type="button" id="authSubmitBtn" class="m-btn m-btn-primary m-btn-block" style="margin-top:12px">
+        Conectar Escáner →
+      </button>
+
+      <div style="margin-top:10px;text-align:center;font-size:11.5px;color:#94A3B8">
+        Abre <strong style="color:#E2E8F0">📷 Cámara / Escáner</strong> en el POS de PC para ver tu enlace automático con QR/código.
+      </div>
+    </div>
+  </section>
+
+  <!-- PANTALLA PRINCIPAL DEL ESCÁNER -->
+  <section id="scannerMainScreen" class="scanner-app-shell hidden">
+    <header class="scanner-topbar">
+      <div class="scanner-brand">
+        <a href="index.html" id="topBackBtn" class="scanner-back-btn hidden">← Panel</a>
+        <div>
+          <div class="scanner-brand-title">📷 Escáner POS</div>
+          <div id="topUserSub" style="font-size:11px;color:#94A3B8;font-weight:600">Listo para leer</div>
+        </div>
+      </div>
+      <div class="scanner-top-actions">
+        <span id="connStatusPill" class="scanner-conn-pill">
+          <span class="scanner-dot"></span>
+          <span id="connStatusText">Conectado</span>
+        </span>
+        <button type="button" id="topUnlinkBtn" class="scanner-gear-btn" title="Cambiar servidor o usuario">⚙</button>
+      </div>
+    </header>
+
+    <main class="scanner-scroll">
+      <!-- Selector de Modo -->
+      <div class="scanner-mode-seg" role="tablist">
+        <button type="button" class="scanner-mode-btn active mode-pos" data-mode="POS_ADD">🛒 Enviar a Caja POS</button>
+        <button type="button" class="scanner-mode-btn" data-mode="LOOKUP">🔍 Consultar Precio</button>
+      </div>
+
+      <!-- Visor de Cámara -->
+      <div class="scanner-card">
+        <div class="scanner-viewfinder" id="scannerViewfinder">
+          <video id="scannerVideo" autoplay playsinline muted></video>
+          <div class="scanner-reticle">
+            <div class="scanner-laser"></div>
+          </div>
+          <div id="scannerFlashOverlay" class="scanner-flash-overlay"></div>
+          <div id="scannerStatusBadge" class="scanner-status-badge">Iniciando cámara...</div>
+        </div>
+
+        <div id="httpCameraNotice" class="hidden" style="margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--amber-soft);color:var(--amber-txt);font-size:12px;font-weight:700;line-height:1.4">
+          <div id="httpNoticeText">
+            ⚠ Si dice <strong>"Google / Chrome no tiene acceso a la cámara"</strong>:
+            <br>1) Si abriste por HTTP, toca <strong>🔒 Activar Cámara Segura (HTTPS)</strong>.
+            <br>2) Si abriste desde el buscador de Google, ábrelo en <strong>Chrome</strong> o activa <em>Ajustes de Android → Apps → Chrome/Google → Permisos → Cámara → Permitir</em>.
+            <br>3) También puedes tocar el botón azul <strong>📸 Foto</strong> abajo (abre la cámara nativa directo).
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+            <a id="btnSwitchHttps" href="#" class="m-btn m-btn-primary m-btn-sm hidden" style="text-decoration:none;flex:1">🔒 Activar Cámara Segura (HTTPS)</a>
+            <button type="button" id="btnRetryCamera" class="m-btn m-btn-navy m-btn-sm" style="flex:1">🔄 Reintentar Cámara</button>
+          </div>
+        </div>
+
+        <div class="scanner-controls-bar">
+          <button type="button" id="btnTorch" class="m-btn m-btn-secondary m-btn-sm">🔦 Linterna</button>
+          <button type="button" id="btnSwitchCam" class="m-btn m-btn-secondary m-btn-sm">🔄 Cámara</button>
+          <button type="button" id="btnPauseCam" class="m-btn m-btn-secondary m-btn-sm">⏸ Pausar</button>
+          <label for="photoCaptureInput" class="m-btn m-btn-blue m-btn-sm" style="margin:0;cursor:pointer">
+            📸 Foto
+            <input type="file" id="photoCaptureInput" accept="image/*" capture="environment" class="hidden">
+          </label>
+        </div>
+
+        <!-- Multiplicador de cantidad -->
+        <div class="scanner-mult-row">
+          <span style="font-size:12px;font-weight:800;color:var(--txt-2)">Cant:</span>
+          <div class="scanner-mult-pills" id="multPills">
+            <button type="button" class="scanner-mult-btn active" data-qty="1">1x</button>
+            <button type="button" class="scanner-mult-btn" data-qty="2">2x</button>
+            <button type="button" class="scanner-mult-btn" data-qty="3">3x</button>
+            <button type="button" class="scanner-mult-btn" data-qty="5">5x</button>
+            <button type="button" class="scanner-mult-btn" data-qty="10">10x</button>
+          </div>
+          <button type="button" id="btnLockQty" class="scanner-lock-btn" title="Mantener cantidad fija después de escanear">🔓</button>
+        </div>
+      </div>
+
+      <!-- Resultado del último escaneo -->
+      <div class="scanner-card" id="scanResultCard">
+        <div style="font-size:12.5px;color:var(--txt-3);font-weight:700;text-align:center;padding:8px 4px">
+          Apunta al código de barras (EAN-13, Code 128) o escríbelo abajo. Se enviará al instante a la Caja abierta en la PC.
+        </div>
+      </div>
+
+      <!-- Ingreso Manual + Pruebas Rápidas -->
+      <div class="scanner-card">
+        <form id="manualScanForm" style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="manualScanInput" class="m-input tabular-nums" style="font-family:monospace;font-weight:700;flex:1" placeholder="Código o 3*7591001000015 / EM01" autocomplete="off">
+          <button type="submit" class="m-btn m-btn-primary" style="min-width:92px">Enviar</button>
+        </form>
+
+        <details style="margin-top:8px">
+          <summary style="font-size:12px;font-weight:800;color:var(--txt-3);cursor:pointer;user-select:none">⚡ Botones de prueba rápida (759 / códigos cortos)</summary>
+          <div class="scanner-samples-wrap" id="quickSamplesWrap">
+            <button type="button" class="scanner-sample-chip" data-sample="7591001000015">🌽 Harina P.A.N.</button>
+            <button type="button" class="scanner-sample-chip" data-sample="7591003000033">🍝 Espagueti</button>
+            <button type="button" class="scanner-sample-chip" data-sample="7592001000112">🧀 Pepito</button>
+            <button type="button" class="scanner-sample-chip" data-sample="7591005000044">🥤 Frescolita</button>
+            <button type="button" class="scanner-sample-chip" data-sample="7594001000310">🍺 Polar Pilsen</button>
+            <button type="button" class="scanner-sample-chip" data-sample="EM01">🥟 EM01 Empanada</button>
+            <button type="button" class="scanner-sample-chip" data-sample="AR19">🫓 AR19 Reina</button>
+          </div>
+        </details>
+      </div>
+
+      <!-- Historial reciente -->
+      <div class="scanner-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <strong style="font-size:13px;color:var(--txt-1)">Lecturas de esta sesión</strong>
+          <span id="historyCountPill" class="pill pill-green">0</span>
+        </div>
+        <div id="scanHistoryList" style="font-size:12.5px;color:var(--txt-3)">Aún no hay escaneos en esta sesión.</div>
+      </div>
+    </main>
+  </section>
+
+  <script src="barcode-scanner.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var ADMIN_CFG_KEY = 'mtp_mobile_admin_cfg_v1';
+      var SCANNER_CFG_KEY = 'mtp_scanner_session_v1';
+
+      var state = {
+        serverUrl: '',
+        token: '',
+        pairCode: '',
+        user: null,
+        mode: 'POS_ADD',
+        qty: 1,
+        lockQty: false,
+        paused: false,
+        history: [],
+        lastMatch: null
+      };
+
+      function $(id) { return document.getElementById(id); }
+
+      function escHtml(str) {
+        return String(str == null ? '' : str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function normalizeUrl(u) {
+        return String(u || '').trim().replace(/\/+$/, '');
+      }
+
+      function getQueryParams() {
+        var out = {};
+        try {
+          var qs = window.location.search ? window.location.search.slice(1) : '';
+          if (!qs) return out;
+          var parts = qs.split('&');
+          for (var i = 0; i < parts.length; i++) {
+            var kv = parts[i].split('=');
+            var k = decodeURIComponent(kv[0] || '').trim();
+            var v = decodeURIComponent(kv.slice(1).join('=') || '').trim();
+            if (k) out[k] = v;
+          }
+        } catch (e) {}
+        return out;
+      }
+
+      function isLocalWebViewOrigin() {
+        var proto = window.location.protocol;
+        var host = window.location.hostname;
+        var port = window.location.port;
+        if (proto === 'file:') return true;
+        if ((host === 'localhost' || host === '127.0.0.1') && !port && window.AndroidBridge) return true;
+        return false;
+      }
+
+      function loadInitialConfig() {
+        var params = getQueryParams();
+
+        if (params.mode && (params.mode.toUpperCase() === 'LOOKUP' || params.mode.toUpperCase() === 'POS_ADD')) {
+          state.mode = params.mode.toUpperCase();
+        }
+        if (params.pair) {
+          state.pairCode = String(params.pair).trim().toUpperCase();
+        }
+
+        // 1. Sesión previa del escáner
+        try {
+          var rawScan = localStorage.getItem(SCANNER_CFG_KEY);
+          if (rawScan) {
+            var ps = JSON.parse(rawScan);
+            if (ps && typeof ps === 'object') {
+              if (ps.serverUrl) state.serverUrl = normalizeUrl(ps.serverUrl);
+              if (ps.token) state.token = ps.token;
+              if (ps.user) state.user = ps.user;
+              if (!state.pairCode && ps.pairCode) state.pairCode = ps.pairCode;
+            }
+          }
+        } catch (e) {}
+
+        // 2. Sesión de la app móvil principal / puente Android
+        try {
+          var rawAdm = localStorage.getItem(ADMIN_CFG_KEY);
+          if (rawAdm) {
+            var pa = JSON.parse(rawAdm);
+            if (pa && typeof pa === 'object') {
+              if (!state.serverUrl && pa.serverUrl) state.serverUrl = normalizeUrl(pa.serverUrl);
+              if (!state.token && pa.token) {
+                state.token = pa.token;
+                state.user = pa.user || state.user;
+              }
+            }
+          }
+        } catch (e2) {}
+
+        if (window.AndroidBridge) {
+          try {
+            if (!state.serverUrl && typeof window.AndroidBridge.getServerUrl === 'function') {
+              state.serverUrl = normalizeUrl(window.AndroidBridge.getServerUrl());
+            }
+            if (!state.token && typeof window.AndroidBridge.getAuthToken === 'function') {
+              state.token = window.AndroidBridge.getAuthToken() || '';
+            }
+            if (!state.user && typeof window.AndroidBridge.getUserJson === 'function') {
+              var u = JSON.parse(window.AndroidBridge.getUserJson() || 'null');
+              if (u) state.user = u;
+            }
+          } catch (e3) {}
+        }
+
+        if (params.server) {
+          state.serverUrl = normalizeUrl(params.server);
+        } else if (!isLocalWebViewOrigin() && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
+          state.serverUrl = normalizeUrl(window.location.origin);
+        } else if (!state.serverUrl) {
+          state.serverUrl = 'http://192.168.1.100:7070';
+        }
+      }
+
+      function saveScannerConfig() {
+        try {
+          localStorage.setItem(SCANNER_CFG_KEY, JSON.stringify({
+            serverUrl: state.serverUrl,
+            token: state.token,
+            pairCode: state.pairCode,
+            user: state.user
+          }));
+        } catch (e) {}
+      }
+
+      function clearScannerAuth() {
+        state.token = '';
+        state.pairCode = '';
+        state.user = null;
+        try { localStorage.removeItem(SCANNER_CFG_KEY); } catch (e) {}
+      }
+
+      function setConnPill(online, text) {
+        var pill = $('connStatusPill');
+        var txt = $('connStatusText');
+        if (pill) pill.classList.toggle('offline', !online);
+        if (txt) txt.textContent = text || (online ? 'En línea' : 'Sin conexión');
+      }
+
+      function showAuthError(msg) {
+        var el = $('authErrorMsg');
+        if (!el) return;
+        if (!msg) {
+          el.classList.add('hidden');
+          el.textContent = '';
+        } else {
+          el.textContent = msg;
+          el.classList.remove('hidden');
+        }
+      }
+
+      function apiPostLogin(payload) {
+        var base = normalizeUrl($('authServerInput') ? $('authServerInput').value : state.serverUrl) || state.serverUrl;
+        state.serverUrl = base;
+        return fetch(base + '/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(function (r) {
+          return r.json().then(function (d) { return { status: r.status, data: d }; });
+        });
+      }
+
+      async function authenticateWithInput(pinOrPair) {
+        var clean = String(pinOrPair || '').trim();
+        if (!clean) {
+          showAuthError('Ingresa tu PIN o el código de enlace de 6 dígitos.');
+          return;
+        }
+        showAuthError('');
+        var btn = $('authSubmitBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Conectando...'; }
+
+        try {
+          var isAlphaPair = /[A-Za-z]/.test(clean) && clean.length === 6;
+          var primaryPayload = isAlphaPair
+            ? { clientApp: 'mobile-scanner', pairCode: clean.toUpperCase() }
+            : { clientApp: 'mobile-scanner', pin: clean };
+
+          var res = await apiPostLogin(primaryPayload);
+
+          // Si ingresó exactamente 6 dígitos y falló como PIN, intentar como pairCode automáticamente
+          if ((!res.data || !res.data.ok) && !isAlphaPair && clean.length === 6) {
+            var resPair = await apiPostLogin({ clientApp: 'mobile-scanner', pairCode: clean });
+            if (resPair.data && resPair.data.ok) {
+              res = resPair;
+            }
+          }
+
+          if (!res.data || !res.data.ok || !res.data.token) {
+            showAuthError((res.data && res.data.error) || 'No se pudo autenticar con la Caja.');
+            return;
+          }
+
+          state.token = res.data.token;
+          state.user = res.data.user || { name: 'Escáner', role: 'Cajero' };
+          if (res.data.user && res.data.user.username === 'escaner-movil') {
+            state.pairCode = clean.toUpperCase();
+          }
+          saveScannerConfig();
+          enterScannerUi();
+        } catch (err) {
+          showAuthError('No se pudo conectar al servidor: ' + state.serverUrl);
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = 'Conectar Escáner →'; }
+        }
+      }
+
+      async function verifyExistingSession() {
+        var base = normalizeUrl(state.serverUrl);
+        if (!base) return false;
+        if (state.token) {
+          try {
+            var r = await fetch(base + '/api/v1/scanner/poll?sinceSeq=0&_t=' + Date.now(), {
+              method: 'GET',
+              headers: { Authorization: 'Bearer ' + state.token }
+            });
+            if (r.ok) return true;
+            if (r.status === 401) state.token = '';
+          } catch (e) {
+            return true; // Permitir abrir visor aunque haya corte momentáneo; se reintentará al enviar
+          }
+        }
+        if (state.pairCode) {
+          try {
+            var rp = await fetch(base + '/api/v1/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ clientApp: 'mobile-scanner', pairCode: state.pairCode })
+            });
+            var dp = await rp.json();
+            if (dp && dp.ok && dp.token) {
+              state.token = dp.token;
+              state.user = dp.user || { name: 'Escáner Móvil', role: 'Cajero' };
+              saveScannerConfig();
+              return true;
+            }
+          } catch (e2) {}
+        }
+        return false;
+      }
+
+      function updateModeUi() {
+        var btns = document.querySelectorAll('.scanner-mode-btn');
+        for (var i = 0; i < btns.length; i++) {
+          var m = btns[i].getAttribute('data-mode');
+          btns[i].classList.toggle('active', m === state.mode);
+        }
+      }
+
+      function updateMultiplierUi() {
+        var btns = document.querySelectorAll('#multPills .scanner-mult-btn');
+        for (var i = 0; i < btns.length; i++) {
+          var q = parseInt(btns[i].getAttribute('data-qty'), 10);
+          btns[i].classList.toggle('active', q === state.qty);
+        }
+        var lockBtn = $('btnLockQty');
+        if (lockBtn) {
+          lockBtn.classList.toggle('active', state.lockQty);
+          lockBtn.textContent = state.lockQty ? '🔒' : '🔓';
+        }
+      }
+
+      function flashSuccessEffect() {
+        var vf = $('scannerViewfinder');
+        var ov = $('scannerFlashOverlay');
+        if (vf) {
+          vf.classList.add('hit');
+          setTimeout(function () { vf.classList.remove('hit'); }, 320);
+        }
+        if (ov) {
+          ov.classList.add('flash');
+          setTimeout(function () { ov.classList.remove('flash'); }, 260);
+        }
+      }
+
+      function renderResultCard(resData, sentQty, mode) {
+        var card = $('scanResultCard');
+        if (!card || !resData) return;
+        var m = resData.match || {};
+        var scan = resData.scan || {};
+        var code = scan.code || m.query || '';
+
+        if (m.found) {
+          state.lastMatch = { code: code, name: m.name };
+          var stockNum = (m.stock !== null && m.stock !== undefined) ? Number(m.stock) : null;
+          var minStk = m.minStock !== null && m.minStock !== undefined ? Number(m.minStock) : 5;
+          var stockBadge = stockNum === null
+            ? '<span class="pill pill-blue">Preparado en cocina</span>'
+            : '<span class="pill ' + (stockNum <= minStk ? 'pill-red' : 'pill-green') + '">Stock: ' + stockNum + ' ' + escHtml(m.unit || 'und') + '</span>';
+
+          var sentBadge = mode === 'LOOKUP'
+            ? '<span class="pill pill-blue">🔍 Solo consulta</span>'
+            : '<span class="pill pill-green">✅ Enviado ' + sentQty + 'x a Caja (#' + escHtml(resData.seq) + ')</span>';
+
+          card.innerHTML =
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">' +
+              '<div style="min-width:0">' +
+                '<div style="font-size:15.5px;font-weight:800;color:var(--txt-1);line-height:1.25">' + escHtml(m.name) + '</div>' +
+                '<div style="font-size:12px;color:var(--txt-3);font-family:monospace;font-weight:700;margin-top:3px">' +
+                  escHtml(m.code || '') + (m.barcode ? ' · ' + escHtml(m.barcode) : '') +
+                '</div>' +
+              '</div>' +
+              '<div style="text-align:right;flex-shrink:0" class="tabular-nums">' +
+                '<div style="font-size:18px;font-weight:900;color:var(--emerald-dark)">$' + Number(m.priceUsd || 0).toFixed(2) + '</div>' +
+                '<div style="font-size:12px;color:var(--txt-3);font-weight:700">Bs ' + Number(m.priceBs || 0).toFixed(2) + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;align-items:center">' +
+              sentBadge + stockBadge +
+            '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">' +
+              '<button type="button" class="m-btn m-btn-primary m-btn-sm" data-quick-add="1" data-quick-code="' + escHtml(code) + '">🛒 +1 a Caja</button>' +
+              '<button type="button" class="m-btn m-btn-secondary m-btn-sm" data-quick-add="3" data-quick-code="' + escHtml(code) + '">🛒 +3 a Caja</button>' +
+            '</div>';
+
+          var qBtns = card.querySelectorAll('[data-quick-add]');
+          for (var i = 0; i < qBtns.length; i++) {
+            qBtns[i].onclick = function () {
+              var q = parseInt(this.getAttribute('data-quick-add'), 10) || 1;
+              var c = this.getAttribute('data-quick-code');
+              sendCodeToServer(c, { qtyOverride: q, modeOverride: 'POS_ADD', format: 'quick' });
+            };
+          }
+        } else {
+          card.innerHTML =
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
+              '<div>' +
+                '<div style="font-size:14px;font-weight:800;color:var(--amber-txt)">⚠ Código no registrado en catálogo</div>' +
+                '<div style="font-size:13px;font-family:monospace;font-weight:800;color:var(--txt-1);margin-top:3px">' + escHtml(code) + '</div>' +
+              '</div>' +
+              '<span class="pill pill-amber">' + (mode === 'LOOKUP' ? 'No encontrado' : 'Enviado a PC') + '</span>' +
+            '</div>';
+        }
+      }
+
+      function renderHistory() {
+        var listEl = $('scanHistoryList');
+        var countEl = $('historyCountPill');
+        if (countEl) countEl.textContent = String(state.history.length);
+        if (!listEl) return;
+        if (state.history.length === 0) {
+          listEl.innerHTML = '<div style="color:var(--txt-3)">Aún no hay escaneos en esta sesión.</div>';
+          return;
+        }
+        var html = '';
+        for (var i = 0; i < state.history.length; i++) {
+          var h = state.history[i];
+          html +=
+            '<div class="scanner-history-item">' +
+              '<div style="min-width:0">' +
+                '<div style="font-weight:800;color:var(--txt-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+                  escHtml(h.qty + '× ' + (h.name || h.code)) +
+                '</div>' +
+                '<div style="font-size:11.5px;color:var(--txt-3);font-family:monospace">' + escHtml(h.code) + ' · ' + escHtml(h.time) + '</div>' +
+              '</div>' +
+              '<span class="pill ' + (h.mode === 'LOOKUP' ? 'pill-blue' : 'pill-green') + '">' +
+                (h.mode === 'LOOKUP' ? 'Consulta' : 'POS') +
+              '</span>' +
+            '</div>';
+        }
+        listEl.innerHTML = html;
+      }
+
+      async function sendCodeToServer(rawCode, opts) {
+        opts = opts || {};
+        var clean = String(rawCode || '').trim();
+        if (!clean) return;
+        var mode = opts.modeOverride || state.mode;
+        var qty = opts.qtyOverride || state.qty || 1;
+        var format = opts.format || 'camera';
+
+        if (!state.token && !state.pairCode) {
+          showAuthScreen('Sesión expirada. Ingresa tu PIN.');
+          return;
+        }
+
+        try {
+          var headers = { 'Content-Type': 'application/json' };
+          if (state.token) headers.Authorization = 'Bearer ' + state.token;
+
+          var payload = {
+            code: clean,
+            qty: qty,
+            mode: mode,
+            format: format,
+            device: window.AndroidBridge ? 'MI-TIENDA-APK' : 'Teléfono Web'
+          };
+          if (state.pairCode) payload.pairCode = state.pairCode;
+
+          var resp = await fetch(normalizeUrl(state.serverUrl) + '/api/v1/scanner/scan', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(payload)
+          });
+
+          if (resp.status === 401) {
+            clearScannerAuth();
+            showAuthScreen('Tu sesión venció. Vuelve a conectar el escáner.');
+            return;
+          }
+
+          var data = await resp.json();
+          if (!data || !data.ok) {
+            if (window.MTPMobileScanner) window.MTPMobileScanner.playBeep('err');
+            setConnPill(false, 'Error');
+            return;
+          }
+
+          setConnPill(true, 'En línea');
+          flashSuccessEffect();
+          if (window.MTPMobileScanner) {
+            window.MTPMobileScanner.playBeep(data.match && data.match.found ? 'ok' : 'warn');
+          }
+
+          var finalQty = (data.scan && data.scan.qty) || qty;
+          renderResultCard(data, finalQty, mode);
+
+          var now = new Date();
+          var timeStr = now.toTimeString().slice(0, 8);
+          state.history.unshift({
+            code: (data.scan && data.scan.code) || clean,
+            name: (data.match && data.match.found) ? data.match.name : 'No catalogado',
+            qty: finalQty,
+            mode: mode,
+            time: timeStr
+          });
+          if (state.history.length > 20) state.history.length = 20;
+          renderHistory();
+
+          if (mode !== 'LOOKUP' && !state.lockQty && !opts.qtyOverride && state.qty !== 1) {
+            state.qty = 1;
+            updateMultiplierUi();
+          }
+        } catch (err) {
+          setConnPill(false, 'Sin red');
+          if (window.MTPMobileScanner) window.MTPMobileScanner.playBeep('err');
+        }
+      }
+
+      async function startLiveViewfinder() {
+        var videoEl = $('scannerVideo');
+        var statusEl = $('scannerStatusBadge');
+        var httpNotice = $('httpCameraNotice');
+        var httpsBtn = $('btnSwitchHttps');
+        var retryBtn = $('btnRetryCamera');
+        var torchBtn = $('btnTorch');
+        if (!window.MTPMobileScanner || !videoEl) return;
+
+        if (httpNotice) httpNotice.classList.add('hidden');
+        if (httpsBtn) {
+          var isPlainLanHttp = window.location.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+          if (isPlainLanHttp) {
+            var httpsHref = 'https://' + window.location.hostname + ':7443/escaner' + (state.pairCode ? ('?pair=' + encodeURIComponent(state.pairCode)) : window.location.search);
+            httpsBtn.href = httpsHref;
+            httpsBtn.classList.remove('hidden');
+          } else {
+            httpsBtn.classList.add('hidden');
+          }
+        }
+        if (retryBtn) {
+          retryBtn.onclick = function () { startLiveViewfinder(); };
+        }
+
+        var res = await window.MTPMobileScanner.startCamera({
+          videoEl: videoEl,
+          cooldownMs: 1350,
+          intervalMs: 130,
+          onStatus: function (st) {
+            if (statusEl && st && st.message) statusEl.textContent = st.message;
+            if (httpNotice && st && (st.state === 'insecure' || st.state === 'error')) {
+              httpNotice.classList.remove('hidden');
+            }
+            if (torchBtn && st && typeof st.hasTorch === 'boolean') {
+              torchBtn.disabled = !st.hasTorch;
+            }
+          },
+          onDetect: function (code, meta) {
+            if (state.paused) return;
+            sendCodeToServer(code, { format: (meta && meta.format) || 'camera' });
+          }
+        });
+        if (torchBtn && res && typeof res.hasTorch === 'boolean') {
+          torchBtn.disabled = !res.hasTorch;
+        }
+      }
+
+      function showAuthScreen(errorMsg) {
+        if (window.MTPMobileScanner) window.MTPMobileScanner.stopCamera();
+        var authScr = $('scannerAuthScreen');
+        var mainScr = $('scannerMainScreen');
+        if (mainScr) mainScr.classList.add('hidden');
+        if (authScr) authScr.classList.remove('hidden');
+        if ($('authServerInput')) $('authServerInput').value = state.serverUrl || '';
+        if (errorMsg) showAuthError(errorMsg);
+      }
+
+      function enterScannerUi() {
+        var authScr = $('scannerAuthScreen');
+        var mainScr = $('scannerMainScreen');
+        if (authScr) authScr.classList.add('hidden');
+        if (mainScr) mainScr.classList.remove('hidden');
+
+        var uName = (state.user && (state.user.name || state.user.username)) || 'Escáner Móvil';
+        var uRole = (state.user && state.user.role) || 'Cajero';
+        if ($('topUserSub')) $('topUserSub').textContent = uName + ' · ' + uRole;
+
+        var backBtn = $('topBackBtn');
+        if (backBtn) {
+          var showBack = Boolean(window.AndroidBridge) || (uRole === 'Administrador');
+          backBtn.classList.toggle('hidden', !showBack);
+        }
+
+        updateModeUi();
+        updateMultiplierUi();
+        renderHistory();
+        setConnPill(true, 'En línea');
+        startLiveViewfinder();
+      }
+
+      function wireUi() {
+        var kp = $('authKeypad');
+        var pinInp = $('authPinInput');
+        if (kp && pinInp) {
+          kp.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-key]');
+            if (!btn) return;
+            var k = btn.getAttribute('data-key');
+            if (k === 'CLR') {
+              pinInp.value = '';
+            } else if (k === 'DEL') {
+              pinInp.value = pinInp.value.slice(0, -1);
+            } else {
+              pinInp.value += k;
+            }
+          });
+          pinInp.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              authenticateWithInput(pinInp.value);
+            }
+          });
+        }
+
+        var submitBtn = $('authSubmitBtn');
+        if (submitBtn) {
+          submitBtn.onclick = function () {
+            authenticateWithInput($('authPinInput') ? $('authPinInput').value : '');
+          };
+        }
+
+        var topUnlink = $('topUnlinkBtn');
+        if (topUnlink) {
+          topUnlink.onclick = function () {
+            clearScannerAuth();
+            showAuthScreen('');
+          };
+        }
+
+        var modeBtns = document.querySelectorAll('.scanner-mode-btn');
+        for (var i = 0; i < modeBtns.length; i++) {
+          modeBtns[i].onclick = function () {
+            state.mode = this.getAttribute('data-mode') || 'POS_ADD';
+            updateModeUi();
+          };
+        }
+
+        var multPills = $('multPills');
+        if (multPills) {
+          multPills.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-qty]');
+            if (!btn) return;
+            state.qty = parseInt(btn.getAttribute('data-qty'), 10) || 1;
+            updateMultiplierUi();
+          });
+        }
+
+        var lockBtn = $('btnLockQty');
+        if (lockBtn) {
+          lockBtn.onclick = function () {
+            state.lockQty = !state.lockQty;
+            updateMultiplierUi();
+          };
+        }
+
+        var torchBtn = $('btnTorch');
+        if (torchBtn) {
+          torchBtn.onclick = async function () {
+            if (!window.MTPMobileScanner) return;
+            var on = await window.MTPMobileScanner.toggleTorch();
+            torchBtn.classList.toggle('is-on', on);
+            torchBtn.textContent = on ? '🔦 Encendida' : '🔦 Linterna';
+          };
+        }
+
+        var switchBtn = $('btnSwitchCam');
+        if (switchBtn) {
+          switchBtn.onclick = function () {
+            if (window.MTPMobileScanner) window.MTPMobileScanner.switchCamera();
+          };
+        }
+
+        var pauseBtn = $('btnPauseCam');
+        if (pauseBtn) {
+          pauseBtn.onclick = function () {
+            state.paused = !state.paused;
+            if (state.paused) {
+              if (window.MTPMobileScanner) window.MTPMobileScanner.stopCamera();
+              pauseBtn.textContent = '▶ Reanudar';
+              if ($('scannerStatusBadge')) $('scannerStatusBadge').textContent = 'Cámara en pausa';
+            } else {
+              pauseBtn.textContent = '⏸ Pausar';
+              startLiveViewfinder();
+            }
+          };
+        }
+
+        var photoInput = $('photoCaptureInput');
+        if (photoInput) {
+          photoInput.onchange = async function () {
+            var f = photoInput.files && photoInput.files[0];
+            photoInput.value = '';
+            if (!f || !window.MTPMobileScanner) return;
+            if ($('scannerStatusBadge')) $('scannerStatusBadge').textContent = 'Analizando foto del código...';
+            var res = await window.MTPMobileScanner.decodeImageFile(f);
+            if (res && res.code) {
+              sendCodeToServer(res.code, { format: 'photo-' + (res.format || '1d') });
+            } else {
+              window.MTPMobileScanner.playBeep('err');
+              if ($('scannerStatusBadge')) $('scannerStatusBadge').textContent = 'No se detectó un código nítido en la foto';
+            }
+          };
+        }
+
+        var manualForm = $('manualScanForm');
+        if (manualForm) {
+          manualForm.onsubmit = function (e) {
+            e.preventDefault();
+            var inp = $('manualScanInput');
+            if (!inp || !inp.value.trim()) return;
+            var val = inp.value.trim();
+            inp.value = '';
+            sendCodeToServer(val, { format: 'manual' });
+          };
+        }
+
+        var samplesWrap = $('quickSamplesWrap');
+        if (samplesWrap) {
+          samplesWrap.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-sample]');
+            if (!btn) return;
+            sendCodeToServer(btn.getAttribute('data-sample'), { format: 'sample' });
+          });
+        }
+
+        window.addEventListener('pagehide', function () {
+          if (window.MTPMobileScanner) window.MTPMobileScanner.stopCamera();
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', async function () {
+        loadInitialConfig();
+        wireUi();
+
+        var params = getQueryParams();
+        if (params.pair) {
+          if ($('authServerInput')) $('authServerInput').value = state.serverUrl;
+          await authenticateWithInput(params.pair);
+          if (state.token) return;
+        }
+
+        var valid = await verifyExistingSession();
+        if (valid) {
+          enterScannerUi();
+        } else {
+          showAuthScreen('');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

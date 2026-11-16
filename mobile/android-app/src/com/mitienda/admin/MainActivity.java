@@ -1,5 +1,6 @@
 package com.mitienda.admin;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.webkit.JavascriptInterface;
+import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -20,6 +22,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -34,7 +37,11 @@ public class MainActivity extends Activity {
     public static final String KEY_TOKEN = "auth_token";
     public static final String KEY_STORE_NAME = "store_name";
     public static final String KEY_USE_REMOTE_UI = "use_remote_ui";
+    public static final String KEY_USER_JSON = "user_json";
 
+    private static final int REQ_NOTIF = 1001;
+    private static final int REQ_CAMERA = 1002;
+    private static final int REQ_FILE_CHOOSER = 1003;
     private static final String LOCAL_APP_HOST = "app.mitienda.local";
     private static final String LOCAL_START_URL = "http://localhost/index.html";
     private WebView webView;
@@ -42,6 +49,10 @@ public class MainActivity extends Activity {
     // "remote" = interfaz viva servida por el servidor; "local" = copia dentro del APK.
     private String currentUiSource = "local";
     private boolean fallbackDone = false;
+    private volatile boolean remoteLiveReady = false;
+    private volatile String cachedRemoteBase = "";
+    private PermissionRequest pendingWebPermissionRequest = null;
+    private ValueCallback<Uri[]> fileChooserCallback = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,9 +74,67 @@ public class MainActivity extends Activity {
         ws.setAllowContentAccess(true);
         ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         ws.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        ws.setMediaPlaybackRequiresUserGesture(false);
 
         webView.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
-        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (request == null) return;
+                        String[] resources = request.getResources();
+                        boolean wantsCamera = false;
+                        if (resources != null) {
+                            for (String r : resources) {
+                                if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(r)) {
+                                    wantsCamera = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!wantsCamera) {
+                            request.grant(resources);
+                            return;
+                        }
+                        if (Build.VERSION.SDK_INT >= 23 && checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                            if (pendingWebPermissionRequest != null) {
+                                try { pendingWebPermissionRequest.deny(); } catch (Exception ignored) {}
+                            }
+                            pendingWebPermissionRequest = request;
+                            requestPermissions(new String[]{Manifest.permission.CAMERA}, REQ_CAMERA);
+                        } else {
+                            request.grant(resources);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onPermissionRequestCanceled(PermissionRequest request) {
+                if (pendingWebPermissionRequest == request) {
+                    pendingWebPermissionRequest = null;
+                }
+            }
+
+            @Override
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+                if (fileChooserCallback != null) {
+                    try { fileChooserCallback.onReceiveValue(null); } catch (Exception ignored) {}
+                }
+                fileChooserCallback = filePathCallback;
+                try {
+                    Intent intent = fileChooserParams != null ? fileChooserParams.createIntent() : new Intent(Intent.ACTION_GET_CONTENT);
+                    if (intent.getType() == null) intent.setType("image/*");
+                    startActivityForResult(intent, REQ_FILE_CHOOSER);
+                    return true;
+                } catch (Exception e) {
+                    fileChooserCallback = null;
+                    return false;
+                }
+            }
+        });
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
@@ -80,6 +149,14 @@ public class MainActivity extends Activity {
                         if (path.startsWith("/")) path = path.substring(1);
                         if (path.startsWith("mobile/")) path = path.substring("mobile/".length());
                         if (path.isEmpty()) path = "index.html";
+
+                        // Cáscara viva en Secure Context (http://localhost) cargando archivos desde el servidor
+                        if (remoteLiveReady && !fallbackDone && cachedRemoteBase != null && !cachedRemoteBase.isEmpty() && isLiveUiAsset(path)) {
+                            WebResourceResponse remoteResp = fetchRemoteAssetResponse(cachedRemoteBase + "/mobile/" + path, path);
+                            if (remoteResp != null) {
+                                return remoteResp;
+                            }
+                        }
 
                         try {
                             InputStream is = getAssets().open(path);
@@ -137,8 +214,9 @@ public class MainActivity extends Activity {
      */
     private void loadInitialUi() {
         fallbackDone = false;
+        remoteLiveReady = false;
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        String serverUrl = normalizeBase(prefs.getString(KEY_SERVER_URL, ""));
+        final String serverUrl = normalizeBase(prefs.getString(KEY_SERVER_URL, ""));
         boolean useRemote = prefs.getBoolean(KEY_USE_REMOTE_UI, true);
 
         if (!useRemote || serverUrl.isEmpty()) {
@@ -146,7 +224,6 @@ public class MainActivity extends Activity {
             return;
         }
 
-        final String remoteUrl = serverUrl + "/mobile/index.html" + buildTabQuery();
         final String probeUrl = serverUrl + "/api/v1/status";
         new Thread(new Runnable() {
             @Override
@@ -156,7 +233,12 @@ public class MainActivity extends Activity {
                     @Override
                     public void run() {
                         if (online) {
-                            loadRemoteUi(remoteUrl);
+                            cachedRemoteBase = serverUrl;
+                            remoteLiveReady = true;
+                            currentUiSource = "remote";
+                            // Mantenemos origen http://localhost (Secure Context) para que getUserMedia/cámara
+                            // funcione en LAN HTTP mientras los archivos se cargan vivos del servidor.
+                            webView.loadUrl(LOCAL_START_URL + buildTabQuery());
                         } else {
                             loadLocalUi();
                         }
@@ -164,6 +246,47 @@ public class MainActivity extends Activity {
                 });
             }
         }).start();
+    }
+
+    private boolean isLiveUiAsset(String path) {
+        return "index.html".equals(path)
+            || "mobile.css".equals(path)
+            || "mobile.js".equals(path)
+            || "barcode-scanner.js".equals(path)
+            || "scanner.html".equals(path);
+    }
+
+    private WebResourceResponse fetchRemoteAssetResponse(String targetUrl, String assetPath) {
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) new URL(targetUrl).openConnection();
+            conn.setConnectTimeout(2500);
+            conn.setReadTimeout(3500);
+            conn.setRequestMethod("GET");
+            conn.setUseCaches(false);
+            int code = conn.getResponseCode();
+            if (code != 200) {
+                return null;
+            }
+            InputStream in = conn.getInputStream();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = in.read(buf)) != -1) {
+                out.write(buf, 0, len);
+            }
+            byte[] data = out.toByteArray();
+            if (data.length == 0) {
+                return null;
+            }
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Cache-Control", "no-store");
+            return new WebResourceResponse(guessMime(assetPath), "UTF-8", 200, "OK", headers, new ByteArrayInputStream(data));
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (conn != null) conn.disconnect();
+        }
     }
 
     private String buildTabQuery() {
@@ -205,6 +328,7 @@ public class MainActivity extends Activity {
     }
 
     private void loadLocalUi() {
+        remoteLiveReady = false;
         currentUiSource = "local";
         webView.loadUrl(LOCAL_START_URL + buildTabQuery());
     }
@@ -215,6 +339,7 @@ public class MainActivity extends Activity {
             return;
         }
         fallbackDone = true;
+        remoteLiveReady = false;
         loadLocalUi();
     }
 
@@ -227,7 +352,7 @@ public class MainActivity extends Activity {
         if (!"remote".equals(currentUiSource) || fallbackDone) {
             return;
         }
-        view.evaluateJavascript("window.__MTP_MOBILE_READY__ === true", new ValueCallback<String>() {
+        view.evaluateJavascript("(window.__MTP_MOBILE_READY__ === true || window.__MTP_IS_SCANNER_APP__ === true)", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
                 if (!"true".equals(value)) {
@@ -270,8 +395,40 @@ public class MainActivity extends Activity {
     private void requestNotifPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= 33) {
             if (checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 1001);
+                requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, REQ_NOTIF);
             }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_CAMERA && pendingWebPermissionRequest != null) {
+            boolean granted = grantResults != null && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            try {
+                if (granted) {
+                    pendingWebPermissionRequest.grant(pendingWebPermissionRequest.getResources());
+                } else {
+                    pendingWebPermissionRequest.deny();
+                }
+            } catch (Exception ignored) {
+            } finally {
+                pendingWebPermissionRequest = null;
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_FILE_CHOOSER && fileChooserCallback != null) {
+            Uri[] result = null;
+            try {
+                result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+            } catch (Exception ignored) {
+            }
+            fileChooserCallback.onReceiveValue(result);
+            fileChooserCallback = null;
         }
     }
 
@@ -316,6 +473,29 @@ public class MainActivity extends Activity {
             return currentUiSource;
         }
 
+        /**
+         * La sesión vive en las preferencias nativas para el servicio de alertas.
+         * Al pasar a la interfaz remota (otro origen) se reusa para no pedir el PIN
+         * una segunda vez; si el token venció, la app vuelve sola al login.
+         */
+        @JavascriptInterface
+        public String getAuthToken() {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            return prefs.getString(KEY_TOKEN, "");
+        }
+
+        @JavascriptInterface
+        public void setSessionUser(String userJson) {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            prefs.edit().putString(KEY_USER_JSON, userJson != null ? userJson : "").apply();
+        }
+
+        @JavascriptInterface
+        public String getUserJson() {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            return prefs.getString(KEY_USER_JSON, "");
+        }
+
         /** Recarga la interfaz viva (por ejemplo, después de cambiar de servidor). */
         @JavascriptInterface
         public void reloadUi() {
@@ -347,7 +527,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void stopAlerts() {
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-            prefs.edit().remove(KEY_TOKEN).apply();
+            prefs.edit().remove(KEY_TOKEN).remove(KEY_USER_JSON).apply();
             stopService(new Intent(MainActivity.this, MtpAlertService.class));
         }
 
@@ -360,6 +540,21 @@ public class MainActivity extends Activity {
                 "live",
                 9001
             );
+        }
+
+        @JavascriptInterface
+        public boolean ensureCameraPermission() {
+            if (Build.VERSION.SDK_INT < 23) return true;
+            boolean granted = checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+            if (!granted) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        requestPermissions(new String[]{Manifest.permission.CAMERA}, REQ_CAMERA);
+                    }
+                });
+            }
+            return granted;
         }
 
         @JavascriptInterface

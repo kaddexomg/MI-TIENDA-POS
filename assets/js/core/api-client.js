@@ -291,6 +291,17 @@
           }
         } catch (_) {}
       });
+      _sse.addEventListener('barcode_scan', function (e) {
+        try {
+          var scanData = JSON.parse(e.data);
+          if (scanData && window.MTPBarcode && typeof window.MTPBarcode.handleRemoteScan === 'function') {
+            window.MTPBarcode.handleRemoteScan(scanData);
+          }
+          if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+            window.dispatchEvent(new CustomEvent('mtp:remote-barcode-scan', { detail: scanData }));
+          }
+        } catch (_) {}
+      });
       _sse.onerror = function () {
         if (_sse) {
           try { _sse.close(); } catch (_) {}

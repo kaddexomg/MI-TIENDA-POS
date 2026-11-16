@@ -62,7 +62,7 @@ function testHttpServer(j, s, done) {
     }, null, function (err, res, body) {
       assert(!err && res.statusCode === 200, 'GET /api/v1/status responde 200 OK');
       const statusObj = JSON.parse(body);
-      assert(statusObj.ok === true && statusObj.version === '8.0.0', 'statusObj contiene version 8.0.0 y ok=true');
+      assert(statusObj.ok === true && statusObj.version === '8.3.0', 'statusObj contiene version 8.3.0 y ok=true');
 
       // 2. Acceso sin token debe retornar 401
       httpRequest({

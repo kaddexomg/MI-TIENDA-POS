@@ -18,6 +18,56 @@
   let currentCallback = null;
   let lastDetectedCode = '';
   let lastDetectedTime = 0;
+  let remoteSse = null;
+  let remotePollTimer = null;
+  let remoteBridgeStarted = false;
+  let lastRemoteScanSeq = 0;
+  const seenRemoteScanIds = new Set();
+  let remoteScanCount = 0;
+  let lastRemoteScanSummary = '';
+
+  function parseScanMultiplier(rawCode) {
+    const clean = String(rawCode || '').trim();
+    if (!clean) return { raw: '', code: '', qty: 1 };
+    const starIdx = clean.indexOf('*');
+    if (starIdx > 0) {
+      const mult = parseInt(clean.slice(0, starIdx), 10);
+      const rest = clean.slice(starIdx + 1).trim();
+      if (!isNaN(mult) && mult > 0 && mult <= 999 && rest) {
+        return { raw: clean, code: rest, qty: mult };
+      }
+    }
+    return { raw: clean, code: clean, qty: 1 };
+  }
+
+  function resolveApiBaseUrl() {
+    if (typeof window === 'undefined') return '';
+    if (window.MTPApiClient && typeof window.MTPApiClient.getActiveBaseUrl === 'function') {
+      const u = window.MTPApiClient.getActiveBaseUrl();
+      if (u) return String(u).replace(/\/+$/, '');
+    }
+    if (window.location && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
+      return String(window.location.origin).replace(/\/+$/, '');
+    }
+    return 'http://127.0.0.1:7070';
+  }
+
+  function resolveApiToken() {
+    if (typeof window === 'undefined') return '';
+    if (window.MTPApiClient && typeof window.MTPApiClient.getAuthToken === 'function') {
+      const t = window.MTPApiClient.getAuthToken();
+      if (t) return t;
+    }
+    try {
+      if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('mtp_api_token')) {
+        return sessionStorage.getItem('mtp_api_token') || '';
+      }
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('mtp_api_token')) {
+        return localStorage.getItem('mtp_api_token') || '';
+      }
+    } catch (_) {}
+    return '';
+  }
 
   /**
    * Determina si el elemento activo es un campo de captura de datos (input, textarea, select, editable)
@@ -88,6 +138,8 @@
   function triggerScan(code) {
     const clean = String(code || '').trim();
     if (!clean) return;
+    const parsed = parseScanMultiplier(clean);
+    const lookupCode = parsed.code || clean;
 
     listeners.forEach(function (fn) {
       try {
@@ -100,11 +152,11 @@
     // Comprobación de existencia del producto en catálogo
     let found = false;
     if (typeof window !== 'undefined' && window.MTP && typeof window.MTP.findByCodeOrBarcode === 'function') {
-      const match = window.MTP.findByCodeOrBarcode(clean, false);
+      const match = window.MTP.findByCodeOrBarcode(lookupCode, false);
       if (match) found = true;
     }
     if (!found && typeof window !== 'undefined' && window.MTP && window.MTP.state) {
-      const qLower = clean.toLowerCase();
+      const qLower = lookupCode.toLowerCase();
       const varMatches = (window.MTP.state.variants || []).filter(function (v) {
         return v.active !== false && v.name && v.name.toLowerCase().includes(qLower);
       });
@@ -117,7 +169,7 @@
     }
 
     if (!found && typeof window !== 'undefined' && window.MTP && typeof window.MTP.toast === 'function') {
-      window.MTP.toast('Código no encontrado: ' + clean + '. Puede buscarlo por nombre.', 'warn');
+      window.MTP.toast('Código no encontrado: ' + lookupCode + '. Puede buscarlo por nombre.', 'warn');
     }
   }
 
@@ -191,19 +243,42 @@
           </h3>
           <button type="button" class="btn btn-secondary btn-sm" id="mtpCamCloseBtn">✕</button>
         </div>
-        <div class="modal-bd">
+        <div class="modal-bd" style="max-height:78vh;overflow-y:auto">
           ${!hasDetector ? `
             <div class="alert alert-warn" style="margin-bottom:12px;padding:10px 12px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:8px;font-size:13px;line-height:1.4">
               <strong>⚠ Cámara no disponible en este equipo</strong><br>
-              Este navegador no cuenta con detección nativa de códigos (BarcodeDetector no disponible). Use su pistola lectora USB o escriba el código abajo.
+              Este navegador no cuenta con detección nativa de códigos (BarcodeDetector no disponible). Use su pistola USB, el teléfono como lector inalámbrico o escriba el código abajo.
             </div>
           ` : ''}
 
-          <div style="position:relative;background:#0f172a;border-radius:12px;overflow:hidden;height:230px;display:flex;align-items:center;justify-content:center;border:2px solid #10b981">
+          <div style="position:relative;background:#0f172a;border-radius:12px;overflow:hidden;height:210px;display:flex;align-items:center;justify-content:center;border:2px solid #10b981">
             <video id="mtpCameraVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover"></video>
             <div style="position:absolute;inset:25px 45px;border:2px dashed rgba(16,185,129,0.85);border-radius:10px;pointer-events:none;box-shadow:0 0 0 9999px rgba(15,23,42,0.38)"></div>
             <div id="mtpCameraStatus" style="position:absolute;bottom:8px;left:10px;right:10px;background:rgba(15,23,42,0.85);color:#a7f3d0;font-size:0.75rem;padding:5px 10px;border-radius:6px;text-align:center;font-weight:700">
-              ${hasDetector ? 'Iniciando cámara para escanear código de barras EAN-13 / QR...' : 'Cámara no disponible en este equipo (use pistola USB o código)'}
+              ${hasDetector ? 'Iniciando cámara para escanear código de barras EAN-13 / QR...' : 'Cámara no disponible en este equipo (use pistola USB o teléfono)'}
+            </div>
+          </div>
+
+          <div id="mtpPhoneBridgeCard" style="margin-top:12px;padding:12px;border-radius:12px;background:#f0fdf4;border:1.5px solid #86efac">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+              <div style="font-size:13px;font-weight:800;color:#065f46;display:flex;align-items:center;gap:6px">
+                📱 Usar Teléfono como Pistola Lectora Inalámbrica
+              </div>
+              <span id="mtpPhoneBridgeCounter" style="font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:#dcfce7;color:#166534">
+                Recibidos: ${remoteScanCount}
+              </span>
+            </div>
+            <div style="font-size:12px;color:#14532d;line-height:1.4;margin-bottom:8px">
+              Abre este enlace en el navegador de tu teléfono (o desde la app Android 📷 Escáner POS) para enviar códigos directo a esta caja en vivo:
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <input type="text" id="mtpPhoneBridgeUrl" readonly value="Cargando enlace del servidor..." class="input" style="font-family:monospace;font-size:12px;font-weight:700;flex:1;min-width:190px;background:#ffffff;color:#0f172a;padding:6px 8px">
+              <button type="button" class="btn btn-secondary btn-sm" id="mtpPhoneCopyBtn">📋 Copiar</button>
+              <button type="button" class="btn btn-primary btn-sm" id="mtpPhoneOpenBtn">↗️ Abrir</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:#166534;font-weight:700">
+              <span>Clave enlace: <strong id="mtpPhonePairCode" style="font-family:monospace;letter-spacing:1px">------</strong></span>
+              <span id="mtpPhoneLastScan">${lastRemoteScanSummary ? ('Último: ' + escHtml(lastRemoteScanSummary)) : 'Esperando lecturas del teléfono...'}</span>
             </div>
           </div>
 
@@ -265,6 +340,8 @@
     });
 
     modal.classList.add('open');
+    loadPhoneBridgeInfo(modal);
+    startRemoteScannerBridge();
     if (manualInp) {
       setTimeout(function () { manualInp.focus(); }, 100);
     }
@@ -361,11 +438,294 @@
     `;
   }
 
+  function updateBridgeModalUi() {
+    if (typeof document === 'undefined') return;
+    const countEl = document.getElementById('mtpPhoneBridgeCounter');
+    if (countEl) countEl.textContent = 'Recibidos: ' + remoteScanCount;
+    const lastEl = document.getElementById('mtpPhoneLastScan');
+    if (lastEl && lastRemoteScanSummary) {
+      lastEl.textContent = 'Último: ' + lastRemoteScanSummary;
+    }
+  }
+
+  function loadPhoneBridgeInfo(modal) {
+    if (!modal || typeof fetch !== 'function') return;
+    const urlInput = modal.querySelector('#mtpPhoneBridgeUrl');
+    const pairEl = modal.querySelector('#mtpPhonePairCode');
+    const copyBtn = modal.querySelector('#mtpPhoneCopyBtn');
+    const openBtn = modal.querySelector('#mtpPhoneOpenBtn');
+    const baseUrl = resolveApiBaseUrl();
+    if (!baseUrl) return;
+
+    const tok = resolveApiToken();
+    const headers = tok ? { Authorization: 'Bearer ' + tok } : {};
+    fetch(baseUrl + '/api/v1/scanner/info?_t=' + Date.now(), { method: 'GET', headers: headers })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.ok) return;
+        const bestUrl = (data.lanScannerUrls && data.lanScannerUrls[0]) || data.scannerUrl || (baseUrl + '/escaner');
+        if (urlInput) urlInput.value = bestUrl;
+        if (pairEl) pairEl.textContent = data.pairCode || 'PIN';
+        if (copyBtn) {
+          copyBtn.onclick = function () {
+            if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(bestUrl).then(function () {
+                if (window.MTP && typeof window.MTP.toast === 'function') {
+                  window.MTP.toast('Enlace del escáner copiado al portapapeles.', 'ok');
+                }
+              }).catch(function () {
+                if (urlInput) { urlInput.select(); document.execCommand && document.execCommand('copy'); }
+              });
+            } else if (urlInput) {
+              urlInput.select();
+              if (document.execCommand) document.execCommand('copy');
+            }
+          };
+        }
+        if (openBtn) {
+          openBtn.onclick = function () {
+            if (typeof window !== 'undefined' && typeof window.open === 'function') {
+              window.open(bestUrl, '_blank', 'noopener');
+            }
+          };
+        }
+      })
+      .catch(function () {
+        if (urlInput) urlInput.value = baseUrl + '/escaner';
+      });
+  }
+
+  function findOpenBarcodeField() {
+    if (typeof document === 'undefined') return null;
+    const candidateIds = ['drawerBarcode', 'invEditBarcode', 'invBarcodeInput', 'bcManualInput'];
+    const activeEl = document.activeElement;
+    for (let i = 0; i < candidateIds.length; i++) {
+      const el = document.getElementById(candidateIds[i]);
+      if (!el) continue;
+      if (activeEl === el) return el;
+      const openWrap = typeof el.closest === 'function'
+        ? el.closest('.open, .modal-backdrop.open, .drawer.open, .sheet-backdrop.open, .drawer-backdrop.open')
+        : null;
+      if (openWrap) return el;
+    }
+    return null;
+  }
+
+  function dispatchInputEvents(el) {
+    if (!el || typeof document === 'undefined') return;
+    try {
+      if (typeof Event === 'function') {
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    } catch (_) {}
+  }
+
+  function handleRemoteScan(scanObj) {
+    if (!scanObj || typeof scanObj !== 'object') return false;
+    const rawCode = String(scanObj.code || '').trim();
+    if (!rawCode) return false;
+    const mode = String(scanObj.mode || 'POS_ADD').trim().toUpperCase();
+    if (mode === 'LOOKUP') return false;
+
+    const seq = typeof scanObj.seq === 'number' ? scanObj.seq : 0;
+    const id = scanObj.id ? String(scanObj.id) : '';
+    if (id && seenRemoteScanIds.has(id)) return false;
+    if (seq > 0 && seq <= lastRemoteScanSeq) return false;
+
+    if (id) {
+      seenRemoteScanIds.add(id);
+      if (seenRemoteScanIds.size > 200) {
+        const firstId = seenRemoteScanIds.values().next().value;
+        if (firstId) seenRemoteScanIds.delete(firstId);
+      }
+    }
+    if (seq > lastRemoteScanSeq) lastRemoteScanSeq = seq;
+
+    const parsed = parseScanMultiplier(rawCode);
+    const cleanCode = parsed.code || rawCode;
+    const qty = Math.max(1, parseInt(scanObj.qty, 10) || parsed.qty || 1);
+    const dispatchCode = qty > 1 ? (qty + '*' + cleanCode) : cleanCode;
+
+    remoteScanCount += 1;
+    lastRemoteScanSummary = (qty > 1 ? (qty + '× ') : '') + cleanCode +
+      (scanObj.match && scanObj.match.name ? (' — ' + scanObj.match.name) : '');
+    updateBridgeModalUi();
+
+    if (typeof document !== 'undefined') {
+      const camModal = document.getElementById('mtpCameraScannerModal');
+      if (camModal && camModal.classList && camModal.classList.contains('open') && typeof currentCallback === 'function') {
+        handleDetected(cleanCode);
+        return true;
+      }
+
+      const openField = findOpenBarcodeField();
+      if (openField) {
+        openField.value = cleanCode;
+        dispatchInputEvents(openField);
+        if (openField.focus) openField.focus();
+        if (typeof window !== 'undefined' && window.MTP && typeof window.MTP.toast === 'function') {
+          window.MTP.toast('📱 Código recibido en campo: ' + cleanCode, 'ok');
+        }
+        return true;
+      }
+    }
+
+    triggerScan(dispatchCode);
+
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+      try {
+        window.dispatchEvent(new CustomEvent('mtp:remote-barcode', { detail: scanObj }));
+      } catch (_) {}
+    }
+    return true;
+  }
+
+  function pollRemoteScansOnce() {
+    if (typeof fetch !== 'function') return Promise.resolve();
+    const baseUrl = resolveApiBaseUrl();
+    if (!baseUrl) return Promise.resolve();
+    const tok = resolveApiToken();
+    const headers = tok ? { Authorization: 'Bearer ' + tok } : {};
+    const url = baseUrl + '/api/v1/scanner/poll?sinceSeq=' + encodeURIComponent(String(lastRemoteScanSeq)) + '&_t=' + Date.now();
+    return fetch(url, { method: 'GET', headers: headers, cache: 'no-store' })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        if (!data || !data.ok) return;
+        if (Array.isArray(data.scans)) {
+          for (let i = 0; i < data.scans.length; i++) {
+            handleRemoteScan(data.scans[i]);
+          }
+        }
+        if (typeof data.lastSeq === 'number' && data.lastSeq > lastRemoteScanSeq && (!data.scans || data.scans.length === 0)) {
+          lastRemoteScanSeq = data.lastSeq;
+        }
+      })
+      .catch(function () {});
+  }
+
+  function connectRemoteScannerSse(baseUrl, tok) {
+    if (typeof EventSource !== 'function' || !baseUrl) return;
+    if (remoteSse) {
+      try { remoteSse.close(); } catch (_) {}
+      remoteSse = null;
+    }
+    let streamUrl = baseUrl + '/api/v1/scanner/stream';
+    const qs = [];
+    if (tok) qs.push('token=' + encodeURIComponent(tok));
+    if (lastRemoteScanSeq > 0) qs.push('sinceSeq=' + encodeURIComponent(String(lastRemoteScanSeq)));
+    if (qs.length > 0) streamUrl += '?' + qs.join('&');
+
+    try {
+      remoteSse = new EventSource(streamUrl);
+      remoteSse.addEventListener('scanner_ready', function (e) {
+        try {
+          const info = JSON.parse(e.data);
+          if (info && typeof info.lastScanSeq === 'number' && lastRemoteScanSeq === 0) {
+            lastRemoteScanSeq = info.lastScanSeq;
+          }
+        } catch (_) {}
+      });
+      remoteSse.addEventListener('barcode_scan', function (e) {
+        try {
+          const scanObj = JSON.parse(e.data);
+          handleRemoteScan(scanObj);
+        } catch (_) {}
+      });
+      remoteSse.onerror = function () {
+        if (remoteSse) {
+          try { remoteSse.close(); } catch (_) {}
+          remoteSse = null;
+        }
+      };
+    } catch (_) {}
+  }
+
+  function syncScannerBaselineAndConnect() {
+    const baseUrl = resolveApiBaseUrl();
+    if (!baseUrl) return;
+    const tok = resolveApiToken();
+    const headers = tok ? { Authorization: 'Bearer ' + tok } : {};
+    if (typeof fetch !== 'function') {
+      connectRemoteScannerSse(baseUrl, tok);
+      return;
+    }
+    fetch(baseUrl + '/api/v1/scanner/info?_t=' + Date.now(), { method: 'GET', headers: headers, cache: 'no-store' })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        if (data && typeof data.lastScanSeq === 'number' && data.lastScanSeq > lastRemoteScanSeq) {
+          lastRemoteScanSeq = data.lastScanSeq;
+        }
+      })
+      .catch(function () {})
+      .then(function () {
+        if (remoteBridgeStarted && !remoteSse) {
+          connectRemoteScannerSse(baseUrl, resolveApiToken());
+        }
+      });
+  }
+
+  function startRemoteScannerBridge() {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    if (window.__MTP_IS_SCANNER_APP__) return;
+    if (window.location && window.location.pathname && /scanner\.html|\/escaner/i.test(window.location.pathname)) return;
+    const baseUrl = resolveApiBaseUrl();
+    if (!baseUrl) return;
+
+    if (!remoteBridgeStarted) {
+      remoteBridgeStarted = true;
+      syncScannerBaselineAndConnect();
+    } else if (!remoteSse) {
+      connectRemoteScannerSse(baseUrl, resolveApiToken());
+    }
+
+    if (!remotePollTimer) {
+      remotePollTimer = setInterval(function () {
+        if (!remoteSse || remoteSse.readyState !== 1) {
+          pollRemoteScansOnce();
+          const curBase = resolveApiBaseUrl();
+          const curTok = resolveApiToken();
+          if (curBase) connectRemoteScannerSse(curBase, curTok);
+        }
+      }, 2800);
+    }
+  }
+
+  function stopRemoteScannerBridge() {
+    if (remoteSse) {
+      try { remoteSse.close(); } catch (_) {}
+      remoteSse = null;
+    }
+    if (remotePollTimer) {
+      clearInterval(remotePollTimer);
+      remotePollTimer = null;
+    }
+    remoteBridgeStarted = false;
+  }
+
+  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    const bootBridge = function () {
+      setTimeout(function () {
+        startRemoteScannerBridge();
+      }, 250);
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bootBridge);
+    } else {
+      bootBridge();
+    }
+    window.addEventListener('mtp:api-online', startRemoteScannerBridge);
+  }
+
   return {
     isBusyField: isBusyField,
     cameraAvailable: cameraAvailable,
     onBarcodeScan: onBarcodeScan,
     triggerScan: triggerScan,
+    parseScanMultiplier: parseScanMultiplier,
+    handleRemoteScan: handleRemoteScan,
+    startRemoteScannerBridge: startRemoteScannerBridge,
+    stopRemoteScannerBridge: stopRemoteScannerBridge,
     openCameraScannerModal: openCameraScannerModal,
     closeCameraScannerModal: closeCameraScannerModal,
     submitManualCode: submitManualCode,

@@ -56,6 +56,12 @@ let cachedSecret = null;
 let cachedSecretDir = null;
 const revokedTokens = new Set();
 const sseClients = new Set();
+const scannerStreamClients = new Set();
+const recentScans = [];
+const MAX_RECENT_SCANS = 60;
+let lastScanSeq = 0;
+let cachedScannerPairCode = null;
+let cachedScannerPairDir = null;
 
 function sha256Hex(text) {
   return crypto.createHash('sha256').update(String(text), 'utf8').digest('hex');
@@ -188,16 +194,171 @@ function normalizeRole(role) {
   return 'Cajero';
 }
 
-function verifyCredentials(body, stateManager) {
+function getScannerPairCode(journal) {
+  const dir = journal && typeof journal.getDataDir === 'function' ? journal.getDataDir() : null;
+  if (cachedScannerPairCode && cachedScannerPairDir === dir) return cachedScannerPairCode;
+  if (dir) {
+    const pairFile = path.join(dir, 'scanner.pair');
+    try {
+      if (fs.existsSync(pairFile)) {
+        const existing = fs.readFileSync(pairFile, 'utf8').trim();
+        if (/^[A-Z0-9]{6}$/.test(existing)) {
+          cachedScannerPairCode = existing;
+          cachedScannerPairDir = dir;
+          return cachedScannerPairCode;
+        }
+      }
+      const code = String(crypto.randomInt ? crypto.randomInt(100000, 999999) : Math.floor(100000 + Math.random() * 900000));
+      fs.writeFileSync(pairFile, code, 'utf8');
+      cachedScannerPairCode = code;
+      cachedScannerPairDir = dir;
+      return cachedScannerPairCode;
+    } catch (e) {
+      // Fallback en memoria
+    }
+  }
+  const secret = getAuthSecret(journal);
+  cachedScannerPairCode = String((parseInt(sha256Hex(secret + ':pair').slice(0, 8), 16) % 900000) + 100000);
+  cachedScannerPairDir = dir;
+  return cachedScannerPairCode;
+}
+
+function matchesCatalogCode(item, q, qNoDash, qNumPad) {
+  if (!item) return false;
+  const c = String(item.code || '').trim().toUpperCase();
+  const cNoDash = c.replace(/-/g, '');
+  const bc = String(item.barcode || '').trim().toUpperCase();
+  const sku = String(item.sku || '').trim().toUpperCase();
+  const qr = String(item.qrCode || '').trim().toUpperCase();
+  if ((c && c === q) || (bc && bc === q) || (sku && sku === q) || (qr && qr === q)) return true;
+  if (cNoDash && cNoDash === qNoDash) return true;
+  if (c && ('0' + c) === q) return true;
+  if (/^[A-Z]+\d+$/.test(qNoDash)) {
+    const m = qNoDash.match(/^([A-Z]+)(\d+)$/);
+    if (m) {
+      const padded = m[1] + m[2].padStart(2, '0');
+      if (cNoDash === padded) return true;
+      const aliasMap = { EMP: 'EM', ARE: 'AR', ALM: 'AL', CAF: 'CA' };
+      if (aliasMap[m[1]] && cNoDash === (aliasMap[m[1]] + m[2].padStart(2, '0'))) return true;
+    }
+  }
+  if (qNumPad && c === ('EM' + qNumPad)) return true;
+  return false;
+}
+
+function formatCatalogMatch(item, kind, stateObj) {
+  const settings = (stateObj && stateObj.settings) || {};
+  const bcv = Number(settings.rateBcv) || 42.85;
+  const priceUsd = Number(item.priceUsd || 0);
+  const costUsd = Number(item.costUsd || 0);
+  const taxExempt = Boolean(item.taxExempt || item.iva === 'E' || item.taxType === 'E');
+  return {
+    found: true,
+    kind: kind,
+    id: item.id || '',
+    code: item.code || '',
+    barcode: item.barcode || '',
+    name: item.name || '',
+    familyId: item.familyId || '',
+    priceUsd: Number(priceUsd.toFixed(2)),
+    priceBs: Number((priceUsd * bcv).toFixed(2)),
+    costUsd: Number(costUsd.toFixed(2)),
+    stock: item.stock !== undefined && item.stock !== null ? Number(item.stock) : null,
+    minStock: item.minStock !== undefined && item.minStock !== null ? Number(item.minStock) : null,
+    unit: item.unit || 'und',
+    iva: taxExempt ? 'E' : (item.iva || 'G16'),
+    taxExempt: taxExempt,
+    sellable: kind !== 'insumo' && item.sellable !== false
+  };
+}
+
+function lookupCatalogItem(stateObj, rawCode, includeInsumos) {
+  const q = String(rawCode || '').trim().toUpperCase();
+  if (!q || !stateObj || typeof stateObj !== 'object') {
+    return { found: false, query: String(rawCode || '').trim() };
+  }
+  const qNoDash = q.replace(/-/g, '');
+  const qNumPad = /^\d{1,2}$/.test(q) ? q.padStart(2, '0') : '';
+
+  const variants = Array.isArray(stateObj.variants) ? stateObj.variants : [];
+  for (let i = 0; i < variants.length; i++) {
+    const v = variants[i];
+    if (v && v.active !== false && matchesCatalogCode(v, q, qNoDash, qNumPad)) {
+      return formatCatalogMatch(v, 'variant', stateObj);
+    }
+  }
+
+  const dishes = Array.isArray(stateObj.dishes) ? stateObj.dishes : [];
+  for (let i = 0; i < dishes.length; i++) {
+    const d = dishes[i];
+    if (d && d.active !== false && matchesCatalogCode(d, q, qNoDash, qNumPad)) {
+      return formatCatalogMatch(d, 'dish', stateObj);
+    }
+  }
+
+  const retailItems = Array.isArray(stateObj.retailItems) ? stateObj.retailItems : [];
+  for (let i = 0; i < retailItems.length; i++) {
+    const r = retailItems[i];
+    if (r && r.active !== false && r.sellable !== false && matchesCatalogCode(r, q, qNoDash, '')) {
+      return formatCatalogMatch(r, 'retail', stateObj);
+    }
+  }
+
+  const inventory = Array.isArray(stateObj.inventory) ? stateObj.inventory : [];
+  for (let i = 0; i < inventory.length; i++) {
+    const inv = inventory[i];
+    if (!inv || inv.active === false) continue;
+    const isSellable = inv.sellable === true || inv.type === 'venta';
+    if (!isSellable && !includeInsumos) continue;
+    if (matchesCatalogCode(inv, q, qNoDash, '')) {
+      return formatCatalogMatch(inv, isSellable ? 'retail' : 'insumo', stateObj);
+    }
+  }
+
+  return { found: false, query: String(rawCode || '').trim() };
+}
+
+function parseScannedCodeInput(rawCode, rawQty) {
+  const clean = String(rawCode || '').trim();
+  let code = clean;
+  let qty = Number(rawQty);
+  if (!isFinite(qty) || qty <= 0) qty = 1;
+  if (clean.indexOf('*') !== -1) {
+    const parts = clean.split('*');
+    const parsedMult = parseInt(parts[0], 10);
+    const rest = parts.slice(1).join('*').trim();
+    if (!isNaN(parsedMult) && parsedMult > 0 && rest) {
+      qty = parsedMult;
+      code = rest;
+    }
+  }
+  return { code: code, qty: Math.min(999, Math.max(1, qty)) };
+}
+
+function verifyCredentials(body, stateManager, journal) {
   const username = body && body.username ? String(body.username).trim().toLowerCase() : '';
   const pin = body && body.pin !== undefined && body.pin !== null ? String(body.pin).trim() : '';
   const pinHash = body && body.pinHash ? String(body.pinHash).trim() : '';
+  const pairCode = body && body.pairCode ? String(body.pairCode).trim().toUpperCase() : '';
   const isMobileAdmin = body && (body.clientApp === 'mobile-admin' || body.clientApp === 'mobile');
+  const isMobileScanner = body && body.clientApp === 'mobile-scanner';
+
+  if (isMobileScanner && pairCode && journal) {
+    const expectedPair = getScannerPairCode(journal);
+    if (pairCode === expectedPair) {
+      return {
+        ok: true,
+        paired: true,
+        user: { username: 'escaner-movil', name: 'Escáner Móvil', role: 'Cajero' }
+      };
+    }
+    return { ok: false, error: 'Código de emparejamiento inválido o expirado.' };
+  }
 
   if (!pin && !pinHash) {
     return { ok: false, error: 'Ingresa tu PIN de acceso.' };
   }
-  if (!username && !isMobileAdmin) {
+  if (!username && !isMobileAdmin && !isMobileScanner) {
     return { ok: false, error: 'Usuario y PIN son obligatorios.' };
   }
 
@@ -244,8 +405,36 @@ function verifyCredentials(body, stateManager) {
       if (hasActiveAdmin) {
         return { ok: false, error: 'PIN de Administrador incorrecto.' };
       }
+    } else if (isMobileScanner) {
+      // Escáner móvil: permite acceso por PIN a cualquier rol activo (Cajero, Encargado o Admin)
+      let hasActiveUser = false;
+      for (let i = 0; i < stateUsers.length; i++) {
+        const u = stateUsers[i];
+        if (!u || u.active === false) continue;
+        hasActiveUser = true;
+        if (matchesUserPin(u)) {
+          return {
+            ok: true,
+            user: { username: u.username, name: u.name || u.username, role: normalizeRole(u.role) }
+          };
+        }
+      }
+      if (hasActiveUser) {
+        return { ok: false, error: 'PIN incorrecto.' };
+      }
     }
     // También permitir usuarios semilla por defecto si aún no se han sincronizado todos
+  }
+
+  if (!username && isMobileScanner) {
+    const seedKeys = Object.keys(DEFAULT_SEED_USERS);
+    for (let sIdx = 0; sIdx < seedKeys.length; sIdx++) {
+      const seedUser = DEFAULT_SEED_USERS[seedKeys[sIdx]];
+      if ((pin && pin === seedUser.pin) || (pinHash && pinHash === sha256Hex(seedUser.pin))) {
+        return { ok: true, user: { username: seedUser.username, name: seedUser.username, role: normalizeRole(seedUser.role) } };
+      }
+    }
+    return { ok: false, error: 'PIN incorrecto.' };
   }
 
   const targetUser = username || 'admin';
@@ -362,8 +551,20 @@ function buildSseEventSummary(savedEvent, currentState) {
 }
 
 function broadcastSseEvent(eventName, dataObj) {
-  if (sseClients.size === 0) return;
   const payload = 'event: ' + eventName + '\ndata: ' + JSON.stringify(dataObj) + '\n\n';
+  if (sseClients.size > 0) {
+    sseClients.forEach(function (clientRes) {
+      try {
+        clientRes.write(payload);
+      } catch (e) {
+        sseClients.delete(clientRes);
+      }
+    });
+  }
+}
+
+function broadcastScannerEvent(scanObj) {
+  const payload = 'event: barcode_scan\ndata: ' + JSON.stringify(scanObj) + '\n\n';
   sseClients.forEach(function (clientRes) {
     try {
       clientRes.write(payload);
@@ -371,6 +572,46 @@ function broadcastSseEvent(eventName, dataObj) {
       sseClients.delete(clientRes);
     }
   });
+  scannerStreamClients.forEach(function (clientRes) {
+    try {
+      clientRes.write(payload);
+    } catch (e) {
+      scannerStreamClients.delete(clientRes);
+    }
+  });
+}
+
+function isLoopbackRequest(req) {
+  const addr = req && req.socket && req.socket.remoteAddress
+    ? String(req.socket.remoteAddress)
+    : (req && req.connection && req.connection.remoteAddress ? String(req.connection.remoteAddress) : '');
+  return addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
+}
+
+function resolveScannerAuth(req, query, body, secret, journal) {
+  const tok = extractBearerToken(req, query);
+  const tokenSession = tok ? verifyToken(tok, secret) : null;
+  if (tokenSession) {
+    return {
+      ok: true,
+      via: 'token',
+      session: {
+        sub: tokenSession.sub || 'usuario',
+        name: tokenSession.name || tokenSession.sub || 'Usuario',
+        role: normalizeRole(tokenSession.role)
+      }
+    };
+  }
+  const pairInput = (body && body.pairCode) || (query && (query.pair || query.pairCode)) || '';
+  const cleanPair = String(pairInput || '').trim().toUpperCase();
+  if (cleanPair && cleanPair === getScannerPairCode(journal)) {
+    return {
+      ok: true,
+      via: 'pairCode',
+      session: { sub: 'escaner-movil', name: 'Escáner Móvil', role: 'Cajero' }
+    };
+  }
+  return { ok: false, via: null, session: null };
 }
 
 function sendJson(res, statusCode, data, req) {
@@ -472,7 +713,7 @@ function handleApiRequest(req, res, journal, stateManager) {
   if (pathname === '/api/auth/login' && method === 'POST') {
     readJsonBody(req, function (err, body) {
       if (err) return sendJson(res, 400, { ok: false, error: err.message }, req);
-      const check = verifyCredentials(body, stateManager);
+      const check = verifyCredentials(body, stateManager, journal);
       if (!check.ok) {
         return sendJson(res, 401, { ok: false, error: check.error }, req);
       }
@@ -506,6 +747,171 @@ function handleApiRequest(req, res, journal, stateManager) {
     const tok = extractBearerToken(req, query);
     if (tok) revokedTokens.add(tok);
     return sendJson(res, 200, { ok: true }, req);
+  }
+
+  // 3b. GET /api/v1/scanner/info (Redes LAN + código de emparejamiento si es local o autenticado)
+  if (pathname === '/api/scanner/info' && method === 'GET') {
+    const net = getNetworkInfo(stateManager, req);
+    const scannerAuth = resolveScannerAuth(req, query, null, secret, journal);
+    const canExposePair = scannerAuth.ok || isLoopbackRequest(req);
+    const pairCode = canExposePair ? getScannerPairCode(journal) : null;
+    const basePrimary = net.primaryUrl || ('http://127.0.0.1:' + net.port);
+    const httpsPort = parseInt(process.env.HTTPS_PORT, 10) || 7443;
+    const scannerUrl = pairCode ? (basePrimary + '/escaner?pair=' + encodeURIComponent(pairCode)) : (basePrimary + '/escaner');
+    const toHttpsUrl = function (u) {
+      return String(u || '').replace(/^http:\/\//i, 'https://').replace(/:\d+$/, ':' + httpsPort);
+    };
+    const httpsPrimary = toHttpsUrl(basePrimary);
+    const httpsScannerUrl = pairCode ? (httpsPrimary + '/escaner?pair=' + encodeURIComponent(pairCode)) : (httpsPrimary + '/escaner');
+    const lanScannerUrls = (net.lanUrls || []).map(function (u) {
+      return pairCode ? (u + '/escaner?pair=' + encodeURIComponent(pairCode)) : (u + '/escaner');
+    });
+    const lanHttpsScannerUrls = (net.lanUrls || []).map(function (u) {
+      const hu = toHttpsUrl(u);
+      return pairCode ? (hu + '/escaner?pair=' + encodeURIComponent(pairCode)) : (hu + '/escaner');
+    });
+    return sendJson(res, 200, {
+      ok: true,
+      port: net.port,
+      httpsPort: httpsPort,
+      primaryUrl: basePrimary,
+      lanUrls: net.lanUrls || [],
+      tailscaleUrls: net.tailscaleUrls || [],
+      pairCode: pairCode,
+      pairedAccess: Boolean(pairCode),
+      scannerUrl: scannerUrl,
+      httpsScannerUrl: httpsScannerUrl,
+      lanScannerUrls: lanScannerUrls,
+      lanHttpsScannerUrls: lanHttpsScannerUrls,
+      lastScanSeq: lastScanSeq,
+      connectedScanners: scannerStreamClients.size + sseClients.size
+    }, req);
+  }
+
+  // 3c. GET /api/v1/scanner/stream (SSE exclusivo para recibir escaneos del teléfono en tiempo real)
+  if (pathname === '/api/scanner/stream' && method === 'GET') {
+    const streamAuth = resolveScannerAuth(req, query, null, secret, journal);
+    if (!streamAuth.ok && !isLoopbackRequest(req)) {
+      return sendJson(res, 401, { ok: false, error: 'Se requiere token o pairCode válido para suscribirse al escáner.' }, req);
+    }
+    const sseHeaders = buildCorsHeaders(req, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no'
+    });
+    res.writeHead(200, sseHeaders);
+    res.write(': connected scanSeq=' + lastScanSeq + '\n\n');
+    res.write('event: scanner_ready\ndata: ' + JSON.stringify({ lastScanSeq: lastScanSeq }) + '\n\n');
+
+    if (query.sinceSeq !== undefined) {
+      const replayFrom = parseInt(query.sinceSeq, 10) || 0;
+      for (let i = 0; i < recentScans.length; i++) {
+        if (recentScans[i] && recentScans[i].seq > replayFrom) {
+          res.write('event: barcode_scan\ndata: ' + JSON.stringify(recentScans[i]) + '\n\n');
+        }
+      }
+    }
+
+    scannerStreamClients.add(res);
+    const scanKeepalive = setInterval(function () {
+      try {
+        res.write(': ping ' + Date.now() + '\n\n');
+      } catch (e) {
+        clearInterval(scanKeepalive);
+        scannerStreamClients.delete(res);
+      }
+    }, 25000);
+    if (scanKeepalive.unref) scanKeepalive.unref();
+
+    req.on('close', function () {
+      clearInterval(scanKeepalive);
+      scannerStreamClients.delete(res);
+    });
+    return;
+  }
+
+  // 3d. GET /api/v1/scanner/poll (Polling de respaldo + consulta puntual ?lookup=CODIGO)
+  if (pathname === '/api/scanner/poll' && method === 'GET') {
+    const pollAuth = resolveScannerAuth(req, query, null, secret, journal);
+    if (!pollAuth.ok && !isLoopbackRequest(req)) {
+      return sendJson(res, 401, { ok: false, error: 'No autorizado para consultar el escáner.' }, req);
+    }
+    const sinceSeq = parseInt(query.sinceSeq || '0', 10) || 0;
+    const scans = [];
+    for (let i = 0; i < recentScans.length; i++) {
+      if (recentScans[i] && recentScans[i].seq > sinceSeq) {
+        scans.push(recentScans[i]);
+      }
+    }
+    const stateObj = stateManager && typeof stateManager.getState === 'function' ? stateManager.getState() : {};
+    const settings = (stateObj && stateObj.settings) || {};
+    let lookupResult = null;
+    if (query.lookup) {
+      const parsedLookup = parseScannedCodeInput(query.lookup, query.qty);
+      const found = lookupCatalogItem(stateObj, parsedLookup.code, query.includeInsumos === '1');
+      lookupResult = Object.assign({ qty: parsedLookup.qty, query: parsedLookup.code }, found);
+    }
+    return sendJson(res, 200, {
+      ok: true,
+      lastSeq: lastScanSeq,
+      rateBcv: Number(settings.rateBcv) || 42.85,
+      scans: scans,
+      lookup: lookupResult
+    }, req);
+  }
+
+  // 3e. POST /api/v1/scanner/scan (Recibe lectura de cámara o manual desde el teléfono y la transmite al POS)
+  if (pathname === '/api/scanner/scan' && method === 'POST') {
+    readJsonBody(req, function (err, body) {
+      if (err) return sendJson(res, 400, { ok: false, error: err.message }, req);
+      const scanAuth = resolveScannerAuth(req, query, body, secret, journal);
+      if (!scanAuth.ok) {
+        return sendJson(res, 401, { ok: false, error: 'Inicia sesión o usa el enlace QR/código de emparejamiento válido.' }, req);
+      }
+      const parsed = parseScannedCodeInput(body && body.code, body && body.qty);
+      if (!parsed.code) {
+        return sendJson(res, 400, { ok: false, error: 'El código de barras no puede estar vacío.' }, req);
+      }
+      const mode = String((body && body.mode) || 'POS_ADD').trim().toUpperCase();
+      const isLookupOnly = mode === 'LOOKUP';
+      const includeInsumos = isLookupOnly || mode === 'INVENTORY_FILL' || Boolean(body && body.includeInsumos);
+      const stateObj = stateManager && typeof stateManager.getState === 'function' ? stateManager.getState() : {};
+      const match = lookupCatalogItem(stateObj, parsed.code, includeInsumos);
+      const seq = isLookupOnly ? lastScanSeq : ++lastScanSeq;
+
+      const scanRecord = {
+        id: 'scan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        seq: seq,
+        code: parsed.code,
+        rawCode: String((body && body.code) || '').trim(),
+        qty: parsed.qty,
+        mode: mode,
+        format: String((body && body.format) || 'manual').trim(),
+        device: String((body && body.device) || 'Teléfono').trim(),
+        target: String((body && body.target) || 'pos').trim(),
+        scannedBy: scanAuth.session ? scanAuth.session.name : 'Escáner Móvil',
+        at: new Date().toISOString(),
+        match: match
+      };
+
+      if (!isLookupOnly) {
+        recentScans.push(scanRecord);
+        while (recentScans.length > MAX_RECENT_SCANS) {
+          recentScans.shift();
+        }
+        broadcastScannerEvent(scanRecord);
+      }
+
+      return sendJson(res, 200, {
+        ok: true,
+        seq: lastScanSeq,
+        broadcasted: !isLookupOnly,
+        scan: scanRecord,
+        match: match
+      }, req);
+    });
+    return;
   }
 
   // Autenticación obligatoria para endpoints protegidos
@@ -889,5 +1295,9 @@ module.exports = {
   sendJson: sendJson,
   readJsonBody: readJsonBody,
   buildCorsHeaders: buildCorsHeaders,
-  verifyToken: verifyToken
+  verifyToken: verifyToken,
+  lookupCatalogItem: lookupCatalogItem,
+  getScannerPairCode: getScannerPairCode,
+  parseScannedCodeInput: parseScannedCodeInput,
+  broadcastScannerEvent: broadcastScannerEvent
 };
