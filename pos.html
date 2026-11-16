@@ -25,6 +25,7 @@
         </div>
         <div class="topbar-right">
           <span class="topbar-rate-pill" id="topRatePill">BCV: —</span>
+          <span class="topbar-rate-pill" id="topFiscalPill" title="Estado del comprobante en Caja" style="cursor:pointer" onclick="location.href='admin/ajustes.html'">Nota interna</span>
           <button type="button" class="btn btn-secondary btn-sm" id="btnOpenTodayTickets"
             onclick="window.MTPPos && window.MTPPos.openTodayTicketsModal()"
             title="Ver cobros realizados hoy, métodos de pago y vueltos entregados">🧾 Tickets del Día</button>
@@ -397,6 +398,14 @@
       const newProdBtn = document.getElementById('btnPosQuickNewProduct');
       if (newProdBtn && !canManage) {
         newProdBtn.style.display = 'none';
+      }
+      const fiscPill = document.getElementById('topFiscalPill');
+      if (fiscPill && window.MTP && MTP.state && MTP.state.settings && MTP.state.settings.fiscal) {
+        const fc = MTP.state.settings.fiscal;
+        const connected = Boolean(fc.serialNumber && fc.mode && fc.mode !== 'INTERNO');
+        fiscPill.textContent = connected ? ('Fiscal: ' + fc.serialNumber) : 'Nota interna';
+        fiscPill.style.background = connected ? '#ECFDF5' : '';
+        fiscPill.style.color = connected ? '#065F46' : '';
       }
     });
 

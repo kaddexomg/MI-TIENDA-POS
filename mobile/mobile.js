@@ -544,9 +544,11 @@
     var todayStr = now.toISOString().slice(0, 10);
     var weekMs = now.getTime() - (7 * 86400000);
     var monthStr = todayStr.slice(0, 7);
+    var yearStr = todayStr.slice(0, 4);
 
     function inPeriod(iso) {
       if (!iso) return false;
+      if (period === 'YEAR') return iso.slice(0, 4) === yearStr;
       if (period === 'MONTH') return iso.slice(0, 7) === monthStr;
       if (period === 'WEEK') {
         var t = Date.parse(iso);
@@ -665,8 +667,8 @@
     var pmPending = extractPagoMovilList().filter(function (p) { return p.verifyStatus === 'PENDIENTE'; });
     var aiSum = (state.aiInsights && state.aiInsights.summary) ? state.aiInsights.summary : null;
 
-    var periodBtns = ['TODAY', 'WEEK', 'MONTH'].map(function (p) {
-      var lbl = p === 'TODAY' ? 'Hoy' : (p === 'WEEK' ? '7 Días' : 'Este Mes');
+    var periodBtns = ['TODAY', 'WEEK', 'MONTH', 'YEAR'].map(function (p) {
+      var lbl = p === 'TODAY' ? 'Hoy' : (p === 'WEEK' ? '7 Días' : (p === 'MONTH' ? 'Este Mes' : 'Este Año'));
       return '<button type="button" class="chip-btn ' + (state.livePeriod === p ? 'active' : '') + '" data-period="' + p + '">' + lbl + '</button>';
     }).join('');
 
@@ -704,18 +706,22 @@
         }).join('')
       : '<div class="list-item" style="text-align:center;color:var(--txt-3)">Sin ventas registradas en este periodo.</div>';
 
+    var lowStockCount = ((state.appState && state.appState.inventory) || []).filter(function (i) {
+      return Number(i.stock) <= Number(i.minStock);
+    }).length;
+
     root.innerHTML =
-      '<div class="sec-head"><div><h2 class="sec-head-title">Mi Día</h2><p class="sec-head-sub">Resumen en tiempo real de tu negocio</p></div><span class="pill pill-blue tabular-nums">' + sum.orders + ' órdenes</span></div>' +
+      '<div class="sec-head"><div><h2 class="sec-head-title">Mis Números</h2><p class="sec-head-sub">Resumen en tiempo real de tu negocio</p></div><span class="pill pill-blue tabular-nums">' + sum.orders + ' ventas</span></div>' +
       offlineHtml +
       '<div class="filter-row" id="livePeriodBar">' + periodBtns + '</div>' +
       '<div class="kpi-grid">' +
-        '<div class="kpi-card tone-green"><div class="kpi-tag">Vendido</div><div class="kpi-val tabular-nums">' + fmtUsd(sum.totalUsd) + '</div><div class="kpi-sub tabular-nums">' + fmtBs(sum.totalBs) + '</div></div>' +
-        '<div class="kpi-card tone-blue"><div class="kpi-tag">Gaveta USD / Bs</div><div class="kpi-val tabular-nums">' + fmtUsd(sum.cashUsd) + '</div><div class="kpi-sub tabular-nums">' + fmtBs(sum.cashBs) + '</div></div>' +
-        '<div class="kpi-card tone-amber"><div class="kpi-tag">Pago Móvil Pend.</div><div class="kpi-val tabular-nums">' + pmPending.length + '</div><div class="kpi-sub">' + (pmPending.length ? 'Desliza a la derecha' : 'Todo verificado') + '</div></div>' +
-        '<div class="kpi-card tone-red"><div class="kpi-tag">Salud IA / Gastos</div><div class="kpi-val tabular-nums">' + (aiSum ? (aiSum.healthScore + '/100') : fmtUsd(sum.expUsd)) + '</div><div class="kpi-sub tabular-nums">Gastos: ' + fmtUsd(sum.expUsd) + '</div></div>' +
+        '<div class="kpi-card tone-green"><div class="kpi-tag">Vendí</div><div class="kpi-val tabular-nums">' + fmtUsd(sum.totalUsd) + '</div><div class="kpi-sub tabular-nums">' + fmtBs(sum.totalBs) + '</div></div>' +
+        '<div class="kpi-card tone-blue"><div class="kpi-tag">Tengo en gaveta</div><div class="kpi-val tabular-nums">' + fmtUsd(sum.cashUsd) + '</div><div class="kpi-sub tabular-nums">' + fmtBs(sum.cashBs) + '</div></div>' +
+        '<div class="kpi-card tone-red"><div class="kpi-tag">Gasté</div><div class="kpi-val tabular-nums">' + fmtUsd(sum.expUsd) + '</div><div class="kpi-sub tabular-nums">' + (aiSum ? ('Salud IA ' + aiSum.healthScore + '/100') : 'Compras y gastos') + '</div></div>' +
+        '<div class="kpi-card tone-amber"><div class="kpi-tag">Se acaba / PM</div><div class="kpi-val tabular-nums">' + lowStockCount + ' / ' + pmPending.length + '</div><div class="kpi-sub">' + (pmPending.length ? (pmPending.length + ' Pago Móvil pend.') : 'Todo al día') + '</div></div>' +
       '</div>' +
       '<div class="quick-actions-row cols-3">' +
-        '<button type="button" id="quickScannerPosBtn" class="quick-tile"><span class="quick-tile-ico" style="background:var(--blue-soft);color:var(--blue-txt)">📷</span><span>Escáner POS</span></button>' +
+        '<button type="button" id="quickScannerPosBtn" class="quick-tile"><span class="quick-tile-ico" style="background:var(--blue-soft);color:var(--blue-txt)">📷</span><span>Escáner Auto</span></button>' +
         '<button type="button" id="quickAddProdBtn" class="quick-tile"><span class="quick-tile-ico" style="background:var(--emerald-soft);color:var(--emerald-txt)">+</span><span>Nuevo Producto</span></button>' +
         '<button type="button" id="quickVerifyPmBtn" class="quick-tile"><span class="quick-tile-ico" style="background:var(--amber-soft);color:var(--amber-txt)">' + pmPending.length + '</span><span>Verificar Pagos</span></button>' +
       '</div>' +
@@ -726,7 +732,13 @@
     if (vpsBtn) vpsBtn.addEventListener('click', openServerSettingsSheet);
 
     var qScan = document.getElementById('quickScannerPosBtn');
-    if (qScan) qScan.addEventListener('click', function () { openBarcodeScannerSheet({ mode: 'POS_ADD' }); });
+    if (qScan) qScan.addEventListener('click', function () {
+      if (state.serverOnline && window.location && window.location.protocol !== 'file:') {
+        window.location.href = 'scanner.html';
+      } else {
+        openBarcodeScannerSheet({ mode: 'POS_ADD' });
+      }
+    });
 
     var qAdd = document.getElementById('quickAddProdBtn');
     if (qAdd) qAdd.addEventListener('click', function () { openProductSheet(null); });

@@ -1,6 +1,6 @@
 # AGENTS.md — Contexto Maestro, Indexación Completa y Bitácora de MI-TIENDA-POS
 
-> **Actualizado**: 13 de Noviembre de 2026 (`19:10 VET`) — **Versión 8.3.0 (Densidad Compacta, Atajos de Familia, Pool Gemini Real, Fotos de Producto con IA, Pago Móvil verificado por SMS y Cáscara Viva Móvil APK 1.1.0)**
+> **Actualizado**: 16 de Noviembre de 2026 (`16:20 VET`) — **Versión 8.4.0 ("Flujo Simple" Material 3 + Liquid Morph, Escáner Pistola Universal HTTPS LAN, Mis Números anual, Máquina Fiscal guiada, APK 1.2.0 e Instalador Win7)**
 > **Arquitectura Activa**: Ver [docs/ARQUITECTURA.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/docs/ARQUITECTURA.md) y archivo histórico en [`docs/archivo/`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/docs/archivo/)
 > **Propósito**: Define las reglas de negocio gastronómicas y comerciales venezolanas, la indexación total del proyecto, la separación estricta de inventario (Ingredientes de Cocina vs. Mercancía de Venta Directa), la facturación con IVA 16% Venezolano e IGTF 3%, el menú simplificado de 5 opciones para el dueño, las 47 fotografías reales verificadas 100% offline y la suite de pruebas automatizadas.
 
@@ -297,3 +297,11 @@
     - **Servidor**: `/mobile/index.html`, `/mobile/mobile.css`, `/mobile/mobile.js` y `/mobile/brand-icon.png` se sirven con `Cache-Control: no-cache`; probado con Chrome headless (login visible, `Conectado · Red de Tienda`).
     - **APK**: `MI-TIENDA-ADMIN.apk` versión 1.1.0 (versionCode 2), 425 KB, firmado y verificado; se instala una sola vez y las próximas mejoras de `mobile/` se ven sin recompilar.
     - **Llaves**: siguen fuera del repo; el APK no lleva ninguna. Cada servidor (PC o VPS) usa su propio `ia-config.json` en `MTP_DATA_DIR`.
+
+19. **✅ v8.4.0 — FLUJO SIMPLE, ESCÁNER PISTOLA UNIVERSAL, MIS NÚMEROS, FISCAL GUIADO Y FIX LAN/HTTPS (16 de Noviembre de 2026)**:
+    - **Escáner pistola universal (`F1`)**: `POST /api/v1/scanner/context` + modo `AUTO` según pantalla activa (`pos` / `inventario` / `gastos`), QR offline (`assets/js/ui/qr.js` + `assets/js/vendor/qrcode.js`) y HTTPS local en puerto `7443`.
+    - **Venta, Inventario, Gastos y Piel M3 (`F2, F3, F4, F8`)**: guía de 3 pasos en Caja, Kardex en lenguaje cotidiano (*Qué entró · Qué salió · Qué queda*), KPI *Gasté hoy*, tokens Material 3 + Liquid Morph.
+    - **Mis números (`F5`)**: [`admin/index.html`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/admin/index.html) con selector **Hoy · Esta semana · Este mes · Este año**, 6 cifras claras y gráfico SVG `renderDailySvgChart()`.
+    - **Máquina fiscal guiada (`F6`)**: asistente *"¿Tienes máquina fiscal conectada?"* con prueba de conexión en [`admin/ajustes.html`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/admin/ajustes.html) y pastilla de estado en [`pos.html`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/pos.html).
+    - **Móvil v1.2.0 (`F7`)**: *Mis Números* con filtro anual, botón **Escáner Auto** y [`MI-TIENDA-ADMIN.apk`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/MI-TIENDA-ADMIN.apk) v1.2.0 (`versionCode=3`).
+    - **Fix crítico LAN + HTTPS en Desktop (`F9`)**: [`desktop/main.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/desktop/main.js) ahora escucha en `0.0.0.0:7070` y levanta HTTPS en `0.0.0.0:7443`; [`tools/installer.iss`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tools/installer.iss) abre TCP `7070,7443` en el Firewall de Windows. Instalador [`dist/Instalar-MI-TIENDA-POS.exe`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/dist/Instalar-MI-TIENDA-POS.exe) (`68.28 MB`) compilado y verificado.

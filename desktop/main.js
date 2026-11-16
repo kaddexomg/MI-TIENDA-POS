@@ -78,6 +78,7 @@ const APP_VERSION = (() => {
 
 let mainWindow = null;
 let httpServer = null;
+let httpsServer = null;
 let serverPort = 0;
 let dataDir = '';
 let backupsDir = '';
@@ -198,20 +199,19 @@ function startEmbeddedServer() {
       process.env.MTP_DATA_DIR = dataDir;
 
       const serverPath = path.join(APP_ROOT, 'server', 'server.js');
+      const sslPath = path.join(APP_ROOT, 'server', 'ssl.js');
       const journalPath = path.join(APP_ROOT, 'server', 'journal.js');
       const statePath = path.join(APP_ROOT, 'server', 'state.js');
 
       const serverModule = require(serverPath);
+      const sslModule = require(sslPath);
+      const https = require('https');
       journalModule = require(journalPath);
       stateModule = require(statePath);
 
       httpServer = serverModule.createServer();
-      httpServer.once('error', (err) => {
-        reject(err);
-      });
 
-      // Puerto 0 sobre loopback 127.0.0.1: evita conflictos de puerto fijo y alertas de Firewall/ACL en Win7
-      httpServer.listen(0, '127.0.0.1', () => {
+      const onHttpListening = () => {
         const addr = httpServer.address();
         serverPort = addr && typeof addr.port === 'number' ? addr.port : 0;
         if (!serverPort) {
@@ -219,9 +219,41 @@ function startEmbeddedServer() {
           return;
         }
         process.env.PORT = String(serverPort);
-        writeLog('INFO', 'Servidor embebido iniciado en http://127.0.0.1:' + serverPort + ' | MTP_DATA_DIR=' + dataDir);
+        writeLog('INFO', 'Servidor embebido iniciado en http://0.0.0.0:' + serverPort + ' | MTP_DATA_DIR=' + dataDir);
+
+        // Iniciar también listener HTTPS en 7443 para que el escáner móvil por Wi-Fi abra la cámara
+        try {
+          const httpsPort = parseInt(process.env.HTTPS_PORT, 10) || 7443;
+          const creds = sslModule.getOrCreateSslCredentials(dataDir);
+          httpsServer = https.createServer(creds, (req, res) => {
+            httpServer.emit('request', req, res);
+          });
+          httpsServer.on('error', (err) => {
+            writeLog('WARN', 'No se pudo abrir HTTPS (' + httpsPort + '): ' + err.message);
+          });
+          httpsServer.listen(httpsPort, '0.0.0.0', () => {
+            process.env.HTTPS_PORT = String(httpsPort);
+            writeLog('INFO', 'Escáner Cámara Segura HTTPS activo en https://0.0.0.0:' + httpsPort + '/escaner');
+          });
+        } catch (sslErr) {
+          writeLog('WARN', 'HTTPS local no iniciado: ' + sslErr.message);
+        }
+
         resolve(serverPort);
+      };
+
+      const preferredPort = parseInt(process.env.PORT, 10) || 7070;
+      httpServer.once('error', (err) => {
+        if (err && (err.code === 'EADDRINUSE' || err.code === 'EACCES')) {
+          writeLog('WARN', 'Puerto ' + preferredPort + ' ocupado (' + err.code + '), usando puerto automático...');
+          httpServer.once('error', reject);
+          httpServer.listen(0, '0.0.0.0', onHttpListening);
+          return;
+        }
+        reject(err);
       });
+
+      httpServer.listen(preferredPort, '0.0.0.0', onHttpListening);
     } catch (err) {
       reject(err);
     }
@@ -653,8 +685,15 @@ function shutdownEmbeddedServer() {
     writeLog('ERROR', 'Error cerrando journal al salir: ' + err.message);
   }
   try {
+    if (httpsServer) {
+      httpsServer.close();
+      httpsServer = null;
+    }
+  } catch (_) {}
+  try {
     if (httpServer) {
       httpServer.close();
+      httpServer = null;
     }
   } catch (_) {}
 }

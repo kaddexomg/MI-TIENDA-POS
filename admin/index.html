@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Análisis Financiero, Ingresos, Gastos y Dashboard | MI TIENDA POS</title>
+  <title>Mis números | MI TIENDA POS</title>
   <link rel="stylesheet" href="../assets/css/tokens.css">
   <link rel="stylesheet" href="../assets/css/app.css">
   <style>
@@ -28,8 +28,8 @@
         <div class="topbar-left">
           <button class="menu-toggle" id="menuToggleBtn">☰</button>
           <div class="topbar-title">
-            <h2 id="dashStoreHeading">Mi día — cómo va el negocio</h2>
-            <p id="dashStoreSub">Lo que vendiste, lo que ganaste, lo que hay en la gaveta y qué se está acabando</p>
+            <h2 id="dashStoreHeading">Mis números</h2>
+            <p id="dashStoreSub">Tu negocio en cifras claras: hoy, esta semana, este mes o este año</p>
           </div>
         </div>
         <div class="topbar-right">
@@ -46,6 +46,7 @@
           <button class="v7-period-btn active" data-period="TODAY">Hoy</button>
           <button class="v7-period-btn" data-period="WEEK">Esta semana</button>
           <button class="v7-period-btn" data-period="MONTH">Este mes</button>
+          <button class="v7-period-btn" data-period="YEAR">Este año</button>
           <span class="v7-period-note" id="periodNote">Los números de abajo son de hoy.</span>
         </div>
 
@@ -57,6 +58,19 @@
 
         <!-- ALERTAS EN VIVO: PAGO MÓVIL POR VERIFICAR + ASISTENTE IA -->
         <div id="dashLiveAlerts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px;margin-bottom:12px"></div>
+
+        <!-- VENTAS POR DÍA (semana / mes) O POR MES (año): SVG puro, sin librerías -->
+        <div class="card card-interactive" data-section="dinero" id="dailyChartCard" style="display:none;margin-bottom:12px">
+          <div class="card-hd">
+            <h3>
+              <span id="chartDailyIcon"></span> <span id="chartDailyTitle">Ventas por día</span>
+            </h3>
+            <span class="badge badge-green tabular-nums" id="chartDailyTotal">$0.00</span>
+          </div>
+          <div class="card-bd">
+            <div class="svg-chart-wrap" id="chartDailyWrap"></div>
+          </div>
+        </div>
 
         <!-- GRÁFICOS INTERACTIVOS NATIVOS SVG (0% GPU / WINDOWS 7) -->
         <div class="grid-2-asym" style="margin-bottom:12px">
@@ -215,6 +229,7 @@
         if (el) el.innerHTML = MTPIcons.get(name, { size: 15 });
       };
       setIco('chartHourlyIcon', 'chart');
+      setIco('chartDailyIcon', 'chart');
       setIco('chartPaymentsIcon', 'cash');
       setIco('chartProfitIcon', 'kitchen');
       setIco('drawerCashIcon', 'bank');
@@ -229,6 +244,7 @@
     function periodLabel() {
       if (dashboardPeriod === 'WEEK') return 'Esta semana';
       if (dashboardPeriod === 'MONTH') return 'Este mes';
+      if (dashboardPeriod === 'YEAR') return 'Este año';
       return 'Hoy';
     }
 
@@ -259,8 +275,11 @@
 
       const cashIco = window.MTPIcons ? MTPIcons.get('cash', { size: 16 }) : '';
       const kitchenIco = window.MTPIcons ? MTPIcons.get('kitchen', { size: 16 }) : '';
-      const wasteIco = window.MTPIcons ? MTPIcons.get('waste', { size: 16 }) : '';
       const chartIco = window.MTPIcons ? MTPIcons.get('chart', { size: 16 }) : '';
+      const bankIco = window.MTPIcons ? MTPIcons.get('bank', { size: 16 }) : '';
+      const outflowIco = window.MTPIcons ? MTPIcons.get('outflow', { size: 16 }) : '';
+      const receiptIco = window.MTPIcons ? MTPIcons.get('receipt', { size: 16 }) : '';
+      const alertIco = window.MTPIcons ? MTPIcons.get('alert', { size: 16 }) : '';
 
       const kpiEl = document.getElementById('mainFinancialKpis');
       if (kpiEl) {
@@ -268,49 +287,78 @@
         const profitVal = Number(fin.netOperatingProfitUsd) || 0;
         const drawerVal = Number(fin.netDrawerUsd) || 0;
         const ivaVal = Number(fin.ivaUsd || 0) || 0;
+        const spentVal = Number(fin.totalExpensesUsd) || 0;
+        const lowStock = (MTP.state.inventory || []).filter(i => Number(i.stock) <= Number(i.minStock));
+        const lowNames = lowStock.slice(0, 3).map(i => i.name).join(', ');
 
+        // LAS 6 CIFRAS DEL DUEÑO, cada una con enlace directo a su pantalla.
         kpiEl.innerHTML = `
-          <div class="stat-card tone-in">
+          <a class="stat-card tone-in" href="cierres.html" title="Ver el cuadre del día">
             <div class="stat-ico green">${cashIco}</div>
             <div>
-              <div class="stat-l">${periodLabel()} vendí</div>
+              <div class="stat-l">Vendí</div>
               <div class="stat-n tabular-nums money-in">${MTP.fmtUSD(grossVal)}</div>
-              <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(fin.grossSalesUsd * bcv)} · ${fin.ordersCount} ventas</div>
+              <div class="stat-sub tabular-nums">${periodLabel()} · ${MTP.fmtBsRaw(grossVal * bcv)} · ${fin.ordersCount} ventas</div>
+              <div class="stat-sub" style="color:var(--money-in-hover);font-weight:var(--fw-bold)">Ver cuadre del día →</div>
             </div>
-          </div>
+          </a>
 
-          <div class="stat-card tone-cash">
+          <a class="stat-card tone-cash" href="precios.html" title="Revisar precios y márgenes">
             <div class="stat-ico yellow">${kitchenIco}</div>
             <div>
-              <div class="stat-l">${periodLabel()} gané</div>
+              <div class="stat-l">Gané</div>
               <div class="stat-n tabular-nums money-bs">${profitVal >= 0 ? '+' : ''}${MTP.fmtUSD(profitVal)}</div>
-              <div class="stat-sub tabular-nums">después del costo y de los gastos</div>
+              <div class="stat-sub tabular-nums">${periodLabel()} · después del costo y de los gastos</div>
+              <div class="stat-sub" style="color:var(--action-hover);font-weight:var(--fw-bold)">Revisar precios →</div>
             </div>
-          </div>
+          </a>
 
-          <div class="stat-card tone-info">
-            <div class="stat-ico blue">${chartIco}</div>
+          <a class="stat-card tone-info" href="cierres.html" title="Contar el dinero de la gaveta">
+            <div class="stat-ico blue">${bankIco}</div>
             <div>
               <div class="stat-l">Tengo en la gaveta</div>
               <div class="stat-n tabular-nums">${MTP.fmtUSD(drawerVal)}</div>
               <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(fin.netDrawerBs)} · pago móvil ${MTP.fmtBsRaw(fin.netBankPmBs)}</div>
+              <div class="stat-sub" style="color:var(--info-hover);font-weight:var(--fw-bold)">Contar billetes y monedas →</div>
             </div>
-          </div>
+          </a>
 
-          <div class="stat-card tone-out">
-            <div class="stat-ico red">${wasteIco}</div>
+          <a class="stat-card tone-out" href="facturas.html" title="Ver compras y gastos">
+            <div class="stat-ico red">${outflowIco}</div>
             <div>
-              <div class="stat-l">IVA que se pagó de 16%</div>
-              <div class="stat-n tabular-nums money-out">${MTP.fmtUSD(ivaVal)}</div>
-              <div class="stat-sub tabular-nums">${MTP.fmtBsRaw((fin.ivaUsd || 0) * bcv)}${fin.igtfUsd > 0 ? ' · IGTF ' + MTP.fmtUSD(fin.igtfUsd) : ''}</div>
+              <div class="stat-l">Gasté</div>
+              <div class="stat-n tabular-nums money-out">${MTP.fmtUSD(spentVal)}</div>
+              <div class="stat-sub tabular-nums">${periodLabel()} · ${MTP.fmtBsRaw(spentVal * bcv)} · ${(fin.expenses || []).length} compras y gastos</div>
+              <div class="stat-sub" style="color:var(--money-out-hover);font-weight:var(--fw-bold)">Ver compras y gastos →</div>
             </div>
-          </div>
+          </a>
+
+          <a class="stat-card tone-cash" href="ajustes.html" title="Ver ajustes de impuestos">
+            <div class="stat-ico yellow">${receiptIco}</div>
+            <div>
+              <div class="stat-l">IVA cobrado</div>
+              <div class="stat-n tabular-nums">${MTP.fmtUSD(ivaVal)}</div>
+              <div class="stat-sub tabular-nums">${MTP.fmtBsRaw(ivaVal * bcv)}${fin.igtfUsd > 0 ? ' · IGTF ' + MTP.fmtUSD(fin.igtfUsd) : ''} · el 16% que cobraste de más</div>
+              <div class="stat-sub" style="color:var(--action-hover);font-weight:var(--fw-bold)">Ver ajustes de impuestos →</div>
+            </div>
+          </a>
+
+          <a class="stat-card ${lowStock.length ? 'tone-out' : 'tone-in'}" href="inventario.html" title="Ver lo que queda en la tienda">
+            <div class="stat-ico ${lowStock.length ? 'red' : 'green'}">${alertIco}</div>
+            <div>
+              <div class="stat-l">Se está acabando</div>
+              <div class="stat-n tabular-nums ${lowStock.length ? 'money-out' : 'money-in'}">${lowStock.length}</div>
+              <div class="stat-sub">${lowStock.length ? esc(lowNames) : 'todo bien de stock'}</div>
+              <div class="stat-sub" style="color:${lowStock.length ? 'var(--money-out-hover)' : 'var(--money-in-hover)'};font-weight:var(--fw-bold)">Ver inventario →</div>
+            </div>
+          </a>
         `;
       }
 
       renderDashboardQuestions(fin);
       renderLivePmAndAiAlerts(fin);
       renderHourlySvgChart();
+      renderDailySvgChart(fin);
       renderPaymentsSvgChart(fin);
       renderKitchenVsRetailCompare(fin);
       renderDrawerCashBreakdown(fin);
@@ -539,6 +587,75 @@
           </svg>
         `;
       }
+    }
+
+    function renderDailySvgChart(fin) {
+      const card = document.getElementById('dailyChartCard');
+      const wrap = document.getElementById('chartDailyWrap');
+      const titleEl = document.getElementById('chartDailyTitle');
+      const totalEl = document.getElementById('chartDailyTotal');
+      if (!card || !wrap) return;
+
+      if (dashboardPeriod === 'TODAY') {
+        card.style.display = 'none';
+        return;
+      }
+      card.style.display = '';
+      const isYear = dashboardPeriod === 'YEAR';
+      if (titleEl) titleEl.textContent = isYear ? 'Ventas por mes (este año)' : 'Ventas por día';
+
+      const sales = (fin && fin.sales) || [];
+      const bucketMap = {};
+      let maxVal = 1;
+      let totalPeriod = 0;
+
+      sales.forEach(s => {
+        if (!s || s.voided || !s.createdAt) return;
+        const dStr = MTP.toLocalDateIso ? MTP.toLocalDateIso(s.createdAt) : String(s.createdAt).slice(0, 10);
+        const key = isYear ? dStr.slice(0, 7) : dStr;
+        const amt = Number(s.totalUsd || 0);
+        totalPeriod += amt;
+        bucketMap[key] = (bucketMap[key] || 0) + amt;
+        if (bucketMap[key] > maxVal) maxVal = bucketMap[key];
+      });
+
+      if (totalEl) totalEl.textContent = `${MTP.fmtUSD(totalPeriod)} (${sales.length} ventas)`;
+
+      const keys = Object.keys(bucketMap).sort();
+      if (!keys.length) {
+        wrap.innerHTML = '<div style="text-align:center;padding:32px 10px;color:var(--txt-3);font-size:13px">Sin ventas en este periodo</div>';
+        return;
+      }
+
+      const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const slotW = Math.max(38, Math.floor(600 / keys.length));
+      const chartW = Math.max(520, keys.length * slotW + 50);
+      const chartH = 200;
+      const barW = Math.min(44, Math.max(16, slotW - 10));
+
+      const barsSvg = keys.map((k, i) => {
+        const val = bucketMap[k];
+        const barH = Math.max(8, Math.round((val / maxVal) * 126));
+        const x = 32 + i * slotW + Math.floor((slotW - barW) / 2);
+        const y = chartH - 32 - barH;
+        const label = isYear ? (monthNames[Number(k.slice(5, 7)) - 1] || k.slice(5, 7)) : k.slice(8, 10) + '/' + k.slice(5, 7);
+        return `
+          <g>
+            <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="6" fill="var(--money-in)" opacity="0.88">
+              <title>${k}: ${MTP.fmtUSD(val)}</title>
+            </rect>
+            <text x="${x + barW / 2}" y="${y - 5}" text-anchor="middle" font-size="10" font-weight="700" fill="#0F172A">$${Math.round(val)}</text>
+            <text x="${x + barW / 2}" y="${chartH - 14}" text-anchor="middle" font-size="10" font-weight="600" fill="#475569">${label}</text>
+          </g>
+        `;
+      }).join('');
+
+      wrap.innerHTML = `
+        <svg viewBox="0 0 ${chartW} ${chartH}" style="width:100%;height:auto;display:block" role="img" aria-label="Ventas por periodo">
+          <line x1="25" y1="${chartH - 32}" x2="${chartW - 10}" y2="${chartH - 32}" stroke="#CBD5E1" stroke-width="1.5"/>
+          ${barsSvg}
+        </svg>
+      `;
     }
 
     function renderPaymentsSvgChart(fin) {

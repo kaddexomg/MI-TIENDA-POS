@@ -192,6 +192,20 @@
             </div>
           </div>
           <div class="card-bd">
+            <!-- ASISTENTE GUIADO F6: ¿TIENES MÁQUINA FISCAL? -->
+            <div id="fiscalWizardBox" style="background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:12px;padding:12px 14px;margin-bottom:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+                <strong style="font-size:14px;color:#0F172A">🧾 ¿Tienes máquina fiscal conectada?</strong>
+                <span class="badge badge-blue" id="fiscWizardStatusPill">Nota interna (sin máquina)</span>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnFiscHasNo" onclick="setFiscalWizardHasMachine(false)">No, uso nota interna (impresora normal)</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnFiscHasYes" onclick="setFiscalWizardHasMachine(true)">Sí, tengo máquina fiscal SENIAT</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnFiscTestConn" onclick="testFiscalConnection()" style="margin-left:auto">🔌 Probar conexión</button>
+              </div>
+              <div id="fiscTestResult" style="font-size:12.5px;color:#334155;display:none;padding:8px 10px;border-radius:8px;background:#fff;border:1px solid #E2E8F0"></div>
+            </div>
+
             <div class="form-grid" style="margin-bottom:12px">
               <div class="form-group">
                 <label>Marca / Fabricante Homologado</label>
@@ -620,6 +634,7 @@
       if (document.getElementById('fiscThermalWidthSelect')) document.getElementById('fiscThermalWidthSelect').value = fc.thermalWidth || '80mm';
       syncThemeSelector();
       if (document.getElementById('fiscApplyIgtfCheck')) document.getElementById('fiscApplyIgtfCheck').checked = Boolean(s.isContribuyenteEspecial);
+      if (typeof updateFiscalWizardPill === 'function') updateFiscalWizardPill();
 
       const termsBody = document.getElementById('terminalsTableBody');
       if (termsBody) {
@@ -762,6 +777,73 @@
       });
       MTP.toast(val ? 'URL remota para móvil guardada.' : 'URL remota limpiada.');
       loadMobileConnectionInfo();
+    }
+
+    function setFiscalWizardHasMachine(hasMachine) {
+      const modeEl = document.getElementById('fiscModeSelect');
+      const serialEl = document.getElementById('fiscSerialInput');
+      if (!hasMachine) {
+        if (modeEl) modeEl.value = 'INTERNO';
+        if (serialEl) serialEl.value = '';
+        saveFiscalConfigForm();
+        updateFiscalWizardPill();
+        return;
+      }
+      if (modeEl && modeEl.value === 'INTERNO') modeEl.value = 'DUAL';
+      if (serialEl) serialEl.focus();
+      updateFiscalWizardPill();
+      MTP.toast('Paso 2: Elige la marca, escribe el serial real de la máquina y pulsa Probar conexión.', 'info');
+    }
+
+    function updateFiscalWizardPill() {
+      const pill = document.getElementById('fiscWizardStatusPill');
+      if (!pill) return;
+      const serial = (document.getElementById('fiscSerialInput')?.value || '').trim();
+      const mode = document.getElementById('fiscModeSelect')?.value || 'INTERNO';
+      if (serial && mode !== 'INTERNO') {
+        pill.textContent = `Máquina fiscal (${serial})`;
+        pill.className = 'badge badge-green';
+      } else {
+        pill.textContent = 'Nota interna (sin máquina)';
+        pill.className = 'badge badge-blue';
+      }
+    }
+
+    async function testFiscalConnection() {
+      const resBox = document.getElementById('fiscTestResult');
+      const serial = (document.getElementById('fiscSerialInput')?.value || '').trim();
+      const mode = document.getElementById('fiscModeSelect')?.value || 'INTERNO';
+      const brand = document.getElementById('fiscBrandSelect')?.value || 'THE_FACTORY_HKA';
+      const port = document.getElementById('fiscPortSelect')?.value || 'COM1';
+      if (!resBox) return;
+      resBox.style.display = 'block';
+
+      if (mode === 'INTERNO' || !serial) {
+        resBox.style.borderColor = '#93C5FD';
+        resBox.style.background = '#EFF6FF';
+        resBox.innerHTML = 'ℹ️ <strong>Modo Nota Interna activo.</strong> No necesitas máquina fiscal para cobrar ni imprimir recibos en tu impresora térmica normal. Si tienes una máquina fiscal, selecciona <em>"Sí, tengo máquina fiscal SENIAT"</em> y escribe su serial real.';
+        return;
+      }
+
+      if (window.MTPDesktop && typeof window.MTPDesktop.testFiscalPort === 'function') {
+        try {
+          const r = await window.MTPDesktop.testFiscalPort({ brand, port, serial });
+          if (r && r.ok) {
+            resBox.style.borderColor = '#86EFAC';
+            resBox.style.background = '#F0FDF4';
+            resBox.innerHTML = `✅ <strong>Máquina fiscal conectada</strong> (${brand} en ${port}, serial ${serial}).`;
+            return;
+          }
+          resBox.style.borderColor = '#FCA5A5';
+          resBox.style.background = '#FEF2F2';
+          resBox.innerHTML = `❌ <strong>No respondió en ${port}.</strong> ${(r && r.error) || 'Revisa que el cable USB/Serial esté conectado y la impresora encendida.'}`;
+          return;
+        } catch (e) { /* fallback abajo */ }
+      }
+
+      resBox.style.borderColor = '#FCD34D';
+      resBox.style.background = '#FFFBEB';
+      resBox.innerHTML = `⚠️ <strong>Configuración lista (${brand} · ${port} · Serial ${serial})</strong>, pero el puerto físico no se puede probar desde el navegador. Ábrelo desde el programa instalado en Windows o revisa el cable en ${port}.`;
     }
 
     function saveFiscalConfigForm() {

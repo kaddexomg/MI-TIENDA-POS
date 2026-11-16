@@ -63,4 +63,6 @@ Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{a
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\resources\app\assets\img\brand-icon.ico"; Tasks: desktopicon
 
 [Run]
+Filename: "netsh"; Parameters: "advfirewall firewall delete rule name=""MI-TIENDA-POS"""; Flags: runhidden; StatusMsg: "Configurando red local..."
+Filename: "netsh"; Parameters: "advfirewall firewall add rule name=""MI-TIENDA-POS"" dir=in action=allow protocol=TCP localport=7070,7443 profile=any"; Flags: runhidden; StatusMsg: "Abriendo puertos de escáner móvil (7070 y 7443)..."
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
