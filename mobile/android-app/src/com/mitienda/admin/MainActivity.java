@@ -230,7 +230,12 @@ public class MainActivity extends Activity {
         fallbackDone = false;
         remoteLiveReady = false;
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        final String serverUrl = normalizeBase(prefs.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL));
+        String rawServer = prefs.getString(KEY_SERVER_URL, "").trim();
+        if (rawServer.isEmpty() || rawServer.contains("192.168.1.100") || rawServer.equals("http://localhost")) {
+            rawServer = DEFAULT_SERVER_URL;
+            prefs.edit().putString(KEY_SERVER_URL, DEFAULT_SERVER_URL).apply();
+        }
+        final String serverUrl = normalizeBase(rawServer);
         boolean useRemote = prefs.getBoolean(KEY_USE_REMOTE_UI, true);
 
         if (!useRemote || serverUrl.isEmpty()) {
@@ -504,7 +509,11 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String getServerUrl() {
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-            return prefs.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL);
+            String raw = prefs.getString(KEY_SERVER_URL, "").trim();
+            if (raw.isEmpty() || raw.contains("192.168.1.100") || raw.equals("http://localhost")) {
+                return DEFAULT_SERVER_URL;
+            }
+            return normalizeBase(raw);
         }
 
         /** Guarda la dirección apenas el dueño la configura (no espera al login). */
