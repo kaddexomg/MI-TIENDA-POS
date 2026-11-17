@@ -720,9 +720,10 @@
         '<div class="kpi-card tone-red"><div class="kpi-tag">Gasté</div><div class="kpi-val tabular-nums">' + fmtUsd(sum.expUsd) + '</div><div class="kpi-sub tabular-nums">' + (aiSum ? ('Salud IA ' + aiSum.healthScore + '/100') : 'Compras y gastos') + '</div></div>' +
         '<div class="kpi-card tone-amber"><div class="kpi-tag">Se acaba / PM</div><div class="kpi-val tabular-nums">' + lowStockCount + ' / ' + pmPending.length + '</div><div class="kpi-sub">' + (pmPending.length ? (pmPending.length + ' Pago Móvil pend.') : 'Todo al día') + '</div></div>' +
       '</div>' +
-      '<div class="quick-actions-row cols-3">' +
+      '<div class="quick-actions-row cols-4">' +
         '<button type="button" id="quickScannerPosBtn" class="quick-tile"><span class="quick-tile-ico" style="background:var(--blue-soft);color:var(--blue-txt)">📷</span><span>Escáner Auto</span></button>' +
         '<button type="button" id="quickAddProdBtn" class="quick-tile"><span class="quick-tile-ico" style="background:var(--emerald-soft);color:var(--emerald-txt)">+</span><span>Nuevo Producto</span></button>' +
+        '<button type="button" id="quickAddExpBtn" class="quick-tile"><span class="quick-tile-ico" style="background:var(--red-soft);color:var(--red-txt)">💸</span><span>Anotar Gasto</span></button>' +
         '<button type="button" id="quickVerifyPmBtn" class="quick-tile"><span class="quick-tile-ico" style="background:var(--amber-soft);color:var(--amber-txt)">' + pmPending.length + '</span><span>Verificar Pagos</span></button>' +
       '</div>' +
       alertsHtml +
@@ -742,6 +743,9 @@
 
     var qAdd = document.getElementById('quickAddProdBtn');
     if (qAdd) qAdd.addEventListener('click', function () { openProductSheet(null); });
+
+    var qExp = document.getElementById('quickAddExpBtn');
+    if (qExp) qExp.addEventListener('click', function () { switchTab('control', true); });
 
     var qPm = document.getElementById('quickVerifyPmBtn');
     if (qPm) qPm.addEventListener('click', function () { switchTab('pagomovil', true); });

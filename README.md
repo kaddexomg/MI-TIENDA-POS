@@ -1,6 +1,6 @@
 # MI-TIENDA-POS — Sistema POS Integral, Journal Anti-Apagones y Control Comercial
 
-> **Versión**: 8.0.0 (Arquitectura Centralizada, Rediseño Apple Light & Instalador Nativo Windows 7 SP1)  
+> **Versión**: 8.4.0 — "Flujo Simple" (Escáner pistola universal, venta en 3 pasos, Mis Números hoy/semana/mes/año, máquina fiscal guiada, piel Material 3 + Liquid Morph, APK 1.2.0)  
 > **Compatibilidad**: Windows 7 SP1 (32 y 64 bits), Windows 8.1, Windows 10, Windows 11, Linux, macOS  
 > **Requisitos Mínimos**: 2 GB de RAM, Procesador Dual-Core x86/x64, Pantalla 1024×768 o superior  
 > **Entorno**: 100% Offline-Ready con persistencia dual (Journal transaccional append-only + LocalStorage hidratado) y shell nativo Electron 22 ia32 / Chromium 108.
@@ -9,7 +9,16 @@
 
 ## 1. ¿Qué es MI-TIENDA-POS?
 
-**MI-TIENDA-POS** es un sistema de punto de venta, control de inventario y facturación legal diseñado específicamente para la realidad operativa y comercial de Venezuela. Resuelve de manera unificada las necesidades de negocios híbridos gastronómicos y comerciales:
+**MI-TIENDA-POS** es un sistema de punto de venta, control de inventario y facturación legal diseñado específicamente para la realidad operativa y comercial de Venezuela.
+
+**Novedades v8.4.0 (16-nov-2026) — pensadas para que una persona sin experiencia use el sistema sin perderse:**
+- **Teléfono como pistola inalámbrica**: enlace fijo + QR. Modos 🖥️ Automático (sigue la pantalla abierta en la PC), 🛒 Vender, 📦 Inventario y 🔍 Consultar. El modo automático, si la PC está en Caja, suma al ticket; si está en Inventario, entra como mercancía recibida.
+- **Venta en 3 pasos visibles** en la Caja: ① Escanea o toca el producto → ② Cobra (F2) → ③ Entrega vuelto y ticket.
+- **Mis números**: hoy / esta semana / este mes / este año, con 6 cifras grandes (Vendí, Gané, Tengo en la gaveta, Gasté, IVA cobrado, Se está acabando).
+- **Inventario en lenguaje de dueño**: "Qué entró · Qué salió · Qué queda", "Llegó mercancía" guiado (unidad o bulto/caja), "Gasté hoy".
+- **Máquina fiscal guiada**: asistente "¿Tienes máquina fiscal?" con prueba honesta de conexión; modo Nota Interna siempre disponible.
+- **Piel Material 3 + Liquid Morph** en versión clara, sin neón, con efecto de vidrio simulado en Windows 7 para no perder rendimiento.
+- **Enlace permanente** del escáner en la PC: `http://<IP>:7070/escaner` y cámara segura en `https://<IP>:7443/escaner`. Resuelve de manera unificada las necesidades de negocios híbridos gastronómicos y comerciales:
 
 1. **Restaurante / Comida Rápida Criolla**: Venta de empanadas, pastelitos andinos, tequeños, papas rellenas, arepas venezolanas, almuerzos (pabellón criollo, arroz chino, pollo frito) y cafetería.
 2. **Minimercado / Abasto / Bodega**: Venta directa de víveres empaquetados (Harina P.A.N. blanca/amarilla, arroz Primor, pasta larga, margarina Mavesa), chucherías (Pepito, Cheetos, Cheese Tris, Doritos, Samba), refrescos, maltas, cervezas frías (Polar Pilsen, Zulia, Solera Verde) y cigarros.

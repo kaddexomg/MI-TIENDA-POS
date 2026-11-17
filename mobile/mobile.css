@@ -540,6 +540,21 @@ input, select, textarea {
   font-size: 12px;
 }
 
+/* 4 accesos grandes del dueño: Escáner / Producto / Gasto / Verificar Pagos */
+.quick-actions-row.cols-4 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.quick-actions-row.cols-4 .quick-tile {
+  flex-direction: column;
+  text-align: center;
+  padding: 12px 8px;
+  gap: 6px;
+  font-size: 12.5px;
+  min-height: 84px;
+  border-radius: 18px;
+}
+
 .quick-tile {
   display: flex;
   align-items: center;
