@@ -881,6 +881,7 @@
     setVpsUrl: setVpsUrl,
     getVpsUrl: function () { return vpsUrl; },
     getBaseUrl: function () { return baseUrl; },
+    getActiveBaseUrl: function () { return baseUrl; },
     generateLocalId: generateLocalId
   };
 

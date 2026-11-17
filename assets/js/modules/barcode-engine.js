@@ -137,8 +137,10 @@
 
   function resolveApiBaseUrl() {
     if (typeof window === 'undefined') return '';
-    if (window.MTPApiClient && typeof window.MTPApiClient.getActiveBaseUrl === 'function') {
-      const u = window.MTPApiClient.getActiveBaseUrl();
+    if (window.MTPApiClient) {
+      const u = typeof window.MTPApiClient.getActiveBaseUrl === 'function'
+        ? window.MTPApiClient.getActiveBaseUrl()
+        : (typeof window.MTPApiClient.getBaseUrl === 'function' ? window.MTPApiClient.getBaseUrl() : '');
       if (u) return String(u).replace(/\/+$/, '');
     }
     if (window.location && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
