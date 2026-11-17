@@ -1567,7 +1567,6 @@
           onDetect: function (code) {
             var bcInput = document.getElementById('pBarcode');
             if (bcInput) bcInput.value = code;
-            window.MTPMobileScanner.playBeep('ok');
             closeInlineScanner();
             showToast('Código capturado: ' + code);
           }
@@ -2108,8 +2107,8 @@
       if (fl) { fl.classList.add('flash'); setTimeout(function () { fl.classList.remove('flash'); }, 240); }
 
       var localHit = findLocalCatalogItem(clean);
-      if (window.MTPMobileScanner) {
-        window.MTPMobileScanner.playBeep(localHit ? 'ok' : 'warn');
+      if (formatName && formatName.indexOf('photo') === 0 && window.MTPMobileScanner) {
+        window.MTPMobileScanner.playBeep('ok');
       }
 
       if (scanState.mode === 'INVENTORY') {

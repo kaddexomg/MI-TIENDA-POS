@@ -1188,9 +1188,9 @@
           }
 
           setConnPill(true, 'En línea');
-          flashSuccessEffect();
-          if (window.MTPMobileScanner) {
-            window.MTPMobileScanner.playBeep(data.match && data.match.found ? 'ok' : 'warn');
+          // El pitido de escaneo físico ya sonó en el milisegundo 0 al detectar la cámara
+          if (opts.format && opts.format.indexOf('photo') === 0 && window.MTPMobileScanner) {
+            window.MTPMobileScanner.playBeep('ok');
           }
 
           // El servidor resuelve el modo AUTO según la pantalla abierta en la PC
@@ -1261,6 +1261,7 @@
           },
           onDetect: function (code, meta) {
             if (state.paused) return;
+            flashSuccessEffect();
             sendCodeToServer(code, { format: (meta && meta.format) || 'camera' });
           }
         });

@@ -360,7 +360,7 @@
         }
       }
     }
-    return out.length > 0 ? out : null;
+    return out.length >= 2 ? out : null;
   }
 
   function decodeCode128FromRuns(runs) {
@@ -483,14 +483,17 @@
       if (r.length > 0 && v === 1 && (runs.length % 2 === 0)) {
         r = r.slice(1);
       }
-      var c128 = decodeCode128FromRuns(r);
-      if (c128) return { code: c128, format: 'code_128' };
-
+      // PRIORIDAD 1: EAN-13 (estándar en 99% de productos venezolanos con checksum estricto)
       var e13 = decodeEan13FromRuns(r, strictChecksum);
       if (e13) return { code: e13, format: 'ean_13' };
 
+      // PRIORIDAD 2: EAN-8 (productos pequeños / confitería)
       var e8 = decodeEan8FromRuns(r, strictChecksum);
       if (e8) return { code: e8, format: 'ean_8' };
+
+      // PRIORIDAD 3: Code 128 (etiquetas internas / alfanuméricas)
+      var c128 = decodeCode128FromRuns(r);
+      if (c128) return { code: c128, format: 'code_128' };
     }
     return null;
   }
@@ -682,17 +685,26 @@
   var nativeDetector = null;
   var lastStatusCb = null;
   var lastDetectCb = null;
+  var cachedAudioEl = null;
+
+  // Audio WAV pre-renderizado (2.650 Hz · 65 ms · 22.05 kHz) para fallback infalible en Android WebView
+  var BEEP_WAV_BASE64 = 'UklGRlYLAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YTILAAAAAIYB4QPKA7gAVvsj9V3zhvsbCoQTIRF6Bm/4xOnV4ubulQrqIPsh1xFR+2LjM9NY3KsBuygeNFYiAQTQ4j3HDsep7/8nf0TqNmsSTOjjwJayedbHHJJPrU10JVL0K8UGqojA3wWYRnBUSjQ1BG/Tl67qshHtCjZDVq5BDRS44oS3Vavz1d4gSlKbTKcjdPKYw9KpgMLMCC5I4VObMlYCsNHOrTa08O9BOFZWNkAyEuTgR7boq4PYjCMTU31L1yGY8AzCs6mMxLcLr0lBU+YwdwD1zxWtl7XV8mc6VVa2PlYQEd8WtZCsINsvJsZTUkoFILvuiMCnqanGnQ4bS5BSLS+Y/j7ObKwOt731ezw/Vi49eQ5A3fKzTq3I3cYoY1QbSTEe4OwMv7Cp18h/EXJMzlFwLbr8jMzUq5m4qfh9PhVWnjucDHHb2bIirnvgTyvrVNhHXBwF65i9zakWy1wUs039UK8r2/reyk2rOrqY+2xA2VUIOr4KpdnOsQuvOePMLV1Vi0aFGivpLbz/qWbNMhfeTh1Q6yn9+DbJ2aruu4f+SUKJVWs44Ajb19GwC7D/5TowuVUzRa4YUefMukaqxc8AGvRPLk8kKB/3lMd2qra9eAERRCZVyTYCBxTW4q8hsc3omTIAVtJD1BZ65XS5oqoz0sYc9FAxTlomQfX3xSaqk79nBMVFslQhNSQFUNQCr0yyo+vpNDJWZ0L6FKPjJ7gUq7DUhB/dUSZNjiRj82HE6qmCwVYHZkcrVHMzRQOP0jGujbOA7ig3T1bzQB8TzuHktpyrOdc3IrFSDUy/Iobx0cLAqYTDQgrxSJNTwTFnAdLQb63ktGLxVjlYVnc/RBH63621OazQ2d8kb1PpSu4gqe9JwaqpmMUqDWhK6lIKMIj/Gc++rFC2SPRzO0xW8z1nDyjegrTsrHPcfCcXVLhJGx/N7cm/qam+xw8QyUsxUk8uqf1kzR6s0bcz9389LVZnPIsNWNxks7WtId8MKqpUe0hHHfLrUb68qfXJ7hIVTWhRkCzK+7XLj6tnuSD6dz/5VdQ6rQuL2lKylK7Z4Y8sJlUzR3EbF+rhvOOpPMzIFUtOj1DOKuz5CsoRqxG7D/1dQbNVOznPCb/YTrGJr5vkBS+NVeFFmhk+6Hu7IKqUzpoYbE+nTwgpDvhkyKWq0Lz//y9DWlWbN/EH99ZYsJOwZedrMd9VhETBF2XmHrpyqvrQZBt2ULFOQCcw9sTGTKqivvAC7kTuVPU1EwYx1XCvtLE36sMzHFYeQ+gVjuTMuNmqcNMmHmtRrU10JVL0K8UGqojA3wWYRnBUSjQ1BG/Tl67qshHtCjZDVq5BDRS44oS3Vavz1d4gSlKbTKcjdPKYw9KpgMLMCC5I4VObMlYCsNHOrTa08O9BOFZWNkAyEuTgR7boq4PYjCMTU31L1yGY8AzCs6mMxLcLr0lBU+YwdwD1zxWtl7XV8mc6VVa2PlYQEd8WtZCsINsvJsZTUkoFILvuiMCnqanGnQ4bS5BSLS+Y/j7ObKwOt731ezw/Vi49eQ5A3fKzTq3I3cYoY1QbSTEe4OwMv7Cp18h/EXJMzlFwLbr8jMzUq5m4qfh9PhVWnjucDHHb2bIirnvgTyvrVNhHXBwF65i9zakWy1wUs039UK8r2/reyk2rOrqY+2xA2VUIOr4KpdnOsQuvOePMLV1Vi0aFGivpLbz/qWbNMhfeTh1Q6yn9+DbJ2aruu4f+SUKJVWs44Ajb19GwC7D/5TowuVUzRa4YUecBu8uqNdCvGb5OvU1KJ1b3HckOrey/agFjQYlRSzSrBjzYQbSrtTXqYS9EUBg/KxV85wO/nrEW1j8amEnYRqIiVPbyy0GzmsbpA709r0qwLoAE39mPuam8au6ILetJvjjdEe/nQcN2uKTbWxo4RA5APR6b9QnPkLkPzfUFxDnYQ1EpngLJ2wy/icM28korekOVMtYOqui6x02/3eAGGqU+YjkdGir1ZNL3v0fTjQd9NQk9LyQEAfndtMRJypf1qCj2PJ4sFgyu6W3MHsa75UAZ4zjZMkEWAvUA1nHGPdmyCO0wRTZMH7L/b+CDyuLQi/inJWU23CadCfrqVdHlzD3qDBj3MnQsqhIj9dzZ+8zt3mQJGCySL6kaqf4r43fQUNcR+0kiyS9QIW0Hjexy1pzTXu5tFuUsNyZZD4z19t2P01LkowkCJ/MoSBbo/SvmjNaO3Sf9lB4qKf0bhQVo7sDbQNoc8mMUtCYmIE4MPfZO4inaaelwCbAhayIoEnD9b+m93JfjzP6KGooi5BblA4nwPOHK4HX18xFoIEEaigk39+DmxeAt7swIKBz/G0wOQf317AjjZun//zEW7xsHEo0C8fLl5jXnZfggDwUajhQOB3n4q+te55vyuAduFrMVtApa/b3wZ+n37sEAixFcFWgNfQGf9bbsfu3q+usLkhMMD9gEA/qu8O/trvY2BocQiQ9gB7z9xPTY70T0EQGfDNcOCAm2AJL4rfKe8wT9WggSDcAJ6gLU++X1dPRk+kgEeQqECVIEZv4L+Vb2SvnuAG8HYwjoBDgAyvvG+JH5r/5uBIoGqwREAe39T/vn+rr98AFHBKgDiQFY/4/93PwE/loAAgIEAgkBAgBF//7+Uv/r/y0A';
 
   function unlockAudio() {
     try {
       if (typeof window === 'undefined') return;
       var Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      if (!audioCtx) audioCtx = new Ctx();
-      if (audioCtx.state === 'suspended' && typeof audioCtx.resume === 'function') {
+      if (Ctx && !audioCtx) audioCtx = new Ctx();
+      if (audioCtx && audioCtx.state === 'suspended' && typeof audioCtx.resume === 'function') {
         audioCtx.resume().catch(function () {});
       }
-      if (!audioUnlocked && audioCtx.state === 'running') {
+      if (!cachedAudioEl && typeof Audio !== 'undefined') {
+        try {
+          cachedAudioEl = new Audio('data:audio/wav;base64,' + BEEP_WAV_BASE64);
+          cachedAudioEl.volume = 1.0;
+        } catch (eAud) {}
+      }
+      if (!audioUnlocked && audioCtx && audioCtx.state === 'running') {
         var buf = audioCtx.createBuffer(1, 1, 22050);
         var src = audioCtx.createBufferSource();
         src.buffer = buf;
@@ -737,60 +749,72 @@
   }
 
   function playBeep(kind) {
-    try {
-      if (typeof window === 'undefined') return;
-      unlockAudio();
-      var Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      if (!audioCtx) audioCtx = new Ctx();
-
-      var emitTone = function () {
-        try {
-          var now = audioCtx.currentTime;
-          if (kind === 'err' || kind === 'warn') {
-            [0, 0.11].forEach(function (offset) {
-              var osc = audioCtx.createOscillator();
-              var gain = audioCtx.createGain();
-              osc.type = 'sawtooth';
-              osc.frequency.setValueAtTime(320, now + offset);
-              gain.gain.setValueAtTime(0.12, now + offset);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.085);
-              osc.connect(gain);
-              gain.connect(audioCtx.destination);
-              osc.start(now + offset);
-              osc.stop(now + offset + 0.09);
-            });
-          } else {
-            // Pitido nítido tipo pistola láser de supermercado
-            var oscOk = audioCtx.createOscillator();
-            var gainOk = audioCtx.createGain();
-            oscOk.type = 'triangle';
-            oscOk.frequency.setValueAtTime(2150, now);
-            oscOk.frequency.exponentialRampToValueAtTime(2650, now + 0.065);
-            gainOk.gain.setValueAtTime(0.18, now);
-            gainOk.gain.exponentialRampToValueAtTime(0.001, now + 0.085);
-            oscOk.connect(gainOk);
-            gainOk.connect(audioCtx.destination);
-            oscOk.start(now);
-            oscOk.stop(now + 0.09);
-          }
-        } catch (innerErr) {}
-      };
-
-      if (audioCtx.state === 'suspended' && typeof audioCtx.resume === 'function') {
-        audioCtx.resume().then(emitTone).catch(function () {});
-      } else {
-        emitTone();
-      }
-    } catch (e) {}
-
+    // 1. Respuesta táctil (vibración corta estilo escáner físico de mano)
     try {
       if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
-        window.AndroidBridge.vibrate(kind === 'err' ? 120 : 45);
+        window.AndroidBridge.vibrate(kind === 'err' ? 120 : 40);
       } else if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate(kind === 'err' ? [70, 50, 70] : 40);
       }
     } catch (e2) {}
+
+    // 2. Respuesta acústica: auténtico BEEP de pistola láser (2.650 Hz · 65 ms)
+    try {
+      if (typeof window === 'undefined') return;
+      unlockAudio();
+      var played = false;
+
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) {
+        if (!audioCtx) audioCtx = new Ctx();
+        if (audioCtx.state === 'suspended' && typeof audioCtx.resume === 'function') {
+          audioCtx.resume().catch(function () {});
+        }
+        if (audioCtx.state === 'running') {
+          var now = audioCtx.currentTime;
+          if (kind === 'err' || kind === 'warn') {
+            // Tono grave doble para error
+            [0, 0.09].forEach(function (offset) {
+              var osc = audioCtx.createOscillator();
+              var gain = audioCtx.createGain();
+              osc.type = 'sawtooth';
+              osc.frequency.setValueAtTime(340, now + offset);
+              gain.gain.setValueAtTime(0.20, now + offset);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.07);
+              osc.connect(gain);
+              gain.connect(audioCtx.destination);
+              osc.start(now + offset);
+              osc.stop(now + offset + 0.075);
+            });
+            played = true;
+          } else {
+            // Pitido nítido clásico de pistola láser de caja (2.650 Hz seco y penetrante)
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(2650, now);
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.068);
+            played = true;
+          }
+        }
+      }
+
+      // Fallback infalible con elemento Audio HTML5 (para WebView Android si Web Audio está bloqueado)
+      if (!played && kind !== 'err' && kind !== 'warn') {
+        if (!cachedAudioEl && typeof Audio !== 'undefined') {
+          cachedAudioEl = new Audio('data:audio/wav;base64,' + BEEP_WAV_BASE64);
+        }
+        if (cachedAudioEl) {
+          cachedAudioEl.currentTime = 0;
+          cachedAudioEl.play().catch(function () {});
+        }
+      }
+    } catch (e) {}
   }
 
   function ensureCanvas(w, h) {
@@ -893,16 +917,38 @@
     onStatus({ ok: true, state: 'starting', message: 'Iniciando cámara...' });
 
     try {
+      // Configuración de cámara optimizada para arranque instantáneo (< 300 ms) sin trabar drivers en Android
+      var videoConstraints = {
+        facingMode: opts.facingMode || currentFacingMode
+      };
+      if (opts.width || opts.height) {
+        if (opts.width) videoConstraints.width = opts.width;
+        if (opts.height) videoConstraints.height = opts.height;
+      } else {
+        videoConstraints.width = { ideal: 1280 };
+        videoConstraints.height = { ideal: 720 };
+      }
+
       var constraints = {
-        video: {
-          facingMode: { ideal: opts.facingMode || currentFacingMode },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
+        video: videoConstraints,
         audio: false
       };
-      currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      try {
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (errConstraint) {
+        // Fallback inmediato sin restricciones de resolución para máxima compatibilidad
+        currentStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: currentFacingMode },
+          audio: false
+        });
+      }
+
       currentVideo = videoEl;
+      videoEl.setAttribute('autoplay', '');
+      videoEl.setAttribute('playsinline', '');
+      videoEl.setAttribute('webkit-playsinline', '');
+      videoEl.muted = true;
       videoEl.srcObject = currentStream;
       if (typeof videoEl.play === 'function') {
         await videoEl.play().catch(function () {});
@@ -928,6 +974,12 @@
       });
 
       var busy = false;
+      var candidateCode = '';
+      var candidateFormat = '';
+      var candidateHits = 0;
+      var candidateFirstSeen = 0;
+      var REQUIRED_CONSENSUS = 2; // Requiere 2 lecturas consecutivas idénticas (consenso anti-alucinaciones)
+
       currentInterval = setInterval(async function () {
         if (busy || !currentVideo || !currentStream) return;
         busy = true;
@@ -936,21 +988,62 @@
           var now = Date.now();
           if (hit && hit.code) {
             missedFramesForLock = 0;
-            // Si el mismo código sigue frente a la cámara, NO volver a escanearlo hasta que salga del encuadre
-            if (hit.code === activeLockedCode) {
+            var detectedCode = String(hit.code).trim();
+
+            // Si el código actual sigue siendo el que ya fue procesado y está bloqueado:
+            if (detectedCode === activeLockedCode) {
               lastCodeAt = now;
-            } else if (hit.code !== lastCode || (now - lastCodeAt) > cooldownMs) {
-              activeLockedCode = hit.code;
-              lastCode = hit.code;
-              lastCodeAt = now;
-              onDetect(hit.code, hit);
+              candidateHits = 0;
+              candidateCode = '';
+            } else {
+              // Comprobar ventana de consenso multi-frame (anti-alucinación y anti-mutación)
+              if (detectedCode === candidateCode && (now - candidateFirstSeen) <= 450) {
+                candidateHits += 1;
+              } else {
+                candidateCode = detectedCode;
+                candidateFormat = hit.format || 'camera';
+                candidateHits = 1;
+                candidateFirstSeen = now;
+              }
+
+              // El motor nativo de Android ya valida internamente; para el motor 1D puro se exigen 2 cuadros idénticos
+              var isNative = hit.format && (hit.format !== 'code_128' && hit.format !== 'ean_13' && hit.format !== 'ean_8');
+              var isConsensusReached = candidateHits >= REQUIRED_CONSENSUS || (isNative && candidateHits >= 1);
+
+              if (isConsensusReached) {
+                candidateCode = '';
+                candidateHits = 0;
+
+                // Verificar debounce / cooldown
+                if (detectedCode !== lastCode || (now - lastCodeAt) > cooldownMs) {
+                  activeLockedCode = detectedCode;
+                  lastCode = detectedCode;
+                  lastCodeAt = now;
+
+                  // 1. Pitido láser instantáneo tipo pistola Zebra / Honeywell a latencia cero
+                  playBeep('ok');
+
+                  // 2. Disparar callback de detección
+                  onDetect(detectedCode, {
+                    code: detectedCode,
+                    format: candidateFormat || hit.format || 'camera',
+                    timestamp: now
+                  });
+                }
+              }
             }
-          } else if (activeLockedCode) {
-            missedFramesForLock += 1;
-            // Requiere ~6 frames (~800ms) sin ver el código para desbloquear y permitir re-escanear si se vuelve a acercar
-            if (missedFramesForLock >= 6 && (now - lastCodeAt) >= 700) {
-              activeLockedCode = '';
-              missedFramesForLock = 0;
+          } else {
+            // Fotograma vacío (sin código detectado)
+            candidateHits = 0;
+            candidateCode = '';
+
+            if (activeLockedCode) {
+              missedFramesForLock += 1;
+              // Si pasaron al menos 4 fotogramas vacíos (~500ms) desde la última vista, desbloquear
+              if (missedFramesForLock >= 4 && (now - lastCodeAt) >= 500) {
+                activeLockedCode = '';
+                missedFramesForLock = 0;
+              }
             }
           }
         } catch (frameErr) {
