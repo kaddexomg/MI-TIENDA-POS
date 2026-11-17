@@ -387,17 +387,24 @@
   }
 
   function loginSingleEndpoint(targetUrl, tokenKeyTarget, username, pin) {
-    if (!targetUrl) return Promise.resolve({ ok: false });
+    if (!targetUrl || !pin) return Promise.resolve({ ok: false });
+    var bodyPayload = { pin: String(pin) };
+    if (username) {
+      bodyPayload.username = username;
+    } else {
+      // Para login directo por PIN desde terminal de Caja o Admin
+      bodyPayload.clientApp = 'mobile-admin';
+    }
     return fetchWithTimeout(targetUrl + '/api/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username, pin: String(pin) })
+      body: JSON.stringify(bodyPayload)
     }, FETCH_TIMEOUT_MS)
       .then(function (res) {
         return res.json().then(function (data) {
           if (res.status === 200 && data && data.ok && data.token) {
             setAuthToken(data.token, tokenKeyTarget);
-            return { ok: true, token: data.token };
+            return { ok: true, token: data.token, user: data.user };
           }
           return { ok: false, error: (data && data.error) || ('HTTP ' + res.status) };
         });
@@ -408,7 +415,7 @@
   }
 
   function loginServer(username, pin) {
-    if (!username || !pin) return Promise.resolve({ ok: false });
+    if (!pin) return Promise.resolve({ ok: false });
     var tasks = [];
     var vpsIdx = -1;
     var localIdx = -1;

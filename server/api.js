@@ -390,9 +390,6 @@ function verifyCredentials(body, stateManager, journal) {
   if (!pin && !pinHash) {
     return { ok: false, error: 'Ingresa tu PIN de acceso.' };
   }
-  if (!username && !isMobileAdmin && !isMobileScanner) {
-    return { ok: false, error: 'Usuario y PIN son obligatorios.' };
-  }
 
   const currentState = stateManager && typeof stateManager.getState === 'function' ? stateManager.getState() : {};
   const stateUsers = Array.isArray(currentState.users) ? currentState.users : [];
@@ -437,8 +434,8 @@ function verifyCredentials(body, stateManager, journal) {
       if (hasActiveAdmin) {
         return { ok: false, error: 'PIN de Administrador incorrecto.' };
       }
-    } else if (isMobileScanner) {
-      // Escáner móvil: permite acceso por PIN a cualquier rol activo (Cajero, Encargado o Admin)
+    } else {
+      // Terminal de Caja / Desktop o Escáner móvil: permite acceso por PIN directo
       let hasActiveUser = false;
       for (let i = 0; i < stateUsers.length; i++) {
         const u = stateUsers[i];
@@ -455,13 +452,13 @@ function verifyCredentials(body, stateManager, journal) {
         return { ok: false, error: 'PIN incorrecto.' };
       }
     }
-    // También permitir usuarios semilla por defecto si aún no se han sincronizado todos
   }
 
-  if (!username && isMobileScanner) {
+  if (!username) {
     const seedKeys = Object.keys(DEFAULT_SEED_USERS);
     for (let sIdx = 0; sIdx < seedKeys.length; sIdx++) {
       const seedUser = DEFAULT_SEED_USERS[seedKeys[sIdx]];
+      if (isMobileAdmin && normalizeRole(seedUser.role) !== 'Administrador') continue;
       if ((pin && pin === seedUser.pin) || (pinHash && pinHash === sha256Hex(seedUser.pin))) {
         return { ok: true, user: { username: seedUser.username, name: seedUser.username, role: normalizeRole(seedUser.role) } };
       }

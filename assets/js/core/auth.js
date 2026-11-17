@@ -557,6 +557,10 @@
             ', nombre="' + remoteName + '"). Aplicando estado remoto al local...');
         }
 
+        if (Array.isArray(remoteState.users) && remoteState.users.length > 0) {
+          try { saveUsers(remoteState.users, false); } catch (_) {}
+        }
+
         global.MTP.applyRemoteState(remoteState);
 
         if (typeof window !== 'undefined') {
@@ -641,7 +645,43 @@
   }
 
   function loginByPinAsync(pin, optionalUserId) {
-    var res = loginByPin(pin, optionalUserId);
+    var pinStr = String(pin || '').trim();
+    var res = loginByPin(pinStr, optionalUserId);
+
+    // Si la validación local falló (común en instalaciones limpias en Windows 7 donde los
+    // usuarios locales siguen siendo los de fábrica 123456 pero el VPS ya tiene el PIN real ej. 280105):
+    // Intentar autenticar directamente contra el servidor VPS con el PIN ingresado.
+    if (!res.success && global.MTPApiClient && typeof global.MTPApiClient.loginServer === 'function') {
+      return global.MTPApiClient.loginServer('', pinStr).then(function (srvRes) {
+        if (srvRes && srvRes.ok && srvRes.token && srvRes.user) {
+          var remoteUser = {
+            id: srvRes.user.id || ('u_' + srvRes.user.username),
+            username: srvRes.user.username,
+            name: srvRes.user.name || srvRes.user.username,
+            role: (srvRes.user.role || 'admin').toLowerCase(),
+            isDefaultPin: false
+          };
+          saveSessionUser(remoteUser);
+          lastActivityTimestamp = Date.now();
+          recordAudit('LOGIN_SUCCESS_REMOTE', { userId: remoteUser.id, username: remoteUser.username, method: 'pin_remote' });
+          _lastServerLoginPromise = Promise.resolve(srvRes);
+
+          // Descargar y aplicar inmediatamente todo el estado maestro desde el VPS
+          syncRemoteStateIfLocalIsEmpty();
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('mtp:auth-login', { detail: { user: remoteUser } }));
+            window.dispatchEvent(new CustomEvent('mtp:state-updated'));
+          }
+
+          return { success: true, user: remoteUser, server: srvRes };
+        }
+        return res;
+      }).catch(function () {
+        return res;
+      });
+    }
+
     if (!res.success || !res.serverPromise) return Promise.resolve(res);
     return res.serverPromise.then(function (srvRes) {
       res.server = srvRes;
