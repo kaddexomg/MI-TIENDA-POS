@@ -662,9 +662,13 @@
       var session = getSession();
       if (!session || !session.user) return;
 
-      var idleLimitMin = 5;
-      if (global.MTP && global.MTP.state && global.MTP.state.settings && global.MTP.state.settings.idleLockMin) {
-        idleLimitMin = Number(global.MTP.state.settings.idleLockMin) || 5;
+      var idleLimitMin = 60;
+      if (global.MTP && global.MTP.state && global.MTP.state.settings && global.MTP.state.settings.idleLockMin !== undefined) {
+        var configuredIdle = Number(global.MTP.state.settings.idleLockMin);
+        if (!isNaN(configuredIdle)) {
+          if (configuredIdle <= 0) return; // Bloqueo automático desactivado
+          idleLimitMin = configuredIdle;
+        }
       }
 
       var maxIdleMs = idleLimitMin * 60 * 1000;

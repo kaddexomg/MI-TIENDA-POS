@@ -863,6 +863,7 @@
     init: init,
     isOnline: function () { return _isOnline; },
     isAuthenticated: function () { return !!getAuthToken(); },
+    getAuthToken: getAuthToken,
     getPendingCount: function () { return getOutbox(STORAGE_OUTBOX_KEY).length + getOutbox(STORAGE_VPS_OUTBOX_KEY).length; },
     getSyncStatus: getSyncStatus,
     probeEndpoint: probeEndpoint,

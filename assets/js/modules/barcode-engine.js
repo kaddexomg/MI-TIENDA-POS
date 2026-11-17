@@ -18,6 +18,9 @@
   let currentCallback = null;
   let lastDetectedCode = '';
   let lastDetectedTime = 0;
+  let activeLockedCameraCode = '';
+  let missedCameraFrames = 0;
+  let posAudioCtx = null;
   let remoteSse = null;
   let remotePollTimer = null;
   let remoteBridgeStarted = false;
@@ -25,6 +28,68 @@
   const seenRemoteScanIds = new Set();
   let remoteScanCount = 0;
   let lastRemoteScanSummary = '';
+
+  function unlockPosAudio() {
+    try {
+      if (typeof window === 'undefined') return;
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!posAudioCtx) posAudioCtx = new Ctx();
+      if (posAudioCtx.state === 'suspended' && typeof posAudioCtx.resume === 'function') {
+        posAudioCtx.resume().catch(function () {});
+      }
+    } catch (_) {}
+  }
+
+  function playScannerBeep(kind) {
+    try {
+      if (typeof window === 'undefined') return;
+      unlockPosAudio();
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!posAudioCtx) posAudioCtx = new Ctx();
+
+      const emit = function () {
+        try {
+          const now = posAudioCtx.currentTime;
+          const osc = posAudioCtx.createOscillator();
+          const gain = posAudioCtx.createGain();
+          if (kind === 'warn' || kind === 'err') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(340, now);
+            gain.gain.setValueAtTime(0.09, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+            osc.connect(gain);
+            gain.connect(posAudioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.12);
+          } else {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(2150, now);
+            osc.frequency.exponentialRampToValueAtTime(2600, now + 0.06);
+            gain.gain.setValueAtTime(0.14, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+            osc.connect(gain);
+            gain.connect(posAudioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.085);
+          }
+        } catch (_) {}
+      };
+
+      if (posAudioCtx.state === 'suspended' && typeof posAudioCtx.resume === 'function') {
+        posAudioCtx.resume().then(emit).catch(function () {});
+      } else {
+        emit();
+      }
+    } catch (_) {}
+  }
+
+  if (typeof document !== 'undefined') {
+    ['pointerdown', 'click', 'keydown'].forEach(function (evName) {
+      document.addEventListener(evName, unlockPosAudio, { passive: true, capture: true });
+    });
+  }
 
   function parseScanMultiplier(rawCode) {
     const clean = String(rawCode || '').trim();
@@ -168,8 +233,13 @@
       }
     }
 
-    if (!found && typeof window !== 'undefined' && window.MTP && typeof window.MTP.toast === 'function') {
-      window.MTP.toast('Código no encontrado: ' + lookupCode + '. Puede buscarlo por nombre.', 'warn');
+    if (found) {
+      playScannerBeep('ok');
+    } else {
+      playScannerBeep('warn');
+      if (typeof window !== 'undefined' && window.MTP && typeof window.MTP.toast === 'function') {
+        window.MTP.toast('Código no encontrado: ' + lookupCode + '. Puede buscarlo por nombre.', 'warn');
+      }
     }
   }
 
@@ -373,14 +443,23 @@
           if (video && video.readyState >= 2) {
             try {
               const codes = await detector.detect(video);
+              const now = Date.now();
               if (codes && codes.length > 0 && codes[0].rawValue) {
                 const raw = String(codes[0].rawValue).trim();
-                const now = Date.now();
-                // Debounce de 2 segundos para evitar lecturas duplicadas continuas
-                if (raw && (raw !== lastDetectedCode || (now - lastDetectedTime > 2000))) {
+                missedCameraFrames = 0;
+                if (raw && raw === activeLockedCameraCode) {
+                  lastDetectedTime = now;
+                } else if (raw && (raw !== lastDetectedCode || (now - lastDetectedTime > 2000))) {
+                  activeLockedCameraCode = raw;
                   lastDetectedCode = raw;
                   lastDetectedTime = now;
                   handleDetected(raw);
+                }
+              } else if (activeLockedCameraCode) {
+                missedCameraFrames += 1;
+                if (missedCameraFrames >= 4 && (now - lastDetectedTime > 800)) {
+                  activeLockedCameraCode = '';
+                  missedCameraFrames = 0;
                 }
               }
             } catch (err) {

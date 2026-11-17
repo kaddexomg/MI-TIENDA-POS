@@ -29,7 +29,7 @@ const aiKeys = require('./ai-keys');
 const imageSearch = require('./image-search');
 const photoStudio = require('./photo-studio');
 
-const TOKEN_TTL_MS = 12 * 60 * 60 * 1000; // 12 horas
+const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 días para evitar cierres inesperados en jornada o móvil
 const DEFAULT_SEED_USERS = {
   admin: { username: 'admin', role: 'Administrador', pin: '123456' },
   encargado: { username: 'encargado', role: 'Encargado', pin: '2244' },

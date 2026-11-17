@@ -36,8 +36,17 @@
       .replace(/'/g, '&#39;');
   }
 
-  function getToken() {
+  var resolvedPhotoBase = '';
+
+  function getToken(target) {
     try {
+      if (root.MTPApiClient && typeof root.MTPApiClient.getAuthToken === 'function') {
+        var clientTok = root.MTPApiClient.getAuthToken(target);
+        if (clientTok) return clientTok;
+      }
+      if (target === 'LOCAL') {
+        return sessionStorage.getItem('mtp_api_token_v8') || localStorage.getItem('mtp_api_token_v8') || '';
+      }
       var t = sessionStorage.getItem('mtp_api_token_v8') || localStorage.getItem('mtp_api_token_v8') || '';
       if (t) return t;
       return sessionStorage.getItem('mtp_vps_token_v8') || localStorage.getItem('mtp_vps_token_v8') || '';
@@ -46,34 +55,42 @@
     }
   }
 
+  function getLocalFallbackBase() {
+    if (typeof location !== 'undefined' && location.origin && /^https?:\/\//i.test(location.origin)) {
+      return String(location.origin).replace(/\/+$/, '');
+    }
+    return 'http://127.0.0.1:7070';
+  }
+
   function getBase() {
+    if (resolvedPhotoBase) return resolvedPhotoBase;
     if (root.MTPApiClient && typeof root.MTPApiClient.getBaseUrl === 'function') {
       var b = root.MTPApiClient.getBaseUrl();
       if (b) return String(b).replace(/\/+$/, '');
     }
-    return (typeof location !== 'undefined' && location.origin) ? location.origin : '';
+    return getLocalFallbackBase();
   }
 
-  function apiFetch(path, options) {
-    var opts = options || {};
+  function doFetch(base, token, path, options) {
+    var opts = Object.assign({}, options || {});
     var headers = Object.assign({ 'Accept': 'application/json' }, opts.headers || {});
-    var tok = getToken();
-    if (tok) headers['Authorization'] = 'Bearer ' + tok;
-    if (opts.body && typeof opts.body !== 'string') {
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    var bodyStr = opts.body;
+    if (bodyStr && typeof bodyStr !== 'string') {
       headers['Content-Type'] = 'application/json';
-      opts.body = JSON.stringify(opts.body);
+      bodyStr = JSON.stringify(bodyStr);
     }
 
     var controller = null;
     var timer = null;
-    var fetchOpts = { method: opts.method || 'GET', headers: headers, body: opts.body };
+    var fetchOpts = { method: opts.method || 'GET', headers: headers, body: bodyStr };
     if (typeof AbortController !== 'undefined') {
       controller = new AbortController();
       fetchOpts.signal = controller.signal;
       timer = setTimeout(function () { controller.abort(); }, opts.timeout || 20000);
     }
 
-    return fetch(getBase() + path, fetchOpts).then(function (res) {
+    return fetch(base + path, fetchOpts).then(function (res) {
       if (timer) clearTimeout(timer);
       return res.json().catch(function () { return {}; }).then(function (data) {
         if (!res.ok) {
@@ -82,18 +99,39 @@
           err.status = res.status;
           throw err;
         }
+        resolvedPhotoBase = base;
         return data;
       });
     }).catch(function (err) {
       if (timer) clearTimeout(timer);
-      if (err && err.name === 'AbortError') throw new Error('La búsqueda tardó demasiado. Revisa la conexión a internet.');
+      if (err && err.name === 'AbortError') {
+        var timeoutErr = new Error('La búsqueda tardó demasiado. Revisa la conexión a internet.');
+        timeoutErr.isNetwork = true;
+        throw timeoutErr;
+      }
       throw err;
     });
   }
 
+  function apiFetch(path, options) {
+    var primaryBase = getBase();
+    var primaryToken = getToken();
+    var localBase = getLocalFallbackBase();
+
+    return doFetch(primaryBase, primaryToken, path, options).catch(function (err) {
+      var canFallbackLocal = localBase && localBase !== primaryBase &&
+        (!err.status || err.status === 401 || err.status >= 500 || err.isNetwork);
+      if (!canFallbackLocal) throw err;
+      var localToken = getToken('LOCAL') || primaryToken;
+      return doFetch(localBase, localToken, path, options);
+    });
+  }
+
   function proxyThumb(url) {
-    var tok = getToken();
-    return getBase() + '/api/ai/image-proxy?url=' + encodeURIComponent(url) +
+    var activeBase = resolvedPhotoBase || getBase();
+    var target = (activeBase === getLocalFallbackBase()) ? 'LOCAL' : undefined;
+    var tok = getToken(target);
+    return activeBase + '/api/ai/image-proxy?url=' + encodeURIComponent(url) +
       (tok ? '&token=' + encodeURIComponent(tok) : '');
   }
 

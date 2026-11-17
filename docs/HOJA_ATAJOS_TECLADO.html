@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hoja de Atajos y Controles del Teclado — MI-TIENDA-POS</title>
+  <style>
+    :root {
+      --ink: #0F172A;
+      --muted: #475569;
+      --border: #CBD5E1;
+      --accent: #09131F;
+      --emerald: #059669;
+      --amber: #D97706;
+      --bg-soft: #F8FAFC;
+    }
+
+    * { box-sizing: border-box; }
+
+    @page {
+      size: portrait;
+      margin: 10mm;
+    }
+
+    body {
+      margin: 0;
+      padding: 18px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--ink);
+      background: #E2E8F0;
+      font-size: 12.5px;
+      line-height: 1.38;
+    }
+
+    .toolbar {
+      max-width: 780px;
+      margin: 0 auto 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background: #FFFFFF;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .toolbar-note {
+      font-size: 12.5px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .btn-print {
+      background: var(--accent);
+      color: #FFFFFF;
+      border: 0;
+      border-radius: 8px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .sheet {
+      max-width: 780px;
+      margin: 0 auto;
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2.5px solid var(--accent);
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .sheet-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+
+    .sheet-sub {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .sheet-badge {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 9px;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #FFFFFF;
+      white-space: nowrap;
+    }
+
+    .section {
+      margin-bottom: 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      page-break-inside: avoid;
+    }
+
+    .section-head {
+      background: var(--bg-soft);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 11px;
+      font-size: 12.5px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--accent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-head.caja { border-left: 4px solid var(--amber); }
+    .section-head.nav { border-left: 4px solid #2563EB; }
+    .section-head.global { border-left: 4px solid var(--emerald); }
+    .section-head.scanner { border-left: 4px solid #7C3AED; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    tr + tr td {
+      border-top: 1px solid #E2E8F0;
+    }
+
+    td {
+      padding: 5.5px 11px;
+      vertical-align: middle;
+    }
+
+    td.keys {
+      width: 34%;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    td.desc {
+      color: #1E293B;
+    }
+
+    kbd {
+      display: inline-block;
+      padding: 2px 6px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--accent);
+      background: #F1F5F9;
+      border: 1px solid #94A3B8;
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      vertical-align: middle;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 11px;
+    }
+
+    .box {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 11px;
+      background: var(--bg-soft);
+      page-break-inside: avoid;
+    }
+
+    .box-title {
+      margin: 0 0 5px;
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .code-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: 11.5px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px 8px;
+    }
+
+    .code-list code {
+      font-family: Consolas, monospace;
+      font-weight: 800;
+      color: #0F172A;
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      border-radius: 4px;
+      padding: 0 4px;
+    }
+
+    .sheet-footer {
+      margin-top: 8px;
+      padding-top: 7px;
+      border-top: 1px dashed var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    @media print {
+      body {
+        background: #FFFFFF;
+        padding: 0;
+      }
+      .toolbar {
+        display: none !important;
+      }
+      .sheet {
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span class="toolbar-note">Plantilla vertical (Carta / A4) — Lista para pegar al lado del monitor de Caja</span>
+    <button type="button" class="btn-print" onclick="window.print()">🖨️ Imprimir Hoja Vertical (Ctrl+P)</button>
+  </div>
+
+  <main class="sheet">
+    <header class="sheet-header">
+      <div>
+        <h1 class="sheet-title">Controles y Atajos de Teclado — MI-TIENDA-POS</h1>
+        <p class="sheet-sub">Guía rápida de Caja, Escáner y Administración · Formato Vertical</p>
+      </div>
+      <span class="sheet-badge">Versión 8.4+</span>
+    </header>
+
+    <section class="section">
+      <div class="section-head caja">
+        <span>1. Teclas Principales en Caja (pos.html)</span>
+        <span>Uso rápido sin mouse</span>
+      </div>
+      <table>
+        <tr>
+          <td class="keys"><kbd>F1</kbd></td>
+          <td class="desc">Lleva el cursor directo a la barra de <strong>Escáner / Buscador</strong>.</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>F2</kbd></td>
+          <td class="desc">Abre el modal de <strong>Cobrar y Entregar Vuelto</strong> (en todo el sistema abre Caja/Cobro).</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>F3</kbd></td>
+          <td class="desc">Pone la cuenta actual <strong>en espera</strong> o restaura una cuenta apartada.</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>F4</kbd></td>
+          <td class="desc">Abre vista rápida e impresión de <strong>Comanda de Cocina</strong>.</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>Enter</kbd></td>
+          <td class="desc">En buscador: agrega el producto exacto o el seleccionado. En ventana de Cobro: <strong>confirma la venta</strong> si el monto cubre el total.</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>Esc</kbd></td>
+          <td class="desc">Cierra ventanas/modales abiertos, limpia la búsqueda y devuelve el foco al escáner.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="section">
+      <div class="section-head nav">
+        <span>2. Familias, Productos y Cantidades en Caja</span>
+        <span>Teclado numérico y flechas</span>
+      </div>
+      <table>
+        <tr>
+          <td class="keys"><kbd>1</kbd> al <kbd>9</kbd></td>
+          <td class="desc">Cambia directo entre las <strong>9 Familias</strong> (1: Fritos, 2: Arepas, 3: Almuerzos, <strong>4: Víveres</strong>, 5: Refrescos, 6: Cafetería, 7: Chucherías, 8: Cervezas, 9: Cigarros).</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>Alt</kbd>+<kbd>1..9</kbd> ó <kbd>Ctrl</kbd>+<kbd>1..9</kbd></td>
+          <td class="desc">Cambia de familia al instante <strong>incluso</strong> mientras estás escribiendo en el buscador.</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>Re Pág</kbd> / <kbd>Av Pág</kbd></td>
+          <td class="desc">Recorre las familias una por una (anterior / siguiente) sin usar el mouse.</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></td>
+          <td class="desc">Navega entre las tarjetas de productos visibles y luego pulsa <kbd>Enter</kbd> para agregar.</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>+</kbd> / <kbd>-</kbd></td>
+          <td class="desc">Suma (+1) o resta (-1) cantidad al <strong>último producto agregado</strong> al ticket.</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>5</kbd><kbd>*</kbd> + código o clic</td>
+          <td class="desc">Activa el <strong>multiplicador</strong> (ej. escribe <code>5*</code> y escanea o toca el producto para cargar 5 unidades de golpe).</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="section">
+      <div class="section-head global">
+        <span>3. Atajos Globales (En cualquier pantalla del sistema)</span>
+        <span>Administración y navegación</span>
+      </div>
+      <table>
+        <tr>
+          <td class="keys"><kbd>Ctrl</kbd> + <kbd>K</kbd></td>
+          <td class="desc">Abre la <strong>Paleta de Comandos</strong> para saltar a cualquier módulo, acción o producto escribiendo su nombre.</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>Ctrl</kbd> + <kbd>B</kbd></td>
+          <td class="desc">Expande, reduce a íconos o contrae el menú lateral izquierdo.</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>F6</kbd></td>
+          <td class="desc">Abre el registro rápido de <strong>Gasto o Salida de Caja</strong>.</td>
+        </tr>
+        <tr>
+          <td class="keys"><kbd>F7</kbd></td>
+          <td class="desc">Abre <strong>Cuadre del Día</strong> (Dueño/Encargado) o <strong>Tickets del Turno</strong> (Cajero).</td>
+        </tr>
+      </table>
+    </section>
+
+    <div class="grid-2">
+      <div class="box">
+        <h2 class="box-title">4. Escáner Pistola USB y Móvil</h2>
+        <ul style="margin:0;padding-left:16px;font-size:11.5px">
+          <li><strong>Pistola USB:</strong> Funciona en cualquier parte de Caja sin hacer clic en el buscador (protege los campos de montos para no escribir por error).</li>
+          <li><strong>Escáner Móvil (Cámara):</strong> Si dejas un producto frente a la cámara <strong>no se repite</strong> hasta que lo apartes (~1 seg) y lo vuelvas a acercar.</li>
+          <li><strong>Multiplicador:</strong> Teclea <code>3*</code> + escanea el código para sumar 3 unidades.</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h2 class="box-title">5. Prefijos de Códigos Cortos</h2>
+        <ul class="code-list">
+          <li><code>EM01</code> Empanadas</li>
+          <li><code>PAS01</code> Pastelitos</li>
+          <li><code>TEQ01</code> Tequeños</li>
+          <li><code>AR01</code> Arepas</li>
+          <li><code>AL01</code> Almuerzos</li>
+          <li><code>VIV101</code> Víveres</li>
+          <li><code>BEB101</code> Refrescos</li>
+          <li><code>CER101</code> Cervezas</li>
+          <li><code>CHU101</code> Chucherías</li>
+          <li><code>CIG101</code> Cigarros</li>
+        </ul>
+      </div>
+    </div>
+
+    <footer class="sheet-footer">
+      <span>MI-TIENDA-POS · Guía Operativa de Teclado</span>
+      <span>Imprimir en orientación Vertical (Ctrl+P)</span>
+    </footer>
+  </main>
+</body>
+</html>

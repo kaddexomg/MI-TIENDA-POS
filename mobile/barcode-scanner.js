@@ -673,12 +673,41 @@
   var torchEnabled = false;
   var lastCode = '';
   var lastCodeAt = 0;
+  var activeLockedCode = '';
+  var missedFramesForLock = 0;
   var audioCtx = null;
+  var audioUnlocked = false;
   var offscreenCanvas = null;
   var offscreenCtx = null;
   var nativeDetector = null;
   var lastStatusCb = null;
   var lastDetectCb = null;
+
+  function unlockAudio() {
+    try {
+      if (typeof window === 'undefined') return;
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtx) audioCtx = new Ctx();
+      if (audioCtx.state === 'suspended' && typeof audioCtx.resume === 'function') {
+        audioCtx.resume().catch(function () {});
+      }
+      if (!audioUnlocked && audioCtx.state === 'running') {
+        var buf = audioCtx.createBuffer(1, 1, 22050);
+        var src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        src.connect(audioCtx.destination);
+        if (typeof src.start === 'function') src.start(0);
+        audioUnlocked = true;
+      }
+    } catch (e) {}
+  }
+
+  if (typeof document !== 'undefined') {
+    ['touchstart', 'pointerdown', 'click', 'keydown'].forEach(function (evName) {
+      document.addEventListener(evName, unlockAudio, { passive: true, capture: true });
+    });
+  }
 
   function hasNativeDetector() {
     return typeof window !== 'undefined' && typeof window.BarcodeDetector === 'function';
@@ -710,39 +739,48 @@
   function playBeep(kind) {
     try {
       if (typeof window === 'undefined') return;
+      unlockAudio();
       var Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return;
       if (!audioCtx) audioCtx = new Ctx();
-      if (audioCtx.state === 'suspended' && typeof audioCtx.resume === 'function') {
-        audioCtx.resume().catch(function () {});
-      }
 
-      var now = audioCtx.currentTime;
-      if (kind === 'err' || kind === 'warn') {
-        [0, 0.11].forEach(function (offset) {
-          var osc = audioCtx.createOscillator();
-          var gain = audioCtx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(320, now + offset);
-          gain.gain.setValueAtTime(0.08, now + offset);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.08);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(now + offset);
-          osc.stop(now + offset + 0.085);
-        });
+      var emitTone = function () {
+        try {
+          var now = audioCtx.currentTime;
+          if (kind === 'err' || kind === 'warn') {
+            [0, 0.11].forEach(function (offset) {
+              var osc = audioCtx.createOscillator();
+              var gain = audioCtx.createGain();
+              osc.type = 'sawtooth';
+              osc.frequency.setValueAtTime(320, now + offset);
+              gain.gain.setValueAtTime(0.12, now + offset);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.085);
+              osc.connect(gain);
+              gain.connect(audioCtx.destination);
+              osc.start(now + offset);
+              osc.stop(now + offset + 0.09);
+            });
+          } else {
+            // Pitido nítido tipo pistola láser de supermercado
+            var oscOk = audioCtx.createOscillator();
+            var gainOk = audioCtx.createGain();
+            oscOk.type = 'triangle';
+            oscOk.frequency.setValueAtTime(2150, now);
+            oscOk.frequency.exponentialRampToValueAtTime(2650, now + 0.065);
+            gainOk.gain.setValueAtTime(0.18, now);
+            gainOk.gain.exponentialRampToValueAtTime(0.001, now + 0.085);
+            oscOk.connect(gainOk);
+            gainOk.connect(audioCtx.destination);
+            oscOk.start(now);
+            oscOk.stop(now + 0.09);
+          }
+        } catch (innerErr) {}
+      };
+
+      if (audioCtx.state === 'suspended' && typeof audioCtx.resume === 'function') {
+        audioCtx.resume().then(emitTone).catch(function () {});
       } else {
-        var oscOk = audioCtx.createOscillator();
-        var gainOk = audioCtx.createGain();
-        oscOk.type = 'sine';
-        oscOk.frequency.setValueAtTime(1950, now);
-        oscOk.frequency.exponentialRampToValueAtTime(2450, now + 0.065);
-        gainOk.gain.setValueAtTime(0.11, now);
-        gainOk.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
-        oscOk.connect(gainOk);
-        gainOk.connect(audioCtx.destination);
-        oscOk.start(now);
-        oscOk.stop(now + 0.08);
+        emitTone();
       }
     } catch (e) {}
 
@@ -895,12 +933,24 @@
         busy = true;
         try {
           var hit = await detectFromVideoFrame(currentVideo);
+          var now = Date.now();
           if (hit && hit.code) {
-            var now = Date.now();
-            if (hit.code !== lastCode || (now - lastCodeAt) > cooldownMs) {
+            missedFramesForLock = 0;
+            // Si el mismo código sigue frente a la cámara, NO volver a escanearlo hasta que salga del encuadre
+            if (hit.code === activeLockedCode) {
+              lastCodeAt = now;
+            } else if (hit.code !== lastCode || (now - lastCodeAt) > cooldownMs) {
+              activeLockedCode = hit.code;
               lastCode = hit.code;
               lastCodeAt = now;
               onDetect(hit.code, hit);
+            }
+          } else if (activeLockedCode) {
+            missedFramesForLock += 1;
+            // Requiere ~6 frames (~800ms) sin ver el código para desbloquear y permitir re-escanear si se vuelve a acercar
+            if (missedFramesForLock >= 6 && (now - lastCodeAt) >= 700) {
+              activeLockedCode = '';
+              missedFramesForLock = 0;
             }
           }
         } catch (frameErr) {
@@ -994,6 +1044,8 @@
   function resetCooldown() {
     lastCode = '';
     lastCodeAt = 0;
+    activeLockedCode = '';
+    missedFramesForLock = 0;
   }
 
   return {
