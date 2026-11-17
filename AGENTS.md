@@ -1,6 +1,6 @@
 # AGENTS.md — Contexto Maestro, Indexación Completa y Bitácora de MI-TIENDA-POS
 
-> **Actualizado**: 16 de Noviembre de 2026 (`16:20 VET`) — **Versión 8.4.0 ("Flujo Simple" Material 3 + Liquid Morph, Escáner Pistola Universal HTTPS LAN, Mis Números anual, Máquina Fiscal guiada, APK 1.2.0 e Instalador Win7)**
+> **Actualizado**: 17 de Noviembre de 2026 (`13:50 VET`) — **Versión 8.5.2 ("Sincronización Automática Post-Login VPS/LAN", Paridad Inmediata Win7 ↔ Android, Pitido Nativo Escáner 2.750 Hz, APKs 1.2.0 e Instalador Win7)**
 > **Arquitectura Activa**: Ver [docs/ARQUITECTURA.md](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/docs/ARQUITECTURA.md) y archivo histórico en [`docs/archivo/`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/docs/archivo/)
 > **Propósito**: Define las reglas de negocio gastronómicas y comerciales venezolanas, la indexación total del proyecto, la separación estricta de inventario (Ingredientes de Cocina vs. Mercancía de Venta Directa), la facturación con IVA 16% Venezolano e IGTF 3%, el menú simplificado de 5 opciones para el dueño, las 47 fotografías reales verificadas 100% offline y la suite de pruebas automatizadas.
 
@@ -335,3 +335,16 @@
       - `MI-TIENDA-ADMIN.apk` (465.5 KB) y `MI-TIENDA-ESCANER.apk` (433.4 KB) recompilados y firmados.
       - `dist/Instalar-MI-TIENDA-POS.exe` (68.3 MB) recompilado con Inno Setup 6.7.3 para Windows 7 SP1+ (ia32).
     - **Verificación**: `node tests/run.js`, `node tools/check-scripts.js` y `node tools/check-html.js` pasando al 100%. Peticiones remotas HTTPS a `https://166-0-112-247.sslip.io/api/v1/scanner/info` y `https://166-0-112-247.sslip.io/escaner` respondiendo exitosamente.
+
+23. **✅ v8.5.2 — SINCRONIZACIÓN AUTOMÁTICA POST-LOGIN VPS/LAN & AUDIO NATIVO ESCÁNER (17 de Noviembre de 2026)**:
+    - **Sincronización Automática Post-Login (`assets/js/core/auth.js`)**:
+      - Se implementó `syncRemoteStateIfLocalIsEmpty()` llamado tras el login exitoso (`finalizeLogin()`).
+      - Si la base de datos local recién instalada en Windows 7 tiene valores de fábrica (0 ventas y nombre genérico) pero el VPS o servidor en red ya posee los datos del negocio (nombre comercial ej. "LOS MOCHIS", ventas, inventario y recetas), el sistema descarga de inmediato el snapshot vía `GET /api/v1/state` y lo materializa localmente con `MTP.applyRemoteState()`.
+      - Protege contra sobreescritura accidental: si el terminal local ya posee historial de ventas real, no se reemplaza.
+      - Resuelve de raíz la discrepancia entre terminales Windows 7 recién instalados y la app de Android que ya estaba sincronizada.
+    - **Pitido Nativo de Escáner (`mobile/android-app/.../MainActivity.java` y `mobile/barcode-scanner.js`)**:
+      - `AndroidBridge.playScanBeep()`: genera un tono seco de 2.750 Hz (onda cuadrada pura mediante `AudioTrack` PCM a 44.1 kHz, 60 ms) idéntico a las pistolas de automercado Zebra LS2208 con cero latencia de audio.
+      - Integrado como capa primaria de sonido antes de Web Audio API y el fallback WAV.
+    - **Compilación e Instalador**:
+      - Reempaquetado del instalador nativo Windows 7 SP1+ `dist/Instalar-MI-TIENDA-POS.exe` con Inno Setup 6.7.3.
+    - **Verificación**: 100% de la suite de pruebas automatizadas (`node tests/run.js`) pasando con éxito.

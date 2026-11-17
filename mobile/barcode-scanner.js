@@ -688,7 +688,7 @@
   var cachedAudioEl = null;
 
   // Audio WAV pre-renderizado (2.650 Hz · 65 ms · 22.05 kHz) para fallback infalible en Android WebView
-  var BEEP_WAV_BASE64 = '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';
+  var BEEP_WAV_BASE64 = 'UklGRtAUAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YawUAAAAAIABKQPnBJ0GLQh+CYMKQguD8jXwCO4p7L3q1+lz6XXpchlnHAcfESFdItoinSLbIZ/aAtfu07XRh9Bw0EvRzdJKMZA1GjmFO5c8SzzSOpI41cLjveG5QrdItva2CrkIvAZJpE4hU/dV21bPVSFTZU8nq9qk4J/RnACcaJ2uoCalpmCiZ7prWG18bEVpMWQFXsCdOJhUlKqSe5OnlrSb3aEjYrFnn2tUbY9sbGlnZEFe+Z1lmG+UrpJok4CWf5uhoethhGeEa09toWyTaZxkfF4ynpOYipSzklaTWpZKm2ahsWFWZ2hrSm2ybLlp0WS4XmuewpinlLqSRZM0lhWbKqF4YSdnS2tDbcNs3mkFZfNepZ7xmMSUwZI1kw+W4ZrvoD5h+GYtazxt02wDajllL1/fniCZ4pTIkiaT65WtmrSgBGHIZg9rM23ibCdqbGVqXxmfUJkAldGSF5PHlXqaeKDKYJhm8GoqbfBsSmqgZaVfU5+AmSCV25IJk6SVR5o9oJBgZ2bQaiBt/WxtatJl4F+Nn7GZQJXlkvySgpUVmgOgVmA2ZrBqFW0KbY9qBGYbYMif45lhlfCS8JJhleOZyJ8bYARmj2oKbRVtsGo2ZlZgA6AVmoKV/JLlkkCVsZmNn+Bf0mVtav1sIG3QamdmkGA9oEeapJUJk9uSIJWAmVOfpV+gZUpq8GwqbfBqmGbKYHigeprHlReT0ZIAlVCZGZ9qX2xlJ2ribDNtD2vIZgRhtKCtmuuVJpPIkuKUIJnfni9fOWUDatNsPG0ta/hmPmHvoOGaD5Y1k8GSxJTxmKWe814FZd5pw2xDbUtrJ2d4YSqhFZs0lkWTupKnlMKYa564XtFkuWmybEptaGtWZ7FhZqFKm1qWVpOzkoqUk5gynnxenGSTaaFsT22Ea4Rn62GhoX+bgJZok66Sb5RlmPmdQV5nZGxpj2xUbZ9rsWcjYt2htJunlnuTqpJUlDiYwJ0FXjFkRWl8bFhtumveZ1xiGaLqm8+WjpOmkjmUC5iIncld+2MdaWhsW23TawtolGJVoiCc95aik6OSIJTfl0+djl3FY/VoU2xebexrN2jNYpCiVpwgl7eToZIHlLSXGJ1SXY5jy2g+bF9tBWxiaARjzKKNnEmXzZOgkvCTiZfgnBZdV2OiaCdsYG0cbI1oPGMIo8Scc5fkk6CS2ZNel6mc6qIgY3doEGxgbTNst2hzYzRd/Jyel/uToZLCkzWXcpyuouhiTGj5a19tSWzgaKpjcF0zncmXFJSikq2TC5c7nHKisWIhaOBrXW1ebAlp4GOrXWyd9ZctlKWSmJPjlgWcN6J4YvVnx2tabXJsMWkWZOddpJ0imEaUqJKEk7uWz5v7oUBiyGesa1ZthWxZaUxkI17dnU+YYZSsknGTlJaZm7+hB2KbZ5FrUm2YbIBpgWRfXhWefJh8lLGSX5NtlmSbhKHOYW1ndmtNbapspmm2ZJpeT56qmJiUtpJOk0eWL5tIoZVhPmdZa0Ztu2zMaetk1l6IntmYtZS9kj2TIpb7mg2hW2EPZzxrP23LbPFpH2URX8KeCJnTlMSSLZP9lcea0aAhYeBmHms4bdpsFWpTZUxf/J44mfGUzZIek9mVlJqWoOdgsGYAay9t6Ww5aoZliF82n2iZEJXWkhCTtpVgmlugrWCAZuBqJW33bFxquWXDX3CfmZkwleCSA5OTlS6aIKBzYE9mwGobbQRtfmrrZf1fqp/KmVCV65L2knGV/JnlnzhgHWafahBtEG2fah1mOGDln/yZcZX2kuuSUJXKmaqf/V/rZX5qBG0bbcBqT2ZzYCCgLpqTlQOT4JIwlZmZcJ/DX7llXGr3bCVt4GqAZq1gW6BgmraVEJPWkhCVaJk2n4hfhmU5aulsL20Aa7Bm52CWoJSa2ZUek82S8ZQ4mfyeTF9TZRVq2mw4bR5r4GYhYdGgx5r9lS2TxJLTlAiZwp4RXx9l8WnLbD9tPGsPZ1thDaH7miKWPZO9krWU2ZiIntZe62TMabtsRm1Zaz5nlWFIoS+bR5ZOk7aSmJSqmE+eml62ZKZpqmxNbXZrbWfOYYShZJttll+TsZJ8lHyYFZ5fXoFkgGmYbFJtkWubZwdiv6GZm5SWcZOskmGUT5jdnSNeTGRZaYVsVm2sa8hnQGL7oc+bu5aEk6iSRpQimKSd510WZDFpcmxabcdr9Wd4YjeiBZzjlpiTpZItlPWXbJ2rXeBjCWlebF1t4GshaLFicqI7nAuXrZOikhSUyZcznXBdqmPgaElsX235a0xo6GKuonKcNZfCk6GS+5Oel/ycNF1zY7doM2xgbRBsd2ggY+qiqZxel9mToJLkk3OXxJz4XDxjjWgcbGBtJ2yiaFdjFl3gnImX8JOgks2TSZeNnMyiBGNiaAVsX20+bMtojmNSXRidtJcHlKGSt5Mgl1ackKLNYjdo7GtebVNs9WjFY45dT53flyCUo5Kik/eWIJxVopRiC2jTa1ttaGwdaftjyV2InQuYOZSmko6Tz5bqmxmiXGLeZ7prWG18bEVpMWQFXsCdOJhUlKqSe5OnlrSb3aEjYrFnn2tUbY9sbGlnZEFe+Z1lmG+UrpJok4CWf5uhoethhGeEa09toWyTaZxkfF4ynpOYipSzklaTWpZKm2ahsWFWZ2hrSm2ybLlp0WS4XmuewpinlLqSRZM0lhWbKqF4YSdnS2tDbcNs3mkFZfNepZ7xmMSUwZI1kw+W4ZrvoD5h+GYtazxt02wDajllL1/fniCZ4pTIkiaT65WtmrSgBGHIZg9rM23ibCdqbGVqXxmfUJkAldGSF5PHlXqaeKDKYJhm8GoqbfBsSmqgZaVfU5+AmSCV25IJk6SVR5o9oJBgZ2bQaiBt/WxtatJl4F+Nn7GZQJXlkvySgpUVmgOgVmA2ZrBqFW0KbY9qBGYbYMif45lhlfCS8JJhleOZyJ8bYARmj2oKbRVtsGo2ZlZgA6AVmoKV/JLlkkCVsZmNn+Bf0mVtav1sIG3QamdmkGA9oEeapJUJk9uSIJWAmVOfpV+gZUpq8GwqbfBqmGbKYHigeprHlReT0ZIAlVCZGZ9qX2xlJ2ribDNtD2vIZgRhtKCtmuuVJpPIkuKUIJnfni9fOWUDatNsPG0ta/hmPmHvoOGaD5Y1k8GSxJTxmKWe814FZd5pw2xDbUtrJ2d4YSqhFZs0lkWTupKnlMKYa564XtFkuWmybEptaGtWZ7FhZqFKm1qWVpOzkoqUk5gynnxenGSTaaFsT22Ea4Rn62GhoX+bgJZok66Sb5RlmPmdQV5nZGxpj2xUbZ9rsWcjYt2htJunlnuTqpJUlDiYwJ0FXjFkRWl8bFhtumveZ1xiGaLqm8+WjpOmkjmUC5iIncld+2MdaWhsW23TawtolGJVoiCc95aik6OSIJTfl0+djl3FY/VoU2xebexrN2jNYpCiVpwgl7eToZIHlLSXGJ1SXY5jy2g+bF9tBWxiaARjzKKNnEmXzZOgkvCTiZfgnBZdV2OiaCdsYG0cbI1oPGMIo8Scc5fkk6CS2ZNel6mc6qIgY3doEGxgbTNst2hzYzRd/Jyel/uToZLCkzWXcpyuouhiTGj5a19tSWzgaKpjcF0zncmXFJSikq2TC5c7nHKisWIhaOBrXW1ebAlp4GOrXWyd9ZctlKWSmJPjlgWcN6J4YvVnx2tabXJsMWkWZOddpJ0imEaUqJKEk7uWz5v7oUBiyGesa1ZthWxZaUxkI17dnU+YYZSsknGTlJaZm7+hB2KbZ5FrUm2YbIBpgWRfXhWefJh8lLGSX5NtlmSbhKHOYW1ndmtNbapspmm2ZJpeT56qmJiUtpJOk0eWL5tIoZVhPmdZa0Ztu2zMaetk1l6IntmYtZS9kj2TIpb7mg2hW2EPZzxrP23LbPFpH2URX8KeCJnTlMSSLZP9lcea0aAhYeBmHms4bdpsFWpTZUxf/J44mfGUzZIek9mVlJqWoOdgsGYAay9t6Ww5aoZliF82n2iZEJXWkhCTtpVgmlugrWCAZuBqJW33bFxquWXDX3CfmZkwleCSA5OTlS6aIKBzYE9mwGobbQRtfmrrZf1fqp/KmVCV65L2knGV/JnlnzhgHWafahBtEG2fah1mOGDln/yZcZX2kuuSUJXKmaqf/V/rZX5qBG0bbcBqT2ZzYCCgLpqTlQOT4JIwlZmZcJ/DX7llXGr3bCVt4GqAZq1gW6BgmraVEJPWkhCVaJk2n4hfhmU5aulsL20Aa7Bm52CWoJSa2ZUek82S8ZQ4mfyeTF9TZRVq2mw4bR5r4GYhYdGgx5r9lS2TxJLTlAiZwp4RXx9l8WnLbD9tPGsPZ1thDaH7miKWPZO9krWU2ZiIntZe62TMabtsRm1Zaz5nlWFIoS+bR5ZOk7aSmJSqmE+eml62ZKZpqmxNbXZrbWfOYYShZJttll+TsZJ8lHyYFZ5fXoFkgGmYbFJtkWubZwdiv6GZm5SWcZOskmGUT5jdnSNeTGRZaYVsVm2sa8hnQGL7oc+bu5aEk6iSRpQimKSd510WZDFpcmxabcdr9Wd4YjeiBZzjlpiTpZItlPWXbJ2rXeBjCWlebF1t4GshaLFicqI7nAuXrZOikhSUyZcznXBdqmPgaElsX235a0xo6GKuonKcNZfCk6GS+5Oel/ycNF1zY7doM2xgbRBsd2ggY+qiqZxel9mToJLkk3OXxJwIozxjjWgcbGBtJ2yiaFdjFl3gnImX8JOgks2TSZeNnMyiBGNiaAVsX20+bMtojmNSXRidtJcHlKGSt5Mgl1ackKLNYjdo7GtebVNs9WjFY45dT53flyCUo5Kik/eWIJxVopRiC2jTa1ttaGwdaftjyV2InQuYOZSmko6Tz5bqmxmiXGLeZ7prWG18bEVpMWQFXsCdOJhUlKqSe5OnlrSb3aEjYrFnn2tUbY9sbGlnZEFe+Z1lmG+UrpJok4CWf5uhoethhGeEa09toWyTaZxkfF4ynpOYipSzklaTWpZKm2ahsWFWZ2hrSm2ybLlp0WS4XmuewpinlLqSRZM0lhWbKqF4YSdnS2tDbcNs3mkFZfNepZ7xmMSUwZI1kw+W4ZrvoD5h+GYtazxt02wDajllL1/fniCZ4pTIkiaT65WtmrSgBGHIZg9rM23ibCdqbGVqXxmfUJkAldGSF5PHlXqaeKDKYJhm8GoqbfBsSmqgZaVfU5+AmSCV25IJk6SVR5o9oJBgZ2bQaiBt/WxtatJl4F+Nn7GZQJXlkvySgpUVmgOgVmA2ZrBqFW0KbY9qBGYbYMif45lhlfCS8JJhleOZyJ8bYARmj2oKbRVtsGo2ZlZgA6AVmoKV/JLlkkCVsZmNn+Bf0mVtav1sIG3QamdmkGA9oEeapJUJk9uSIJWAmVOfpV+gZUpq8GwqbfBqmGbKYHigeprHlReT0ZIAlVCZGZ9qX2xlJ2ribDNtD2vIZgRhtKCtmuuVJpPIkuKUIJnfni9fOWUDatNsPG0ta/hmPmHvoOGaD5Y1k8GSxJTxmKWe814FZd5pw2xDbUtrJ2d4YSqhFZs0lkWTupKnlMKYa564XtFkuWmybEptaGtWZ7FhZqFKm1qWVpOzkoqUk5gynnxenGSTaaFsT22Ea4Rn62GhoX+bgJZok66Sb5RlmPmdQV5nZGxpj2xUbZ9rsWcjYt2htJunlnuTqpJUlDiYwJ0FXjFkRWl8bFhtumveZ1xiGaLqm8+WjpOmkjmUC5iIncld+2MdaWhsW23TawtolGJVoiCc95aik6OSIJTfl0+djl3FY/VoU2xebexrN2jNYpCiVpwgl7eToZIHlLSXGJ1SXY5jy2g+bF9tBWxiaARjzKKNnEmXzZOgkvCTiZfgnBZdV2OiaCdsYG0cbI1oPGP4XMScc5fkk6CS2ZNel6mc6qIgY3doEGxgbTNst2hzYzRd/Jyel/uToZLCkzWXcpyuouhiTGj5a19tSWzgaKpjcF0zncmXFJSikq2TC5c7nHKisWIhaOBrXW1ebAlp4GOrXWyd9ZctlKWSmJPjlgWcN6J4YvVnx2tabXJsMWkWZOddpJ0imEaUqJKEk7uWz5v7oUBiyGesa1ZthWxZaUxkI17dnU+YYZSsknGTlJaZm7+hB2KbZ5FrUm2YbIBpgWRfXhWefJh8lLGSX5NtlmSbhKHOYW1ndmtNbapspmm2ZJpeT56qmJiUtpJOk0eWL5tIoZVhPmdZa0Ztu2zMaetk1l6IntmYtZS9kj2TIpb7mg2hW2EPZzxrP23LbPFpH2URX8KeCJnTlMSSLZP9lcea0aAhYeBmHms4bdpsFWpTZUxf/J44mfGUzZIek9mVlJqWoOdgsGYAay9t6Ww5aoZliF82n2iZEJXWkhCTtpVgmlugrWCAZuBqJW33bFxquWXDX3CfmZkwleCSA5OTlS6aIKBzYE9mwGobbQRtfmrrZf1fqp/KmVCV65L2knGV/JnlnzhgHWafahBtEG2fah1mOGDln/yZcZX2kuuSUJXKmaqf/V/rZX5qBG0bbcBqT2ZzYCCgLpqTlQOT4JIwlZmZcJ/DX7llXGr3bCVt4GqAZq1gW6BgmraVEJPWkhCVaJk2n1BfuGTHaNBqdmq5Z/Zi11whpfufG5womnqaE52coXSncFZUWwRf4mCWYCBe0Fk/VPytWqnbpRSkWqSwpseqEbCbTfpRSFX2VrRWgFSgUJxLzLawspSv/609rlKw+7O5uNBEqEiRSwxN0UzaSmdH70KRv/27R7notyK4+7k4vWvBETxgP+FBJUPrQi9BJj44OkvIQcX0ws7BCMKpw37GKMpcMyE2ODhAOQQ5fjfcNHUx+9B7zprMscvwy13NzM/w0rEq6yyVLl8vGy/ILYkrqSig2azXOtaR1dnVFtcj2cLbEiK/I/kkgCUyJQwkLiLSHzri1ODS327fw9/T4ILinuR9GZwaZBulG0cbTBrLGPAWyerx6WTpR+mu6Zbq6uuE7fMQhBHWEc0RXBGHEF8PBQ5O8wXz7vId85nzXvRZ9XX2dAh1CFAI+QdxB70G7AUPBcf7D/xx/O/8hf0p/tH+cP8=';
 
   function unlockAudio() {
     try {
@@ -749,16 +749,23 @@
   }
 
   function playBeep(kind) {
-    // 1. Respuesta táctil (vibración corta estilo escáner físico de mano)
+    // 1. Pitido nativo ultra-rápido por AndroidBridge (cero latencia, altavoz físico nativo a 2.750 Hz)
+    try {
+      if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.playScanBeep === 'function') {
+        window.AndroidBridge.playScanBeep(kind || 'ok');
+      }
+    } catch (eBridge) {}
+
+    // 2. Respuesta táctil (vibración estilo escáner físico de mano)
     try {
       if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
-        window.AndroidBridge.vibrate(kind === 'err' ? 120 : 40);
+        window.AndroidBridge.vibrate(kind === 'err' ? 120 : 35);
       } else if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(kind === 'err' ? [70, 50, 70] : 40);
+        navigator.vibrate(kind === 'err' ? [70, 50, 70] : 35);
       }
-    } catch (e2) {}
+    } catch (eVib) {}
 
-    // 2. Respuesta acústica: auténtico BEEP de pistola láser (2.650 Hz · 65 ms)
+    // 3. Respuesta acústica Web Audio (pistola de mano Zebra LS2208: onda cuadrada 2.750 Hz · 60 ms)
     try {
       if (typeof window === 'undefined') return;
       unlockAudio();
@@ -773,38 +780,35 @@
         if (audioCtx.state === 'running') {
           var now = audioCtx.currentTime;
           if (kind === 'err' || kind === 'warn') {
-            // Tono grave doble para error
-            [0, 0.09].forEach(function (offset) {
-              var osc = audioCtx.createOscillator();
-              var gain = audioCtx.createGain();
-              osc.type = 'sawtooth';
-              osc.frequency.setValueAtTime(340, now + offset);
-              gain.gain.setValueAtTime(0.20, now + offset);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.07);
-              osc.connect(gain);
-              gain.connect(audioCtx.destination);
-              osc.start(now + offset);
-              osc.stop(now + offset + 0.075);
-            });
-            played = true;
-          } else {
-            // Pitido nítido clásico de pistola láser de caja (2.650 Hz seco y penetrante)
             var osc = audioCtx.createOscillator();
             var gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(2650, now);
-            gain.gain.setValueAtTime(0.35, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(350, now);
+            gain.gain.setValueAtTime(0.28, now);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.12);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start(now);
-            osc.stop(now + 0.068);
+            osc.stop(now + 0.12);
+            played = true;
+          } else {
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(2750, now);
+            gain.gain.setValueAtTime(0.30, now);
+            gain.gain.setValueAtTime(0.30, now + 0.052);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.060);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.062);
             played = true;
           }
         }
       }
 
-      // Fallback infalible con elemento Audio HTML5 (para WebView Android si Web Audio está bloqueado)
+      // Fallback HTML5 Audio con audio WAV sintetizado
       if (!played && kind !== 'err' && kind !== 'warn') {
         if (!cachedAudioEl && typeof Audio !== 'undefined') {
           cachedAudioEl = new Audio('data:audio/wav;base64,' + BEEP_WAV_BASE64);

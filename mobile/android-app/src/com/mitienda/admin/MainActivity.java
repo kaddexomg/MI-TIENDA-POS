@@ -5,6 +5,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -705,6 +708,57 @@ public class MainActivity extends Activity {
                 }
             } catch (Exception ignored) {
             }
+        }
+
+        @JavascriptInterface
+        public void playScanBeep(final String kind) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        boolean isErr = "err".equalsIgnoreCase(kind) || "warn".equalsIgnoreCase(kind);
+                        int sampleRate = 44100;
+                        int durationMs = isErr ? 120 : 60;
+                        int numSamples = (int) (sampleRate * (durationMs / 1000.0));
+                        short[] buffer = new short[numSamples];
+                        double freq = isErr ? 350.0 : 2750.0;
+                        double angle = 0;
+                        double increment = 2.0 * Math.PI * freq / sampleRate;
+
+                        for (int i = 0; i < numSamples; i++) {
+                            double tMs = (double) i / sampleRate * 1000.0;
+                            double env = 1.0;
+                            if (tMs < 1.5) {
+                                env = tMs / 1.5;
+                            } else if (tMs > (durationMs - 4.0)) {
+                                env = Math.max(0.0, (durationMs - tMs) / 4.0);
+                            }
+                            double sinVal = Math.sin(angle);
+                            double squareVal = sinVal >= 0 ? 1.0 : -1.0;
+                            double sampleVal = (squareVal * 0.85 + sinVal * 0.15) * 28000.0 * env;
+                            buffer[i] = (short) Math.max(-32767, Math.min(32767, (int) sampleVal));
+                            angle += increment;
+                        }
+
+                        AudioTrack track = new AudioTrack(
+                            AudioManager.STREAM_MUSIC,
+                            sampleRate,
+                            AudioFormat.CHANNEL_OUT_MONO,
+                            AudioFormat.ENCODING_PCM_16BIT,
+                            numSamples * 2,
+                            AudioTrack.MODE_STATIC
+                        );
+                        track.write(buffer, 0, numSamples);
+                        track.play();
+                        try {
+                            Thread.sleep(durationMs + 20);
+                        } catch (InterruptedException ignored) {}
+                        track.stop();
+                        track.release();
+                    } catch (Exception ignored) {
+                    }
+                }
+            }).start();
         }
     }
 }

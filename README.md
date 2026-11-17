@@ -1,6 +1,6 @@
 # MI-TIENDA-POS — Sistema POS Integral, Journal Anti-Apagones y Control Comercial
 
-> **Versión**: 8.4.0 — "Flujo Simple" (Escáner pistola universal, venta en 3 pasos, Mis Números hoy/semana/mes/año, máquina fiscal guiada, piel Material 3 + Liquid Morph, APK 1.2.0)  
+> **Versión**: 8.5.2 — "Sincronización Total & Audio Nativo" (Descarga automática de estado VPS/LAN post-reinstalación en Windows 7, paridad inmediata con Android, respuesta sonora de escáner a 2.750 Hz, venta en 3 pasos, Mis Números hoy/semana/mes/año, máquina fiscal guiada, piel Material 3 + Liquid Morph)  
 > **Compatibilidad**: Windows 7 SP1 (32 y 64 bits), Windows 8.1, Windows 10, Windows 11, Linux, macOS  
 > **Requisitos Mínimos**: 2 GB de RAM, Procesador Dual-Core x86/x64, Pantalla 1024×768 o superior  
 > **Entorno**: 100% Offline-Ready con persistencia dual (Journal transaccional append-only + LocalStorage hidratado) y shell nativo Electron 22 ia32 / Chromium 108.
@@ -11,7 +11,11 @@
 
 **MI-TIENDA-POS** es un sistema de punto de venta, control de inventario y facturación legal diseñado específicamente para la realidad operativa y comercial de Venezuela.
 
-**Novedades v8.4.0 (16-nov-2026) — pensadas para que una persona sin experiencia use el sistema sin perderse:**
+**Novedades v8.5.2 (17-nov-2026):**
+- **Sincronización Automática Post-Login (Windows 7 ↔ VPS ↔ Android)**: Al reinstalar el software en Windows 7 o encender un terminal nuevo, el inicio de sesión por PIN ahora detecta de forma automática si la base de datos local está en blanco/predeterminada. Si el servidor VPS/LAN ya contiene datos reales (nombre de comercio, productos, recetas, historial), descarga y materializa inmediatamente todo el estado en memoria y disco local, garantizando paridad total con la app de Android sin pasos manuales.
+- **Audio Nativo de Escáner sin Latencia**: El lector de código de barras incorpora sintetizador nativo de audio (`AndroidBridge.playScanBeep`) con onda cuadrada a 2.750 Hz (estilo Zebra LS2208 de caja), complementado por Web Audio API y fallback WAV para confirmación sonora instantánea al escanear.
+
+**Novedades v8.4.0 (16-nov-2026) — Flujo Simple:**
 - **Teléfono como pistola inalámbrica**: enlace fijo + QR. Modos 🖥️ Automático (sigue la pantalla abierta en la PC), 🛒 Vender, 📦 Inventario y 🔍 Consultar. El modo automático, si la PC está en Caja, suma al ticket; si está en Inventario, entra como mercancía recibida.
 - **Venta en 3 pasos visibles** en la Caja: ① Escanea o toca el producto → ② Cobra (F2) → ③ Entrega vuelto y ticket.
 - **Mis números**: hoy / esta semana / este mes / este año, con 6 cifras grandes (Vendí, Gané, Tengo en la gaveta, Gasté, IVA cobrado, Se está acabando).

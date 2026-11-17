@@ -476,6 +476,25 @@
     }
     _lastServerLoginPromise = serverPromise;
 
+    // ───────────────────────────────────────────────────────────────────
+    // Sincronización Post-Login: si el estado local está vacío o tiene
+    // valores predeterminados (reinstalación fresca) y el VPS tiene
+    // datos reales, descargar el estado del VPS y aplicarlo localmente.
+    // Esto resuelve el problema de que al reinstalar en Windows 7
+    // la app arranca con el nombre original sin la configuración del
+    // dueño, mientras que el Android sí tiene los datos correctos.
+    // ───────────────────────────────────────────────────────────────────
+    serverPromise.then(function (srvRes) {
+      if (!srvRes || !srvRes.ok) return;
+      try {
+        syncRemoteStateIfLocalIsEmpty();
+      } catch (syncErr) {
+        if (typeof console !== 'undefined' && console.warn) {
+          console.warn('[MTPAuth] Error en sincronización post-login:', syncErr);
+        }
+      }
+    });
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('mtp:auth-login', { detail: { user: user } }));
       window.dispatchEvent(new CustomEvent('mtp:state-updated'));
@@ -484,6 +503,78 @@
     var res = { success: true, user: user, serverPromise: serverPromise };
     if (extraNote) res.note = extraNote;
     return res;
+  }
+
+  /**
+   * Sincroniza estado remoto si el local parece vacío o predeterminado.
+   * Se invoca tras un login exitoso al servidor (VPS o local en red).
+   *
+   * Detecta "estado vacío" cuando no hay ventas y el nombre de la tienda
+   * sigue siendo el default. Si el VPS responde con un estado que tiene
+   * más datos (ventas, nombre personalizado), lo aplica localmente.
+   */
+  function syncRemoteStateIfLocalIsEmpty() {
+    if (!global.MTPApiClient || typeof global.MTPApiClient.getState !== 'function') return;
+    if (!global.MTP || typeof global.MTP.applyRemoteState !== 'function') return;
+
+    var localState = (global.MTP && global.MTP.state) ? global.MTP.state : null;
+    if (!localState) return;
+
+    var localSales = Array.isArray(localState.sales) ? localState.sales.length : 0;
+    var localInventory = Array.isArray(localState.inventory) ? localState.inventory.length : 0;
+    var localName = (localState.settings && localState.settings.storeName) ? String(localState.settings.storeName).trim() : '';
+    var DEFAULT_NAME = 'MI TIENDA POS';
+    var DEFAULT_NAME_FULL = 'MI TIENDA POS · Restaurante & Abasto';
+    var isDefaultName = !localName || localName === DEFAULT_NAME || localName === DEFAULT_NAME_FULL;
+    var isLocalEmpty = localSales === 0 && isDefaultName;
+
+    // Si el local ya tiene datos reales (ventas o nombre personalizado), no sobreescribir
+    if (!isLocalEmpty && localSales > 0) return;
+
+    if (typeof console !== 'undefined' && console.log) {
+      console.log('[MTPAuth] Estado local parece vacío/predeterminado (ventas=' + localSales +
+        ', inventario=' + localInventory + ', nombre="' + localName + '"). Intentando sincronizar desde servidor...');
+    }
+
+    global.MTPApiClient.getState()
+      .then(function (resp) {
+        if (!resp || !resp.state) return;
+        var remoteState = resp.state;
+        var remoteSales = Array.isArray(remoteState.sales) ? remoteState.sales.length : 0;
+        var remoteName = (remoteState.settings && remoteState.settings.storeName)
+          ? String(remoteState.settings.storeName).trim() : '';
+        var remoteHasData = remoteSales > 0 || (remoteName && remoteName !== DEFAULT_NAME && remoteName !== DEFAULT_NAME_FULL);
+
+        if (!remoteHasData) {
+          if (typeof console !== 'undefined' && console.log) {
+            console.log('[MTPAuth] El servidor remoto también tiene datos predeterminados. No hay nada que sincronizar.');
+          }
+          return;
+        }
+
+        if (typeof console !== 'undefined' && console.log) {
+          console.log('[MTPAuth] ✅ Servidor tiene datos reales (ventas=' + remoteSales +
+            ', nombre="' + remoteName + '"). Aplicando estado remoto al local...');
+        }
+
+        global.MTP.applyRemoteState(remoteState);
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('mtp:state-updated'));
+          window.dispatchEvent(new CustomEvent('mtp:remote-sync-applied', {
+            detail: {
+              remoteSales: remoteSales,
+              remoteName: remoteName,
+              source: 'post-login-sync'
+            }
+          }));
+        }
+      })
+      .catch(function (err) {
+        if (typeof console !== 'undefined' && console.warn) {
+          console.warn('[MTPAuth] No se pudo descargar el estado del servidor:', err);
+        }
+      });
   }
 
   function login(username, pin) {
