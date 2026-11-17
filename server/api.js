@@ -743,7 +743,7 @@ function handleApiRequest(req, res, journal, stateManager) {
     return sendJson(res, 200, {
       ok: true,
       service: 'MI-TIENDA-POS Local Engine',
-      version: '8.3.0',
+      version: '8.4.0',
       uptimeSec: Math.floor(process.uptime()),
       device: 'CAJA-01',
       lastSeq: journal.getLastSeq(),

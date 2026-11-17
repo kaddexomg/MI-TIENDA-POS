@@ -29,3 +29,6 @@ screenshot-*.png
 
 # Carpetas temporales de pruebas
 .test_data_*/
+
+# Estado del orquestador tri-cli
+.tri-cli/

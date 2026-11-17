@@ -2,7 +2,7 @@
 
 /**
  * server/server.js
- * MI-TIENDA-POS v5.0.0
+ * MI-TIENDA-POS v8.4.0
  * 
  * Servidor HTTP Local Híbrido:
  * - Sirve la Aplicación Web Estática (HTML, CSS, JS, SVG)
@@ -248,7 +248,7 @@ function start(portToUse) {
 
   server.listen(port, '0.0.0.0', function () {
     console.log('================================================================');
-    console.log('  MI-TIENDA-POS v5.0.0 · Servidor Local + Journal Anti-Apagones');
+    console.log('  MI-TIENDA-POS v8.4.0 · Servidor Local + Journal Anti-Apagones');
     console.log('  Puerto HTTP       : ' + port);
     console.log('  Acceso local Caja : http://localhost:' + port + '/pos.html');
     console.log('  Acceso local Admin: http://localhost:' + port + '/admin/index.html');

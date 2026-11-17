@@ -133,7 +133,7 @@ async function main() {
     assert.ok(res1.port > 0, 'Puerto efímero debe ser > 0');
     assert.strictEqual(res1.electron, '22.3.27');
     assert.strictEqual(res1.probe.hasMTPDesktop, true, 'window.MTPDesktop debe estar expuesto');
-    assert.strictEqual(res1.probe.version, '8.0.0');
+    assert.strictEqual(res1.probe.version, '8.4.0');
     assert.strictEqual(res1.probe.hasPrint, true, 'MTPDesktop.print debe existir');
     assert.strictEqual(res1.probe.hasOpenBackups, true, 'MTPDesktop.openBackupsFolder debe existir');
     assert.strictEqual(res1.probe.hasSetCartState, true, 'MTPDesktop.setCartState debe existir');
@@ -142,16 +142,19 @@ async function main() {
     assert.ok(fs.existsSync(path.join(tmpData, 'journal.ndjson')), 'journal.ndjson debe crearse en MTP_DATA_DIR');
     console.log('    OK: Electron ' + res1.electron + ' (Chrome ' + res1.chrome + ') puerto ' + res1.port);
 
-    console.log('==> [3/5] Prueba de continuidad de localStorage entre puertos efímeros distintos...');
+    console.log('==> [3/5] Prueba de continuidad de localStorage y puerto estable (enlace fijo del escáner)...');
     const storageSeed = {
       mtp_desktop_continuity_test: 'ok_persist_v8',
       mtp_custom_note: 'caja_win7'
     };
     fs.writeFileSync(path.join(tmpData, 'desktop-localstorage.json'), JSON.stringify(storageSeed), 'utf8');
     const res2 = await runElectronSmoke({ MTP_DATA_DIR: tmpData, MTP_USER_DATA_DIR: tmpUser });
-    assert.notStrictEqual(res2.port, res1.port, 'El segundo arranque debe obtener otro puerto efímero');
+    // v8.4: el servidor usa puerto preferido fijo (7070) para que el enlace del
+    // escáner móvil (/escaner?pair=XXXXXX) sea permanente; solo cae a aleatorio si está ocupado.
+    assert.ok(res2.port > 0, 'El segundo arranque debe tener puerto válido');
+    assert.strictEqual(res2.port, res1.port, 'Con el puerto libre, el enlace del escáner debe ser estable entre arranques');
     assert.ok(res2.probe.localStorageKeys >= 2, 'preload.js debe hidratar localStorage antes de ejecutar scripts');
-    console.log('    OK: puerto ' + res1.port + ' -> ' + res2.port + ', claves hidratadas: ' + res2.probe.localStorageKeys);
+    console.log('    OK: puerto estable ' + res1.port + ' -> ' + res2.port + ', claves hidratadas: ' + res2.probe.localStorageKeys);
 
     console.log('==> [4/5] Prueba de arranque directo --start=pos...');
     const posRes = await runElectronSmoke({ MTP_DATA_DIR: tmpData, MTP_USER_DATA_DIR: tmpUser }, ['--start=pos']);
