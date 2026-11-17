@@ -23,6 +23,7 @@ const journal = require('./journal');
 const stateManager = require('./state');
 const api = require('./api');
 const ssl = require('./ssl');
+const ratesSync = require('./rates-sync');
 
 const DEFAULT_PORT = 7070;
 const DEFAULT_HTTPS_PORT = 7443;
@@ -269,6 +270,9 @@ function start(portToUse) {
     }
     console.log('  Directorio Datos  : ' + journal.getDataDir());
     console.log('================================================================');
+
+    // Iniciar sincronización automática de tasas BCV/EUR/USDT
+    ratesSync.start(journal, stateManager);
   });
 
   let httpsServer = null;
@@ -293,6 +297,7 @@ function start(portToUse) {
   function handleGracefulShutdown(signal) {
     console.log('\n[MTP Server] Señal de apagado recibida (' + signal + '). Guardando snapshot...');
     try {
+      ratesSync.stop();
       stateManager.saveSnapshot();
       journal.close();
       console.log('[MTP Server] Snapshot guardado y journal cerrado correctamente.');
