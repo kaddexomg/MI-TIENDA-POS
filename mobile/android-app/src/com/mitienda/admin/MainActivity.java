@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.provider.Settings;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
@@ -39,11 +40,21 @@ public class MainActivity extends Activity {
     public static final String KEY_USE_REMOTE_UI = "use_remote_ui";
     public static final String KEY_USER_JSON = "user_json";
 
+    /* Detector bancario de Pago Movil (BankNotificationListenerService) */
+    public static final String KEY_BANK_LISTENER_ENABLED = "bank_listener_enabled";
+    public static final String KEY_BANK_RECEIVED_COUNT = "bank_received_count";
+    public static final String KEY_BANK_LAST_AT = "bank_last_at";
+    public static final String KEY_BANK_LAST_TEXT = "bank_last_text";
+    public static final String KEY_BANK_LAST_RESULT = "bank_last_result";
+    public static final String KEY_BANK_RECENT_HASHES = "bank_recent_hashes";
+
+    /** Paquete del APK dedicado al escaner (sabor Scanner). */
+    public static final String SCANNER_PACKAGE = "com.mitienda.scanner";
+
     private static final int REQ_NOTIF = 1001;
     private static final int REQ_CAMERA = 1002;
     private static final int REQ_FILE_CHOOSER = 1003;
     private static final String LOCAL_APP_HOST = "app.mitienda.local";
-    private static final String LOCAL_START_URL = "http://localhost/index.html";
     private WebView webView;
     private String pendingTab = "";
     // "remote" = interfaz viva servida por el servidor; "local" = copia dentro del APK.
@@ -58,7 +69,9 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        requestNotifPermissionIfNeeded();
+        if (!isScannerFlavor()) {
+            requestNotifPermissionIfNeeded();
+        }
         extractIntentTab(getIntent());
 
         webView = new WebView(this);
@@ -238,7 +251,7 @@ public class MainActivity extends Activity {
                             currentUiSource = "remote";
                             // Mantenemos origen http://localhost (Secure Context) para que getUserMedia/cámara
                             // funcione en LAN HTTP mientras los archivos se cargan vivos del servidor.
-                            webView.loadUrl(LOCAL_START_URL + buildTabQuery());
+                            webView.loadUrl(localStartUrl() + buildTabQuery());
                         } else {
                             loadLocalUi();
                         }
@@ -249,11 +262,14 @@ public class MainActivity extends Activity {
     }
 
     private boolean isLiveUiAsset(String path) {
-        return "index.html".equals(path)
-            || "mobile.css".equals(path)
-            || "mobile.js".equals(path)
-            || "barcode-scanner.js".equals(path)
-            || "scanner.html".equals(path);
+        if ("mobile.css".equals(path) || "barcode-scanner.js".equals(path) || "scanner.html".equals(path)) {
+            return true;
+        }
+        if (isScannerFlavor()) {
+            // El APK Escaner no lleva index.html ni mobile.js.
+            return false;
+        }
+        return "index.html".equals(path) || "mobile.js".equals(path);
     }
 
     private WebResourceResponse fetchRemoteAssetResponse(String targetUrl, String assetPath) {
@@ -291,9 +307,39 @@ public class MainActivity extends Activity {
 
     private String buildTabQuery() {
         if (pendingTab != null && !pendingTab.isEmpty()) {
-            return "?tab=" + Uri.encode(pendingTab);
+            String base = localStartUrl();
+            String sep = base.indexOf('?') >= 0 ? "&" : "?";
+            return sep + "tab=" + Uri.encode(pendingTab);
         }
         return "";
+    }
+
+    /**
+     * Sabor Scanner (MI TIENDA ESCANER): misma clase con otro applicationId.
+     * No enciende alertas de ventas ni el detector bancario.
+     */
+    private boolean isScannerFlavor() {
+        try {
+            return SCANNER_PACKAGE.equals(getPackageName());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Pantalla inicial empaquetada en el APK. Viene del recurso
+     * R.string.local_start_url para que cada sabor abra su propia interfaz
+     * (index.html en Admin, scanner.html en el Escaner).
+     */
+    private String localStartUrl() {
+        try {
+            String url = getString(R.string.local_start_url);
+            if (url != null && url.trim().length() > 0) {
+                return url.trim();
+            }
+        } catch (Exception ignored) {
+        }
+        return "http://localhost/index.html";
     }
 
     private String normalizeBase(String url) {
@@ -330,7 +376,7 @@ public class MainActivity extends Activity {
     private void loadLocalUi() {
         remoteLiveReady = false;
         currentUiSource = "local";
-        webView.loadUrl(LOCAL_START_URL + buildTabQuery());
+        webView.loadUrl(localStartUrl() + buildTabQuery());
     }
 
     /** Si la interfaz remota no carga, cae una sola vez a la copia del APK. */
@@ -496,6 +542,80 @@ public class MainActivity extends Activity {
             return prefs.getString(KEY_USER_JSON, "");
         }
 
+        /* -----------------------------------------------------------------
+           DETECTOR BANCARIO AUTOMATICO (PAGO MOVIL)
+           ----------------------------------------------------------------- */
+
+        /** true si Android ya autorizo a esta app a leer notificaciones. */
+        @JavascriptInterface
+        public boolean isNotificationAccessEnabled() {
+            try {
+                return BankNotificationListenerService.hasNotificationAccess(MainActivity.this);
+            } catch (Throwable t) {
+                return false;
+            }
+        }
+
+        /** Abre la pantalla de Android para conceder el acceso a notificaciones. */
+        @JavascriptInterface
+        public void openNotificationAccessSettings() {
+            try {
+                Intent intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            } catch (Exception e) {
+                try {
+                    Intent fallback = new Intent(Settings.ACTION_SETTINGS);
+                    fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(fallback);
+                } catch (Exception ignored) {
+                }
+            }
+        }
+
+        /** Enciende o apaga el detector sin quitarle el permiso del sistema. */
+        @JavascriptInterface
+        public void setBankListenerEnabled(boolean enabled) {
+            try {
+                SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                prefs.edit().putBoolean(KEY_BANK_LISTENER_ENABLED, enabled).apply();
+            } catch (Exception ignored) {
+            }
+        }
+
+        /**
+         * Estado del detector en JSON exacto:
+         * {"enabled":true,"access":true,"received":0,"lastAt":0,"lastText":"","lastResult":""}
+         */
+        @JavascriptInterface
+        public String getBankListenerStatus() {
+            boolean access = false;
+            boolean enabled = false;
+            int received = 0;
+            long lastAt = 0L;
+            String lastText = "";
+            String lastResult = "";
+            try {
+                SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                access = BankNotificationListenerService.hasNotificationAccess(MainActivity.this);
+                enabled = prefs.getBoolean(KEY_BANK_LISTENER_ENABLED, access);
+                received = prefs.getInt(KEY_BANK_RECEIVED_COUNT, 0);
+                lastAt = prefs.getLong(KEY_BANK_LAST_AT, 0L);
+                String storedText = prefs.getString(KEY_BANK_LAST_TEXT, "");
+                String storedResult = prefs.getString(KEY_BANK_LAST_RESULT, "");
+                lastText = storedText != null ? storedText : "";
+                lastResult = storedResult != null ? storedResult : "";
+            } catch (Throwable ignored) {
+            }
+            return "{\"enabled\":" + enabled
+                + ",\"access\":" + access
+                + ",\"received\":" + received
+                + ",\"lastAt\":" + lastAt
+                + ",\"lastText\":" + BankNotificationListenerService.jsonQuote(lastText)
+                + ",\"lastResult\":" + BankNotificationListenerService.jsonQuote(lastResult)
+                + "}";
+        }
+
         /** Recarga la interfaz viva (por ejemplo, después de cambiar de servidor). */
         @JavascriptInterface
         public void reloadUi() {
@@ -516,6 +636,9 @@ public class MainActivity extends Activity {
                 .putString(KEY_STORE_NAME, storeName != null ? storeName : "MI TIENDA POS")
                 .apply();
 
+            // El APK Escaner nunca levanta el servicio de alertas de ventas.
+            if (isScannerFlavor()) return;
+
             Intent svc = new Intent(MainActivity.this, MtpAlertService.class);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(svc);
@@ -528,11 +651,13 @@ public class MainActivity extends Activity {
         public void stopAlerts() {
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
             prefs.edit().remove(KEY_TOKEN).remove(KEY_USER_JSON).apply();
+            if (isScannerFlavor()) return;
             stopService(new Intent(MainActivity.this, MtpAlertService.class));
         }
 
         @JavascriptInterface
         public void showTestNotification(String title, String body) {
+            if (isScannerFlavor()) return;
             MtpAlertService.postStandardNotification(
                 MainActivity.this,
                 title != null ? title : "MI TIENDA ADMIN",

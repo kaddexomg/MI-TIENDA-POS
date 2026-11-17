@@ -28,6 +28,7 @@ const aiAdvisor = require('./ai-advisor');
 const aiKeys = require('./ai-keys');
 const imageSearch = require('./image-search');
 const photoStudio = require('./photo-studio');
+const pagoMovilParser = require('./pagomovil-parser');
 
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 días para evitar cierres inesperados en jornada o móvil
 const DEFAULT_SEED_USERS = {
@@ -49,6 +50,7 @@ const ADMIN_ONLY_EVENT_TYPES = {
   RATE_UPDATED: ['Administrador', 'Encargado'],
   SALE_VOIDED: ['Administrador', 'Encargado'],
   PAGO_MOVIL_STATUS_CHANGED: ['Administrador', 'Encargado'],
+  PAGO_MOVIL_INCOMING: ['Administrador', 'Encargado'],
   CATALOG_CHANGED: ['Administrador', 'Encargado']
 };
 
@@ -573,6 +575,12 @@ function buildSseEventSummary(savedEvent, currentState) {
     summary.saleId = p.saleId || '';
     summary.paymentRef = p.paymentRef || '';
     summary.newStatus = p.newStatus || 'CONCILIADO';
+  } else if (type === 'PAGO_MOVIL_INCOMING') {
+    summary.amountBs = Number(p.amountBs || 0);
+    summary.reference = p.reference || '';
+    summary.bankName = p.bankName || '';
+    summary.conciliated = p.conciliated === true;
+    summary.saleId = p.saleId || '';
   } else if (type === 'STOCK_ADJUSTED' || type === 'WASTE_RECORDED' || type === 'ITEM_SAVED') {
     summary.itemName = p.itemName || (p.item && p.item.name) || p.name || '';
   }
@@ -658,6 +666,136 @@ function resolveScannerAuth(req, query, body, secret, journal) {
     };
   }
   return { ok: false, via: null, session: null };
+}
+
+/* ==========================================================================
+   Pago Móvil — Detector bancario automático (Fase 2 v8.5)
+   ========================================================================== */
+
+/**
+ * Normaliza una referencia bancaria a solo dígitos.
+ */
+function normalizePaymentReference(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/\D+/g, '');
+}
+
+/**
+ * Indica si un pago Pago Móvil sigue pendiente de conciliación.
+ */
+function isPendingPagoMovilPayment(payment) {
+  if (!payment || payment.method !== 'Pago Móvil') return false;
+  if (payment.verifyStatus === 'PENDIENTE') return true;
+  return payment.verified === false &&
+    payment.verifyStatus !== 'CONCILIADO' &&
+    payment.verifyStatus !== 'RECHAZADO';
+}
+
+/**
+ * Busca la venta/pago pendiente que corresponde a un abono bancario.
+ * Recorre las ventas de la más reciente a la más vieja y exige:
+ *   - método "Pago Móvil" y estado pendiente
+ *   - referencia igual o últimos 6 dígitos coincidentes
+ *   - monto en Bs con tolerancia de ±0.50
+ *
+ * @returns {Object|null} { saleId, paymentId, paymentRef, payRef, sale }
+ */
+function findPendingPagoMovilPayment(stateObj, parsed) {
+  if (!stateObj || !parsed || !Array.isArray(stateObj.sales)) return null;
+  const amount = Number(parsed.amountBs);
+  if (!isFinite(amount) || amount <= 0) return null;
+  const messageRef = normalizePaymentReference(parsed.reference);
+  if (!messageRef) return null;
+
+  for (let si = stateObj.sales.length - 1; si >= 0; si--) {
+    const sale = stateObj.sales[si];
+    if (!sale || !Array.isArray(sale.payments)) continue;
+    for (let pi = 0; pi < sale.payments.length; pi++) {
+      const pay = sale.payments[pi];
+      if (!isPendingPagoMovilPayment(pay)) continue;
+
+      const payBs = Number(pay.amountBs);
+      if (!isFinite(payBs) || Math.abs(payBs - amount) > 0.5) continue;
+
+      const payRef = normalizePaymentReference(pay.ref !== undefined && pay.ref !== null ? pay.ref : pay.reference);
+      if (!payRef) continue;
+
+      const sameRef = payRef === messageRef;
+      const sameTail = payRef.length >= 6 && messageRef.length >= 6 &&
+        payRef.slice(-6) === messageRef.slice(-6);
+      if (!sameRef && !sameTail) continue;
+
+      return {
+        saleId: String(sale.id || ''),
+        paymentId: pay.id ? String(pay.id) : '',
+        paymentRef: messageRef,
+        payRef: payRef,
+        sale: sale
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Busca un abono ya recibido (deduplicación por referencia+monto o texto).
+ */
+function findDuplicateIncomingPayment(list, parsed, textHash) {
+  if (!Array.isArray(list) || !parsed) return null;
+  const reference = normalizePaymentReference(parsed.reference);
+  const amount = Number(parsed.amountBs);
+  for (let i = 0; i < list.length; i++) {
+    const item = list[i];
+    if (!item) continue;
+    const itemRef = normalizePaymentReference(item.reference);
+    const itemAmount = Number(item.amountBs);
+    if (reference && itemRef && reference === itemRef &&
+        isFinite(amount) && isFinite(itemAmount) && Math.abs(itemAmount - amount) <= 0.01) {
+      return item;
+    }
+    if (textHash && item.rawText && sha256Hex(item.rawText) === textHash) {
+      return item;
+    }
+  }
+  return null;
+}
+
+/**
+ * Proyección pública del parseo (contrato POST /pagomovil/incoming).
+ */
+function toPublicParsedMessage(parsed) {
+  const p = parsed || {};
+  return {
+    amountBs: p.amountBs === null || p.amountBs === undefined ? null : Number(p.amountBs),
+    reference: p.reference || '',
+    phone: p.phone || '',
+    ci: p.ci || '',
+    bankName: p.bankName || 'Banco no identificado',
+    confidence: Number(p.confidence || 0)
+  };
+}
+
+/**
+ * Proyección pública de un abono capturado (contrato GET /pagomovil/incoming).
+ */
+function toPublicIncomingPayment(item) {
+  if (!item) return null;
+  return {
+    id: item.id || '',
+    amountBs: Number(item.amountBs || 0),
+    reference: item.reference || '',
+    phone: item.phone || '',
+    ci: item.ci || '',
+    bankName: item.bankName || 'Banco no identificado',
+    sourceApp: item.sourceApp || '',
+    sourcePackage: item.sourcePackage || '',
+    rawText: item.rawText || '',
+    receivedAt: item.receivedAt || '',
+    conciliated: item.conciliated === true,
+    saleId: item.saleId || '',
+    paymentRef: item.paymentRef || item.reference || '',
+    confidence: Number(item.confidence || 0)
+  };
 }
 
 function sendJson(res, statusCode, data, req) {
@@ -1007,6 +1145,215 @@ function handleApiRequest(req, res, journal, stateManager) {
   }
   const sessionRole = normalizeRole(session.role);
   session.role = sessionRole;
+
+  // 3f. POST /api/v1/pagomovil/incoming — Abono capturado por el detector bancario del teléfono
+  if (pathname === '/api/pagomovil/incoming' && method === 'POST') {
+    if (session.role !== 'Administrador' && session.role !== 'Encargado') {
+      return sendJson(res, 403, {
+        ok: false,
+        error: 'Solo Administrador o Encargado puede registrar abonos bancarios.'
+      }, req);
+    }
+
+    readJsonBody(req, function (err, body) {
+      if (err) return sendJson(res, 400, { ok: false, error: err.message }, req);
+
+      const payload = body && typeof body === 'object' ? body : {};
+      const parsed = pagoMovilParser.parseBankMessage(payload);
+
+      if (!parsed.isPagoMovil) {
+        return sendJson(res, 422, {
+          ok: false,
+          error: 'El mensaje no parece una confirmación de Pago Móvil venezolano.'
+        }, req);
+      }
+      if (!parsed.amountBs) {
+        return sendJson(res, 422, {
+          ok: false,
+          error: 'No se pudo leer el monto en bolívares del mensaje bancario.'
+        }, req);
+      }
+
+      const stateObj = stateManager.getState() || {};
+      const incomingList = Array.isArray(stateObj.incomingBankPayments) ? stateObj.incomingBankPayments : [];
+      const textHash = parsed.rawText ? sha256Hex(parsed.rawText) : '';
+      const duplicate = findDuplicateIncomingPayment(incomingList, parsed, textHash);
+      if (duplicate) {
+        return sendJson(res, 200, {
+          ok: true,
+          parsed: toPublicParsedMessage(parsed),
+          duplicate: true,
+          conciliated: duplicate.conciliated === true,
+          saleId: duplicate.saleId || '',
+          paymentId: duplicate.paymentId || '',
+          paymentRef: duplicate.paymentRef || parsed.reference,
+          status: duplicate.conciliated === true ? 'CONCILIADO' : 'PENDIENTE',
+          incomingId: duplicate.id || '',
+          at: duplicate.receivedAt || ''
+        }, req);
+      }
+
+      const match = findPendingPagoMovilPayment(stateObj, parsed);
+      const receivedAt = new Date().toISOString();
+      const idempotencyKey = 'pm-in-' + (parsed.reference || 'sinref') + '-' + parsed.amountBs;
+      const record = {
+        id: 'pm-in-' + Date.now() + '-' + crypto.randomBytes(4).toString('hex'),
+        amountBs: parsed.amountBs,
+        reference: parsed.reference,
+        phone: parsed.phone,
+        ci: parsed.ci,
+        bankName: parsed.bankName,
+        sourceApp: parsed.sourceApp,
+        sourcePackage: parsed.sourcePackage,
+        rawText: parsed.rawText,
+        confidence: parsed.confidence,
+        isPagoMovil: parsed.isPagoMovil,
+        clientApp: String(payload.clientApp || '').slice(0, 60),
+        postedAt: Number(payload.postedAt) || 0,
+        receivedAt: receivedAt,
+        receivedBy: session.sub,
+        conciliated: !!match,
+        saleId: match ? match.saleId : '',
+        paymentId: match ? match.paymentId : '',
+        paymentRef: parsed.reference,
+        idempotencyKey: idempotencyKey
+      };
+
+      let savedEvent;
+      try {
+        savedEvent = journal.appendEvent({
+          type: 'PAGO_MOVIL_INCOMING',
+          user: 'detector-bancario',
+          payload: record
+        });
+      } catch (saveErr) {
+        console.error('[API] Error guardando abono bancario:', saveErr.message);
+        return sendJson(res, 500, {
+          ok: false,
+          error: 'Error de persistencia del abono bancario: ' + saveErr.message
+        }, req);
+      }
+
+      if (savedEvent.deduplicated) {
+        const already = savedEvent.payload || record;
+        return sendJson(res, 200, {
+          ok: true,
+          parsed: toPublicParsedMessage(parsed),
+          duplicate: true,
+          conciliated: already.conciliated === true,
+          saleId: already.saleId || '',
+          paymentId: already.paymentId || '',
+          paymentRef: already.paymentRef || parsed.reference,
+          status: already.conciliated === true ? 'CONCILIADO' : 'PENDIENTE',
+          incomingId: already.id || '',
+          at: already.receivedAt || ''
+        }, req);
+      }
+
+      const updatedState = stateManager.applyEvent(savedEvent, false);
+      broadcastSseEvent('state_event', {
+        seq: savedEvent.seq,
+        type: savedEvent.type,
+        id: savedEvent.id,
+        ts: savedEvent.ts,
+        user: savedEvent.user,
+        summary: buildSseEventSummary(savedEvent, updatedState)
+      });
+
+      let conciliated = false;
+      if (match) {
+        const statusRef = match.paymentId ? parsed.reference : match.payRef;
+        const statusIdem = 'pm-auto-' + match.saleId + '-' + (match.paymentId || match.payRef) + '-' + parsed.reference;
+        try {
+          const statusEvent = journal.appendEvent({
+            type: 'PAGO_MOVIL_STATUS_CHANGED',
+            user: 'detector-bancario',
+            payload: {
+              saleId: match.saleId,
+              paymentId: match.paymentId,
+              paymentRef: statusRef,
+              newStatus: 'CONCILIADO',
+              reason: 'Abono bancario automático: ' + parsed.bankName + ' ref ' + parsed.reference,
+              sourceIncomingId: record.id,
+              idempotencyKey: statusIdem
+            }
+          });
+
+          if (!statusEvent.deduplicated) {
+            const statusState = stateManager.applyEvent(statusEvent, false);
+            broadcastSseEvent('state_event', {
+              seq: statusEvent.seq,
+              type: statusEvent.type,
+              id: statusEvent.id,
+              ts: statusEvent.ts,
+              user: statusEvent.user,
+              summary: buildSseEventSummary(statusEvent, statusState)
+            });
+            broadcastSseEvent('PAGO_MOVIL_VERIFIED', {
+              saleId: match.saleId,
+              paymentRef: parsed.reference,
+              amountBs: parsed.amountBs,
+              reference: parsed.reference,
+              bankName: parsed.bankName,
+              sourceApp: parsed.sourceApp,
+              at: new Date().toISOString()
+            });
+          }
+          conciliated = true;
+        } catch (statusErr) {
+          console.error('[API] Error conciliando abono bancario:', statusErr.message);
+        }
+      }
+
+      return sendJson(res, 200, {
+        ok: true,
+        parsed: toPublicParsedMessage(parsed),
+        duplicate: false,
+        conciliated: conciliated,
+        saleId: match ? match.saleId : '',
+        paymentId: match ? match.paymentId : '',
+        paymentRef: parsed.reference,
+        status: conciliated ? 'CONCILIADO' : 'PENDIENTE',
+        incomingId: record.id,
+        at: receivedAt
+      }, req);
+    });
+    return;
+  }
+
+  // 3g. GET /api/v1/pagomovil/incoming — Últimos abonos bancarios capturados
+  if (pathname === '/api/pagomovil/incoming' && method === 'GET') {
+    if (session.role !== 'Administrador' && session.role !== 'Encargado') {
+      return sendJson(res, 403, {
+        ok: false,
+        error: 'Solo Administrador o Encargado puede consultar los abonos bancarios.'
+      }, req);
+    }
+
+    const stateObj = stateManager.getState() || {};
+    const incomingList = Array.isArray(stateObj.incomingBankPayments) ? stateObj.incomingBankPayments.slice() : [];
+    let limit = parseInt(query.limit, 10);
+    if (!isFinite(limit) || limit <= 0) limit = 20;
+    if (limit > 100) limit = 100;
+
+    incomingList.sort(function (a, b) {
+      const ta = a && a.receivedAt ? Date.parse(a.receivedAt) : 0;
+      const tb = b && b.receivedAt ? Date.parse(b.receivedAt) : 0;
+      return (isFinite(tb) ? tb : 0) - (isFinite(ta) ? ta : 0);
+    });
+
+    const items = [];
+    for (let i = 0; i < incomingList.length && items.length < limit; i++) {
+      const item = toPublicIncomingPayment(incomingList[i]);
+      if (item) items.push(item);
+    }
+
+    return sendJson(res, 200, {
+      ok: true,
+      count: items.length,
+      items: items
+    }, req);
+  }
 
   // 4. GET /api/v1/stream (Server-Sent Events en tiempo real)
   if (pathname === '/api/stream' && method === 'GET') {
@@ -1381,5 +1728,7 @@ module.exports = {
   lookupCatalogItem: lookupCatalogItem,
   getScannerPairCode: getScannerPairCode,
   parseScannedCodeInput: parseScannedCodeInput,
-  broadcastScannerEvent: broadcastScannerEvent
+  broadcastScannerEvent: broadcastScannerEvent,
+  findPendingPagoMovilPayment: findPendingPagoMovilPayment,
+  buildSseEventSummary: buildSseEventSummary
 };

@@ -1882,6 +1882,26 @@
         });
       }
 
+      window.addEventListener('mtp:unknown-barcode', function (ev) {
+        const scannedCode = ev && ev.detail && ev.detail.code ? String(ev.detail.code).trim() : '';
+        if (!scannedCode || !canManageProducts() || !window.MTPProductDrawer) return;
+        if (window.MTPUI && typeof window.MTPUI.toast === 'function') {
+          ev.preventDefault();
+          window.MTPUI.toast('Código nuevo (' + scannedCode + '). ¿Deseas registrarlo ahora?', {
+            tone: 'warn',
+            duration: 6000,
+            actionLabel: '➕ Crear producto',
+            onAction: function () {
+              window.MTPProductDrawer.open({
+                mode: 'create',
+                defaultFamilyId: activeFamilyId,
+                barcode: scannedCode
+              });
+            }
+          });
+        }
+      });
+
       document.addEventListener('keydown', function (e) {
         const tag = (document.activeElement && document.activeElement.tagName) || '';
         const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';

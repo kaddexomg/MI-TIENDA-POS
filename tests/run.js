@@ -369,6 +369,7 @@ require('./pos.test.js');
 require('./sync-integrity.test.js');
 require('./ai-photos.test.js');
 require('./scanner.test.js');
+require('./pagomovil-bank.test.js');
 
 if (process.exitCode) {
   console.error('❌ Algunas pruebas fallaron. Revisa el detalle arriba.');

@@ -3,382 +3,757 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hoja de Atajos y Controles del Teclado — MI-TIENDA-POS</title>
+  <title>Atajos de Teclado — MI-TIENDA-POS (A4 Horizontal)</title>
   <style>
     :root {
+      --navy: #0B1526;
+      --navy-2: #13233B;
       --ink: #0F172A;
-      --muted: #475569;
-      --border: #CBD5E1;
-      --accent: #09131F;
-      --emerald: #059669;
+      --muted: #5B6B80;
+      --line: #D9E0EA;
+      --line-soft: #EDF1F6;
+      --paper: #FFFFFF;
+      --soft: #F6F8FB;
       --amber: #D97706;
-      --bg-soft: #F8FAFC;
+      --amber-soft: #FFF7E8;
+      --emerald: #059669;
+      --emerald-soft: #ECFDF5;
+      --blue: #2563EB;
+      --blue-soft: #EFF5FF;
+      --violet: #7C3AED;
+      --violet-soft: #F4F0FF;
+      --rose: #E11D48;
     }
 
     * { box-sizing: border-box; }
 
     @page {
-      size: portrait;
-      margin: 10mm;
+      size: A4 landscape;
+      margin: 7mm;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      margin: 0;
-      padding: 18px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       color: var(--ink);
-      background: #E2E8F0;
-      font-size: 12.5px;
-      line-height: 1.38;
+      background: #E7EBF1;
+      font-size: 11.5px;
+      line-height: 1.32;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
-    .toolbar {
-      max-width: 780px;
-      margin: 0 auto 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      background: #FFFFFF;
+    /* ---------- Barra de pantalla (no se imprime) ---------- */
+    .screen-bar {
+      max-width: 1120px;
+      margin: 18px auto 12px;
       padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      background: var(--navy);
+      color: #FFFFFF;
+      border: 1px solid #1E3352;
+      border-radius: 12px;
+      box-shadow: 0 8px 22px rgba(11, 21, 38, 0.18);
     }
 
-    .toolbar-note {
-      font-size: 12.5px;
-      color: var(--muted);
-      font-weight: 600;
+    .screen-bar-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .screen-bar-copy strong {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .screen-bar-copy span {
+      font-size: 11.5px;
+      color: #B9C7DA;
     }
 
     .btn-print {
-      background: var(--accent);
-      color: #FFFFFF;
-      border: 0;
-      border-radius: 8px;
-      padding: 9px 16px;
-      font-size: 13px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .sheet {
-      max-width: 780px;
-      margin: 0 auto;
-      background: #FFFFFF;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 18px 20px;
-    }
-
-    .sheet-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      border-bottom: 2.5px solid var(--accent);
-      padding-bottom: 8px;
-      margin-bottom: 12px;
-    }
-
-    .sheet-title {
-      margin: 0;
-      font-size: 20px;
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 16px;
+      border: 1px solid #F3B54A;
+      border-radius: 9px;
+      background: linear-gradient(180deg, #FBBF24, #F59E0B);
+      color: #3A2500;
+      font: inherit;
+      font-size: 12.5px;
       font-weight: 900;
-      letter-spacing: -0.02em;
-      color: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 2px 0 #B45309, 0 6px 14px rgba(245, 158, 11, 0.28);
     }
 
-    .sheet-sub {
-      margin: 2px 0 0;
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 600;
+    .btn-print:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 #B45309;
     }
 
-    .sheet-badge {
-      font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 4px 9px;
-      border-radius: 6px;
-      background: var(--accent);
-      color: #FFFFFF;
-      white-space: nowrap;
+    /* ---------- Hoja ---------- */
+    .sheet {
+      max-width: 1120px;
+      margin: 0 auto 24px;
+      padding: 9px;
+      background: var(--paper);
+      border: 2px solid var(--navy);
+      border-radius: 18px;
+      box-shadow: 0 22px 55px rgba(11, 21, 38, 0.22);
     }
 
-    .section {
-      margin-bottom: 11px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
+    .sheet-frame {
+      position: relative;
+      padding: 13px 15px 11px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
       overflow: hidden;
+    }
+
+    .sheet-frame::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 4px;
+      background: linear-gradient(90deg, #F59E0B 0 34%, #10B981 34% 67%, #2563EB 67% 100%);
+      border-radius: 11px 11px 0 0;
+    }
+
+    /* ---------- Cabecera ---------- */
+    .masthead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 11px 16px;
+      margin-bottom: 11px;
+      background:
+        radial-gradient(120% 180% at 100% 0%, rgba(37, 99, 235, 0.22), transparent 55%),
+        linear-gradient(135deg, #0B1526 0%, #13233B 100%);
+      color: #FFFFFF;
+      border-radius: 10px;
+      border: 1px solid #1E3352;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      flex: none;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      background: linear-gradient(180deg, #FBBF24, #F59E0B);
+      border: 1px solid #FCD34D;
+      color: #3A2500;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 4px 10px rgba(0, 0, 0, 0.25);
+    }
+
+    .eyebrow {
+      margin: 0 0 2px;
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #FBBF24;
+    }
+
+    .masthead h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.12;
+      font-weight: 900;
+      letter-spacing: -0.025em;
+    }
+
+    .sub {
+      margin: 2px 0 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: #B9C7DA;
+    }
+
+    .masthead-meta {
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+    }
+
+    .version {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: #FBBF24;
+      color: #3A2500;
+      font-size: 10.5px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .format {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #93A6BF;
+    }
+
+    /* ---------- Columnas ---------- */
+    .columns {
+      display: grid;
+      grid-template-columns: 1.18fr 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .col {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    /* ---------- Paneles ---------- */
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+      break-inside: avoid;
       page-break-inside: avoid;
     }
 
-    .section-head {
-      background: var(--bg-soft);
-      border-bottom: 1px solid var(--border);
-      padding: 6px 11px;
-      font-size: 12.5px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: var(--accent);
+    .panel-head {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: var(--soft);
+      border-bottom: 1px solid var(--line);
+      border-left: 4px solid var(--navy);
     }
 
-    .section-head.caja { border-left: 4px solid var(--amber); }
-    .section-head.nav { border-left: 4px solid #2563EB; }
-    .section-head.global { border-left: 4px solid var(--emerald); }
-    .section-head.scanner { border-left: 4px solid #7C3AED; }
+    .panel-head h2 {
+      margin: 0;
+      font-size: 11.5px;
+      font-weight: 900;
+      letter-spacing: 0.025em;
+      text-transform: uppercase;
+      color: var(--navy);
+    }
 
+    .panel-head .num {
+      flex: none;
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      background: var(--navy);
+      color: #FFFFFF;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .panel-head .tag {
+      margin-left: auto;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .panel-caja .panel-head { border-left-color: var(--amber); background: var(--amber-soft); }
+    .panel-caja .panel-head .num { background: var(--amber); }
+    .panel-fam .panel-head { border-left-color: var(--blue); background: var(--blue-soft); }
+    .panel-fam .panel-head .num { background: var(--blue); }
+    .panel-global .panel-head { border-left-color: var(--emerald); background: var(--emerald-soft); }
+    .panel-global .panel-head .num { background: var(--emerald); }
+    .panel-scanner .panel-head { border-left-color: var(--violet); background: var(--violet-soft); }
+    .panel-scanner .panel-head .num { background: var(--violet); }
+    .panel-codes .panel-head { border-left-color: var(--rose); background: #FFF1F3; }
+    .panel-codes .panel-head .num { background: var(--rose); }
+    .panel-tips .panel-head { border-left-color: #0EA5E9; background: #F0F9FF; }
+    .panel-tips .panel-head .num { background: #0EA5E9; }
+
+    .tips-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 12px;
+    }
+
+    .tips-list li:last-child {
+      grid-column: 1 / -1;
+    }
+
+    /* ---------- Tablas ---------- */
     table {
       width: 100%;
       border-collapse: collapse;
     }
 
     tr + tr td {
-      border-top: 1px solid #E2E8F0;
+      border-top: 1px solid var(--line-soft);
     }
 
     td {
-      padding: 5.5px 11px;
+      padding: 4.5px 9px;
       vertical-align: middle;
     }
 
     td.keys {
-      width: 34%;
-      font-weight: 700;
+      width: 31%;
       white-space: nowrap;
+      line-height: 1.7;
     }
 
     td.desc {
       color: #1E293B;
+      font-size: 10.9px;
     }
 
+    td.desc strong {
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .small-note {
+      display: block;
+      margin-top: 1px;
+      font-size: 9.6px;
+      color: var(--muted);
+    }
+
+    /* ---------- Teclas ---------- */
     kbd {
       display: inline-block;
-      padding: 2px 6px;
+      min-width: 18px;
+      padding: 1.5px 5px;
       font-family: Consolas, "Courier New", monospace;
-      font-size: 11.5px;
+      font-size: 10px;
       font-weight: 800;
-      color: var(--accent);
-      background: #F1F5F9;
+      line-height: 1.25;
+      text-align: center;
+      color: var(--navy);
+      background: linear-gradient(180deg, #FFFFFF 0%, #EEF2F7 100%);
       border: 1px solid #94A3B8;
-      border-bottom-width: 2px;
+      border-bottom: 2.5px solid #64748B;
       border-radius: 5px;
+      box-shadow: inset 0 1px 0 #FFFFFF;
       vertical-align: middle;
     }
 
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 11px;
-    }
-
-    .box {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 11px;
-      background: var(--bg-soft);
-      page-break-inside: avoid;
-    }
-
-    .box-title {
-      margin: 0 0 5px;
-      font-size: 12px;
+    .plus {
+      display: inline-block;
+      margin: 0 2px;
+      color: #64748B;
+      font-size: 9px;
       font-weight: 900;
-      color: var(--accent);
-      text-transform: uppercase;
+      vertical-align: middle;
     }
 
-    .code-list {
+    /* ---------- Listas de escáner ---------- */
+    .list {
       margin: 0;
-      padding: 0;
+      padding: 6px 10px 7px 10px;
       list-style: none;
-      font-size: 11.5px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .list li {
+      position: relative;
+      padding-left: 14px;
+      font-size: 10.6px;
+      color: #1E293B;
+    }
+
+    .list li::before {
+      content: "";
+      position: absolute;
+      left: 2px;
+      top: 5px;
+      width: 5px;
+      height: 5px;
+      border-radius: 2px;
+      background: var(--violet);
+    }
+
+    .list strong { font-weight: 800; color: var(--navy); }
+
+    /* ---------- Códigos ---------- */
+    .chips {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 3px 8px;
+      gap: 3px 7px;
+      padding: 7px 9px 8px;
     }
 
-    .code-list code {
-      font-family: Consolas, monospace;
-      font-weight: 800;
-      color: #0F172A;
-      background: #FFFFFF;
-      border: 1px solid #CBD5E1;
-      border-radius: 4px;
-      padding: 0 4px;
-    }
-
-    .sheet-footer {
-      margin-top: 8px;
-      padding-top: 7px;
-      border-top: 1px dashed var(--border);
+    .chip {
       display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--muted);
-      font-weight: 600;
+      align-items: baseline;
+      gap: 5px;
+      padding: 2px 5px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      font-size: 9.8px;
+      color: #334155;
+      white-space: nowrap;
     }
 
+    .chip code {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9.6px;
+      font-weight: 900;
+      color: var(--rose);
+      background: #FFFFFF;
+      border: 1px solid #FBCFE0;
+      border-radius: 3px;
+      padding: 0 3px;
+    }
+
+    /* ---------- Franja de rutina ---------- */
+    .strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 9px;
+      padding: 6.5px 11px;
+      background: linear-gradient(90deg, #FFFBEB, #F8FAFC 55%, #EFF6FF);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--amber);
+      border-radius: 8px;
+    }
+
+    .strip-label {
+      flex: none;
+      font-size: 9.2px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--amber);
+    }
+
+    .steps {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+      font-size: 10.6px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .steps .arrow {
+      color: #94A3B8;
+      font-style: normal;
+      font-weight: 900;
+    }
+
+    .strip-note {
+      margin-left: auto;
+      font-size: 9.8px;
+      font-weight: 600;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ---------- Pie ---------- */
+    .foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 7px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--line);
+      font-size: 9.6px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .foot strong { color: var(--navy); }
+
+    /* ---------- Impresión ---------- */
     @media print {
       body {
         background: #FFFFFF;
-        padding: 0;
+        font-size: 10.6px;
       }
-      .toolbar {
-        display: none !important;
-      }
+
+      .screen-bar { display: none !important; }
+
       .sheet {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
         border: 0;
         border-radius: 0;
-        padding: 0;
-        max-width: 100%;
+        box-shadow: none;
       }
+
+      .sheet-frame {
+        padding: 0;
+        border: 1.2px solid var(--navy);
+        border-radius: 8px;
+        overflow: visible;
+      }
+
+      .sheet-frame::before { display: none; }
+
+      .masthead {
+        border-radius: 7px 7px 0 0;
+        margin-bottom: 6px;
+        padding: 8px 13px;
+      }
+
+      .masthead h1 { font-size: 18px; }
+
+      .columns { gap: 7px; }
+      .col { gap: 6px; }
+
+      .panel { box-shadow: none; }
+
+      td { padding: 3.6px 8px; }
+      td.desc { font-size: 10.1px; }
+      .list li { font-size: 9.9px; }
+      .chip { font-size: 9.2px; padding: 1.5px 4px; }
+      .strip { margin-top: 6px; padding: 5px 9px; }
+      .foot { margin-top: 5px; }
+    }
+
+    @media screen and (max-width: 900px) {
+      .columns { grid-template-columns: 1fr; }
+      .masthead { align-items: flex-start; }
+      .masthead h1 { font-size: 18px; }
+      .screen-bar { align-items: flex-start; flex-direction: column; }
     }
   </style>
 </head>
 <body>
-  <div class="toolbar">
-    <span class="toolbar-note">Plantilla vertical (Carta / A4) — Lista para pegar al lado del monitor de Caja</span>
-    <button type="button" class="btn-print" onclick="window.print()">🖨️ Imprimir Hoja Vertical (Ctrl+P)</button>
+  <div class="screen-bar">
+    <div class="screen-bar-copy">
+      <strong>Hoja de atajos · A4 horizontal</strong>
+      <span>Vista previa en pantalla. Al imprimir se oculta esta barra y sale una sola página.</span>
+    </div>
+    <button type="button" class="btn-print" onclick="window.print()">🖨️ Imprimir horizontal (Ctrl+P)</button>
   </div>
 
   <main class="sheet">
-    <header class="sheet-header">
-      <div>
-        <h1 class="sheet-title">Controles y Atajos de Teclado — MI-TIENDA-POS</h1>
-        <p class="sheet-sub">Guía rápida de Caja, Escáner y Administración · Formato Vertical</p>
-      </div>
-      <span class="sheet-badge">Versión 8.4+</span>
-    </header>
+    <div class="sheet-frame">
+      <header class="masthead">
+        <div class="brand">
+          <div class="brand-mark">MT</div>
+          <div>
+            <p class="eyebrow">MI TIENDA POS · Guía operativa</p>
+            <h1>Atajos y controles de teclado</h1>
+            <p class="sub">Caja, escáner y administración · todo sin mouse</p>
+          </div>
+        </div>
+        <div class="masthead-meta">
+          <span class="version">Versión 8.5</span>
+          <span class="format">A4 horizontal</span>
+        </div>
+      </header>
 
-    <section class="section">
-      <div class="section-head caja">
-        <span>1. Teclas Principales en Caja (pos.html)</span>
-        <span>Uso rápido sin mouse</span>
-      </div>
-      <table>
-        <tr>
-          <td class="keys"><kbd>F1</kbd></td>
-          <td class="desc">Lleva el cursor directo a la barra de <strong>Escáner / Buscador</strong>.</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>F2</kbd></td>
-          <td class="desc">Abre el modal de <strong>Cobrar y Entregar Vuelto</strong> (en todo el sistema abre Caja/Cobro).</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>F3</kbd></td>
-          <td class="desc">Pone la cuenta actual <strong>en espera</strong> o restaura una cuenta apartada.</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>F4</kbd></td>
-          <td class="desc">Abre vista rápida e impresión de <strong>Comanda de Cocina</strong>.</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>Enter</kbd></td>
-          <td class="desc">En buscador: agrega el producto exacto o el seleccionado. En ventana de Cobro: <strong>confirma la venta</strong> si el monto cubre el total.</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>Esc</kbd></td>
-          <td class="desc">Cierra ventanas/modales abiertos, limpia la búsqueda y devuelve el foco al escáner.</td>
-        </tr>
-      </table>
-    </section>
+      <div class="columns">
+        <!-- Columna principal -->
+        <div class="col col-main">
+          <section class="panel panel-caja">
+            <div class="panel-head">
+              <span class="num">1</span>
+              <h2>Caja rápida</h2>
+              <span class="tag">pos.html</span>
+            </div>
+            <table>
+              <tr>
+                <td class="keys"><kbd>F1</kbd></td>
+                <td class="desc">Lleva el cursor directo a la barra de <strong>Escáner / Buscador</strong>.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>F2</kbd></td>
+                <td class="desc">Abre <strong>Cobrar y entregar vuelto</strong>. En el cobro, <kbd>Enter</kbd> confirma la venta.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>F3</kbd></td>
+                <td class="desc">Pone la cuenta actual <strong>en espera</strong> o restaura una cuenta apartada.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>F4</kbd></td>
+                <td class="desc">Abre la vista rápida e impresión de la <strong>comanda de cocina</strong>.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>Enter</kbd></td>
+                <td class="desc">En el buscador agrega el producto exacto. En el cobro <strong>confirma</strong> si el monto cubre el total.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>Esc</kbd></td>
+                <td class="desc">Cierra ventanas, limpia la búsqueda y devuelve el foco al escáner.</td>
+              </tr>
+            </table>
+          </section>
 
-    <section class="section">
-      <div class="section-head nav">
-        <span>2. Familias, Productos y Cantidades en Caja</span>
-        <span>Teclado numérico y flechas</span>
-      </div>
-      <table>
-        <tr>
-          <td class="keys"><kbd>1</kbd> al <kbd>9</kbd></td>
-          <td class="desc">Cambia directo entre las <strong>9 Familias</strong> (1: Fritos, 2: Arepas, 3: Almuerzos, <strong>4: Víveres</strong>, 5: Refrescos, 6: Cafetería, 7: Chucherías, 8: Cervezas, 9: Cigarros).</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>Alt</kbd>+<kbd>1..9</kbd> ó <kbd>Ctrl</kbd>+<kbd>1..9</kbd></td>
-          <td class="desc">Cambia de familia al instante <strong>incluso</strong> mientras estás escribiendo en el buscador.</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>Re Pág</kbd> / <kbd>Av Pág</kbd></td>
-          <td class="desc">Recorre las familias una por una (anterior / siguiente) sin usar el mouse.</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></td>
-          <td class="desc">Navega entre las tarjetas de productos visibles y luego pulsa <kbd>Enter</kbd> para agregar.</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>+</kbd> / <kbd>-</kbd></td>
-          <td class="desc">Suma (+1) o resta (-1) cantidad al <strong>último producto agregado</strong> al ticket.</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>5</kbd><kbd>*</kbd> + código o clic</td>
-          <td class="desc">Activa el <strong>multiplicador</strong> (ej. escribe <code>5*</code> y escanea o toca el producto para cargar 5 unidades de golpe).</td>
-        </tr>
-      </table>
-    </section>
+          <section class="panel panel-fam">
+            <div class="panel-head">
+              <span class="num">2</span>
+              <h2>Familias, productos y cantidades</h2>
+              <span class="tag">sin mouse</span>
+            </div>
+            <table>
+              <tr>
+                <td class="keys"><kbd>1</kbd><span class="plus">al</span><kbd>9</kbd></td>
+                <td class="desc">Cambia entre las <strong>9 familias</strong>: Fritos, Arepas, Almuerzos, <strong>Víveres</strong>, Refrescos, Cafetería, Chucherías, Cervezas y Cigarros.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>Alt</kbd><span class="plus">+</span><kbd>1..9</kbd></td>
+                <td class="desc">Cambia de familia al instante <strong>incluso escribiendo</strong> en el buscador. También funciona con <kbd>Ctrl</kbd>.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>Re Pág</kbd><span class="plus">/</span><kbd>Av Pág</kbd></td>
+                <td class="desc">Recorre las familias una por una, anterior o siguiente.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd></td>
+                <td class="desc">Navega entre las tarjetas visibles; pulsa <kbd>Enter</kbd> para agregar la seleccionada.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>+</kbd><span class="plus">/</span><kbd>−</kbd></td>
+                <td class="desc">Suma o resta una unidad al <strong>último producto</strong> agregado al ticket.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>5</kbd><kbd>*</kbd><span class="plus">+</span>código</td>
+                <td class="desc">Multiplicador: escribe <strong>5*</strong> y escanea o toca el producto para cargar 5 unidades de golpe.</td>
+              </tr>
+            </table>
+          </section>
 
-    <section class="section">
-      <div class="section-head global">
-        <span>3. Atajos Globales (En cualquier pantalla del sistema)</span>
-        <span>Administración y navegación</span>
-      </div>
-      <table>
-        <tr>
-          <td class="keys"><kbd>Ctrl</kbd> + <kbd>K</kbd></td>
-          <td class="desc">Abre la <strong>Paleta de Comandos</strong> para saltar a cualquier módulo, acción o producto escribiendo su nombre.</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>Ctrl</kbd> + <kbd>B</kbd></td>
-          <td class="desc">Expande, reduce a íconos o contrae el menú lateral izquierdo.</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>F6</kbd></td>
-          <td class="desc">Abre el registro rápido de <strong>Gasto o Salida de Caja</strong>.</td>
-        </tr>
-        <tr>
-          <td class="keys"><kbd>F7</kbd></td>
-          <td class="desc">Abre <strong>Cuadre del Día</strong> (Dueño/Encargado) o <strong>Tickets del Turno</strong> (Cajero).</td>
-        </tr>
-      </table>
-    </section>
+          <section class="panel panel-tips">
+            <div class="panel-head">
+              <span class="num">✓</span>
+              <h2>Buenas prácticas en mostrador</h2>
+              <span class="tag">recordar</span>
+            </div>
+            <ul class="list tips-list">
+              <li><strong>Cobra siempre con F2</strong> y confirma con Enter; no cierres la venta a mano.</li>
+              <li><strong>Pago Móvil:</strong> verifica el SMS del banco antes de entregar la mercancía.</li>
+              <li><strong>Sin mouse:</strong> Ctrl+K salta a cualquier pantalla y F1 vuelve al escáner.</li>
+            </ul>
+          </section>
+        </div>
 
-    <div class="grid-2">
-      <div class="box">
-        <h2 class="box-title">4. Escáner Pistola USB y Móvil</h2>
-        <ul style="margin:0;padding-left:16px;font-size:11.5px">
-          <li><strong>Pistola USB:</strong> Funciona en cualquier parte de Caja sin hacer clic en el buscador (protege los campos de montos para no escribir por error).</li>
-          <li><strong>Escáner Móvil (Cámara):</strong> Si dejas un producto frente a la cámara <strong>no se repite</strong> hasta que lo apartes (~1 seg) y lo vuelvas a acercar.</li>
-          <li><strong>Multiplicador:</strong> Teclea <code>3*</code> + escanea el código para sumar 3 unidades.</li>
-        </ul>
+        <!-- Columna lateral -->
+        <div class="col col-side">
+          <section class="panel panel-global">
+            <div class="panel-head">
+              <span class="num">3</span>
+              <h2>Atajos globales</h2>
+              <span class="tag">cualquier pantalla</span>
+            </div>
+            <table>
+              <tr>
+                <td class="keys"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>K</kbd></td>
+                <td class="desc">Abre la <strong>paleta de comandos</strong>: salta a cualquier módulo, acción o producto escribiendo su nombre.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>B</kbd></td>
+                <td class="desc">Expande, reduce a íconos o contrae el <strong>menú lateral</strong>.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>F6</kbd></td>
+                <td class="desc">Abre el registro rápido de <strong>gasto o salida de caja</strong>.</td>
+              </tr>
+              <tr>
+                <td class="keys"><kbd>F7</kbd></td>
+                <td class="desc">Abre <strong>Cuadre del día</strong> (dueño/encargado) o <strong>Tickets del turno</strong> (cajero).</td>
+              </tr>
+            </table>
+          </section>
+
+          <section class="panel panel-scanner">
+            <div class="panel-head">
+              <span class="num">4</span>
+              <h2>Escáner pistola y móvil</h2>
+              <span class="tag">USB + cámara</span>
+            </div>
+            <ul class="list">
+              <li><strong>Pistola USB:</strong> funciona en toda la Caja sin hacer clic en el buscador y protege los campos de montos.</li>
+              <li><strong>Cámara del teléfono:</strong> si dejas un producto frente a la cámara no se repite hasta apartarlo (~1 segundo).</li>
+              <li><strong>Modos del móvil:</strong> Automático, Vender (Caja), Inventario y Consultar Precio.</li>
+              <li><strong>Multiplicador:</strong> teclea <strong>3*</strong> y escanea el código para sumar 3 unidades.</li>
+            </ul>
+          </section>
+
+          <section class="panel panel-codes">
+            <div class="panel-head">
+              <span class="num">5</span>
+              <h2>Prefijos de códigos</h2>
+              <span class="tag">etiquetas</span>
+            </div>
+            <div class="chips">
+              <span class="chip"><code>EMP-</code> Empanadas</span>
+              <span class="chip"><code>PAS-</code> Pastelitos</span>
+              <span class="chip"><code>TEQ-</code> Tequeños</span>
+              <span class="chip"><code>PAP-</code> Papas rellenas</span>
+              <span class="chip"><code>MAN-</code> Mandocas</span>
+              <span class="chip"><code>ARE-</code> Arepas</span>
+              <span class="chip"><code>ALM-</code> Almuerzos</span>
+              <span class="chip"><code>VIV-</code> Víveres</span>
+              <span class="chip"><code>BEB-</code> Bebidas</span>
+              <span class="chip"><code>CAF-</code> Cafetería</span>
+              <span class="chip"><code>CHU-</code> Chucherías</span>
+              <span class="chip"><code>CER-</code> Cervezas</span>
+              <span class="chip"><code>CIG-</code> Cigarros</span>
+              <span class="chip"><code>759</code> Código Venezuela</span>
+            </div>
+          </section>
+        </div>
       </div>
-      <div class="box">
-        <h2 class="box-title">5. Prefijos de Códigos Cortos</h2>
-        <ul class="code-list">
-          <li><code>EM01</code> Empanadas</li>
-          <li><code>PAS01</code> Pastelitos</li>
-          <li><code>TEQ01</code> Tequeños</li>
-          <li><code>AR01</code> Arepas</li>
-          <li><code>AL01</code> Almuerzos</li>
-          <li><code>VIV101</code> Víveres</li>
-          <li><code>BEB101</code> Refrescos</li>
-          <li><code>CER101</code> Cervezas</li>
-          <li><code>CHU101</code> Chucherías</li>
-          <li><code>CIG101</code> Cigarros</li>
-        </ul>
+
+      <div class="strip">
+        <span class="strip-label">Rutina sin mouse</span>
+        <span class="steps">
+          <kbd>F1</kbd> buscar
+          <i class="arrow">→</i> escanear
+          <i class="arrow">→</i> <kbd>F2</kbd> cobrar
+          <i class="arrow">→</i> <kbd>Enter</kbd> confirmar
+        </span>
+        <span class="strip-note">La pistola USB funciona en toda la Caja.</span>
       </div>
+
+      <footer class="foot">
+        <span><strong>MI-TIENDA-POS</strong> · Guía operativa de teclado</span>
+        <span>Imprimir en A4 horizontal · Ctrl + P</span>
+      </footer>
     </div>
-
-    <footer class="sheet-footer">
-      <span>MI-TIENDA-POS · Guía Operativa de Teclado</span>
-      <span>Imprimir en orientación Vertical (Ctrl+P)</span>
-    </footer>
   </main>
 </body>
 </html>

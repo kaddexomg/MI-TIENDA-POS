@@ -105,6 +105,36 @@
     return { raw: clean, code: clean, qty: 1 };
   }
 
+  function normalizeScanCode(value) {
+    return String(value === undefined || value === null ? '' : value)
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '');
+  }
+
+  /**
+   * ¿El código existe en CUALQUIER lista del catálogo (aunque sea un insumo
+   * de cocina que no se vende suelto)? Sirve para no ofrecer "Crear producto"
+   * cuando el código ya está ocupado por otra cosa.
+   */
+  function existsAnywhereInCatalog(codeStr) {
+    const q = normalizeScanCode(codeStr);
+    if (!q) return false;
+    const st = (typeof window !== 'undefined' && window.MTP && window.MTP.state) ? window.MTP.state : null;
+    if (!st) return false;
+    const lists = [st.variants, st.dishes, st.retailItems, st.inventory];
+    for (let i = 0; i < lists.length; i++) {
+      const list = lists[i];
+      if (!Array.isArray(list)) continue;
+      for (let j = 0; j < list.length; j++) {
+        const it = list[j];
+        if (!it) continue;
+        if (normalizeScanCode(it.code) === q || normalizeScanCode(it.barcode) === q) return true;
+      }
+    }
+    return false;
+  }
+
   function resolveApiBaseUrl() {
     if (typeof window === 'undefined') return '';
     if (window.MTPApiClient && typeof window.MTPApiClient.getActiveBaseUrl === 'function') {
@@ -179,7 +209,7 @@
           e.preventDefault();
           const code = buffer.trim();
           buffer = '';
-          triggerScan(code);
+          triggerScan(code, 'usb');
           return;
         }
         buffer = '';
@@ -200,7 +230,7 @@
     });
   }
 
-  function triggerScan(code) {
+  function triggerScan(code, source) {
     const clean = String(code || '').trim();
     if (!clean) return;
     const parsed = parseScanMultiplier(clean);
@@ -215,12 +245,12 @@
     });
 
     // Comprobación de existencia del producto en catálogo
-    let found = false;
+    let sellableFound = false;
     if (typeof window !== 'undefined' && window.MTP && typeof window.MTP.findByCodeOrBarcode === 'function') {
       const match = window.MTP.findByCodeOrBarcode(lookupCode, false);
-      if (match) found = true;
+      if (match) sellableFound = true;
     }
-    if (!found && typeof window !== 'undefined' && window.MTP && window.MTP.state) {
+    if (!sellableFound && typeof window !== 'undefined' && window.MTP && window.MTP.state) {
       const qLower = lookupCode.toLowerCase();
       const varMatches = (window.MTP.state.variants || []).filter(function (v) {
         return v.active !== false && v.name && v.name.toLowerCase().includes(qLower);
@@ -229,17 +259,46 @@
         return i.sellable && i.name && i.name.toLowerCase().includes(qLower);
       });
       if (varMatches.length === 1 || retMatches.length === 1) {
-        found = true;
+        sellableFound = true;
       }
     }
 
+    const inInventoryScreen = detectScreenFromLocation() === 'inventario';
+    const existsInCatalog = existsAnywhereInCatalog(lookupCode);
+    const found = sellableFound || (inInventoryScreen && existsInCatalog);
+
     if (found) {
       playScannerBeep('ok');
-    } else {
-      playScannerBeep('warn');
+      return;
+    }
+
+    playScannerBeep('warn');
+
+    if (existsInCatalog) {
+      // El código sí existe, pero es un ingrediente de cocina: no se vende
+      // suelto en Caja. No ofrecemos crear un producto duplicado.
       if (typeof window !== 'undefined' && window.MTP && typeof window.MTP.toast === 'function') {
-        window.MTP.toast('Código no encontrado: ' + lookupCode + '. Puede buscarlo por nombre.', 'warn');
+        window.MTP.toast('El código ' + lookupCode + ' es de un ingrediente de cocina y no se vende suelto en Caja.', 'warn');
       }
+      return;
+    }
+
+    // Código realmente desconocido: la pantalla activa (Caja o Inventario)
+    // decide si ofrece "➕ Crear con este código". Si nadie lo atiende,
+    // se muestra el aviso genérico de siempre.
+    let handledByPage = false;
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+      try {
+        const unknownEvt = new CustomEvent('mtp:barcode-unknown', {
+          detail: { code: lookupCode, raw: clean, source: source || 'scanner' },
+          cancelable: true
+        });
+        handledByPage = window.dispatchEvent(unknownEvt) === false;
+      } catch (_) {}
+    }
+
+    if (!handledByPage && typeof window !== 'undefined' && window.MTP && typeof window.MTP.toast === 'function') {
+      window.MTP.toast('Código no encontrado: ' + lookupCode + '. Puede buscarlo por nombre.', 'warn');
     }
   }
 
@@ -269,7 +328,7 @@
     if (typeof cb === 'function') {
       cb(clean);
     } else {
-      triggerScan(clean);
+      triggerScan(clean, 'camera');
     }
   }
 
@@ -666,7 +725,7 @@
     // En modo INVENTORY_FILL la pantalla de Inventario reacciona al evento
     // (abre "Llegó mercancía" o suma al conteo); no se dispara el flujo de Caja.
     if (mode !== 'INVENTORY_FILL') {
-      triggerScan(dispatchCode);
+      triggerScan(dispatchCode, 'remote');
     }
 
     if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {

@@ -221,6 +221,83 @@
     return cont;
   }
 
+  /**
+   * Aviso con un botón de acción (por ejemplo "➕ Crear con este código").
+   * Se usa cuando el cajero escanea un código que no está en el catálogo:
+   * el aviso no desaparece antes de que pueda tocarlo y no usa alert().
+   *
+   * @param {string} message
+   * @param {Object} o { type, actionLabel, onAction, duration, icon }
+   * @returns {Object|null} { close }
+   */
+  function toastAction(message, o) {
+    o = o || {};
+    if (typeof document === 'undefined') return null;
+    const cont = ensureToastRegion();
+
+    const el = document.createElement('div');
+    const kind = o.type === 'err' ? 'err' : (o.type === 'info' ? 'info' : 'warn');
+    el.className = 'mtp-toast mtp-toast-action ' + kind;
+    el.style.flexWrap = 'wrap';
+    el.style.maxWidth = '440px';
+
+    const ico = document.createElement('span');
+    ico.textContent = o.icon || (kind === 'err' ? '🚨' : (kind === 'info' ? '✅' : '⚠️'));
+    const msg = document.createElement('span');
+    msg.textContent = String(message === undefined || message === null ? '' : message);
+    msg.style.flex = '1';
+    msg.style.minWidth = '150px';
+    el.appendChild(ico);
+    el.appendChild(msg);
+
+    let timer = null;
+    function close() {
+      if (timer) { clearTimeout(timer); timer = null; }
+      el.style.opacity = '0';
+      el.style.transition = 'opacity 0.22s';
+      setTimeout(function () {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }, 240);
+    }
+
+    if (o.actionLabel && typeof o.onAction === 'function') {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mtp-toast-btn';
+      btn.textContent = o.actionLabel;
+      // Estilos en línea para que el botón se vea igual en Caja y en Admin
+      // (no todas las pantallas cargan la misma hoja de estilos del POS).
+      btn.style.cssText = [
+        'margin-left:4px',
+        'min-height:36px',
+        'padding:7px 12px',
+        'border:none',
+        'border-radius:8px',
+        'background:#FFFFFF',
+        'color:#0F172A',
+        'font-family:inherit',
+        'font-weight:800',
+        'font-size:12.5px',
+        'cursor:pointer',
+        'flex-shrink:0'
+      ].join(';');
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        close();
+        try {
+          o.onAction();
+        } catch (err) {
+          if (typeof console !== 'undefined' && console.error) console.error(err);
+        }
+      });
+      el.appendChild(btn);
+    }
+
+    cont.appendChild(el);
+    timer = setTimeout(close, Number(o.duration) > 0 ? Number(o.duration) : 9000);
+    return { close: close };
+  }
+
   /* ------------------------------------------------------------- Tema --- */
   function getTheme() {
     try {
@@ -297,6 +374,7 @@
     promptDialog: promptDialog,
     menuDialog: menuDialog,
     ensureToastRegion: ensureToastRegion,
+    toastAction: toastAction,
     theme: root.MTPTheme
   };
 })(window);

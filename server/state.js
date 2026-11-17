@@ -61,6 +61,7 @@ function createDefaultState() {
     users: [],
     posTerminals: [],
     pagoMovilAccounts: [],
+    incomingBankPayments: [],
     lastSeq: 0,
     updatedAt: new Date().toISOString()
   };
@@ -738,6 +739,37 @@ function applyEvent(event, isReplay) {
           }
           break;
         }
+      }
+      break;
+    }
+
+    case 'PAGO_MOVIL_INCOMING': {
+      /* Abonos capturados por el detector bancario del teléfono.
+         Se guardan del más reciente al más viejo, con deduplicación por
+         idempotencyKey y un tope de 200 registros para no inflar el snapshot. */
+      if (!Array.isArray(currentState.incomingBankPayments)) {
+        currentState.incomingBankPayments = [];
+      }
+      const incoming = Object.assign({}, payload);
+      if (!incoming.id) incoming.id = event.id;
+      if (!incoming.receivedAt) incoming.receivedAt = eventTs;
+      const incomingIdem = incoming.idempotencyKey || event.idempotencyKey || '';
+      let incomingDup = -1;
+      for (let ii = 0; ii < currentState.incomingBankPayments.length; ii++) {
+        const existing = currentState.incomingBankPayments[ii];
+        if (!existing) continue;
+        if (incomingIdem && existing.idempotencyKey === incomingIdem) {
+          incomingDup = ii;
+          break;
+        }
+      }
+      if (incomingDup >= 0) {
+        // Ya registrado: conservar el original (puede tener la conciliación aplicada).
+        break;
+      }
+      currentState.incomingBankPayments.unshift(incoming);
+      while (currentState.incomingBankPayments.length > 200) {
+        currentState.incomingBankPayments.pop();
       }
       break;
     }

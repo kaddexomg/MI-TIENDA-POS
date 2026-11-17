@@ -89,6 +89,15 @@ function serveStaticFile(req, res, pathname) {
     res.end();
     return;
   }
+  // Panel del dueño en el celular (APK Admin). La raíz "/" sigue siendo el
+  // login de escritorio de la app Electron, así que no se toca.
+  if (decodedPath === '/admin-movil' || decodedPath === '/admin-movil/') {
+    const parsedMovil = url.parse(req.url || '', false);
+    const qsMovil = parsedMovil && parsedMovil.search ? parsedMovil.search : '';
+    res.writeHead(302, { 'Location': '/mobile/index.html' + qsMovil });
+    res.end();
+    return;
+  }
 
   // Prevenir Directory Traversal fuera de PROJECT_ROOT
   const safeRelativePath = path.normalize(decodedPath).replace(/^(\.\.[\/\\])+/, '');

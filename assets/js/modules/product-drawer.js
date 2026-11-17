@@ -265,8 +265,44 @@
                     🎲
                   </button>
                 </div>
+                <div id="drawerBarcodeHint" style="display:none;margin-top:5px;padding:6px 9px;border-radius:8px;background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;font-size:11.5px;font-weight:700;line-height:1.35"></div>
               </div>
             </div>
+
+            <!-- CALCULADORA DE COMPRA POR BULTO / CAJA -->
+            <details class="apple-bulk-calc" id="drawerBulkCalc" style="border:1px solid #E2E8F0;border-radius:10px;background:#F8FAFC">
+              <summary style="cursor:pointer;padding:10px 12px;font-size:13px;font-weight:800;color:#0F172A;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <span>🧮 Compra por bulto o caja</span>
+                <span id="drawerBulkSummaryInline" style="font-size:11.5px;font-weight:700;color:#64748B">Bulto ÷ unidades = costo real</span>
+              </summary>
+              <div style="padding:0 12px 12px 12px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label for="drawerBulkCost">Costo del bulto ($)</label>
+                    <input type="number" step="0.01" min="0" id="drawerBulkCost" class="input"
+                      style="font-size:14px;font-weight:700;font-variant-numeric:tabular-nums" placeholder="21.60">
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label for="drawerBulkUnits">Unidades por bulto</label>
+                    <input type="number" step="1" min="1" id="drawerBulkUnits" class="input"
+                      style="font-size:14px;font-weight:700;font-variant-numeric:tabular-nums" value="20">
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label for="drawerBulkMargin">Margen deseado (%)</label>
+                    <input type="number" step="1" min="0" max="90" id="drawerBulkMargin" class="input"
+                      style="font-size:14px;font-weight:700;font-variant-numeric:tabular-nums" value="30">
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;display:flex;align-items:flex-end">
+                    <button type="button" class="btn btn-action" id="btnApplyBulk" style="width:100%;height:36px;font-size:12px;font-weight:800">
+                      ⬇ Usar este costo y precio
+                    </button>
+                  </div>
+                </div>
+                <div id="drawerBulkResult" style="margin-top:9px;padding:8px 10px;border-radius:8px;background:#FFFFFF;border:1px solid #E2E8F0;font-size:12px;line-height:1.5;color:#334155">
+                  Escribe el costo del bulto para calcular el costo unitario y el precio sugerido.
+                </div>
+              </div>
+            </details>
 
             <!-- SELECTOR VISUAL DE FOTO (47 FOTOS REALES) -->
             <div class="form-group">
@@ -376,6 +412,144 @@
 
     priceUsdInput.addEventListener('input', updateCalculations);
     costUsdInput.addEventListener('input', updateCalculations);
+
+    /* ── Calculadora de compra por bulto / caja ─────────────────────────────
+       Bulto ÷ unidades = costo unitario real.  El precio sugerido usa el
+       mismo criterio de margen que se muestra arriba (margen sobre la venta),
+       así el número que se aplica coincide con el % que ve el dueño.        */
+    const bulkCostInput = backdrop.querySelector('#drawerBulkCost');
+    const bulkUnitsInput = backdrop.querySelector('#drawerBulkUnits');
+    const bulkMarginInput = backdrop.querySelector('#drawerBulkMargin');
+    const bulkResultEl = backdrop.querySelector('#drawerBulkResult');
+    const bulkSummaryEl = backdrop.querySelector('#drawerBulkSummaryInline');
+    const applyBulkBtn = backdrop.querySelector('#btnApplyBulk');
+
+    function fmtUsd(n) {
+      return '$' + (Number(n) || 0).toFixed(2);
+    }
+
+    function readBulk() {
+      const cost = Number(bulkCostInput.value) || 0;
+      const units = Math.max(1, Math.floor(Number(bulkUnitsInput.value) || 0));
+      let margin = Number(bulkMarginInput.value);
+      if (isNaN(margin)) margin = 30;
+      margin = Math.max(0, Math.min(90, margin));
+      return { cost: cost, units: units, margin: margin };
+    }
+
+    function computeBulkPreview() {
+      const v = readBulk();
+      if (v.cost <= 0) return null;
+      const unitCost = v.cost / v.units;
+      const unitPrice = v.margin >= 100 ? unitCost : (unitCost / (1 - v.margin / 100));
+      return {
+        cost: v.cost,
+        units: v.units,
+        margin: v.margin,
+        unitCost: unitCost,
+        unitPrice: unitPrice,
+        profit: unitPrice - unitCost,
+        totalSale: unitPrice * v.units
+      };
+    }
+
+    /**
+     * Precio final en Bs respetando el modo de IVA configurado
+     * (RECARGO suma 16%, INCLUIDO desglosa). Usa el motor fiscal real
+     * para no inventar impuestos a mano.
+     */
+    function pvpBsForPrice(priceUsd) {
+      const settings = (root.MTP && root.MTP.state && root.MTP.state.settings) ? root.MTP.state.settings : {};
+      const bcv = getBcvRate();
+      if (root.MTPTax && typeof root.MTPTax.computeTotals === 'function') {
+        const tot = root.MTPTax.computeTotals({
+          lines: [{
+            name: 'preview',
+            qty: 1,
+            priceUsd: Number(priceUsd) || 0,
+            taxType: selectedTaxType,
+            iva: selectedTaxType
+          }],
+          payments: [],
+          settings: settings,
+          rateBcv: bcv
+        });
+        return { totalUsd: tot.totalUsd, totalBs: tot.totalBs, ivaUsd: tot.totalIvaUsd, mode: tot.ivaMode };
+      }
+      return { totalUsd: Number(priceUsd) || 0, totalBs: (Number(priceUsd) || 0) * bcv, ivaUsd: 0, mode: 'RECARGO' };
+    }
+
+    function renderBulkPreview() {
+      if (!bulkResultEl) return;
+      const p = computeBulkPreview();
+
+      if (!p) {
+        bulkResultEl.innerHTML = 'Escribe el costo del bulto para calcular el costo unitario y el precio sugerido.';
+        if (bulkSummaryEl) bulkSummaryEl.textContent = 'Bulto ÷ unidades = costo real';
+        return;
+      }
+
+      const bcv = getBcvRate();
+      const pvp = pvpBsForPrice(p.unitPrice);
+      const ivaNote = selectedTaxType === 'E'
+        ? '<span style="color:#047857;font-weight:800">Exento de IVA (Art. 18)</span>'
+        : (pvp.mode === 'INCLUIDO'
+            ? 'IVA 16% incluido en el precio'
+            : 'IVA 16% se recarga al cobrar');
+
+      bulkResultEl.innerHTML =
+        '<div style="display:flex;justify-content:space-between;gap:8px">' +
+          '<span>Costo real por unidad</span><strong style="font-variant-numeric:tabular-nums">' + fmtUsd(p.unitCost) + '</strong>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;gap:8px">' +
+          '<span>Precio sugerido (' + p.margin + '% margen)</span>' +
+          '<strong style="color:#059669;font-variant-numeric:tabular-nums">' + fmtUsd(p.unitPrice) + '</strong>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;gap:8px">' +
+          '<span>Ganancia por unidad</span>' +
+          '<strong style="font-variant-numeric:tabular-nums">' + fmtUsd(p.profit) + '</strong>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;gap:8px">' +
+          '<span>Ganancia si vendes los ' + p.units + '</span>' +
+          '<strong style="font-variant-numeric:tabular-nums">' + fmtUsd(p.profit * p.units) + '</strong>' +
+        '</div>' +
+        '<div style="margin-top:5px;padding-top:5px;border-top:1px dashed #CBD5E1;font-size:12px">' +
+          'PVP al cliente: <strong style="color:#0F172A">' + fmtUsd(pvp.totalUsd) + '</strong>' +
+          ' · <strong style="color:#0369A1">' + Number(pvp.totalBs).toFixed(2) + ' Bs</strong>' +
+          (Number(pvp.ivaUsd) > 0 ? ' (IVA ' + fmtUsd(pvp.ivaUsd) + ')' : '') +
+          '<br><span style="color:#64748B">' + ivaNote + ' · tasa ' + bcv.toFixed(2) + '</span>' +
+        '</div>';
+
+      if (bulkSummaryEl) {
+        bulkSummaryEl.textContent = 'Unidad: ' + fmtUsd(p.unitCost) + ' · Venta: ' + fmtUsd(p.unitPrice);
+      }
+    }
+
+    [bulkCostInput, bulkUnitsInput, bulkMarginInput].forEach(function (inp) {
+      if (!inp) return;
+      inp.addEventListener('input', renderBulkPreview);
+      inp.addEventListener('change', renderBulkPreview);
+    });
+
+    if (applyBulkBtn) {
+      applyBulkBtn.addEventListener('click', function () {
+        const p = computeBulkPreview();
+        if (!p) {
+          if (root.MTP && root.MTP.toast) {
+            root.MTP.toast('Escribe primero el costo del bulto o caja.', 'warn');
+          }
+          bulkCostInput.focus();
+          return;
+        }
+        costUsdInput.value = p.unitCost.toFixed(2);
+        priceUsdInput.value = p.unitPrice.toFixed(2);
+        updateCalculations();
+        renderBulkPreview();
+        if (root.MTP && root.MTP.toast) {
+          root.MTP.toast('✅ Aplicado: costo ' + fmtUsd(p.unitCost) + ' y precio ' + fmtUsd(p.unitPrice) + ' por unidad.');
+        }
+      });
+    }
 
     function updateTaxButtonsState() {
       const isKitchen = selectedType === 'cocina';

@@ -241,6 +241,94 @@
       border-bottom: 0;
       padding-bottom: 2px;
     }
+    /* ---- Consulta de precio (modo 🔍 LOOKUP) ---- */
+    .scanner-lookup-label {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--txt-3);
+    }
+    .scanner-lookup-name {
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.25;
+      color: var(--txt-1);
+      margin-top: 2px;
+      overflow-wrap: break-word;
+    }
+    .scanner-lookup-code {
+      font-size: 11.5px;
+      font-weight: 700;
+      font-family: monospace;
+      color: var(--txt-3);
+      margin-top: 2px;
+      overflow-wrap: break-word;
+    }
+    .scanner-lookup-prices {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .scanner-lookup-price {
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 8px 6px;
+      text-align: center;
+    }
+    .scanner-lookup-amount {
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: break-word;
+    }
+    .scanner-lookup-amount.usd { color: var(--emerald-dark); }
+    .scanner-lookup-amount.bs { color: var(--txt-1); }
+    .scanner-lookup-stock {
+      margin-top: 8px;
+      border-radius: 14px;
+      padding: 9px 10px;
+      text-align: center;
+      font-weight: 800;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+    }
+    .scanner-lookup-stock.ok {
+      background: var(--emerald-soft);
+      border-color: rgba(16, 185, 129, 0.35);
+      color: var(--emerald-txt);
+    }
+    .scanner-lookup-stock.low {
+      background: var(--amber-soft);
+      border-color: rgba(245, 158, 11, 0.35);
+      color: var(--amber-txt);
+    }
+    .scanner-lookup-stock-num {
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1.05;
+      font-variant-numeric: tabular-nums;
+    }
+    .scanner-lookup-stock-num .unit {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .scanner-lookup-stock-text {
+      font-size: 13px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+    .scanner-lookup-note {
+      margin-top: 8px;
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--txt-3);
+    }
   </style>
   <script>
     window.__MTP_IS_SCANNER_APP__ = true;
@@ -420,6 +508,16 @@
       var ADMIN_CFG_KEY = 'mtp_mobile_admin_cfg_v1';
       var SCANNER_CFG_KEY = 'mtp_scanner_session_v1';
 
+      /*
+       * El APK dedicado al escáner abre: http://localhost/scanner.html?app=scanner
+       * Ese sabor no lleva el panel del dueño (index.html/mobile.js), así que
+       * nunca debe mostrar el enlace "← Panel" ni accesos administrativos.
+       */
+      var scannerOnlyApp = false;
+      try {
+        scannerOnlyApp = /(?:^|[?&])app=scanner(?:&|$)/.test(String(window.location.search || ''));
+      } catch (eScanOnly) {}
+
       var state = {
         serverUrl: '',
         token: '',
@@ -435,6 +533,16 @@
 
       /* Contexto de pantalla activa en la PC (modo AUTO) */
       var ctxState = { screen: null, label: null, sse: null, timer: null };
+
+      /* Solo un Administrador con sesión real puede saltar al panel de escritorio. */
+      function canOpenAdminPanel() {
+        if (scannerOnlyApp) return false;
+        if (!state.user) return false;
+        if (String(state.user.role || '') !== 'Administrador') return false;
+        if (state.pairCode) return false;
+        if (state.user.username === 'escaner-movil') return false;
+        return true;
+      }
 
       function $(id) { return document.getElementById(id); }
 
@@ -778,6 +886,61 @@
         }
       }
 
+      /* Formato venezolano de Bolívares: 1.250,50 */
+      function fmtBs(n) {
+        var num = Number(n || 0);
+        if (!isFinite(num)) num = 0;
+        var parts = num.toFixed(2).split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        return parts[0] + ',' + parts[1];
+      }
+
+      /*
+       * Modo 🔍 Consultar Precio: precio en $, precio en Bs y existencia en
+       * grande. Solo informa; nunca agrega nada al carrito de la Caja.
+       */
+      function renderLookupCard(card, m, code, stockNum, minStk) {
+        var usd = Number(m.priceUsd || 0);
+        var bs = Number(m.priceBs || 0);
+        if (!isFinite(usd)) usd = 0;
+        if (!isFinite(bs)) bs = 0;
+
+        var stockHtml;
+        if (stockNum === null || isNaN(stockNum)) {
+          stockHtml =
+            '<div class="scanner-lookup-stock">' +
+              '<div class="scanner-lookup-label">Existencia</div>' +
+              '<div class="scanner-lookup-stock-text">Se prepara al momento en cocina</div>' +
+            '</div>';
+        } else {
+          var low = stockNum <= minStk;
+          stockHtml =
+            '<div class="scanner-lookup-stock ' + (low ? 'low' : 'ok') + '">' +
+              '<div class="scanner-lookup-label">' + (low ? 'Queda poco' : 'Hay en existencia') + '</div>' +
+              '<div class="scanner-lookup-stock-num">' + stockNum + ' <span class="unit">' + escHtml(m.unit || 'und') + '</span></div>' +
+            '</div>';
+        }
+
+        card.innerHTML =
+          '<div style="text-align:center">' +
+            '<div class="scanner-lookup-label">🔍 Consulta de precio</div>' +
+            '<div class="scanner-lookup-name">' + escHtml(m.name) + '</div>' +
+            '<div class="scanner-lookup-code">' + escHtml(m.code || '') + (m.barcode ? ' · ' + escHtml(m.barcode) : '') + '</div>' +
+          '</div>' +
+          '<div class="scanner-lookup-prices">' +
+            '<div class="scanner-lookup-price">' +
+              '<div class="scanner-lookup-label">Precio $</div>' +
+              '<div class="scanner-lookup-amount usd">$' + usd.toFixed(2) + '</div>' +
+            '</div>' +
+            '<div class="scanner-lookup-price">' +
+              '<div class="scanner-lookup-label">Precio Bs</div>' +
+              '<div class="scanner-lookup-amount bs">' + fmtBs(bs) + '</div>' +
+            '</div>' +
+          '</div>' +
+          stockHtml +
+          '<div class="scanner-lookup-note">Solo consulta · no se agregó a ninguna venta (' + escHtml(code) + ')</div>';
+      }
+
       function renderResultCard(resData, sentQty, mode) {
         var card = $('scanResultCard');
         if (!card || !resData) return;
@@ -792,6 +955,12 @@
           var stockBadge = stockNum === null
             ? '<span class="pill pill-blue">Preparado en cocina</span>'
             : '<span class="pill ' + (stockNum <= minStk ? 'pill-red' : 'pill-green') + '">Stock: ' + stockNum + ' ' + escHtml(m.unit || 'und') + '</span>';
+
+          // Consulta de precio: tarjeta grande con $, Bs y existencia. No toca el carrito.
+          if (mode === 'LOOKUP') {
+            renderLookupCard(card, m, code, stockNum, minStk);
+            return;
+          }
 
           var sentBadge = mode === 'LOOKUP'
             ? '<span class="pill pill-blue">🔍 Solo consulta</span>'
@@ -1020,8 +1189,8 @@
 
         var backBtn = $('topBackBtn');
         if (backBtn) {
-          var showBack = Boolean(window.AndroidBridge) || (uRole === 'Administrador');
-          backBtn.classList.toggle('hidden', !showBack);
+          // Ni el APK Escáner ni una sesión de Cajero/pairCode ven el panel del dueño.
+          backBtn.classList.toggle('hidden', !canOpenAdminPanel());
         }
 
         updateModeUi();

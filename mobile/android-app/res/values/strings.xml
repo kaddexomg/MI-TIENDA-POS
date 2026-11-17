@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Valores por defecto del sabor ADMIN. El compilador
+  (tools/build-mobile-apk.ps1) reescribe este archivo dentro de
+  build/<sabor>/ para que cada APK tenga su propio nombre y pantalla inicial:
+    Admin   -> MI TIENDA ADMIN    + http://localhost/index.html
+    Escaner -> MI TIENDA ESCANER  + http://localhost/scanner.html?app=scanner
+-->
 <resources>
     <string name="app_name">MI TIENDA ADMIN</string>
+    <string name="local_start_url">http://localhost/index.html</string>
 </resources>

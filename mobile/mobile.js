@@ -298,7 +298,9 @@
                 handleUnauthorized();
               }
               var errMsg = (data && data.error) ? data.error : ('Error HTTP ' + res.status);
-              throw new Error(errMsg);
+              var httpErr = new Error(errMsg);
+              httpErr.status = res.status;
+              throw httpErr;
             }
             return data;
           });
@@ -373,8 +375,19 @@
       sseSource.addEventListener('state_event', function (e) {
         try {
           var meta = JSON.parse(e.data || '{}');
+          if (meta && meta.type === 'PAGO_MOVIL_VERIFIED') {
+            notifyPagoMovilVerified(meta.summary || meta.payload || meta);
+            recordLiveAlert(meta);
+            scheduleBankDataRefresh();
+            return;
+          }
           recordLiveAlert(meta);
           refreshAllData(true);
+        } catch (err) {}
+      });
+      sseSource.addEventListener('PAGO_MOVIL_VERIFIED', function (e) {
+        try {
+          notifyPagoMovilVerified(JSON.parse(e.data || '{}'));
         } catch (err) {}
       });
       sseSource.onerror = function () {
@@ -403,6 +416,8 @@
       }
     } else if (meta.type === 'PAGO_MOVIL_STATUS_CHANGED') {
       text = 'Pago Móvil Ref #' + (sum.paymentRef || '') + ' → ' + (sum.newStatus || '');
+    } else if (meta.type === 'PAGO_MOVIL_VERIFIED') {
+      text = 'Pago Móvil conciliado: ' + fmtBs(sum.amountBs || 0) + ' (Ref ' + (sum.reference || sum.paymentRef || '—') + ')';
     } else if (meta.type === 'RATE_UPDATED') {
       text = 'Tasas actualizadas desde PC/Móvil';
     } else if (sum.itemName) {
@@ -758,6 +773,396 @@
     });
   }
 
+  /* ========================================================================
+     DETECTOR BANCARIO AUTOMÁTICO (FASE 2 · PESTAÑA PAGO MÓVIL)
+     --------------------------------------------------------------
+     Puente Android esperado (todo con guardas porque en un navegador normal
+     no existe): isNotificationAccessEnabled(), openNotificationAccessSettings(),
+     setBankListenerEnabled(boolean) y getBankListenerStatus() → JSON.
+     Los abonos capturados vienen del servidor:
+     GET /api/v1/pagomovil/incoming?limit=5 → { ok, count, items[] }.
+     ======================================================================== */
+  var BANK_LIST_LIMIT = 5;
+  var BANK_LIST_THROTTLE_MS = 5000;
+  var BANK_STATUS_HINT = 'El detector automático solo funciona en la app MI TIENDA ADMIN instalada en el teléfono.';
+  var BANK_PRIVACY_TEXT = 'Solo se leen notificaciones de bancos. Nada se comparte fuera de tu tienda.';
+  var BANK_SERVER_STALE_TEXT = 'El servidor aún no tiene el detector actualizado.';
+
+  var bankDetector = {
+    hasBridge: false,
+    supported: false,
+    access: false,
+    enabled: false,
+    received: 0,
+    lastAt: 0,
+    lastText: '',
+    lastResult: '',
+    items: [],
+    itemsKnown: false,
+    itemsError: '',
+    loading: false,
+    lastLoadAt: 0,
+    lastEventAt: '',
+    lastEventKey: '',
+    lastEventKeyAt: 0
+  };
+
+  var bankDataRefreshTimer = null;
+
+  function getAndroidBridge() {
+    var bridge = window.AndroidBridge;
+    return bridge ? bridge : null;
+  }
+
+  function safeBridgeCall(name, args) {
+    var bridge = getAndroidBridge();
+    if (!bridge || typeof bridge[name] !== 'function') return undefined;
+    try {
+      return bridge[name].apply(bridge, args || []);
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  // Timestamps del puente pueden venir en segundos o en milisegundos;
+  // el servidor manda receivedAt como ISO. Aquí se aceptan ambos.
+  function normalizeBankTs(value) {
+    if (value === null || value === undefined || value === '') return 0;
+    var n = Number(value);
+    if (!isNaN(n) && n > 0) {
+      if (n < 10000000000) n = n * 1000;
+      return n;
+    }
+    var parsed = Date.parse(String(value));
+    return isNaN(parsed) ? 0 : parsed;
+  }
+
+  function formatBankWhen(value) {
+    var ms = normalizeBankTs(value);
+    if (!ms) return '';
+    var d = new Date(ms);
+    if (isNaN(d.getTime())) return '';
+    var now = new Date();
+    var sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+    try {
+      if (sameDay) return d.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+      return d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit' }) + ' ' +
+        d.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      var hh = ('0' + d.getHours()).slice(-2);
+      var mm = ('0' + d.getMinutes()).slice(-2);
+      return hh + ':' + mm;
+    }
+  }
+
+  function readBankListenerStatus() {
+    var bd = bankDetector;
+    var bridge = getAndroidBridge();
+    bd.hasBridge = Boolean(bridge);
+
+    if (!bridge) {
+      bd.supported = false;
+      bd.access = false;
+      bd.enabled = false;
+      bd.received = 0;
+      bd.lastAt = 0;
+      bd.lastText = '';
+      bd.lastResult = '';
+      return bd;
+    }
+
+    var raw = safeBridgeCall('getBankListenerStatus', []);
+    var parsed = null;
+    if (raw && typeof raw === 'object') {
+      parsed = raw;
+    } else if (typeof raw === 'string' && raw) {
+      try { parsed = JSON.parse(raw); } catch (e) { parsed = null; }
+    }
+
+    var hasStatus = Boolean(parsed && typeof parsed === 'object');
+    var canAskAccess = typeof bridge.isNotificationAccessEnabled === 'function';
+    bd.supported = hasStatus || canAskAccess;
+
+    var access = false;
+    if (hasStatus && typeof parsed.access === 'boolean') {
+      access = parsed.access;
+    } else if (canAskAccess) {
+      access = Boolean(safeBridgeCall('isNotificationAccessEnabled', []));
+    }
+    bd.access = Boolean(access);
+
+    if (hasStatus && typeof parsed.enabled === 'boolean') {
+      bd.enabled = Boolean(parsed.enabled);
+    } else {
+      bd.enabled = bd.access;
+    }
+    bd.received = hasStatus ? (Number(parsed.received) || 0) : 0;
+    bd.lastAt = hasStatus ? normalizeBankTs(parsed.lastAt) : 0;
+    bd.lastText = (hasStatus && parsed.lastText) ? String(parsed.lastText) : '';
+    bd.lastResult = (hasStatus && parsed.lastResult) ? String(parsed.lastResult) : '';
+    return bd;
+  }
+
+  function describeIncomingBankError(err) {
+    var status = Number(err && err.status) || 0;
+    if (status === 404 || status === 405 || status === 501 || status >= 500) return BANK_SERVER_STALE_TEXT;
+    var msg = String(err && err.message ? err.message : '');
+    if (/HTTP (4|5)[0-9][0-9]/.test(msg)) return BANK_SERVER_STALE_TEXT;
+    if (/Tiempo de espera|Failed to fetch|NetworkError|Load failed|abort/i.test(msg)) {
+      return 'Sin respuesta del servidor. Revisa la conexión de la tienda.';
+    }
+    return 'No se pudo leer la lista de abonos (' + (msg || 'sin conexión') + ').';
+  }
+
+  function loadIncomingBankPayments(force) {
+    var bd = bankDetector;
+    var now = Date.now();
+
+    if (!force && (now - bd.lastLoadAt) < BANK_LIST_THROTTLE_MS) return Promise.resolve();
+    if (bd.loading) return Promise.resolve();
+
+    if (!state.token || !state.serverUrl) {
+      bd.itemsKnown = false;
+      bd.itemsError = 'Conecta tu servidor y entra con tu PIN para ver los abonos capturados.';
+      renderBankDetectorCard();
+      return Promise.resolve();
+    }
+    if (!state.serverOnline) {
+      bd.itemsKnown = false;
+      bd.itemsError = 'Sin conexión con el servidor. La lista se actualiza al reconectar.';
+      renderBankDetectorCard();
+      return Promise.resolve();
+    }
+
+    bd.loading = true;
+    bd.lastLoadAt = now;
+    renderBankDetectorCard();
+
+    return apiFetch('/api/v1/pagomovil/incoming?limit=' + BANK_LIST_LIMIT).then(function (data) {
+      var items = (data && Array.isArray(data.items)) ? data.items : [];
+      bd.items = items.slice(0, BANK_LIST_LIMIT);
+      bd.itemsKnown = true;
+      bd.itemsError = '';
+    }).catch(function (err) {
+      bd.items = [];
+      bd.itemsKnown = false;
+      bd.itemsError = describeIncomingBankError(err);
+    }).then(function () {
+      bd.loading = false;
+      renderBankDetectorCard();
+    });
+  }
+
+  function bankStatusPill() {
+    var bd = bankDetector;
+    if (!bd.hasBridge) return { cls: 'pill-blue', txt: 'Solo en el teléfono' };
+    if (!bd.supported) return { cls: 'pill-red', txt: 'App sin detector' };
+    if (!bd.access) return { cls: 'pill-amber', txt: 'Permiso pendiente' };
+    if (!bd.enabled) return { cls: 'pill-amber', txt: 'Desactivado' };
+    return { cls: 'pill-green', txt: 'Activo' };
+  }
+
+  function buildBankIncomingListHtml() {
+    var bd = bankDetector;
+    var canReload = Boolean(state.token && state.serverUrl);
+    var html = '<div class="bd-list-hd"><span>Últimos abonos capturados</span>' +
+      (canReload ? '<button type="button" class="bd-refresh" data-bd-action="reload-list" aria-label="Actualizar abonos capturados">🔄</button>' : '') +
+      '</div>';
+
+    if (bd.itemsError) {
+      return html + '<div class="bd-empty">' + esc(bd.itemsError) + '</div>';
+    }
+    if (!bd.itemsKnown) {
+      return html + '<div class="bd-empty">' + (bd.loading ? 'Buscando abonos en el servidor…' : 'Sin abonos consultados todavía.') + '</div>';
+    }
+    if (!bd.items.length) {
+      return html + '<div class="bd-empty">Aún no hay abonos capturados por el banco.</div>';
+    }
+
+    html += bd.items.map(function (it) {
+      var amount = Number(it && it.amountBs) || 0;
+      var bank = (it && (it.bankName || it.sourceApp)) ? String(it.bankName || it.sourceApp) : 'Banco';
+      var ref = (it && (it.reference || it.paymentRef)) ? String(it.reference || it.paymentRef) : '';
+      var when = formatBankWhen(it && it.receivedAt);
+      var done = Boolean(it && it.conciliated);
+      var metaBits = [bank];
+      if (ref) metaBits.push('Ref ' + ref);
+      if (when) metaBits.push(when);
+      return '<div class="bd-row">' +
+        '<div class="bd-row-main">' +
+          '<span class="bd-row-amt tabular-nums">' + esc(fmtBs(amount)) + '</span>' +
+          '<span class="bd-row-meta">' + esc(metaBits.join(' · ')) + '</span>' +
+        '</div>' +
+        '<span class="pill ' + (done ? 'pill-green' : 'pill-amber') + '">' + (done ? 'Conciliado' : 'Pendiente') + '</span>' +
+      '</div>';
+    }).join('');
+
+    return html;
+  }
+
+  function buildBankDetectorCardHtml() {
+    var bd = bankDetector;
+    var pill = bankStatusPill();
+    var note = '';
+    var actions = '';
+
+    if (!bd.hasBridge) {
+      note = BANK_STATUS_HINT;
+    } else if (!bd.supported) {
+      note = 'La app instalada no trae el detector bancario. Instala la versión nueva de MI TIENDA ADMIN para activarlo.';
+    } else if (!bd.access) {
+      note = 'Falta el permiso de acceso a notificaciones. Android abrirá los ajustes: busca MI TIENDA ADMIN y actívalo.';
+      actions += '<button type="button" class="m-btn m-btn-primary bd-btn" data-bd-action="open-access">🔔 Activar permiso bancario</button>';
+    } else if (!bd.enabled) {
+      note = 'El permiso ya está dado, pero el detector está apagado.';
+      actions += '<button type="button" class="m-btn m-btn-primary bd-btn" data-bd-action="enable">▶ Activar detector</button>' +
+        '<button type="button" class="m-btn m-btn-secondary bd-btn" data-bd-action="open-access">⚙️ Abrir ajustes de Android</button>';
+    } else {
+      note = 'Escuchando las notificaciones del banco. Cada abono se envía solo a tu servidor.';
+      actions += '<button type="button" class="m-btn m-btn-secondary bd-btn" data-bd-action="disable">⏸ Desactivar detector</button>' +
+        '<button type="button" class="m-btn m-btn-secondary bd-btn" data-bd-action="open-access">⚙️ Abrir ajustes de Android</button>';
+    }
+
+    var capturedTxt = bd.supported ? String(bd.received) : '—';
+    var whenTxt = bd.lastAt ? formatBankWhen(bd.lastAt) : '—';
+    var resultTxt = bd.lastResult || (bd.supported ? 'Sin mensajes todavía' : 'Solo en la app');
+
+    var lastTextHtml = '';
+    if (bd.lastText) {
+      var shortText = bd.lastText.length > 90 ? (bd.lastText.slice(0, 90) + '…') : bd.lastText;
+      lastTextHtml = '<div class="bd-last-text">📩 ' + esc(shortText) + '</div>';
+    }
+
+    return '' +
+      '<div class="bd-head">' +
+        '<div class="bd-head-txt">' +
+          '<h2 class="bd-title">🏦 Detector Bancario Automático</h2>' +
+          '<p class="bd-sub">Lee las notificaciones del banco y concilia el Pago Móvil solo</p>' +
+        '</div>' +
+        '<span class="pill ' + pill.cls + '">' + esc(pill.txt) + '</span>' +
+      '</div>' +
+      '<div class="bd-note">' + esc(note) + '</div>' +
+      (actions ? '<div class="bd-actions">' + actions + '</div>' : '') +
+      '<div class="bd-stats">' +
+        '<div class="bd-stat">' +
+          '<span class="bd-stat-lbl">Mensajes capturados</span>' +
+          '<span class="bd-stat-val tabular-nums">' + esc(capturedTxt) + '</span>' +
+        '</div>' +
+        '<div class="bd-stat">' +
+          '<span class="bd-stat-lbl">Último aviso</span>' +
+          '<span class="bd-stat-val bd-stat-val-sm tabular-nums">' + esc(whenTxt) + '</span>' +
+          '<span class="bd-stat-note">' + esc(resultTxt) + '</span>' +
+        '</div>' +
+      '</div>' +
+      lastTextHtml +
+      buildBankIncomingListHtml() +
+      '<div class="bd-privacy">🔒 ' + esc(BANK_PRIVACY_TEXT) + '</div>';
+  }
+
+  // Reconstruye SOLO el contenido de la tarjeta (no recarga la app ni la pestaña).
+  function renderBankDetectorCard() {
+    var host = document.getElementById('bankDetectorCard');
+    if (!host) return;
+    host.innerHTML = buildBankDetectorCardHtml();
+  }
+
+  function refreshBankDetectorCard(forceList) {
+    readBankListenerStatus();
+    renderBankDetectorCard();
+    return loadIncomingBankPayments(Boolean(forceList));
+  }
+
+  function handleBankDetectorAction(action) {
+    var bd = bankDetector;
+    if (!action) return;
+
+    if (action === 'reload-list') {
+      vibrateLight();
+      loadIncomingBankPayments(true);
+      return;
+    }
+
+    if (!bd.hasBridge || !bd.supported) {
+      showToast(BANK_STATUS_HINT);
+      return;
+    }
+
+    vibrateLight();
+
+    if (action === 'open-access') {
+      safeBridgeCall('openNotificationAccessSettings', []);
+      showToast('En Ajustes activa “MI TIENDA ADMIN” en Acceso a notificaciones');
+      // Al volver de los ajustes, visibilitychange vuelve a leer el estado.
+      setTimeout(function () { refreshBankDetectorCard(false); }, 1200);
+      return;
+    }
+    if (action === 'enable') {
+      safeBridgeCall('setBankListenerEnabled', [true]);
+      showToast('Detector bancario activado');
+      setTimeout(function () { refreshBankDetectorCard(true); }, 350);
+      return;
+    }
+    if (action === 'disable') {
+      safeBridgeCall('setBankListenerEnabled', [false]);
+      showToast('Detector bancario desactivado');
+      setTimeout(function () { refreshBankDetectorCard(false); }, 350);
+    }
+  }
+
+  function scheduleBankDataRefresh() {
+    if (bankDataRefreshTimer) return;
+    bankDataRefreshTimer = setTimeout(function () {
+      bankDataRefreshTimer = null;
+      refreshAllData(true);
+    }, 500);
+  }
+
+  function notifyPagoMovilVerified(data) {
+    var d = data || {};
+    var amountBs = Number(d.amountBs) || 0;
+    var ref = String(d.reference || d.paymentRef || '');
+    var at = d.at ? String(d.at) : new Date().toISOString();
+    var key = ref + '|' + amountBs + '|' + at;
+    var now = Date.now();
+
+    // El servidor puede mandar el evento dedicado y también dentro de state_event:
+    // el mismo abono no debe avisar dos veces.
+    if (bankDetector.lastEventKey === key && (now - bankDetector.lastEventKeyAt) < 12000) return;
+    bankDetector.lastEventKey = key;
+    bankDetector.lastEventKeyAt = now;
+    bankDetector.lastEventAt = at;
+
+    showToast('Pago Móvil conciliado: ' + fmtBs(amountBs) + (ref ? ' (Ref ' + ref + ')' : ''));
+    vibrateLight();
+    renderBankDetectorCard();
+    loadIncomingBankPayments(true);
+    scheduleBankDataRefresh();
+  }
+
+  function initBankDetectorWatch() {
+    // Un único listener delegado para todos los botones de la tarjeta:
+    // así no se duplican al reconstruirla.
+    document.addEventListener('click', function (e) {
+      var node = e.target;
+      while (node && node !== document) {
+        if (node.getAttribute && node.getAttribute('data-bd-action')) {
+          e.preventDefault();
+          handleBankDetectorAction(node.getAttribute('data-bd-action'));
+          return;
+        }
+        node = node.parentNode;
+      }
+    });
+
+    // Al volver de Ajustes de Android (o de otra app) se relee el estado nativo.
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState && document.visibilityState !== 'visible') return;
+      var shell = document.getElementById('appShell');
+      if (!shell || shell.classList.contains('hidden')) return;
+      refreshBankDetectorCard(false);
+    });
+  }
+
   function renderPagoMovilTab(root) {
     var all = extractPagoMovilList();
     var filtered = all.filter(function (r) {
@@ -805,6 +1210,7 @@
         '<div><h2 class="sec-head-title">Pago Móvil</h2><p class="sec-head-sub">Verificación bancaria y referencias</p></div>' +
         '<span class="pill ' + (pendingCount > 0 ? 'pill-amber' : 'pill-green') + '">' + pendingCount + ' pendientes</span>' +
       '</div>' +
+      '<div id="bankDetectorCard" class="bank-detector-card" role="region" aria-label="Detector bancario automático"></div>' +
       (!state.serverOnline ? '<div class="offline-banner"><span><strong>Sin conexión al VPS.</strong> Al conectar se mostrarán referencias reales.</span><button type="button" class="m-btn m-btn-amber m-btn-sm" id="pmCfgSrvBtn">Conectar</button></div>' : '') +
       '<div class="filter-row" id="pmFilterBar">' + filters + '</div>' +
       cardsHtml;
@@ -842,6 +1248,10 @@
         });
       });
     });
+
+    // Tarjeta del Detector Bancario Automático: lee el puente Android y los
+    // últimos abonos capturados por el servidor (throttle interno de 5 s).
+    refreshBankDetectorCard(false);
   }
 
   function renderInventoryTab(root) {
@@ -2103,6 +2513,9 @@
     });
 
     positionPagerAndPill(idx, animate !== false);
+
+    // Al entrar a Pago Móvil se relee el estado del detector y su lista.
+    if (state.activeTab === 'pagomovil') refreshBankDetectorCard(false);
   }
 
   function rubberband(overshoot, dim) {
@@ -2350,6 +2763,7 @@
 
     initSwipePager();
     initSheetSwipeDismiss();
+    initBankDetectorWatch();
 
     var hdrScanBtn = document.getElementById('hdrScannerBtn');
     if (hdrScanBtn) {
