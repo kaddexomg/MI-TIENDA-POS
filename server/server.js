@@ -252,7 +252,8 @@ function createServer() {
  */
 function start(portToUse) {
   const port = portToUse || parseInt(process.env.PORT, 10) || DEFAULT_PORT;
-  const httpsPort = parseInt(process.env.HTTPS_PORT, 10) || DEFAULT_HTTPS_PORT;
+  const httpsPortRaw = process.env.HTTPS_PORT;
+  const httpsPort = httpsPortRaw !== undefined ? parseInt(httpsPortRaw, 10) : DEFAULT_HTTPS_PORT;
   const server = createServer();
 
   server.listen(port, '0.0.0.0', function () {
@@ -261,23 +262,31 @@ function start(portToUse) {
     console.log('  Puerto HTTP       : ' + port);
     console.log('  Acceso local Caja : http://localhost:' + port + '/pos.html');
     console.log('  Acceso local Admin: http://localhost:' + port + '/admin/index.html');
-    console.log('  Escáner Móvil     : https://localhost:' + httpsPort + '/escaner');
+    if (httpsPort > 0) {
+      console.log('  Escáner Móvil     : https://localhost:' + httpsPort + '/escaner');
+    } else {
+      console.log('  Escáner Móvil     : Vía proxy HTTPS / Nginx (HTTPS nativo deshabilitado)');
+    }
     console.log('  Directorio Datos  : ' + journal.getDataDir());
     console.log('================================================================');
   });
 
   let httpsServer = null;
-  try {
-    const creds = ssl.getOrCreateSslCredentials(journal.getDataDir());
-    httpsServer = https.createServer(creds, createRequestListener());
-    httpsServer.on('error', function (err) {
-      console.warn('[MTP Server] Aviso HTTPS (' + httpsPort + '): ' + err.message);
-    });
-    httpsServer.listen(httpsPort, '0.0.0.0', function () {
-      console.log('[MTP Server] Escáner Cámara Segura HTTPS activo en puerto ' + httpsPort);
-    });
-  } catch (e) {
-    console.warn('[MTP Server] No se pudo iniciar listener HTTPS:', e.message);
+  if (httpsPort > 0) {
+    try {
+      const creds = ssl.getOrCreateSslCredentials(journal.getDataDir());
+      httpsServer = https.createServer(creds, createRequestListener());
+      httpsServer.on('error', function (err) {
+        console.warn('[MTP Server] Aviso HTTPS (' + httpsPort + '): ' + err.message);
+      });
+      httpsServer.listen(httpsPort, '0.0.0.0', function () {
+        console.log('[MTP Server] Escáner Cámara Segura HTTPS activo en puerto ' + httpsPort);
+      });
+    } catch (e) {
+      console.warn('[MTP Server] No se pudo iniciar listener HTTPS:', e.message);
+    }
+  } else {
+    console.log('[MTP Server] Listener HTTPS interno omitido (modo proxy inverso Nginx).');
   }
 
   // Manejo de apagado limpio

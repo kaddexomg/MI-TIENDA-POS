@@ -320,6 +320,18 @@
     - **Detector Bancario Pago Móvil (`b46d224`)**: [`BankNotificationListenerService.java`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/mobile/android-app/src/com/mitienda/admin/BankNotificationListenerService.java) + [`server/pagomovil-parser.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/server/pagomovil-parser.js) + `POST /api/v1/pagomovil/incoming` + [`tests/pagomovil-bank.test.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/pagomovil-bank.test.js) integrado en [`tests/run.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/tests/run.js).
     - **Entrada Express y Puente VPS (`b46d224`, `c7c21bf`)**: [`pos-engine.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/modules/pos-engine.js) abre creación rápida al escanear código nuevo (`mtp:unknown-barcode`), calculadora de bultos en [`product-drawer.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/modules/product-drawer.js), y [`barcode-engine.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/modules/barcode-engine.js) + [`api-client.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/core/api-client.js) corregidos (`getBaseUrl`/`getActiveBaseUrl`) para usar la URL del VPS.
     - **Login Unificado en Escáner (`9ff82c7`)**: [`mobile/scanner.html`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/mobile/scanner.html) actualizado con el mismo login fintech de Admin, sin IP `192.168.1.100` falsa por defecto y con modal de configuración VPS.
-    - **PENDIENTE PRÓXIMA SESIÓN (Despliegue en VPS de JJ PAPER)**:
-      - El VPS de JJ PAPER (`166.0.112.247` / `https://166-0-112-247.sslip.io`) está activo pero solo corre JJ Paper; `MI-TIENDA-POS` (`server/`) aún no está desplegado allí y `ssh root@166.0.112.247` pidió credenciales/llave no cargada por defecto.
-      - **Siguiente paso**: localizar la llave/credencial SSH en `C:\Users\PC\Desktop\JJ PAPER` (sin exponer secretos en Git/docs), desplegar `server/` de `MI-TIENDA-POS` en `166.0.112.247` con `pm2` + proxy HTTPS (Nginx/Caddy), grabar esa URL fija por defecto en `api-client.js`, `mobile.js` y `scanner.html` (cero configuración para el cliente final), y recompilar ambos APKs + `tools/build-win7-installer.ps1`.
+
+22. **✅ v8.5.1 — DESPLIEGUE EN VIVO EN VPS SOBERANO Y CERO-CONFIGURACIÓN (17 de Noviembre de 2026)**:
+    - **Despliegue en VPS (166.0.112.247 / `https://166-0-112-247.sslip.io`)**:
+      - `server/` desplegado en `/opt/mi-tienda-pos` y orquestado con `pm2` (`mi-tienda-pos`, PID persistente con `pm2 save`).
+      - Nginx configurado con terminación SSL oficial Let's Encrypt para `166-0-112-247.sslip.io`:
+        - Puerto 443 estándar: enruta `/api/`, `/mobile/`, `/assets/`, `/media/`, `/escaner`, `/scanner`, `/admin-movil`, `/pos.html`, `/admin/` a `http://127.0.0.1:7070` con soporte completo de SSE (Server-Sent Events) sin buffer (`proxy_buffering off; proxy_read_timeout 86400s;`). Coexiste 100% en armonía con JJ Paper (PostgREST `/rest/v1/`, GoTrue `/auth/v1/` y Cheito `/cheito/`).
+        - Puerto 7443 dedicado: virtual host SSL completo hacia MI-TIENDA-POS.
+    - **Cero Configuración para el Cliente Final**:
+      - `DEFAULT_VPS_URL` preconfigurado en [`assets/js/core/api-client.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/assets/js/core/api-client.js) (`https://166-0-112-247.sslip.io`).
+      - Fallback por defecto en [`mobile/mobile.js`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/mobile/mobile.js) y [`mobile/scanner.html`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/mobile/scanner.html) hacia el VPS oficial.
+      - `DEFAULT_SERVER_URL` preconfigurado en [`MainActivity.java`](file:///C:/Users/PC/Desktop/MI-TIENDA-POS/mobile/android-app/src/com/mitienda/admin/MainActivity.java). Tanto el APK de Admin como el de Escáner conectan inmediatamente al VPS sin requerir escribir IPs o URLs manualmente.
+    - **Compilación de Artefactos**:
+      - `MI-TIENDA-ADMIN.apk` (465.5 KB) y `MI-TIENDA-ESCANER.apk` (433.4 KB) recompilados y firmados.
+      - `dist/Instalar-MI-TIENDA-POS.exe` (68.3 MB) recompilado con Inno Setup 6.7.3 para Windows 7 SP1+ (ia32).
+    - **Verificación**: `node tests/run.js`, `node tools/check-scripts.js` y `node tools/check-html.js` pasando al 100%. Peticiones remotas HTTPS a `https://166-0-112-247.sslip.io/api/v1/scanner/info` y `https://166-0-112-247.sslip.io/escaner` respondiendo exitosamente.

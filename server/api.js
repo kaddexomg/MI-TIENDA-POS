@@ -940,10 +940,15 @@ function handleApiRequest(req, res, journal, stateManager) {
     const canExposePair = scannerAuth.ok || isLoopbackRequest(req);
     const pairCode = canExposePair ? getScannerPairCode(journal) : null;
     const basePrimary = net.primaryUrl || ('http://127.0.0.1:' + net.port);
-    const httpsPort = parseInt(process.env.HTTPS_PORT, 10) || 7443;
+    const httpsPortRaw = process.env.HTTPS_PORT;
+    const httpsPort = httpsPortRaw !== undefined ? parseInt(httpsPortRaw, 10) : 7443;
     const scannerUrl = pairCode ? (basePrimary + '/escaner?pair=' + encodeURIComponent(pairCode)) : (basePrimary + '/escaner');
     const toHttpsUrl = function (u) {
-      return String(u || '').replace(/^http:\/\//i, 'https://').replace(/:\d+$/, ':' + httpsPort);
+      let res = String(u || '').replace(/^http:\/\//i, 'https://');
+      if (httpsPort === 443 || httpsPort <= 0) {
+        return res.replace(/:\d+$/, '');
+      }
+      return res.replace(/:\d+$/, ':' + httpsPort);
     };
     const httpsPrimary = toHttpsUrl(basePrimary);
     const httpsScannerUrl = pairCode ? (httpsPrimary + '/escaner?pair=' + encodeURIComponent(pairCode)) : (httpsPrimary + '/escaner');

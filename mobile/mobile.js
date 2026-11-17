@@ -194,6 +194,9 @@
       }
     }
 
+    if (!state.vpsUrl) {
+      state.vpsUrl = 'https://166-0-112-247.sslip.io';
+    }
     if (!state.lanUrl) {
       state.lanUrl = 'http://192.168.137.1:7070';
     }

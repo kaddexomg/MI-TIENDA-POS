@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
 
     public static final String PREFS_NAME = "mtp_admin_prefs";
     public static final String KEY_SERVER_URL = "server_url";
+    public static final String DEFAULT_SERVER_URL = "https://166-0-112-247.sslip.io";
     public static final String KEY_TOKEN = "auth_token";
     public static final String KEY_STORE_NAME = "store_name";
     public static final String KEY_USE_REMOTE_UI = "use_remote_ui";
@@ -229,7 +230,7 @@ public class MainActivity extends Activity {
         fallbackDone = false;
         remoteLiveReady = false;
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        final String serverUrl = normalizeBase(prefs.getString(KEY_SERVER_URL, ""));
+        final String serverUrl = normalizeBase(prefs.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL));
         boolean useRemote = prefs.getBoolean(KEY_USE_REMOTE_UI, true);
 
         if (!useRemote || serverUrl.isEmpty()) {
@@ -503,7 +504,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String getServerUrl() {
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-            return prefs.getString(KEY_SERVER_URL, "");
+            return prefs.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL);
         }
 
         /** Guarda la dirección apenas el dueño la configura (no espera al login). */

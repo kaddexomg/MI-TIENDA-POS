@@ -52,8 +52,9 @@
     } catch (_) {}
   }
 
+  var DEFAULT_VPS_URL = 'https://166-0-112-247.sslip.io';
   var localUrl = cleanUrl(readStorage(STORAGE_LOCAL_URL_KEY)) || defaultOrigin;
-  var vpsUrl = cleanUrl(readStorage(STORAGE_VPS_URL_KEY));
+  var vpsUrl = cleanUrl(readStorage(STORAGE_VPS_URL_KEY)) || DEFAULT_VPS_URL;
   if (!vpsUrl && defaultOrigin.indexOf('https://') === 0) {
     vpsUrl = defaultOrigin;
   }
